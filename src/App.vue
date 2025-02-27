@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RouterView /> <!-- APENAS UMA VEZ! -->
+    <RouterView />
   </div>
 </template>
 
@@ -8,7 +8,7 @@
 import { RouterView } from 'vue-router';
 
 export default {
-  name:"App",
+  name: "App",
   components: {
     RouterView
   }
