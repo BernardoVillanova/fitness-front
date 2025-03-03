@@ -11,9 +11,11 @@
   "dependencies": {
     "axios": "^1.8.1",
     "core-js": "^3.8.3",
+    "events": "^3.3.0",
     "pinia": "^3.0.1",
     "vue": "^3.2.13",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vuetify": "^3.7.14"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
