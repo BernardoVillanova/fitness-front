@@ -11,7 +11,7 @@
       <div class="form-section">
         <h2 class="title">Login</h2>
         <p class="subtitle">
-          Não tem uma conta? <a href="#" class="register-link" @click.prevent="goToRegister">Crie uma aqui!</a>
+          Não tem uma conta? <router-link to="/register" class="register-link">Crie uma aqui!</router-link>
         </p>
 
         <form @submit.prevent="login">
@@ -27,6 +27,7 @@
 
 <script>
 import NavBar from "@/components/NavBar.vue";
+import jwt_decode from 'jwt-decode';
 import api from "@/api";
 
 export default {
@@ -49,15 +50,30 @@ export default {
           email: this.email,
           password: this.password,
         });
-        localStorage.setItem("token", response.data.token);
-        console.log('response.data.token: ', response.data.token);
+
+        const token = response.data.token;
+        console.log('response: ', response);
+        console.log('token: ', token);
+
+        const decodedToken = jwt_decode(token);
+
+        if (!decodedToken.role) {
+          throw new Error("Token inválido ou sem informações de papel.");
+        }
+
+        sessionStorage.setItem("token", token);
+
+        if (decodedToken.role === "personal") {
+          this.$router.push("/dashboard");
+        } else {
+          this.$router.push("/student-dashboard");
+        }
+
         alert("Login bem-sucedido!");
       } catch (error) {
-        alert("Erro no login");
+        console.error("Erro no login:", error);
+        alert("Erro no login. Verifique suas credenciais.");
       }
-    },
-    goToRegister() {
-      this.$router.push("/register");
     },
   },
 };
