@@ -27,7 +27,7 @@
 
 <script>
 import NavBar from "@/components/NavBar.vue";
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import api from "@/api";
 
 export default {
@@ -52,10 +52,9 @@ export default {
         });
 
         const token = response.data.token;
-        console.log('response: ', response);
-        console.log('token: ', token);
 
-        const decodedToken = jwt_decode(token);
+        const decodedToken = jwtDecode(token);
+        console.log('decodedToken: ', decodedToken);
 
         if (!decodedToken.role) {
           throw new Error("Token inválido ou sem informações de papel.");

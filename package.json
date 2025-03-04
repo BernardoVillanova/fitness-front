@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt",
-    "serve": "vue-cli-service serve",
+    "dev": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@types/jwt-decode": "^2.2.1",
     "axios": "^1.8.1",
     "core-js": "^3.8.3",
     "events": "^3.3.0",

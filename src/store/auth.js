@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -9,7 +9,8 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.token,
     userRole: (state) => {
       if (state.token) {
-        const decodedToken = jwt_decode(state.token); // Usa a função jwt_decode diretamente
+        const decodedToken = jwtDecode(state.token);
+        console.log('decodedToken: ', decodedToken);
         return decodedToken.role || null;
       }
       return null;
