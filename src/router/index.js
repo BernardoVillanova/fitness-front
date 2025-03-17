@@ -12,7 +12,7 @@ const routes = [
   {
     path: '/dashboard',
     component: DashboardTech,
-    meta: { requiresAuth: true, role: 'personal' },
+    // meta: { requiresAuth: true, role: 'personal' },
   },
 ];
 

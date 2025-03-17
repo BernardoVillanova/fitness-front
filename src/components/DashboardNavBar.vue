@@ -1,5 +1,5 @@
 <template>
-  <nav :class="['navbar', { 'navbar-mobile': isMobile }]">
+  <nav :class="['navbar', { 'navbar-dark': isDarkMode, 'navbar-light': !isDarkMode, 'navbar-mobile': isMobile }]">
     <button v-if="isMobile" @click="toggleMenu" class="hamburger-menu">
       <i :class="menuOpen ? 'fas fa-times' : 'fas fa-bars'"></i>
     </button>
@@ -9,25 +9,25 @@
     <ul :class="['nav-links', { 'menu-open': menuOpen }]">
       <li>
         <router-link to="/home">
-          <i class="fas fa-home"></i>
+          <img :src="iconHome" class="home">
           <span v-if="!isMobile">Home</span>
         </router-link>
       </li>
       <li>
         <router-link to="/students">
-          <i class="fas fa-user-graduate"></i>
+          <img :src="iconUserGroup" alt="">
           <span v-if="!isMobile">Alunos</span>
         </router-link>
       </li>
       <li>
         <router-link to="/workout-plans">
-          <i class="fas fa-dumbbell"></i>
+          <img :src="iconDumbbell" alt="">
           <span v-if="!isMobile">Treinos</span>
         </router-link>
       </li>
       <li>
         <button @click="logout">
-          <i class="fas fa-sign-out-alt"></i>
+          <img :src="iconLogout" alt="">
           <span v-if="!isMobile">Sair</span>
         </button>
       </li>
@@ -36,11 +36,11 @@
     <!-- Perfil e Tema -->
     <div class="bottom-section">
       <div class="profile">
-        <i class="fas fa-user-circle"></i>
+        <img :src="iconUserGroup" alt="">
         <span v-if="!isMobile">Perfil</span>
       </div>
       <button @click="toggleDarkMode" class="theme-toggle">
-        <i class="fas" :class="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+        <img :src="iconTheme" alt="">
         <span v-if="!isMobile">{{ isDarkMode ? 'Claro' : 'Escuro' }}</span>
       </button>
     </div>
@@ -51,7 +51,18 @@
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+
+import iconHomeDark from '@/assets/house-dark.svg';
+import iconHomeLight from '@/assets/house-white.svg';
+import iconUserGroupDark from '@/assets/user-group-dark.svg';
+import iconUserGroupLight from '@/assets/user-group-white.svg';
+import iconDumbbellDark from '@/assets/dumbbell-dark.svg';
+import iconDumbbellLight from '@/assets/dumbbell-white.svg';
+import iconLogoutDark from '@/assets/right-from-bracket-dark.svg';
+import iconLogoutLight from '@/assets/right-from-bracket-white.svg';
+import iconSun from '@/assets/sun.svg';
+import iconMoon from '@/assets/moon.svg';
 
 export default {
   name: "DashboardNavBar",
@@ -78,6 +89,12 @@ export default {
       router.push('/login');
     };
 
+    const iconHome = computed(() => (isDarkMode.value ? iconHomeLight : iconHomeDark));
+    const iconUserGroup = computed(() => (isDarkMode.value ? iconUserGroupLight : iconUserGroupDark));
+    const iconDumbbell = computed(() => (isDarkMode.value ? iconDumbbellLight : iconDumbbellDark));
+    const iconLogout = computed(() => (isDarkMode.value ? iconLogoutLight : iconLogoutDark));
+    const iconTheme = computed(() => (isDarkMode.value ? iconSun : iconMoon));
+
     onMounted(() => {
       window.addEventListener('resize', checkScreenSize);
     });
@@ -86,12 +103,38 @@ export default {
       window.removeEventListener('resize', checkScreenSize);
     });
 
-    return { isDarkMode, toggleDarkMode, logout, isMobile, menuOpen, toggleMenu };
+    return { 
+      isDarkMode, 
+      toggleDarkMode, 
+      logout, 
+      isMobile, 
+      menuOpen, 
+      toggleMenu,
+      iconHome,
+      iconUserGroup,
+      iconDumbbell,
+      iconLogout,
+      iconTheme
+    };
   }
 };
 </script>
 
 <style scoped>
+.navbar-dark {
+  background-color: #121212 !important;
+  color: #ffffff;
+}
+
+.navbar-light {
+  background-color: #ffffff !important;
+  color: #121212;
+}
+
+.navbar {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .navbar {
   width: 80px;
   height: 100vh;
@@ -209,6 +252,10 @@ export default {
 
   .logo {
     margin-bottom: 0;
+  }
+
+  .home {
+    fill: white;
   }
 
   .nav-links {
