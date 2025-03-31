@@ -1,6 +1,6 @@
 <template>
-  <NavBar/>
-  <div class="full-screen">
+  <NavBar />
+  <div :class="isDarkMode ? 'full-screen dark' : 'full-screen light'">
     <div class="card-container">
       <!-- Seção da Imagem -->
       <div class="image-section">
@@ -27,16 +27,20 @@
 
 <script>
 import NavBar from "@/components/NavBar.vue";
+import { useThemeStore } from '@/store/theme';
+import { storeToRefs } from 'pinia';
 import { jwtDecode } from 'jwt-decode';
 import api from "@/api";
 
 export default {
   name: "LoginPage",
+  components: { NavBar },
+  setup() {
+    const themeStore = useThemeStore();
+    const { isDarkMode } = storeToRefs(themeStore);
 
-  components: {
-    NavBar,
+    return { isDarkMode };
   },
-
   data() {
     return {
       email: "",
@@ -52,9 +56,7 @@ export default {
         });
 
         const token = response.data.token;
-
         const decodedToken = jwtDecode(token);
-        console.log('decodedToken: ', decodedToken);
 
         if (!decodedToken.role) {
           throw new Error("Token inválido ou sem informações de papel.");
@@ -78,13 +80,21 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+.light {
+  background-color: #f4f4f4;
+  color: #333;
+}
+.dark {
+  background-color: #1a1a2e;
+  color: white;
+}
+
 .full-screen {
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f4f4f4;
   padding: 20px;
 }
 
@@ -92,7 +102,7 @@ export default {
   display: flex;
   max-width: 800px;
   width: 100%;
-  background: white;
+  background: var(--card-bg);
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   overflow: hidden;
@@ -100,7 +110,7 @@ export default {
 
 .image-section {
   width: 40%;
-  background: #2c3e50;
+  background: var(--image-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,7 +125,7 @@ export default {
 .form-section {
   width: 60%;
   padding: 40px;
-  background-color: #fff;
+  background-color: var(--form-bg);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -124,13 +134,13 @@ export default {
 .title {
   font-size: 24px;
   font-weight: bold;
-  color: #333;
+  color: inherit;
   margin-bottom: 10px;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #666;
+  color: inherit;
   margin-bottom: 20px;
   font-weight: bold;
 }
@@ -158,7 +168,7 @@ input {
 button {
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
+  background-color: var(--button-bg);
   color: white;
   border: none;
   border-radius: 5px;
@@ -168,7 +178,23 @@ button {
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: var(--button-hover-bg);
+}
+
+:root {
+  --card-bg: white;
+  --form-bg: #fff;
+  --image-bg: #2c3e50;
+  --button-bg: #007bff;
+  --button-hover-bg: #0056b3;
+}
+
+.dark {
+  --card-bg: #2c2c2c;
+  --form-bg: #1e1e1e;
+  --image-bg: #1a1a2e;
+  --button-bg: #ff5e99;
+  --button-hover-bg: #d93d78;
 }
 
 @media (max-width: 768px) {

@@ -4,7 +4,7 @@
     <ul class="nav-links">
       
       <li><router-link to="/">Home</router-link></li>
-      <li><a href="#">Sobre Nós</a></li>
+      <li><router-link to="/about">Sobre Nós</router-link></li>
       <li><router-link to="/login">Login</router-link></li>
     </ul>
 
