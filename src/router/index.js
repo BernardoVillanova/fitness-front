@@ -3,16 +3,20 @@ import HomePage from '../views/home.vue';
 import LoginPage from '../views/login.vue';
 import RegisterPage from '../views/register.vue';
 import DashboardTech from '../views/dashboardtech.vue';
+import StudentList from '../components/StudentList.vue'
+import AboutUs from '../views/about.vue'
 import { useAuthStore } from '../store/auth';
 
 const routes = [
   { path: '/', component: HomePage },
   { path: '/login', component: LoginPage },
   { path: '/register', component: RegisterPage },
+  { path: '/students', component: StudentList },
+  { path: '/about', component: AboutUs},
   {
     path: '/dashboard',
     component: DashboardTech,
-    // meta: { requiresAuth: true, role: 'personal' },
+    meta: { requiresAuth: true, role: 'personal' },
   },
 ];
 

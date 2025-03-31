@@ -1,4 +1,5 @@
 <template>
+  <NavBar/>
   <div :class="['container', isDarkMode ? 'dark' : 'light']">
     <div class="form-container">
       <h2>Cadastre-se</h2>
@@ -23,12 +24,16 @@
 </template>
 
 <script>
+import NavBar from "@/components/NavBar.vue";
 import axios from "axios";
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 
 export default {
   name: "RegisterPage",
+  components: {
+    NavBar,
+  },
 
   setup() {
     const themeStore = useThemeStore();
@@ -90,8 +95,9 @@ export default {
 }
 
 .form-container {
+  width: 100vh;
   background: rgba(255, 255, 255, 0.1);
-  padding: 20px;
+  padding: 4.5rem;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }

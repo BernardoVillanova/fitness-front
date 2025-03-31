@@ -1,118 +1,94 @@
 <template>
-    <div :class="{ dark: isDarkMode, light: !isDarkMode }">
-        <section class="hero">
-        <div class="hero-content">
-            <h1>Acompanhe o desempenho dos seus alunos ou o seu próprio progresso</h1>
-            <p>Se você é um personal trainer, tenha uma visão clara do desenvolvimento de seus alunos. Se você é um aluno, monitore sua evolução e conquistas.</p>
-            <button class="cta-button">Criar Conta</button>
-        </div>
-        <div class="hero-image">
-            <img src="https://via.placeholder.com/500x300" alt="Treinamento Fitness" />
-        </div>
-        </section>
+  <div :class="isDarkMode ? 'dark' : 'light'">
+    
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Acompanhe o desempenho dos seus alunos ou o seu próprio progresso</h1>
+        <p>Se você é um personal trainer, tenha uma visão clara do desenvolvimento de seus alunos. Se você é um aluno, monitore sua evolução e conquistas.</p>
+        <button class="cta-button"><router-link to="/register">Criar Conta</router-link></button>
+      </div>
+      <div class="hero-image">
+        <img src="https://via.placeholder.com/500x300" alt="Treinamento Fitness" />
+      </div>
+    </section>
 
-        <section class="features">
-        <div class="feature-card">
-            <h3>Gestão de Alunos</h3>
-            <p>Monitore e acompanhe o desempenho de cada aluno, ajustando treinos conforme necessário.</p>
-            <button class="read-more">Saiba mais</button>
-        </div>
-        <div class="feature-card">
-            <h3>Seu Progresso</h3>
-            <p>Registre e visualize seu desempenho diário, estabeleça metas e veja sua evolução.</p>
-            <button class="read-more">Saiba mais</button>
-        </div>
-        <div class="feature-card">
-            <h3>Planos Personalizados</h3>
-            <p>Receba ou crie treinos e dietas personalizados para alcançar seus objetivos.</p>
-            <button class="read-more">Saiba mais</button>
-        </div>
-        </section>
-    </div>
+    <section class="features">
+      <div class="feature-card" v-for="feature in features" :key="feature.title">
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+        <button class="read-more">Saiba mais</button>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script>
-    import { useThemeStore } from '@/store/theme';
-    import { storeToRefs } from 'pinia';
+import { useThemeStore } from '@/store/theme';
+import { storeToRefs } from 'pinia';
 
-    export default {
-        setup() {
-            const themeStore = useThemeStore();
-            const { isDarkMode } = storeToRefs(themeStore);
+export default {
+  setup() {
+    const themeStore = useThemeStore();
+    const { isDarkMode } = storeToRefs(themeStore);
 
-            return { isDarkMode };
-        }
+    const toggleTheme = () => {
+      themeStore.toggleDarkMode();
     };
+
+    return { isDarkMode, toggleTheme, features: [
+      { title: 'Gestão de Alunos', description: 'Monitore e acompanhe o desempenho de cada aluno, ajustando treinos conforme necessário.' },
+      { title: 'Seu Progresso', description: 'Registre e visualize seu desempenho diário, estabeleça metas e veja sua evolução.' },
+      { title: 'Planos Personalizados', description: 'Receba ou crie treinos e dietas personalizados para alcançar seus objetivos.' }
+    ] };
+  }
+};
 </script>
 
 <style scoped>
-/* Modo Claro/Escuro */
 .light {
-  background-color: #f0f0f0;
-  color: #333;
+  --nav-bg: #f0f0f0;
+  --text-color: #333;
+  --hero-bg: linear-gradient(135deg, #ffffff, #87CEFA);
+  --card-bg: #ffffff;
+  background-color: var(--nav-bg);
+  color: var(--text-color);
 }
 
 .dark {
-  background-color: #1a1a2e;
-  color: white;
+  --nav-bg: #1a1a2e;
+  --text-color: white;
+  --hero-bg: linear-gradient(135deg, #2a0845, #6441a5);
+  --card-bg: #222;
+  background-color: var(--nav-bg);
+  color: var(--text-color);
 }
 
-/* Navbar */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 15px 30px;
-  background: #2c2c54;
+  background: var(--nav-bg);
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: white;
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  gap: 20px;
-}
-
-.nav-links li a {
-  text-decoration: none;
-  color: white;
-  font-size: 16px;
-}
-
-.toggle-mode {
+.navbar .toggle-mode {
   background: none;
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: white;
+  color: var(--text-color);
 }
 
-/* Hero Section */
 .hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 80px 20px;
-  background: linear-gradient(135deg, #2a0845, #6441a5);
+  background: var(--hero-bg);
 }
 
 .hero-content {
   max-width: 50%;
-}
-
-.hero h1 {
-  font-size: 36px;
-  font-weight: bold;
-}
-
-.hero p {
-  font-size: 18px;
-  margin: 10px 0;
 }
 
 .cta-button {
@@ -129,14 +105,6 @@
   background-color: #d93d78;
 }
 
-/* Imagem */
-.hero-image img {
-  width: 100%;
-  max-width: 500px;
-  border-radius: 10px;
-}
-
-/* Features Section */
 .features {
   display: flex;
   justify-content: space-around;
@@ -144,7 +112,7 @@
 }
 
 .feature-card {
-  background: #222;
+  background: var(--card-bg);
   padding: 20px;
   border-radius: 10px;
   width: 30%;
