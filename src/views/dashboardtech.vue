@@ -54,7 +54,7 @@
   };
   </script>
   
-  <style scoped>
+<style scoped>
   .dashboard-container {
     display: flex;
     height: 100vh;
@@ -139,5 +139,5 @@
       grid-column: span 1;
     }
   }
-  </style>
+</style>
   
