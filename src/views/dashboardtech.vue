@@ -14,13 +14,13 @@
             <h1>Plataformas</h1>
           </div>
           <div class="sentiments-card small">
-            <h2>Sentimentos</h2>
+            <h2>Cargas</h2>
           </div>
           <div class="time-spent-card medium">
             <h3>Tempo Gasto</h3>
           </div>
           <div class="talk-listen-ratio-card large">
-            <h2>Relação Falar/Ouvir</h2>
+            <h2>Volume</h2>
           </div>
         </section>
       </main>
