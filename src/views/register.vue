@@ -133,7 +133,7 @@ export default {
         alert("Cadastro realizado com sucesso!");
 
         if (this.role === "aluno") {
-          this.$router.push("/aluno/complementar");
+          this.$router.push("/student-register");
         } else {
           this.$router.push("/login");
         }

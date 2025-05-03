@@ -5,6 +5,7 @@ import RegisterPage from '../views/register.vue';
 import DashboardTech from '../views/dashboardtech.vue';
 import StudentList from '../components/StudentList.vue'
 import AboutUs from '../views/about.vue'
+import StudentRegister from '../views/studentregister.vue';
 import { useAuthStore } from '../store/auth';
 
 const routes = [
@@ -13,6 +14,7 @@ const routes = [
   { path: '/register', component: RegisterPage },
   { path: '/students', component: StudentList },
   { path: '/about', component: AboutUs},
+  { path: '/student-register', component: StudentRegister},
   {
     path: '/dashboard',
     component: DashboardTech,
