@@ -17,7 +17,6 @@
         <form @submit.prevent="login">
           <input type="email" placeholder="Email" v-model="email" required />
           <input type="password" placeholder="Senha" v-model="password" required />
-
           <button type="submit">Entrar</button>
         </form>
       </div>
@@ -38,7 +37,6 @@ export default {
   setup() {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
-
     return { isDarkMode };
   },
   data() {
@@ -81,35 +79,51 @@ export default {
 </script>
 
 <style scoped>
-.light {
-  background-color: #f4f4f4;
-  color: #333;
+:root {
+  --primary-color: #007bff;
+  --bg-color: #f4f4f4;
+  --card-bg: #ffffff;
+  --form-bg: #ffffff;
+  --image-bg: #e9f1ff;
+  --button-bg: #007bff;
+  --button-hover-bg: #0056b3;
+  --text-color: #333;
 }
+
 .dark {
-  background-color: #1a1a2e;
-  color: white;
+  --primary-color: #6441a5;
+  --bg-color: #121212;
+  --card-bg: #1f1f2e;
+  --form-bg: #252539;
+  --image-bg: #1a1a2e;
+  --button-bg: #6441a5;
+  --button-hover-bg: #4a2d91;
+  --text-color: #ffffff;
 }
 
 .full-screen {
   height: 100vh;
+  background-color: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  color: var(--text-color);
 }
 
 .card-container {
   display: flex;
-  max-width: 800px;
+  max-width: 1000px;
   width: 100%;
-  background: var(--card-bg);
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+  background-color: var(--card-bg);
+  border-radius: 20px;
   overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease-in-out;
 }
 
 .image-section {
-  width: 40%;
+  width: 45%;
   background: var(--image-bg);
   display: flex;
   align-items: center;
@@ -123,8 +137,8 @@ export default {
 }
 
 .form-section {
-  width: 60%;
-  padding: 40px;
+  width: 55%;
+  padding: 60px 40px;
   background-color: var(--form-bg);
   display: flex;
   flex-direction: column;
@@ -132,24 +146,22 @@ export default {
 }
 
 .title {
-  font-size: 24px;
-  font-weight: bold;
-  color: inherit;
+  font-size: 32px;
+  font-weight: 700;
   margin-bottom: 10px;
+  color: var(--text-color);
 }
 
 .subtitle {
   font-size: 14px;
-  color: inherit;
-  margin-bottom: 20px;
-  font-weight: bold;
+  color: var(--text-color);
+  margin-bottom: 25px;
 }
 
 .register-link {
-  color: #ff5733;
+  color: var(--primary-color);
   font-weight: bold;
   text-decoration: none;
-  cursor: pointer;
 }
 
 .register-link:hover {
@@ -158,49 +170,36 @@ export default {
 
 input {
   width: 100%;
-  padding: 12px;
-  margin: 10px 0;
+  padding: 14px 16px;
+  margin-bottom: 16px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 16px;
+  background: #fff;
+  box-sizing: border-box;
 }
 
 button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: var(--button-bg);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
-  margin-top: 10px;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
 }
 
 button:hover {
   background-color: var(--button-hover-bg);
 }
 
-:root {
-  --card-bg: white;
-  --form-bg: #fff;
-  --image-bg: #2c3e50;
-  --button-bg: #007bff;
-  --button-hover-bg: #0056b3;
-}
-
-.dark {
-  --card-bg: #2c2c2c;
-  --form-bg: #1e1e1e;
-  --image-bg: #1a1a2e;
-  --button-bg: #ff5e99;
-  --button-hover-bg: #d93d78;
-}
-
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .card-container {
     flex-direction: column;
-    max-width: 90%;
+    max-width: 95%;
   }
   .image-section {
     width: 100%;
@@ -208,33 +207,22 @@ button:hover {
   }
   .form-section {
     width: 100%;
-    padding: 20px;
+    padding: 40px 25px;
   }
 }
 
 @media (max-width: 480px) {
-  .full-screen {
-    padding: 10px;
-  }
-  .card-container {
-    max-width: 100%;
-  }
-  .form-section {
-    padding: 15px;
-  }
   .title {
-    font-size: 20px;
+    font-size: 24px;
   }
   .subtitle {
     font-size: 12px;
   }
   input {
     font-size: 14px;
-    padding: 10px;
   }
   button {
     font-size: 14px;
-    padding: 10px;
   }
 }
 </style>
