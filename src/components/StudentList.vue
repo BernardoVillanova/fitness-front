@@ -1,186 +1,216 @@
 <template>
-  <div :class="{ 'dashboard-dark': isDarkMode, 'dashboard-light': !isDarkMode }" class="dashboard-container">
+  <div :class="['student-dashboard', isDarkMode ? 'dark' : 'light']">
     <DashboardNavBar @toggle-theme="toggleTheme" />
-    <main class="dashboard-main">
-      <section class="dashboard-content">
-        <div class="staff-list">
-          <header class="staff-header">
-            <h2>Lista de Alunos</h2>
-            <button @click="fetchStaff" class="refresh-button">Atualizar</button>
-          </header>
-          <p v-if="staffList.length === 0" class="fallback-message">Nenhum aluno encontrado.</p>
-          <table v-else class="staff-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Contato</th>
-                <th>Atividade</th>
-                <th>Plano</th>
-                <th>Tipo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="staff in staffList" :key="staff.id">
-                <td>
-                  <img :src="staff.avatar || 'default-avatar.png'" class="avatar" />
-                  {{ staff.name }}
-                </td>
-                <td>{{ staff.contact }}</td>
-                <td>
-                  <span v-for="day in daysOfWeek" :key="day"
-                        :class="{ 'active-day': staff.workingDays.includes(day) }"
-                        class="day-badge">
-                    {{ day }}
-                  </span>
-                </td>
-                <td>{{ staff.treatment }}</td>
-                <td :class="{ 'full-time': staff.type === 'FULL-TIME', 'part-time': staff.type === 'PART-TIME' }">
-                  {{ staff.type }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    
+    <main class="content">
+      <div class="header">
+        <h1>Alunos</h1>
+        <div class="actions">
+          <button class="btn-primary" @click="fetchStudents">Atualizar</button>
+          <input type="text" v-model="search" placeholder="Buscar por nome..." />
         </div>
-      </section>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Foto</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="student in filteredStudents" :key="student.id">
+              <td><img :src="student.avatar || 'default-avatar.png'" class="avatar" /></td>
+              <td>{{ student.name }}</td>
+              <td>{{ student.email }}</td>
+              <td>
+                <span :class="['badge', student.status === 'ativo' ? 'active' : 'inactive']">
+                  {{ student.status }}
+                </span>
+              </td>
+              <td>
+                <button @click="goToProfile(student.id)" title="Ver perfil">👁️</button>
+                <button @click="editStudent(student.id)" title="Editar">✏️</button>
+                <button @click="deleteStudent(student.id)" title="Excluir">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <button :disabled="page === 1" @click="page--">Anterior</button>
+          <span>Página {{ page }}</span>
+          <button :disabled="page >= maxPage" @click="page++">Próxima</button>
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
-<script>
-import DashboardNavBar from "@/components/DashboardNavBar.vue";
-import { useThemeStore } from "@/store/theme";
-import { storeToRefs } from "pinia";
-import { ref, onMounted } from "vue";
+<script setup>
+import DashboardNavBar from '@/components/DashboardNavBar.vue'
+import { ref, computed, onMounted } from 'vue'
+import { useThemeStore } from '@/store/theme'
+import { storeToRefs } from 'pinia'
+import axios from 'axios'
 
-export default {
-  name: 'StudentList',
-  components: { DashboardNavBar },
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
 
-  setup() {
-    const themeStore = useThemeStore();
-    const { isDarkMode } = storeToRefs(themeStore);
-    const staffList = ref([]);
-    const daysOfWeek = ref(["S", "M", "T", "W", "T", "F", "S"]);
-    
-    const fetchStaff = async () => {
-      try {
-        staffList.value = [
-          { id: 1, name: "Ronald Richards", avatar: "avatar1.png", contact: "209-555-0104", workingDays: ["M", "W", "F"], treatment: "23", type: "Hipertrofia" },
-          { id: 2, name: "Drg. Jerald O'Hara", avatar: "avatar2.png", contact: "302-555-0107", workingDays: ["M", "T", "W", "T", "F"], treatment: "56", type: "Fisoterapia" }
-        ];
-      } catch (error) {
-        console.error("Erro ao buscar alunos", error);
-      }
-    };
-    
-    const toggleTheme = () => {
-      isDarkMode.value = !isDarkMode.value;
-    };
-    
-    onMounted(fetchStaff);
-    
-    return { isDarkMode, staffList, daysOfWeek, fetchStaff, toggleTheme };
+const students = ref([])
+const search = ref('')
+const page = ref(1)
+const limit = 5
+
+const fetchStudents = async () => {
+  try {
+    const response = await axios.get('/api/students') // ou com paginação no backend
+    students.value = response.data
+  } catch (err) {
+    console.error('Erro ao buscar alunos:', err)
   }
-};
+}
+
+const filteredStudents = computed(() => {
+  const start = (page.value - 1) * limit
+  const end = page.value * limit
+  return students.value
+    .filter(s => s.name.toLowerCase().includes(search.value.toLowerCase()))
+    .slice(start, end)
+})
+
+const maxPage = computed(() => Math.ceil(students.value.length / limit))
+
+const goToProfile = (id) => {
+  // Exemplo: use router.push
+  window.location.href = `/student/${id}`
+}
+
+const editStudent = (id) => {
+  alert('Editar aluno: ' + id)
+}
+
+const deleteStudent = async (id) => {
+  if (confirm('Deseja realmente excluir este aluno?')) {
+    await axios.delete(`/api/students/${id}`)
+    fetchStudents()
+  }
+}
+
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+}
+
+onMounted(fetchStudents)
 </script>
 
 <style scoped>
-  .dashboard-container {
-    display: flex;
-    height: 100vh;
-    overflow-x: hidden;
-    margin-left: 80px;
-  }
+.student-dashboard.light {
+  background: #f8f9fa;
+  color: #333;
+}
 
-  .dashboard-main {
-    flex: 1;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-  }
+.student-dashboard.dark {
+  background: #1c1c2e;
+  color: white;
+}
 
-  .dashboard-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-  }
+.content {
+  padding: 40px;
+  margin-left: 4%;
+}
 
-  .staff-list {
-    width: 200vh;
-    max-width: 1200px;
-    background: white;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    padding: 20px;
-  }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  .staff-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+.actions {
+  display: flex;
+  gap: 10px;
+}
 
-  .staff-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-  }
+.actions input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 
-  th, td {
-    padding: 10px;
-    text-align: left;
-  }
-  th {
-    background: #007bff;
-    color: white;
-  }
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
 
-  .avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
+.student-dashboard.dark .btn-primary {
+  background-color: #6441a5;
+}
 
-  .day-badge {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
-    margin: 2px;
-    border-radius: 50%;
-    background: #ddd;
-  }
+.table-container {
+  margin-top: 20px;
+  background: white;
+  border-radius: 8px;
+  overflow-x: auto;
+}
 
-  .active-day {
-    background: #4caf50;
-    color: white;
-  }
+.student-dashboard.dark .table-container {
+  background: #2a2a40;
+}
 
-  .full-time {
-    color: green;
-  }
-  .part-time {
-    color: orange;
-  }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  .dashboard-dark {
-    background-color: #1a1a2e;
-    color: white;
-  }
+th {
+  background: #007bff;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
 
-  .dashboard-light {
-    background-color: #f0f0f0;
-    color: black;
-  }
+.student-dashboard.dark th {
+  background: #6441a5;
+}
 
-  @media (max-width: 768px) {
-    .dashboard-content {
-      grid-template-columns: 1fr;
-    }
-    .dashboard-container {
-      margin-left: 0;
-    }
-  }
+td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+}
+
+.active {
+  background-color: #28a745;
+  color: white;
+}
+
+.inactive {
+  background-color: #dc3545;
+  color: white;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
 </style>
