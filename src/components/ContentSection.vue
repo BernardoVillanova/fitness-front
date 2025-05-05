@@ -95,7 +95,6 @@ export default {
   padding: 60px 20px;
   background: linear-gradient(135deg, var(--background-color), var(--primary-color));
   border-radius: 20px;
-  margin: 20px;
 }
 
 .hero-content {
