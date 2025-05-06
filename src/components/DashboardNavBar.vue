@@ -36,7 +36,7 @@
     <!-- Perfil e Tema -->
     <div class="bottom-section">
       <div class="profile">
-        <img :src="iconUserGroup" alt="">
+        <img :src="iconUser" alt="">
         <span v-if="!isMobile">Perfil</span>
       </div>
       <button @click="toggleDarkMode" class="theme-toggle">
@@ -57,6 +57,8 @@ import iconHomeDark from '@/assets/house-dark.svg';
 import iconHomeLight from '@/assets/house-white.svg';
 import iconUserGroupDark from '@/assets/user-group-dark.svg';
 import iconUserGroupLight from '@/assets/user-group-white.svg';
+import iconUserLight from '@/assets/user-white.svg';
+import iconUserDark from '@/assets/user-dark.svg';
 import iconDumbbellDark from '@/assets/dumbbell-dark.svg';
 import iconDumbbellLight from '@/assets/dumbbell-white.svg';
 import iconLogoutDark from '@/assets/right-from-bracket-dark.svg';
@@ -94,6 +96,7 @@ export default {
     const iconDumbbell = computed(() => (isDarkMode.value ? iconDumbbellLight : iconDumbbellDark));
     const iconLogout = computed(() => (isDarkMode.value ? iconLogoutLight : iconLogoutDark));
     const iconTheme = computed(() => (isDarkMode.value ? iconSun : iconMoon));
+    const iconUser = computed(() => (isDarkMode.value ? iconUserLight : iconUserDark))
 
     onMounted(() => {
       window.addEventListener('resize', checkScreenSize);
@@ -112,6 +115,7 @@ export default {
       toggleMenu,
       iconHome,
       iconUserGroup,
+      iconUser,
       iconDumbbell,
       iconLogout,
       iconTheme
@@ -121,179 +125,179 @@ export default {
 </script>
 
 <style scoped>
-.navbar-dark {
-  background-color: #121212 !important;
-  color: #ffffff;
-}
+  .navbar-dark {
+    background-color: #121212 !important;
+    color: #ffffff;
+  }
 
-.navbar-light {
-  background-color: #ffffff !important;
-  color: #121212;
-}
+  img {
+    width: 2rem;
+  }
 
-.navbar {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
+  .navbar-light {
+    background-color: #ffffff !important;
+    color: #121212;
+  }
 
-.navbar {
-  width: 80px;
-  height: 100vh;
-  background: #1e1e2d;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 0;
-  transition: all 0.3s ease-in-out;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-}
-
-.navbar-mobile {
-  width: 100%;
-  height: 60px;
-  flex-direction: row;
-  justify-content: space-around;
-  padding: 10px 0;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  background: #1e1e2d;
-  box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 30px;
-}
-
-.nav-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: all 0.3s;
-}
-
-.nav-links li {
-  margin: 20px 0;
-}
-
-.nav-links a,
-.nav-links button {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.nav-links i {
-  font-size: 18px;
-  margin-bottom: 5px;
-}
-
-/* BARRA INFERIOR NO MOBILE */
-.bottom-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: auto;
-}
-
-/* PERFIL E TEMA */
-.profile,
-.theme-toggle {
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 15px 0;
-  cursor: pointer;
-}
-
-.theme-toggle {
-  background: none;
-  border: none;
-}
-
-/* MENU HAMBURGUER */
-.hamburger-menu {
-  display: none;
-  position: absolute;
-  top: 15px;
-  left: 20px;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-/* MODO MOBILE: NAVBAR INFERIOR */
-@media (max-width: 768px) {
   .navbar {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .navbar {
+    width: 80px;
+    height: 100vh;
+    background: #1e1e2d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    transition: all 0.3s ease-in-out;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+  }
+
+  .navbar-mobile {
     width: 100%;
     height: 60px;
     flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
+    justify-content: space-around;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    background: #1e1e2d;
+    box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.3);
   }
 
   .logo {
-    margin-bottom: 0;
-  }
-
-  .home {
-    fill: white;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 30px;
   }
 
   .nav-links {
-    flex-direction: row;
-    justify-content: space-around;
-    width: 100%;
-    position: absolute;
-    bottom: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s;
   }
 
   .nav-links li {
-    margin: 0 10px;
+    margin: 20px 0;
   }
 
-  .nav-links a span,
-  .nav-links button span,
-  .profile span,
-  .theme-toggle span {
-    display: none;
+  .nav-links a,
+  .nav-links button {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .nav-links i {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+
+  .bottom-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: auto;
+  }
+
+  .profile,
+  .theme-toggle {
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 15px 0;
+    cursor: pointer;
+  }
+
+  .theme-toggle {
+    background: none;
+    border: none;
   }
 
   .hamburger-menu {
-    display: block;
-  }
-
-  .menu-open {
-    display: flex;
-    flex-direction: column;
+    display: none;
     position: absolute;
-    bottom: 60px;
-    background: #1e1e2d;
-    width: 100%;
-    padding: 15px 0;
-    box-shadow: 0px -5px 10px rgba(0, 0, 0, 0.3);
+    top: 15px;
+    left: 20px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
   }
 
-  .menu-open li {
-    margin: 10px 0;
+  @media (max-width: 768px) {
+    .navbar {
+      width: 100%;
+      height: 60px;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15px;
+    }
+
+    .logo {
+      margin-bottom: 0;
+    }
+
+    .home {
+      fill: white;
+    }
+
+    .nav-links {
+      flex-direction: row;
+      justify-content: space-around;
+      width: 100%;
+      position: absolute;
+      bottom: 10px;
+    }
+
+    .nav-links li {
+      margin: 0 10px;
+    }
+
+    .nav-links a span,
+    .nav-links button span,
+    .profile span,
+    .theme-toggle span {
+      display: none;
+    }
+
+    .hamburger-menu {
+      display: block;
+    }
+
+    .menu-open {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      bottom: 60px;
+      background: #1e1e2d;
+      width: 100%;
+      padding: 15px 0;
+      box-shadow: 0px -5px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .menu-open li {
+      margin: 10px 0;
+    }
   }
-}
 </style>
