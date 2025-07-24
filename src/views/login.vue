@@ -78,7 +78,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 :root {
   --primary-color: #007bff;
   --bg-color: #f4f4f4;
@@ -183,7 +183,7 @@ button {
   width: 100%;
   padding: 14px;
   background-color: var(--button-bg);
-  color: white;
+  color: black;
   border: none;
   border-radius: 8px;
   cursor: pointer;

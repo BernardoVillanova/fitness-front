@@ -6,6 +6,7 @@ import DashboardTech from '../views/dashboardtech.vue';
 import StudentList from '../components/StudentList.vue'
 import AboutUs from '../views/about.vue'
 import StudentRegister from '../views/studentregister.vue';
+import InstructorRegister from '../views/instructorregister.vue'
 import { useAuthStore } from '../store/auth';
 
 const routes = [
@@ -13,12 +14,13 @@ const routes = [
   { path: '/login', component: LoginPage },
   { path: '/register', component: RegisterPage },
   { path: '/students', component: StudentList },
-  { path: '/about', component: AboutUs},
-  { path: '/student-register', component: StudentRegister},
+  { path: '/about', component: AboutUs },
+  { path: '/student-register', component: StudentRegister },
+  { path: '/instructor-register', component: InstructorRegister },
   {
     path: '/dashboard',
     component: DashboardTech,
-    // meta: { requiresAuth: true, role: 'personal' },
+    meta: { requiresAuth: true, role: 'personal' },
   },
 ];
 

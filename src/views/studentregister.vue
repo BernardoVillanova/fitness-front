@@ -1,6 +1,5 @@
 <template>
   <div class="container">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <h2 class="sidebar-title">Cadastro de Aluno</h2>
       <ul class="sidebar-steps">
@@ -11,68 +10,97 @@
       </ul>
     </aside>
 
-    <!-- Conteúdo Principal -->
     <main class="main">
       <div class="form-card">
         <!-- Etapa 1 -->
         <div v-if="step === 1">
           <h3 class="form-title">Informações Pessoais</h3>
           <div class="form-grid">
-            <input v-model="form.personalInfo.height" type="number" placeholder="Altura (cm)" class="input" />
-            <input v-model="form.personalInfo.weight" type="number" placeholder="Peso (kg)" class="input" />
-            <input v-model="form.personalInfo.trainingExperience" placeholder="Experiência de treino" class="input" />
-            <input
-              v-model="form.personalInfo.location.cep"
-              placeholder="CEP"
-              @blur="fetchAddress"
-              class="input"
-              :class="{ 'input-error': cepError }"
-            />
-            <input
-              v-model="form.personalInfo.location.city"
-              placeholder="Cidade"
-              class="input disabled"
-              readonly
-            />
-            <input
-              v-model="form.personalInfo.location.neighborhood"
-              placeholder="Bairro"
-              class="input disabled"
-              readonly
-            />
+            <input v-model.number="form.personalInfo.height" type="number" placeholder="Altura (cm)" class="input" />
+            <input v-model.number="form.personalInfo.weight" type="number" placeholder="Peso (kg)" class="input" />
+            
+            <select v-model="form.personalInfo.trainingExperience" class="input">
+              <option disabled value="">Experiência de treino</option>
+              <option>Iniciante</option>
+              <option>Intermediário</option>
+              <option>Avançado</option>
+              <option>Atleta</option>
+            </select>
+
+            <input v-model="form.personalInfo.location.cep" placeholder="CEP" @blur="fetchAddress" class="input" :class="{ 'input-error': cepError }" />
+            <input v-model="form.personalInfo.location.city" placeholder="Cidade" class="input disabled" readonly />
+            <input v-model="form.personalInfo.location.neighborhood" placeholder="Bairro" class="input disabled" readonly />
+            <input v-model="form.personalInfo.location.street" placeholder="Rua" class="input" />
+            <input v-model="form.personalInfo.location.number" placeholder="Número" type="text" class="input" />
+            
+            <select v-model="form.personalInfo.location.preferredTrainingType" class="input">
+              <option disabled value="">Tipo de treino preferido</option>
+              <option>Musculação</option>
+              <option>Funcional</option>
+              <option>Aeróbico</option>
+              <option>Crossfit</option>
+              <option>Outros</option>
+            </select>
           </div>
         </div>
 
         <!-- Etapa 2 -->
         <div v-if="step === 2">
           <h3 class="form-title">Restrições de Saúde</h3>
-          <textarea
-            v-model="form.healthRestrictions.notes"
-            placeholder="Notas médicas, restrições, observações..."
-            class="input textarea"
-          ></textarea>
+          <div class="form-grid">
+            <div class="medical-contact">
+              <label for="doctorContact">Contato Médico</label>
+              <input id="doctorContact" v-model="form.healthRestrictions.doctorContact" placeholder="Nome e telefone do médico" class="input" />
+            </div>
+
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.healthRestrictions.medicalAuthorization" />
+              Possui autorização médica?
+            </label>
+
+            <textarea
+              v-model="form.healthRestrictions.notes"
+              placeholder="Notas médicas, restrições, observações..."
+              class="input textarea"
+            ></textarea>
+          </div>
         </div>
 
         <!-- Etapa 3 -->
         <div v-if="step === 3">
           <h3 class="form-title">Objetivos</h3>
-          <input
-            v-model="goal.description"
-            placeholder="Qual seu objetivo?"
-            class="input"
-          />
-          <button class="btn" @click="addGoal">Adicionar</button>
+          <div class="form-grid">
+            <input v-model="goal.description" placeholder="Qual seu objetivo?" class="input" />
+            <button class="btn" @click="addGoal">Adicionar Objetivo</button>
+          </div>
           <ul class="goal-list">
-            <li v-for="(g, i) in form.goals" :key="i">{{ g.description }}</li>
+            <li v-for="(g, i) in form.goals" :key="i">• {{ g.description }}</li>
           </ul>
         </div>
 
         <!-- Etapa 4 -->
         <div v-if="step === 4">
           <h3 class="form-title">Preferências</h3>
-          <input v-model="form.preferences.trainingLocation" placeholder="Local de treino" class="input" />
-          <input v-model="form.preferences.preferredTime" placeholder="Horário preferido" class="input" />
-          <input v-model="form.preferences.trainingDays" placeholder="Dias de treino" class="input" />
+          <div class="form-grid">
+            <div>
+              <label>Dias preferidos:</label>
+              <div class="checkbox-group">
+                <label v-for="day in daysOfWeek" :key="day" class="checkbox-label">
+                  <input type="checkbox" :value="day" v-model="form.preferences.trainingDays" />
+                  {{ day }}
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label>Horário preferido:</label>
+              <div class="time-range">
+                <input type="time" v-model="form.preferences.preferredTimeStart" class="input time-input" />
+                <span class="time-separator">até</span>
+                <input type="time" v-model="form.preferences.preferredTimeEnd" class="input time-input" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Navegação -->
@@ -90,45 +118,52 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'StudentRegister',
   data() {
     return {
       step: 1,
       maxStep: 4,
-      isSubmitting: false,
       cepError: false,
-      goal: {
-        description: ''
-      },
+      isSubmitting: false,
+      daysOfWeek: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+      goal: { description: '' },
       form: {
         personalInfo: {
-          height: '',
-          weight: '',
+          weight: null,
+          height: null,
           trainingExperience: '',
           location: {
             cep: '',
             city: '',
-            neighborhood: ''
+            neighborhood: '',
+            street: '',
+            number: '',
+            preferredTrainingType: ''
           }
         },
         healthRestrictions: {
-          notes: ''
+          medicalAuthorization: false,
+          doctorContact: '',
+          notes: '',
+          injuries: [],
+          chronicConditions: [],
+          medications: []
         },
         goals: [],
         preferences: {
-          trainingLocation: '',
-          preferredTime: '',
-          trainingDays: ''
+          trainingDays: [],
+          preferredTimeStart: '',
+          preferredTimeEnd: ''
         }
       }
     };
   },
   methods: {
     stepClass(n) {
-      return {
-        'active-step': this.step === n
-      };
+      return { 'active-step': this.step === n };
     },
     async nextStep() {
       if (this.step === 1 && !this.validateStepOne()) return;
@@ -140,13 +175,55 @@ export default {
       if (this.step < this.maxStep) {
         this.step++;
       } else {
-        // Finalizar
         this.isSubmitting = true;
         try {
-          console.log('Dados do aluno:', this.form);
+          const userId = this.$route.query.userId;
+          if (!userId) {
+            alert('ID do usuário não encontrado.');
+            return;
+          }
+          // TODO - Ajustar payload para como está sendo salvo no banco
+          const payload = {
+            userId,
+            personalInfo: {
+              height: this.form.personalInfo.height,
+              weight: this.form.personalInfo.weight,
+              trainingExperience: this.form.personalInfo.trainingExperience,
+              location: { 
+                cep: this.form.personalInfo.location.cep,
+                city: this.form.personalInfo.location.city,
+                neighborhood: this.form.personalInfo.location.neighborhood,
+                street: this.form.personalInfo.location.street,
+                number: this.form.personalInfo.location.number,
+                preferredTrainingType: this.form.personalInfo.location.preferredTrainingType
+              },
+              availability: {
+                trainingDays: this.form.preferences.trainingDays,
+                preferredTime: `${this.form.preferences.preferredTimeStart} - ${this.form.preferences.preferredTimeEnd}`
+              }
+            },
+            healthRestrictions: {
+              medicalAuthorization: this.form.healthRestrictions.medicalAuthorization,
+              doctorContact: this.form.healthRestrictions.doctorContact,
+              notes: this.form.healthRestrictions.notes,
+              injuries: this.form.healthRestrictions.injuries || [],
+              chronicConditions: this.form.healthRestrictions.chronicConditions || [],
+              medications: this.form.healthRestrictions.medications || []
+            },
+            goals: this.form.goals,
+            preferences: {
+              trainingDays: this.form.preferences.trainingDays,
+              preferredTime: `${this.form.preferences.preferredTimeStart} - ${this.form.preferences.preferredTimeEnd}`
+            }
+          };
+
+          const res = await axios.post('http://localhost:3000/api/students', payload);
+          console.log('Aluno criado:', res.data);
           this.step++;
-        } catch (error) {
-          alert('Erro ao enviar. Tente novamente.');
+          this.$router.push('/login');
+        } catch (err) {
+          console.error(err);
+          alert('Erro ao cadastrar aluno.');
         } finally {
           this.isSubmitting = false;
         }
@@ -157,22 +234,21 @@ export default {
     },
     validateStepOne() {
       const { height, weight, trainingExperience, location } = this.form.personalInfo;
-      if (!height || !weight || !trainingExperience || !location.cep) {
-        alert('Preencha todos os campos obrigatórios.');
-        return false;
-      }
-      if (this.cepError) {
-        alert('Verifique o CEP inserido.');
-        return false;
-      }
-      return true;
+      return (
+        height &&
+        weight &&
+        trainingExperience &&
+        location.cep &&
+        location.street &&
+        location.number &&
+        !this.cepError
+      );
     },
     addGoal() {
       const desc = this.goal.description.trim();
-      if (desc) {
-        this.form.goals.push({ description: desc });
-        this.goal.description = '';
-      }
+      if (!desc) return alert('Digite um objetivo válido');
+      this.form.goals.push({ description: desc });
+      this.goal.description = '';
     },
     async fetchAddress() {
       const cep = this.form.personalInfo.location.cep.replace(/\D/g, '');
@@ -185,16 +261,46 @@ export default {
         const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const data = await res.json();
 
-        if (!data.erro) {
+        if (data.erro) {
+          this.cepError = true;
+        } else {
           this.form.personalInfo.location.city = data.localidade;
           this.form.personalInfo.location.neighborhood = data.bairro;
           this.cepError = false;
-        } else {
-          this.cepError = true;
         }
-      } catch (err) {
+      } catch {
         this.cepError = true;
       }
+    },
+    resetForm() {
+      this.form = {
+        personalInfo: {
+          weight: null,
+          height: null,
+          trainingExperience: '',
+          location: {
+            cep: '',
+            city: '',
+            neighborhood: '',
+            street: '',
+            number: '',
+            preferredTrainingType: ''
+          }
+        },
+        healthRestrictions: {
+          medicalAuthorization: false,
+          doctorContact: '',
+          notes: ''
+        },
+        goals: [],
+        preferences: {
+          trainingDays: [],
+          preferredTimeStart: '',
+          preferredTimeEnd: ''
+        }
+      };
+      this.goal = { description: '' };
+      this.step = 1;
     }
   }
 };
@@ -204,10 +310,7 @@ export default {
 .container {
   display: flex;
   width: 100%;
-  max-width: none;
   min-height: 100vh;
-  margin: 0;
-  border-radius: 0;
   background: #fff;
 }
 
@@ -267,7 +370,7 @@ export default {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .input {
@@ -295,6 +398,7 @@ export default {
 
 .input.textarea {
   min-height: 100px;
+  resize: vertical;
 }
 
 .btn {
@@ -320,6 +424,8 @@ export default {
 .goal-list {
   margin-top: 1rem;
   padding-left: 1rem;
+  list-style: disc;
+  color: #333;
 }
 
 .form-nav {
@@ -334,5 +440,39 @@ export default {
   color: #16a34a;
   font-size: 1.1rem;
   margin-top: 2rem;
+}
+
+/* NOVOS ESTILOS */
+.medical-contact {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+}
+
+.time-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.time-separator {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.time-input {
+  width: 120px;
 }
 </style>
