@@ -120,40 +120,51 @@ export default {
       }
 
       try {
-        await axios.post("http://localhost:3000/api/auth/register", {
+        const res = await axios.post("http://localhost:3000/api/auth/register", {
           name: this.name,
           cpf: this.cpf,
           email: this.email,
           password: this.password,
           phone: this.phone,
           birthDate: this.birthDate,
-          role: this.role,
+        role: this.role,
         });
+
+        const userId = res.data.user._id
 
         alert("Cadastro realizado com sucesso!");
 
-        if (this.role === "aluno") {
-          this.$router.push("/student-register");
-        } else {
-          this.$router.push("/login");
-        }
-      } catch (error) {
-        console.error("Erro ao registrar:", error.response?.data || error.message);
-        alert(error.response?.data?.message || "Erro ao registrar. Tente novamente.");
+        this.$router.push({
+          path: this.role === "aluno" ? "/student-register" : "/instructor-register",
+          query: { userId },
+        });
+      } catch (error) { // TODO - Necessário melhor tratativa de erros 
+        console.error("Erro ao registrar:", error.response?.data);
+        alert(error.response?.data?.message);
       }
     },
-    validateCPF(cpf) {
+
+    validateCPF(cpf) { // GPT para validação de CPF
       cpf = cpf.replace(/[^\d]+/g, '');
+
       if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+
       let soma = 0, resto;
       for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i);
+
       resto = (soma * 10) % 11;
       if (resto === 10 || resto === 11) resto = 0;
+
       if (resto !== parseInt(cpf[9])) return false;
+
       soma = 0;
+
       for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i);
+
       resto = (soma * 10) % 11;
+
       if (resto === 10 || resto === 11) resto = 0;
+
       return resto === parseInt(cpf[10]);
     },
   },
