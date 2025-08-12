@@ -8,7 +8,7 @@
 
     <ul :class="['nav-links', { 'menu-open': menuOpen }]">
       <li>
-        <router-link to="/home">
+        <router-link to="/dashboard">
           <img :src="iconHome" class="home">
           <span v-if="!isMobile">Home</span>
         </router-link>

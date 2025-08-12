@@ -65,7 +65,9 @@ import DashboardNavBar from '@/components/DashboardNavBar.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useThemeStore } from '@/store/theme'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
@@ -117,8 +119,8 @@ const maxPage = computed(() => Math.ceil(
 ))
 
 const goToProfile = (id) => {
-  window.location.href = `/student/${id}`
-}
+  router.push(`/students/${id}`);
+};
 
 const editStudent = (id) => {
   alert('Editar aluno: ' + id)
