@@ -2,6 +2,8 @@
   <div class="dashboard">
     <DashboardNavBar @toggle-theme="toggleTheme" />
 
+    <!-- TO-DO - Dados mockados -->
+
     <div class="dashboard-container">
       <section class="profile-header">
         <img class="profile-photo" :src="user.photo" alt="Foto de perfil" />
