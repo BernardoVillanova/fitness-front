@@ -1,56 +1,60 @@
 <template>
-    <footer 
-      class="footer"
-      :class="isDarkMode ? 'dark' : 'light'"
-    >
-      <p>© 2025 Sua Plataforma. Todos os direitos reservados.</p>
-    </footer>
+  <footer class="footer" :class="isDarkMode ? 'dark' : 'light'">
+    <p>&copy; 2025 Winx Fitness. Todos os direitos reservados.</p>
+  </footer>
 </template>
 
 <script>
-import { useThemeStore } from '@/store/theme';
-import { storeToRefs } from 'pinia';
+import { useThemeStore } from "@/store/theme";
+import { storeToRefs } from "pinia";
 
-  export default {
-    name: 'FooterSection',
-    
-    setup() {
-      const themeStore = useThemeStore();
-      const { isDarkMode } = storeToRefs(themeStore);
-      
-      return{
-        isDarkMode,
-      }
-    }
-  }
+export default {
+  name: "FooterSection",
+
+  setup() {
+    const themeStore = useThemeStore();
+    const { isDarkMode } = storeToRefs(themeStore);
+
+    return {
+      isDarkMode,
+    };
+  },
+};
 </script>
-  
+
 <style scoped>
 .footer {
   text-align: center;
-  padding: 20px;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 30px 20px;
+  border-top: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  font-family: var(--font-family);
 }
 
 .light {
-  --primary-color: #007bff;
-  --background-color: #f9f9f9;
-  --text-color: #333;
-  --card-background: #fff;
+  background-color: #f8fafc;
+  color: #64748b;
+  --border-color: #e2e8f0;
 }
 
 .dark {
-  --primary-color: #6441a5;
-  --background-color: #121212;
-  --text-color: #eee;
-  --card-background: #1e1e1e;
+  background-color: #1a1a1a;
+  color: #a0a0a0;
+  --border-color: rgba(255, 255, 255, 0.1);
 }
 
-.light, .dark {
-  background-color: var(--background-color);
-  color: var(--text-color);
+.footer p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding: 20px 15px;
+  }
+
+  .footer p {
+    font-size: 0.9rem;
+  }
 }
 </style>
-  
