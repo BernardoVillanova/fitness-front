@@ -2,7 +2,6 @@
   <nav class="navbar" :class="{ dark: isDarkMode, light: !isDarkMode }">
     <div class="logo">Winx Fitness</div>
 
-    <!-- Menu Desktop -->
     <div class="middle-container">
       <ul class="nav-links">
         <li><router-link to="/" class="nav-link">Home</router-link></li>
@@ -13,7 +12,6 @@
       </ul>
     </div>
 
-    <!-- Botão Hambúrguer -->
     <button
       class="hamburger-menu"
       @click="toggleMobileMenu"
@@ -41,7 +39,6 @@
       </span>
     </label>
 
-    <!-- Menu Mobile (Overlay) -->
     <div
       class="mobile-menu-overlay"
       :class="{ active: isMobileMenuOpen }"
@@ -460,7 +457,7 @@ input:checked + .switch-track .switch-thumb {
 }
 
 .theme-switch.mobile input:checked + .switch-track .switch-thumb {
-  left: 40px;
+  left: 30px;
 }
 
 input:checked + .switch-track .switch-icon::before {
@@ -477,7 +474,6 @@ input:checked + .switch-track .switch-icon::before {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
-/* Media Queries */
 @media (max-width: 768px) {
   .navbar {
     padding: 16px 20px;
@@ -491,7 +487,7 @@ input:checked + .switch-track .switch-icon::before {
     display: none;
   }
 
-  .theme-switch {
+  .theme-switch:not(.mobile) {
     display: none;
   }
 
@@ -523,9 +519,12 @@ input:checked + .switch-track .switch-icon::before {
     right: 20px;
     bottom: 20px;
   }
+
+  .theme-switch.mobile input:checked + .switch-track .switch-thumb {
+    left: 28px;
+  }
 }
 
-/* Animações suaves */
 @media (prefers-reduced-motion: no-preference) {
   .mobile-menu-overlay {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

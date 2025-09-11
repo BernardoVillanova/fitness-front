@@ -345,7 +345,6 @@ export default {
   overflow: hidden;
 }
 
-/* Animações geométricas */
 .geometric-animations {
   position: absolute;
   top: 0;
@@ -361,7 +360,6 @@ export default {
   opacity: 0.1;
 }
 
-/* Círculos */
 .circle-1 {
   width: 80px;
   height: 80px;
@@ -382,7 +380,6 @@ export default {
   animation: float2 8s ease-in-out infinite;
 }
 
-/* Triângulos */
 .triangle-1 {
   width: 0;
   height: 0;
@@ -405,7 +402,6 @@ export default {
   animation: rotate2 12s linear infinite;
 }
 
-/* Quadrados */
 .square-1 {
   width: 60px;
   height: 60px;
@@ -426,7 +422,6 @@ export default {
   transform-origin: center;
 }
 
-/* Hexágono */
 .hexagon-1 {
   width: 50px;
   height: 43.3px;
@@ -456,7 +451,6 @@ export default {
   border-top: 14.43px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Linhas */
 .line-1 {
   width: 100px;
   height: 2px;
@@ -475,7 +469,6 @@ export default {
   animation: slideY1 10s ease-in-out infinite;
 }
 
-/* Animações */
 @keyframes float1 {
   0%,
   100% {
@@ -786,7 +779,6 @@ export default {
   box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
   .right-section {
     padding: 30px 40px;
