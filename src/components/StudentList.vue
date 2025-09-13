@@ -8,6 +8,12 @@
         <div class="actions">
           <button class="btn-primary" @click="fetchStudents">Atualizar</button>
           <input type="text" v-model="search" placeholder="Buscar por nome..." />
+
+          <!-- Filtro para mostrar alunos com instrutor ou sem -->
+          <select v-model="filterType" @change="fetchStudents" class="filter-select">
+            <option value="assigned">Meus alunos</option>
+            <option value="unassigned">Alunos sem instrutor</option>
+          </select>
         </div>
       </div>
 
@@ -39,8 +45,13 @@
                 <button @click="editStudent(student.id)" title="Editar" class="icon-btn edit">
                   <i class="fas fa-pen"></i>
                 </button>
-                <button @click="deleteStudent(student.id)" title="Excluir" class="icon-btn delete">
-                  <i class="fas fa-trash"></i>
+                <button
+                  v-if="filterType === 'assigned'"
+                  @click="unassignStudent(student.id)"
+                  title="Remover do instrutor"
+                  class="icon-btn delete"
+                >
+                  <i class="fas fa-user-slash"></i>
                 </button>
               </td>
             </tr>
@@ -62,59 +73,60 @@
 
 <script setup>
 import DashboardNavBar from '@/components/DashboardNavBar.vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useThemeStore } from '@/store/theme'
 import { storeToRefs } from 'pinia'
+import axios from 'axios'
+
+// Pegue o id do instrutor logado de onde preferir (rota, store, etc)
+// Aqui assumi query param só pra exemplo:
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const instructorId = route.query.instructorId || '1' // Coloque seu default real
 
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
 const students = ref([])
-
 const search = ref('')
 const page = ref(1)
 const limit = 10
+const filterType = ref('assigned') // 'assigned' ou 'unassigned'
 
-const sampleStudents = [
-  { id: 1, name: 'Ana Clara Lima', email: 'ana.lima@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=1' },
-  { id: 2, name: 'Bruno Souza', email: 'bruno.souza@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=2' },
-  { id: 3, name: 'Carlos Eduardo', email: 'carlos.edu@example.com', status: 'inativo', avatar: 'https://i.pravatar.cc/150?img=3' },
-  { id: 4, name: 'Daniela Rocha', email: 'daniela.rocha@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=4' },
-  { id: 5, name: 'Eduardo Freitas', email: 'edu.freitas@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=5' },
-  { id: 6, name: 'Fernanda Costa', email: 'fernanda.costa@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=6' },
-  { id: 7, name: 'Gustavo Martins', email: 'gustavo.m@example.com', status: 'inativo', avatar: 'https://i.pravatar.cc/150?img=7' },
-  { id: 8, name: 'Helena Barbosa', email: 'helena.b@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=8' },
-  { id: 9, name: 'Igor Fernandes', email: 'igor.f@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=9' },
-  { id: 10, name: 'Juliana Gomes', email: 'juliana.g@example.com', status: 'inativo', avatar: 'https://i.pravatar.cc/150?img=10' },
-  { id: 11, name: 'Kleber Dias', email: 'kleber.d@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=11' },
-  { id: 12, name: 'Larissa Mota', email: 'larissa.m@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=12' },
-  { id: 13, name: 'Marcos Paulo', email: 'marcos.p@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=13' },
-  { id: 14, name: 'Natália Ribeiro', email: 'natalia.r@example.com', status: 'inativo', avatar: 'https://i.pravatar.cc/150?img=14' },
-  { id: 15, name: 'Otávio Silva', email: 'otavio.s@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=15' },
-  { id: 16, name: 'Patrícia Almeida', email: 'patricia.a@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=16' },
-  { id: 17, name: 'Ricardo Leal', email: 'ricardo.l@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=17' },
-  { id: 18, name: 'Sabrina Lopes', email: 'sabrina.l@example.com', status: 'inativo', avatar: 'https://i.pravatar.cc/150?img=18' },
-  { id: 19, name: 'Thiago Pinto', email: 'thiago.p@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=19' },
-  { id: 20, name: 'Vanessa Cardoso', email: 'vanessa.c@example.com', status: 'ativo', avatar: 'https://i.pravatar.cc/150?img=20' }
-]
-
+// Buscar alunos conforme filtro selecionado
 const fetchStudents = async () => {
-  students.value = sampleStudents
+  try {
+    if (filterType.value === 'assigned') {
+      const res = await axios.get(`/api/students/instructor/${instructorId}`)
+      students.value = res.data
+    } else {
+      const res = await axios.get(`/api/students/unassigned`)
+      console.log('res: ', res);
+      students.value = res.data
+    }
+    page.value = 1
+  } catch (err) {
+    alert('Erro ao carregar alunos.')
+    console.error(err)
+  }
 }
 
 const filteredStudents = computed(() => {
+  const filtered = students.value.filter(s =>
+    s.name.toLowerCase().includes(search.value.toLowerCase())
+  )
   const start = (page.value - 1) * limit
   const end = page.value * limit
-  return students.value
-    .filter(s => s.name.toLowerCase().includes(search.value.toLowerCase()))
-    .slice(start, end)
+  return filtered.slice(start, end)
 })
 
-const maxPage = computed(() => Math.ceil(
-  students.value.filter(s =>
-    s.name.toLowerCase().includes(search.value.toLowerCase())
-  ).length / limit
-))
+const maxPage = computed(() => {
+  return Math.ceil(
+    students.value.filter(s =>
+      s.name.toLowerCase().includes(search.value.toLowerCase())
+    ).length / limit
+  )
+})
 
 const goToProfile = (id) => {
   window.location.href = `/student/${id}`
@@ -124,15 +136,34 @@ const editStudent = (id) => {
   alert('Editar aluno: ' + id)
 }
 
-const deleteStudent = async (id) => {
-  if (confirm('Deseja realmente excluir este aluno?')) {
-    students.value = students.value.filter(s => s.id !== id)
+const unassignStudent = async (studentId) => {
+  if (!confirm('Deseja remover este aluno do seu acompanhamento?')) return;
+
+  try {
+    await axios.delete(`/api/students/${studentId}/instructor/${instructorId}`)
+
+    students.value = students.value.filter(s => s.id !== studentId)
+
+    alert('Aluno removido do seu acompanhamento.')
+  } catch (error) {
+    console.error('Erro ao remover aluno:', error)
+    alert('Não foi possível remover o aluno. Tente novamente.')
   }
 }
 
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value
 }
+
+watch([filterType, search], () => {
+  fetchStudents()
+  page.value = 1
+})
+
+watch(page, (newPage) => {
+  if (newPage < 1) page.value = 1
+  else if (newPage > maxPage.value) page.value = maxPage.value
+})
 
 onMounted(fetchStudents)
 </script>
@@ -173,12 +204,22 @@ onMounted(fetchStudents)
 .actions {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .actions input {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
+}
+
+.filter-select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #333;
+  cursor: pointer;
 }
 
 .btn-primary {

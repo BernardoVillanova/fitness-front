@@ -10,7 +10,7 @@ export const useAuthStore = defineStore('auth', {
     userRole: (state) => {
       if (state.token) {
         const decodedToken = jwtDecode(state.token);
-        console.log('decodedToken: ', decodedToken);
+
         return decodedToken.role || null;
       }
       return null;
