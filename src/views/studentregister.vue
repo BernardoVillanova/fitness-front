@@ -185,6 +185,7 @@ export default {
           // TODO - Ajustar payload para como está sendo salvo no banco
           const payload = {
             userId,
+            instructorId: {}, // TODO - Verificar como será feito a conexão de aluno e instrutor
             personalInfo: {
               height: this.form.personalInfo.height,
               weight: this.form.personalInfo.weight,
@@ -217,8 +218,8 @@ export default {
             }
           };
 
-          const res = await axios.post('http://localhost:3000/api/students', payload);
-          console.log('Aluno criado:', res.data);
+          await axios.post('http://localhost:3000/api/students', payload);
+
           this.step++;
           this.$router.push('/login');
         } catch (err) {
