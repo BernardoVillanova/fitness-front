@@ -84,7 +84,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const instructorId = route.query.instructorId || '1' // Coloque seu default real
 
-const router = useRouter();
+const router = useRoute();
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
