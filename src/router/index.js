@@ -9,6 +9,7 @@ import StudentList from '../components/StudentList.vue';
 import StudentProfile from '../views/studentprofile.vue'
 import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/instructorregister.vue';
+import gymHome from '../views/gymHome.vue';
 import { useAuthStore } from '../store/auth';
 
 const routes = [
@@ -16,6 +17,7 @@ const routes = [
   { path: '/login', component: LoginPage },
   { path: '/register', component: RegisterPage },
   { path: '/students', component: StudentList },
+  { path: '/gym', component: gymHome },
   {
     path: '/students/:id',
     component: StudentProfile,
