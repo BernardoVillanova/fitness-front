@@ -50,11 +50,12 @@ const routes = [
   { path: '/about', component: AboutUs },
   { path: '/student-register', component: StudentRegister },
   { path: '/instructor-register', component: InstructorRegister },
+  { path: '/exercises', component: () => import('../views/exercises.vue') },
   { path: '/workout-plans', component: WorkoutPlans },
   {
     path: '/dashboard',
     component: DashboardTech,
-    // meta: { requiresAuth: true, role: 'personal' },
+    // meta: { requiresAuth: true, role: 'personal' },  
   },
   {
     path: '/dashboard-student',
