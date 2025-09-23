@@ -115,12 +115,6 @@ export default {
             "Crie ou receba treinos e dietas feitas sob medida para seus objetivos.",
           icon: "https://img.icons8.com/ios-filled/50/000000/task.png",
         },
-        {
-          title: "Acesso em Qualquer Lugar",
-          description:
-            "Use nosso site responsivo de qualquer dispositivo, onde estiver.",
-          icon: "https://img.icons8.com/ios-filled/50/000000/cloud.png",
-        },
       ],
     };
   },

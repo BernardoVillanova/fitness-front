@@ -38,13 +38,34 @@
           <span v-if="!isMobile">Alunos</span>
         </router-link>
       </li>
-      <li>
-        <router-link to="/workout-plans" class="nav-item" active-class="active">
+      <li class="nav-item-with-submenu">
+        <div class="nav-item" @click="toggleWorkoutSubmenu" :class="{ 'has-submenu-active': workoutSubmenuOpen }">
           <div class="nav-icon">
             <i class="fas fa-dumbbell"></i>
           </div>
           <span v-if="!isMobile">Treinos</span>
-        </router-link>
+          <div class="submenu-arrow" v-if="!isMobile">
+            <i :class="workoutSubmenuOpen ? 'fas fa-chevron-down' : 'fas fa-chevron-right'"></i>
+          </div>
+        </div>
+        <ul class="submenu" v-if="workoutSubmenuOpen && !isMobile">
+          <li>
+            <router-link to="/exercises" class="nav-item submenu-item" active-class="active">
+              <div class="nav-icon">
+                <i class="fas fa-list"></i>
+              </div>
+              <span>Exercícios</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/workout-plans" class="nav-item submenu-item" active-class="active">
+              <div class="nav-icon">
+                <i class="fas fa-clipboard-list"></i>
+              </div>
+              <span>Planos</span>
+            </router-link>
+          </li>
+        </ul>
       </li>
       <li>
         <router-link to="/settings" class="nav-item" active-class="active">
@@ -122,6 +143,7 @@ export default {
     
     const isMobile = ref(window.innerWidth <= 768);
     const menuOpen = ref(false);
+    const workoutSubmenuOpen = ref(false);
 
     const checkScreenSize = () => {
       isMobile.value = window.innerWidth <= 768;
@@ -129,6 +151,10 @@ export default {
 
     const toggleMenu = () => {
       menuOpen.value = !menuOpen.value;
+    };
+
+    const toggleWorkoutSubmenu = () => {
+      workoutSubmenuOpen.value = !workoutSubmenuOpen.value;
     };
 
     const logout = () => {
@@ -153,6 +179,8 @@ export default {
       isMobile, 
       menuOpen, 
       toggleMenu,
+      workoutSubmenuOpen,
+      toggleWorkoutSubmenu,
       iconLogout
     };
   }
@@ -324,6 +352,70 @@ export default {
 
 .nav-icon i {
   font-size: 20px;
+}
+
+/* Submenu styles */
+.nav-item-with-submenu {
+  position: relative;
+}
+
+.nav-item.has-submenu-active {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.navbar-dark .nav-item.has-submenu-active {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.submenu {
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+  background: var(--bg-primary, rgba(248, 250, 252, 0.9));
+  border-left: 3px solid rgba(37, 99, 235, 0.3);
+  margin-left: 32px;
+  padding-left: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.navbar-dark .submenu {
+  background: rgba(15, 16, 23, 0.8);
+  border-left-color: rgba(139, 92, 246, 0.3);
+}
+
+.submenu-item {
+  padding: 12px 24px !important;
+  font-size: 14px !important;
+  margin-right: 0 !important;
+  border-radius: 0 !important;
+}
+
+.submenu-item.active,
+.submenu-item.router-link-active {
+  background: rgba(37, 99, 235, 0.15) !important;
+  border-radius: 8px !important;
+  margin-right: 8px !important;
+}
+
+.navbar-dark .submenu-item.active,
+.navbar-dark .submenu-item.router-link-active {
+  background: rgba(139, 92, 246, 0.2) !important;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Divider */

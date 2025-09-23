@@ -1230,6 +1230,8 @@ export default {
   display: flex;
   gap: 1rem;
   align-items: center;
+}
+
 .positive { 
   color: #4ade80;
   background-color: rgba(74, 222, 128, 0.1);
