@@ -1,191 +1,116 @@
 <template>
   <div v-if="show" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h2>{{ isEditing ? 'Editar' : 'Criar' }} Plano de Exercícios</h2>
-        <button @click="closeModal" class="close-btn">&times;</button>
-      </div>
-      
-      <form @submit.prevent="savePlan" class="modal-form">
-        <!-- Nome do Plano -->
-        <div class="form-group">
-          <label class="form-label">Nome do Plano *</label>
-          <input 
-            v-model="formData.name" 
-            type="text" 
-            required 
-            class="form-input"
-            placeholder="Ex: Hipertrofia Iniciante"
-          >
+      <div class="modal">
+        <!-- Header -->
+        <div class="modal-header">
+          <div class="modal-header-icon">+</div>
+          <div>
+            <h2>{{ isEditing ? 'Editar Plano' : 'Novo Plano' }}</h2>
+            <p>{{ isEditing ? 'Modifique seu plano de exercícios' : 'Crie um plano personalizado' }}</p>
+          </div>
         </div>
 
-        <!-- Divisões de Treino -->
-        <div class="divisions-section">
-          <div class="section-header">
-            <h3>Divisões de Treino</h3>
-            <button 
-              type="button" 
-              @click="addDivision" 
-              class="add-btn"
+        <!-- Informações Básicas -->
+        <div class="section">
+          <h3>Informações Básicas</h3>
+          <div class="input-group">
+            <label for="nome-plano">Nome do Plano</label>
+            <input 
+              id="nome-plano" 
+              v-model="formData.name"
+              type="text" 
+              placeholder="Ex: Hipertrofia Avançada"
             >
-              + Adicionar Divisão
-            </button>
-          </div>
-
-          <div 
-            v-for="(division, divisionIndex) in formData.divisions" 
-            :key="divisionIndex"
-            class="division-card"
-          >
-            <div class="division-header">
-              <div class="form-group division-name">
-                <label class="form-label">Nome da Divisão *</label>
-                <input 
-                  v-model="division.name" 
-                  type="text" 
-                  required 
-                  class="form-input"
-                  placeholder="Ex: Treino A - Peito/Tríceps"
-                >
-              </div>
-              <button 
-                type="button" 
-                @click="removeDivision(divisionIndex)"
-                class="remove-btn"
-                :disabled="formData.divisions.length === 1"
-              >
-                🗑️
-              </button>
-            </div>
-
-            <!-- Exercícios da Divisão -->
-            <div class="exercises-section">
-              <div class="exercises-header">
-                <h4>Exercícios</h4>
-                <button 
-                  type="button" 
-                  @click="addExercise(divisionIndex)" 
-                  class="add-exercise-btn"
-                >
-                  + Adicionar Exercício
-                </button>
-              </div>
-
-              <div 
-                v-for="(exercise, exerciseIndex) in division.exercises" 
-                :key="exerciseIndex"
-                class="exercise-card"
-              >
-                <div class="exercise-header">
-                  <div class="form-group exercise-name">
-                    <label class="form-label">Nome do Exercício *</label>
-                    <input 
-                      v-model="exercise.name" 
-                      type="text" 
-                      required 
-                      class="form-input"
-                      placeholder="Ex: Supino Reto"
-                    >
-                  </div>
-                  <button 
-                    type="button" 
-                    @click="removeExercise(divisionIndex, exerciseIndex)"
-                    class="remove-exercise-btn"
-                    :disabled="division.exercises.length === 1"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Descrição</label>
-                  <textarea 
-                    v-model="exercise.description" 
-                    class="form-textarea"
-                    rows="2"
-                    placeholder="Descrição detalhada da execução..."
-                  ></textarea>
-                </div>
-
-                <div class="exercise-details">
-                  <div class="form-group">
-                    <label class="form-label">Séries *</label>
-                    <input 
-                      v-model.number="exercise.sets" 
-                      type="number" 
-                      min="1" 
-                      max="10"
-                      required 
-                      class="form-input"
-                    >
-                  </div>
-                  
-                  <div class="form-group">
-                    <label class="form-label">Repetições *</label>
-                    <input 
-                      v-model.number="exercise.reps" 
-                      type="number" 
-                      min="1" 
-                      max="100"
-                      required 
-                      class="form-input"
-                    >
-                  </div>
-                  
-                  <div class="form-group">
-                    <label class="form-label">Peso Ideal (kg) *</label>
-                    <input 
-                      v-model.number="exercise.idealWeight" 
-                      type="number" 
-                      min="0" 
-                      step="0.5"
-                      required 
-                      class="form-input"
-                    >
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">URL da Imagem</label>
-                  <input 
-                    v-model="exercise.image" 
-                    type="url" 
-                    class="form-input"
-                    placeholder="https://exemplo.com/imagem.jpg"
-                  >
-                  <div v-if="exercise.image" class="image-preview">
-                    <img :src="exercise.image" alt="Preview" @error="handleImageError">
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="division.exercises.length === 0" class="no-exercises">
-                <p>Nenhum exercício adicionado ainda.</p>
-                <button type="button" @click="addExercise(divisionIndex)" class="add-first-exercise-btn">
-                  Adicionar Primeiro Exercício
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="formData.divisions.length === 0" class="no-divisions">
-            <p>Nenhuma divisão criada ainda.</p>
-            <button type="button" @click="addDivision" class="add-first-division-btn">
-              Criar Primeira Divisão
-            </button>
           </div>
         </div>
 
-        <!-- Ações do Modal -->
-        <div class="modal-actions">
-          <button type="button" @click="closeModal" class="btn-cancel">
-            Cancelar
-          </button>
-          <button type="submit" class="btn-save" :disabled="!isFormValid">
-            {{ isEditing ? 'Salvar Alterações' : 'Criar Plano' }}
-          </button>
+        <!-- Divisão -->
+        <div class="section">
+          <h3>Divisão: 1</h3>
+          <div class="input-group">
+            <label for="nome-divisao">Nome da Divisão</label>
+            <input 
+              id="nome-divisao" 
+              v-model="formData.divisions[0].name"
+              type="text" 
+              placeholder="Ex: Treino A – Peito/Tríceps"
+            >
+          </div>
+
+          <!-- Exercício -->
+          <div class="input-group">
+            <label for="nome-exercicio">Nome do Exercício</label>
+            <input 
+              id="nome-exercicio" 
+              v-model="formData.divisions[0].exercises[0].name"
+              type="text" 
+              placeholder="Ex: Supino Reto"
+            >
+          </div>
+          <div class="input-group">
+            <label for="descricao">Descrição</label>
+            <textarea 
+              id="descricao" 
+              v-model="formData.divisions[0].exercises[0].description"
+              placeholder="Descreva a execução do exercício..."
+            ></textarea>
+          </div>
+
+          <!-- Séries, Reps, Peso -->
+          <div class="row">
+            <div class="input-group">
+              <label for="series">Séries</label>
+              <input 
+                id="series" 
+                v-model.number="formData.divisions[0].exercises[0].sets"
+                type="number" 
+                placeholder="3"
+              >
+            </div>
+            <div class="input-group">
+              <label for="reps">Repetições</label>
+              <input 
+                id="reps" 
+                v-model.number="formData.divisions[0].exercises[0].reps"
+                type="number" 
+                placeholder="12"
+              >
+            </div>
+            <div class="input-group">
+              <label for="peso">Peso Ideal</label>
+              <input 
+                id="peso" 
+                v-model.number="formData.divisions[0].exercises[0].idealWeight"
+                type="number" 
+                placeholder="0"
+              >
+            </div>
+          </div>
+
+          <!-- URL da Imagem -->
+          <div class="input-group">
+            <label for="imagem">URL da Imagem (Opcional)</label>
+            <input 
+              id="imagem" 
+              v-model="formData.divisions[0].exercises[0].image"
+              type="url" 
+              placeholder="https://exemplo.com/imagem.jpg"
+            >
+          </div>
         </div>
-      </form>
+
+        <!-- Footer -->
+        <div class="footer">
+          <span class="alert" :class="{ 'hidden': isFormValid }">⚠ Preencha todos os campos obrigatórios</span>
+          <div>
+            <button class="btn-create" @click="savePlan" :disabled="!isFormValid">
+              {{ isEditing ? 'Salvar Plano' : 'Criar Plano' }}
+            </button>
+            <button class="btn-cancel" @click="closeModal">Cancelar</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -212,26 +137,31 @@ export default {
     return {
       formData: {
         name: '',
-        divisions: []
+        divisions: [{
+          name: '',
+          exercises: [{
+            name: '',
+            description: '',
+            image: '',
+            sets: 3,
+            reps: 12,
+            idealWeight: 0
+          }]
+        }]
       }
     }
   },
   computed: {
     isFormValid() {
-      if (!this.formData.name.trim()) return false;
-      if (this.formData.divisions.length === 0) return false;
+      const division = this.formData.divisions[0];
+      const exercise = division.exercises[0];
       
-      return this.formData.divisions.every(division => {
-        if (!division.name.trim()) return false;
-        if (division.exercises.length === 0) return false;
-        
-        return division.exercises.every(exercise => {
-          return exercise.name.trim() && 
-                 exercise.sets > 0 && 
-                 exercise.reps > 0 && 
-                 exercise.idealWeight >= 0;
-        });
-      });
+      return this.formData.name.trim() !== '' &&
+             division.name.trim() !== '' &&
+             exercise.name.trim() !== '' &&
+             exercise.sets > 0 &&
+             exercise.reps > 0 &&
+             exercise.idealWeight >= 0;
     }
   },
   watch: {
@@ -252,10 +182,8 @@ export default {
   methods: {
     initializeForm() {
       if (this.planData && this.isEditing) {
-        // Clonar dados para edição
         this.formData = JSON.parse(JSON.stringify(this.planData));
       } else if (this.planData && !this.isEditing) {
-        // Para duplicar plano
         const duplicatedPlan = JSON.parse(JSON.stringify(this.planData));
         delete duplicatedPlan._id;
         duplicatedPlan.divisions.forEach(division => {
@@ -266,7 +194,6 @@ export default {
         });
         this.formData = duplicatedPlan;
       } else {
-        // Novo plano
         this.formData = {
           name: '',
           divisions: [{
@@ -284,48 +211,6 @@ export default {
       }
     },
 
-    addDivision() {
-      this.formData.divisions.push({
-        name: '',
-        exercises: [{
-          name: '',
-          description: '',
-          image: '',
-          sets: 3,
-          reps: 12,
-          idealWeight: 0
-        }]
-      });
-    },
-
-    removeDivision(index) {
-      if (this.formData.divisions.length > 1) {
-        this.formData.divisions.splice(index, 1);
-      }
-    },
-
-    addExercise(divisionIndex) {
-      this.formData.divisions[divisionIndex].exercises.push({
-        name: '',
-        description: '',
-        image: '',
-        sets: 3,
-        reps: 12,
-        idealWeight: 0
-      });
-    },
-
-    removeExercise(divisionIndex, exerciseIndex) {
-      const division = this.formData.divisions[divisionIndex];
-      if (division.exercises.length > 1) {
-        division.exercises.splice(exerciseIndex, 1);
-      }
-    },
-
-    handleImageError(event) {
-      event.target.style.display = 'none';
-    },
-
     savePlan() {
       if (this.isFormValid) {
         this.$emit('save', { ...this.formData });
@@ -340,405 +225,245 @@ export default {
 </script>
 
 <style scoped>
+* {
+  box-sizing: border-box;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
   padding: 20px;
 }
 
 .modal-content {
-  background: var(--card-bg, #ffffff);
-  color: var(--text-color, #333);
+  position: relative;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.modal {
+  background: #fff;
   border-radius: 16px;
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  width: 800px;
+  max-width: 95vw;
+  max-height: 95vh;
+  padding: 40px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  gap: 28px;
+  overflow-y: auto;
 }
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
-  border-bottom: 2px solid var(--border-color, #e9ecef);
-  background: linear-gradient(135deg, var(--primary-color, #007bff), var(--primary-color, #007bff)aa);
+  gap: 12px;
+}
+
+.modal-header-icon {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 20px;
   font-weight: 600;
+  color: #1a1a1a;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-}
-
-.close-btn:hover {
-  opacity: 1;
-}
-
-.modal-form {
-  flex: 1;
-  overflow-y: auto;
-  padding: 32px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--text-color, #333);
-  font-size: 0.9rem;
-}
-
-.form-input,
-.form-textarea {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid var(--border-color, #e9ecef);
-  border-radius: 8px;
-  background: var(--card-bg, #ffffff);
-  color: var(--text-color, #333);
+.modal-header p {
+  margin: 0;
   font-size: 14px;
-  transition: border-color 0.3s ease;
-  box-sizing: border-box;
+  color: #666;
 }
 
-.form-input:focus,
-.form-textarea:focus {
-  outline: none;
-  border-color: var(--primary-color, #007bff);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 60px;
-  font-family: inherit;
-}
-
-/* Sections */
-.divisions-section {
-  margin-top: 30px;
-}
-
-.section-header {
+.section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--border-color, #e9ecef);
+  flex-direction: column;
+  gap: 14px;
 }
 
-.section-header h3 {
-  margin: 0;
-  font-size: 1.3rem;
+.section h3 {
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-color, #333);
+  margin: 0;
+  color: #333;
 }
 
-.add-btn {
-  background: var(--primary-color, #007bff);
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group label {
+  font-size: 16px;
+  color: #444;
   font-weight: 500;
-  transition: all 0.3s ease;
 }
 
-.add-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
-
-/* Division Cards */
-.division-card {
-  background: var(--card-bg, #f8f9fa);
-  border: 2px solid var(--border-color, #e9ecef);
+.input-group input,
+.input-group textarea {
+  padding: 16px 18px;
+  border: 1px solid #ddd;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  position: relative;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s;
+  width: 100%;
+  font-family: "Inter", sans-serif;
 }
 
-.division-header {
+.input-group input:focus,
+.input-group textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+textarea {
+  resize: none;
+  min-height: 70px;
+}
+
+.row {
   display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.division-name {
+.row .input-group {
   flex: 1;
-  margin-bottom: 0;
+  min-width: 0;
 }
 
-.remove-btn {
-  background: var(--danger-color, #dc3545);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  height: fit-content;
-}
-
-.remove-btn:hover:not(:disabled) {
-  background: #c82333;
-  transform: translateY(-1px);
-}
-
-.remove-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Exercises */
-.exercises-section {
-  margin-top: 15px;
-}
-
-.exercises-header {
+.footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-}
-
-.exercises-header h4 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-color, #333);
-}
-
-.add-exercise-btn {
-  background: var(--success-color, #28a745);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.add-exercise-btn:hover {
-  background: #218838;
-  transform: translateY(-1px);
-}
-
-.exercise-card {
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #dee2e6);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 15px;
-}
-
-.exercise-header {
-  display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  margin-bottom: 15px;
-}
-
-.exercise-name {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.remove-exercise-btn {
-  background: var(--danger-color, #dc3545);
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.3s ease;
-  height: fit-content;
-}
-
-.remove-exercise-btn:hover:not(:disabled) {
-  background: #c82333;
-}
-
-.remove-exercise-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.exercise-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.image-preview {
   margin-top: 10px;
+  font-size: 13px;
+  color: #666;
 }
 
-.image-preview img {
-  max-width: 200px;
-  max-height: 150px;
-  border-radius: 8px;
-  border: 2px solid var(--border-color, #e9ecef);
-}
-
-/* Empty States */
-.no-exercises,
-.no-divisions {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-color, #6c757d);
-}
-
-.no-exercises p,
-.no-divisions p {
-  margin-bottom: 15px;
-  font-size: 1rem;
-}
-
-.add-first-exercise-btn,
-.add-first-division-btn {
-  background: var(--primary-color, #007bff);
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.add-first-exercise-btn:hover,
-.add-first-division-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
-
-/* Modal Actions */
-.modal-actions {
+.footer > div {
   display: flex;
   gap: 15px;
-  justify-content: flex-end;
-  padding: 24px 32px;
-  border-top: 2px solid var(--border-color, #e9ecef);
-  background: var(--card-bg, #f8f9fa);
+  align-items: center;
 }
 
-.btn-cancel,
-.btn-save {
-  padding: 12px 24px;
-  border-radius: 8px;
+.footer button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  transition: 0.2s;
   min-width: 120px;
 }
 
 .btn-cancel {
-  background: transparent;
-  color: var(--secondary-color, #6c757d);
-  border: 2px solid var(--secondary-color, #6c757d);
+  background: none;
+  color: #666;
 }
 
 .btn-cancel:hover {
-  background: var(--secondary-color, #6c757d);
-  color: white;
+  background: #f5f5f5;
 }
 
-.btn-save {
-  background: var(--primary-color, #007bff);
-  color: white;
-  border: 2px solid var(--primary-color, #007bff);
+.btn-create {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff;
 }
 
-.btn-save:hover:not(:disabled) {
-  background: #0056b3;
-  border-color: #0056b3;
-  transform: translateY(-1px);
+.btn-create:hover:not(:disabled) {
+  background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%);
 }
 
-.btn-save:disabled {
-  opacity: 0.6;
+.btn-create:disabled {
+  background: #ccc;
   cursor: not-allowed;
 }
 
-/* Responsividade */
+.alert {
+  color: #d93025;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.3s;
+}
+
+.alert.hidden {
+  opacity: 0;
+}
+
+/* Scrollbar styling */
+.modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 @media (max-width: 768px) {
-  .modal-content {
-    max-width: 95vw;
+  .modal {
+    width: 95%;
+    max-width: none;
     margin: 10px;
   }
   
-  .modal-form {
-    padding: 20px;
+  .row {
+    flex-direction: column;
   }
   
-  .modal-header {
-    padding: 20px;
-  }
-  
-  .exercise-details {
-    grid-template-columns: 1fr;
-  }
-  
-  .division-header,
-  .exercise-header {
+  .footer {
     flex-direction: column;
     gap: 10px;
+    align-items: stretch;
   }
   
-  .division-name,
-  .exercise-name {
-    width: 100%;
+  .footer > div {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
   }
   
-  .modal-actions {
-    flex-direction: column;
-    padding: 20px;
-  }
-  
-  .btn-cancel,
-  .btn-save {
-    width: 100%;
+  .footer button {
+    flex: 1;
   }
 }
 </style>
