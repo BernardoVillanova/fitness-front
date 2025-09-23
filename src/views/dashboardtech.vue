@@ -1230,6 +1230,29 @@ export default {
   display: flex;
   gap: 1rem;
   align-items: center;
+.positive { 
+  color: #4ade80;
+  background-color: rgba(74, 222, 128, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.negative { 
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.warning { 
+  color: #fbbf24;
+  background-color: rgba(251, 191, 36, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.neutral { 
+  color: var(--text-muted);
+  background-color: rgba(156, 163, 175, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
 }
 
 .filter-btn,

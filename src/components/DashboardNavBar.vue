@@ -23,11 +23,11 @@
         </router-link>
       </li>
       <li>
-        <router-link to="/analytics" class="nav-item" active-class="active">
+        <router-link to="/gym" class="nav-item" active-class="active">
           <div class="nav-icon">
-            <i class="fas fa-chart-line"></i>
+            <i class="fas fa-building"></i>
           </div>
-          <span v-if="!isMobile">Analytics</span>
+          <span v-if="!isMobile">Academias</span>
         </router-link>
       </li>
       <li>
