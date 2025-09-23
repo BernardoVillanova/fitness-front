@@ -30,10 +30,11 @@
           
           <div class="chart-container">
             <apexchart 
+              ref="progressChart"
               type="area" 
               height="300" 
               :options="progressChartOptions" 
-              :series="progressChartData" 
+              :series="progressData" 
             />
           </div>
           
@@ -201,10 +202,11 @@
           <h3 class="card-title">Volume Semanal</h3>
           <div class="weekly-chart">
             <apexchart 
-              type="column" 
+              ref="weeklyChart"
+              type="bar" 
               height="350" 
               :options="weeklyChartOptions" 
-              :series="weeklyChartData" 
+              :series="weeklyData" 
             />
           </div>
           <div class="weekly-stats">
@@ -243,7 +245,26 @@ export default {
     return {
       currentDate: new Date(),
       selectedPeriod: 'Últimos 6 meses',
-      weekDays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+      weekDays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+      progressData: [
+        {
+          name: "Média de Peso",
+          type: 'area',
+          data: [78, 76, 74, 75, 73, 71, 72, 70]
+        },
+        {
+          name: "Treinos Concluídos",
+          type: 'area',
+          data: [42, 48, 46, 52, 49, 56, 58, 54]
+        }
+      ],
+      weeklyData: [
+        {
+          name: "Sessões Realizadas",
+          type: 'bar',
+          data: [45, 52, 48, 61, 55, 67, 43]
+        }
+      ]
     };
   },
   setup() {
@@ -323,45 +344,91 @@ export default {
     progressChartOptions() {
       return {
         chart: {
+          id: 'progress-chart',
+          type: 'area',
           toolbar: { show: false },
-          background: 'transparent'
+          background: 'transparent',
+          fontFamily: 'Manrope, sans-serif',
+          zoom: { enabled: false }
         },
         dataLabels: { enabled: false },
         xaxis: {
           categories: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"],
           labels: { 
-            style: { colors: '#6B7280' } 
-          }
+            style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' } 
+          },
+          axisBorder: { show: false },
+          axisTicks: { show: false }
         },
         yaxis: [
           {
-            title: { text: 'Peso (kg)', style: { color: '#6B7280' } },
-            labels: { style: { colors: '#6B7280' } }
+            title: { 
+              text: 'Peso (kg)',
+              style: { color: '#6B7280', fontFamily: 'Manrope, sans-serif' }
+            },
+            labels: { 
+              style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' },
+              formatter: function(val) {
+                return val.toFixed(0)
+              }
+            }
           },
           {
             opposite: true,
-            title: { text: 'Treinos', style: { color: '#6B7280' } },
-            labels: { style: { colors: '#6B7280' } }
+            title: { 
+              text: 'Treinos',
+              style: { color: '#6B7280', fontFamily: 'Manrope, sans-serif' }
+            },
+            labels: { 
+              style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' },
+              formatter: function(val) {
+                return val.toFixed(0)
+              }
+            }
           }
         ],
-        colors: ["#007bff", "#9CA3AF"],
+        colors: ["#6c5ce7", "#a29bfe"],
         fill: {
           type: 'gradient',
           gradient: {
             shadeIntensity: 1,
-            opacityFrom: 0.3,
-            opacityTo: 0
+            opacityFrom: 0.4,
+            opacityTo: 0.1,
+            stops: [0, 100]
           }
         },
         stroke: { 
-          curve: "smooth", 
-          width: [3, 2.5] 
+          curve: "smooth",
+          width: [3, 2.5],
+          lineCap: 'round'
         },
         grid: { 
-          borderColor: '#E5E7EB', 
-          strokeDashArray: 3 
+          borderColor: '#e5e7eb',
+          strokeDashArray: 3,
+          xaxis: { lines: { show: false } },
+          padding: { top: 10, right: 0, bottom: 0, left: 10 }
         },
-        legend: { show: false }
+        legend: { show: false },
+        tooltip: {
+          enabled: true,
+          theme: 'light',
+          x: {
+            show: true,
+            format: 'dd MMM'
+          },
+          y: [
+            {
+              formatter: function(value) {
+                return value + ' kg'
+              }
+            },
+            {
+              formatter: function(value) {
+                return value + ' treinos'
+              }
+            }
+          ]
+        }
       };
     },
 
@@ -377,31 +444,49 @@ export default {
     weeklyChartOptions() {
       return {
         chart: {
+          id: 'weekly-chart',
+          type: 'bar',
           toolbar: { show: false },
-          background: 'transparent'
+          background: 'transparent',
+          fontFamily: 'Manrope, sans-serif'
         },
         plotOptions: {
           bar: {
             borderRadius: 8,
-            columnWidth: '70%'
+            columnWidth: '70%',
+            distributed: true
           }
         },
         dataLabels: { enabled: false },
         xaxis: {
           categories: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
           labels: { 
-            style: { colors: '#6B7280' } 
+            style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' } 
           }
         },
         yaxis: {
           labels: { 
-            style: { colors: '#6B7280' } 
+            style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' } 
           }
         },
-        colors: ["#007bff"],
+        colors: ['#6c5ce7'],
         grid: { 
-          borderColor: '#E5E7EB', 
+          borderColor: '#e5e7eb', 
           strokeDashArray: 3 
+        },
+        tooltip: {
+          enabled: true,
+          theme: 'light',
+          y: {
+            formatter: function(value) {
+              return value + ' sessões'
+            }
+          }
+        },
+        states: {
+          hover: {
+            filter: { type: 'lighten', value: 0.1 }
+          }
         }
       };
     },
@@ -575,27 +660,29 @@ export default {
   font-family: 'Manrope', 'Noto Sans', sans-serif;
 }
 
-.dashboard-light {
-  --card-bg: #ffffff;
-  --text-color: #1f2937;
-  --text-muted: #6b7280;
-  --border-color: #e5e7eb;
-  --bg-secondary: #f9fafb;
-  --hover-bg: #f3f4f6;
-  background-color: #ffffff;
-}
+  .dashboard-light {
+    --card-bg: #ffffff;
+    --text-color: #1e1e2d;
+    --text-muted: #6b7280;
+    --border-color: #f1f1f4;
+    --bg-secondary: #f8f7ff;
+    --hover-bg: #ece9ff;
+    --primary-color: #6c5ce7;
+    --primary-light: #8b5cf6;
+    background-color: #f8f7ff;
+  }
 
-.dashboard-dark {
-  --card-bg: #1f2937;
-  --text-color: #f9fafb;
-  --text-muted: #9ca3af;
-  --border-color: #374151;
-  --bg-secondary: #111827;
-  --hover-bg: #374151;
-  background-color: #111827;
-}
-
-.dashboard-main {
+  .dashboard-dark {
+    --card-bg: #1e1e2d;
+    --text-color: #f9fafb;
+    --text-muted: #9ca3af;
+    --border-color: #2d2d3f;
+    --bg-secondary: #171723;
+    --hover-bg: #2d2d3f;
+    --primary-color: #6c5ce7;
+    --primary-light: #8b5cf6;
+    background-color: #171723;
+  }.dashboard-main {
   flex: 1;
   padding: 2rem;
   background-color: var(--card-bg);
@@ -652,15 +739,17 @@ export default {
 
 /* Cards */
 .card {
-  background-color: var(--bg-secondary);
+  background-color: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1.5rem;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.02);
 }
 
 .card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
 }
 
 .card-header-with-dropdown {
@@ -766,7 +855,7 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #007bff, #0056b3);
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
   border-radius: 3px;
   transition: width 0.6s ease;
 }
@@ -817,9 +906,10 @@ export default {
 
 .table-container {
   overflow-x: auto;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
   background-color: var(--card-bg);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.02);
 }
 
 .students-table {
@@ -888,10 +978,30 @@ export default {
   font-size: 1rem;
 }
 
-.positive { color: #059669; }
-.negative { color: #dc2626; }
-.warning { color: #d97706; }
-.neutral { color: var(--text-muted); }
+.positive { 
+  color: #4ade80;
+  background-color: rgba(74, 222, 128, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.negative { 
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.warning { 
+  color: #fbbf24;
+  background-color: rgba(251, 191, 36, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.neutral { 
+  color: var(--text-muted);
+  background-color: rgba(156, 163, 175, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
 
 .adherence-value {
   font-weight: 500;
@@ -899,11 +1009,11 @@ export default {
 }
 
 .action-button {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: 8px;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   cursor: pointer;
@@ -911,8 +1021,9 @@ export default {
 }
 
 .action-button:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-light);
   transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
 }
 
 /* Bottom Section */
@@ -971,8 +1082,10 @@ export default {
 
 .calendar-grid {
   background-color: var(--card-bg);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.02);
 }
 
 .weekdays {
