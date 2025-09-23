@@ -50,77 +50,219 @@
           </div>
         </div>
 
-        <!-- Performance Metrics -->
+        <!-- Performance Metrics - DESIGN MELHORADO -->
         <div class="card performance-metrics-card">
-          <h3 class="card-title">Métricas de Desempenho</h3>
+          <div class="metrics-header">
+            <h3 class="metrics-title">Métricas de Desempenho</h3>
+            <p class="metrics-subtitle">Acompanhe os resultados obtidos</p>
+          </div>
           
-          <div class="metrics-list">
-            <div v-for="metric in performanceMetrics" :key="metric.label" class="metric-item">
-              <div class="metric-header">
-                <span class="metric-label">{{ metric.label }}</span>
-                <span class="metric-value">{{ metric.value }}</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: metric.percentage + '%' }"></div>
+          <div class="metrics-grid">
+            <div v-for="metric in performanceMetrics" :key="metric.label" class="metric-card">
+              <div class="metric-content">
+                <div class="metric-info">
+                  <h4 class="metric-label">{{ metric.label }}</h4>
+                  <span class="metric-value">{{ metric.value }}</span>
+                </div>
+                <div class="progress-wrapper">
+                  <div class="progress-track">
+                    <div 
+                      class="progress-bar" 
+                      :style="{ 
+                        width: metric.percentage + '%',
+                        '--progress-width': metric.percentage + '%'
+                      }"
+                    ></div>
+                  </div>
+                  <span class="progress-percentage">{{ metric.percentage }}%</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="achievements-section">
-            <h4 class="achievements-title">Conquistas Recentes</h4>
+            <div class="achievements-header">
+              <h4 class="achievements-title">Conquistas Recentes</h4>
+              <div class="achievements-badge">{{ recentAchievements.length }}</div>
+            </div>
             <div class="achievement-list">
-              <p v-for="achievement in recentAchievements" :key="achievement.id" class="achievement-item">
-                <span class="achievement-name">{{ achievement.student }}</span> {{ achievement.description }}
-              </p>
+              <div v-for="achievement in recentAchievements" :key="achievement.id" class="achievement-item">
+                <div class="achievement-icon">🏆</div>
+                <div class="achievement-content">
+                  <span class="achievement-student">{{ achievement.student }}</span>
+                  <span class="achievement-description">{{ achievement.description }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Individual Analysis -->
+      <!-- Individual Analysis - NOVA VERSÃO MODERNA -->
       <section class="individual-analysis-section">
-        <h2 class="section-title">Análise Individual de Alunos</h2>
+        <div class="section-header">
+          <div class="section-title-container">
+            <h2 class="section-title">Análise Individual de Alunos</h2>
+            <p class="section-subtitle">Acompanhamento detalhado do progresso de cada estudante</p>
+          </div>
+          <div class="section-actions">
+            <button class="filter-btn">
+              <span class="material-symbols-outlined">tune</span>
+              Filtros
+            </button>
+            <button class="export-btn">
+              <span class="material-symbols-outlined">download</span>
+              Exportar
+            </button>
+          </div>
+        </div>
         
-        <div class="table-container">
-          <table class="students-table">
-            <thead class="table-header">
-              <tr>
-                <th class="table-th">Aluno</th>
-                <th class="table-th text-center">Progresso de Peso</th>
-                <th class="table-th text-center">Adesão ao Treino</th>
-                <th class="table-th">Tendência</th>
-                <th class="table-th">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="table-body">
-              <tr v-for="student in studentsData" :key="student.id" class="table-row">
-                <td class="table-cell">
-                  <div class="student-info">
-                    <div class="student-avatar" :style="{ backgroundImage: `url(${student.avatar})` }"></div>
-                    <span>{{ student.name }}</span>
+        <div class="students-grid">
+          <div 
+            v-for="student in studentsData" 
+            :key="student.id" 
+            class="student-card"
+            @click="viewStudentDetails(student.id)"
+          >
+            <!-- Student Header -->
+            <div class="student-header">
+              <div class="student-avatar-container">
+                <div class="student-avatar" :style="{ backgroundImage: `url(${student.avatar})` }"></div>
+                <div class="online-indicator"></div>
+              </div>
+              <div class="student-basic-info">
+                <h3 class="student-name">{{ student.name }}</h3>
+                <p class="student-id">#{{ String(student.id).padStart(4, '0') }}</p>
+              </div>
+              <div class="student-menu">
+                <button class="menu-btn">
+                  <span class="material-symbols-outlined">more_vert</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Progress Stats -->
+            <div class="progress-stats">
+              <div class="stat-row">
+                <div class="stat-item weight-stat">
+                  <div class="stat-icon-container">
+                    <span class="material-symbols-outlined stat-icon">{{ getWeightIcon(student.weightProgress) }}</span>
                   </div>
-                </td>
-                <td class="table-cell text-center">
-                  <span :class="['weight-progress', getWeightClass(student.weightProgress)]">
-                    <span class="material-symbols-outlined progress-icon">{{ getWeightIcon(student.weightProgress) }}</span>
-                    {{ formatWeight(student.weightProgress) }}
+                  <div class="stat-content">
+                    <span class="stat-label">Progresso de Peso</span>
+                    <div class="stat-value-container">
+                      <span :class="['stat-value', getWeightClass(student.weightProgress)]">
+                        {{ formatWeight(student.weightProgress) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stat-item adherence-stat">
+                  <div class="stat-icon-container">
+                    <span class="material-symbols-outlined stat-icon">fitness_center</span>
+                  </div>
+                  <div class="stat-content">
+                    <span class="stat-label">Adesão ao Treino</span>
+                    <div class="adherence-progress">
+                      <div class="adherence-bar">
+                        <div 
+                          class="adherence-fill" 
+                          :style="{ width: student.adherence + '%' }"
+                          :class="getAdherenceClass(student.adherence)"
+                        ></div>
+                      </div>
+                      <span :class="['adherence-value', getAdherenceClass(student.adherence)]">
+                        {{ student.adherence }}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trend Analysis -->
+              <div class="trend-analysis">
+                <div class="trend-indicator">
+                  <span class="material-symbols-outlined trend-icon" :class="getTrendClass(student.trend)">
+                    {{ getTrendIcon(student.trend) }}
                   </span>
-                </td>
-                <td class="table-cell text-center">
-                  <span :class="['adherence-value', getAdherenceClass(student.adherence)]">{{ student.adherence }}%</span>
-                </td>
-                <td class="table-cell">
+                  <span class="trend-label">Tendência:</span>
                   <span :class="['trend-value', getTrendClass(student.trend)]">
-                    <span class="material-symbols-outlined trend-icon">{{ getTrendIcon(student.trend) }}</span>
                     {{ getTrendText(student.trend) }}
                   </span>
-                </td>
-                <td class="table-cell">
-                  <button class="action-button" @click="viewStudentDetails(student.id)">Ver Detalhes</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+                
+                <!-- Mini Chart -->
+                <div class="mini-chart">
+                  <svg width="80" height="30" viewBox="0 0 80 30">
+                    <polyline
+                      :points="generateMiniChartPoints(student.trend)"
+                      fill="none"
+                      :stroke="getTrendColor(student.trend)"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="card-footer">
+              <div class="last-activity">
+                <span class="material-symbols-outlined">schedule</span>
+                <span>Último treino: {{ getLastWorkoutTime(student.id) }}</span>
+              </div>
+              <button class="view-details-btn" @click.stop="viewStudentDetails(student.id)">
+                <span>Ver Detalhes</span>
+                <span class="material-symbols-outlined">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="summary-stats">
+          <div class="summary-card">
+            <div class="summary-icon">
+              <span class="material-symbols-outlined">group</span>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ studentsData.length }}</span>
+              <span class="summary-label">Alunos Ativos</span>
+            </div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="summary-icon">
+              <span class="material-symbols-outlined">trending_up</span>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ calculateAverageProgress() }}%</span>
+              <span class="summary-label">Progresso Médio</span>
+            </div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="summary-icon">
+              <span class="material-symbols-outlined">fitness_center</span>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ calculateAverageAdherence() }}%</span>
+              <span class="summary-label">Adesão Média</span>
+            </div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="summary-icon">
+              <span class="material-symbols-outlined">emoji_events</span>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ getPositiveTrends() }}</span>
+              <span class="summary-label">Tendências Positivas</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -348,14 +490,14 @@ export default {
           type: 'area',
           toolbar: { show: false },
           background: 'transparent',
-          fontFamily: 'Manrope, sans-serif',
+          fontFamily: 'Inter, -apple-system, sans-serif',
           zoom: { enabled: false }
         },
         dataLabels: { enabled: false },
         xaxis: {
           categories: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"],
           labels: { 
-            style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' } 
+            style: { colors: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' } 
           },
           axisBorder: { show: false },
           axisTicks: { show: false }
@@ -364,10 +506,10 @@ export default {
           {
             title: { 
               text: 'Peso (kg)',
-              style: { color: '#6B7280', fontFamily: 'Manrope, sans-serif' }
+              style: { color: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' }
             },
             labels: { 
-              style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' },
+              style: { colors: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' },
               formatter: function(val) {
                 return val.toFixed(0)
               }
@@ -377,10 +519,10 @@ export default {
             opposite: true,
             title: { 
               text: 'Treinos',
-              style: { color: '#6B7280', fontFamily: 'Manrope, sans-serif' }
+              style: { color: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' }
             },
             labels: { 
-              style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' },
+              style: { colors: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' },
               formatter: function(val) {
                 return val.toFixed(0)
               }
@@ -448,7 +590,7 @@ export default {
           type: 'bar',
           toolbar: { show: false },
           background: 'transparent',
-          fontFamily: 'Manrope, sans-serif'
+          fontFamily: 'Inter, -apple-system, sans-serif'
         },
         plotOptions: {
           bar: {
@@ -461,12 +603,12 @@ export default {
         xaxis: {
           categories: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
           labels: { 
-            style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' } 
+            style: { colors: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' } 
           }
         },
         yaxis: {
           labels: { 
-            style: { colors: '#6B7280', fontFamily: 'Manrope, sans-serif' } 
+            style: { colors: '#6B7280', fontFamily: 'Inter, -apple-system, sans-serif' } 
           }
         },
         colors: ['#6c5ce7'],
@@ -610,15 +752,16 @@ export default {
     },
 
     getAdherenceClass(adherence) {
-      if (adherence >= 90) return 'positive';
+      if (adherence >= 90) return 'excellent';
+      if (adherence >= 80) return 'good';
       if (adherence >= 70) return 'warning';
-      return 'negative';
+      return 'poor';
     },
 
     getTrendClass(trend) {
       const classes = {
         'positive': 'positive',
-        'stable': 'warning',
+        'stable': 'stable',
         'negative': 'negative'
       };
       return classes[trend] || 'neutral';
@@ -635,11 +778,48 @@ export default {
 
     getTrendText(trend) {
       const texts = {
-        'positive': 'Positiva',
+        'positive': 'Excelente',
         'stable': 'Estável',
         'negative': 'Requer Atenção'
       };
       return texts[trend] || 'Indefinida';
+    },
+
+    getTrendColor(trend) {
+      const colors = {
+        'positive': '#10b981',
+        'stable': '#f59e0b',
+        'negative': '#ef4444'
+      };
+      return colors[trend] || '#6b7280';
+    },
+
+    generateMiniChartPoints(trend) {
+      const points = {
+        'positive': '0,25 20,20 40,15 60,10 80,5',
+        'stable': '0,15 20,18 40,15 60,17 80,15',
+        'negative': '0,5 20,10 40,15 60,20 80,25'
+      };
+      return points[trend] || '0,15 20,15 40,15 60,15 80,15';
+    },
+
+    getLastWorkoutTime(studentId) {
+      const times = ['2 horas', '1 dia', '3 dias', '5 dias'];
+      return times[studentId % times.length];
+    },
+
+    calculateAverageProgress() {
+      const total = this.studentsData.reduce((sum, student) => sum + Math.abs(student.weightProgress), 0);
+      return Math.round((total / this.studentsData.length) * 10);
+    },
+
+    calculateAverageAdherence() {
+      const total = this.studentsData.reduce((sum, student) => sum + student.adherence, 0);
+      return Math.round(total / this.studentsData.length);
+    },
+
+    getPositiveTrends() {
+      return this.studentsData.filter(student => student.trend === 'positive').length;
     },
 
     viewStudentDetails(studentId) {
@@ -651,42 +831,62 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0');
 
+/* CORREÇÃO PRINCIPAL - Layout do dashboard */
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  margin-left: 80px;
-  font-family: 'Manrope', 'Noto Sans', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-  .dashboard-light {
-    --card-bg: #ffffff;
-    --text-color: #1e1e2d;
-    --text-muted: #6b7280;
-    --border-color: #f1f1f4;
-    --bg-secondary: #f8f7ff;
-    --hover-bg: #ece9ff;
-    --primary-color: #6c5ce7;
-    --primary-light: #8b5cf6;
-    background-color: #f8f7ff;
-  }
-
-  .dashboard-dark {
-    --card-bg: #1e1e2d;
-    --text-color: #f9fafb;
-    --text-muted: #9ca3af;
-    --border-color: #2d2d3f;
-    --bg-secondary: #171723;
-    --hover-bg: #2d2d3f;
-    --primary-color: #6c5ce7;
-    --primary-light: #8b5cf6;
-    background-color: #171723;
-  }.dashboard-main {
+.dashboard-main {
   flex: 1;
+  margin-left: 280px; /* Corrige o espaçamento da navbar */
   padding: 2rem;
-  background-color: var(--card-bg);
+  background-color: var(--bg-secondary);
   color: var(--text-color);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dashboard-light {
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --bg-secondary: #f8fafc;
+  --hover-bg: #f1f5f9;
+  --primary-color: #6366f1;
+  --primary-light: #8b5cf6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --progress-bg: #f1f5f9;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  background-color: #f8fafc;
+}
+
+.dashboard-dark {
+  --card-bg: #1e1e2d;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-secondary: #6b7280;
+  --border-color: #2d2d3f;
+  --bg-secondary: #171723;
+  --hover-bg: #2d2d3f;
+  --primary-color: #6366f1;
+  --primary-light: #8b5cf6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --progress-bg: #374151;
+  --glass-bg: rgba(30, 30, 45, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  background-color: #171723;
 }
 
 /* Header - Simplified */
@@ -702,9 +902,10 @@ export default {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
+  background-color: var(--card-bg);
+  border-radius: 16px;
   border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar {
@@ -727,28 +928,29 @@ export default {
   color: var(--text-muted);
   font-size: 0.8rem;
   margin: 0;
+  font-weight: 400;
 }
 
 /* Content Grid */
 .content-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 2rem;
 }
 
-/* Cards */
+/* Cards Base */
 .card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.02);
+  border-radius: 20px;
+  padding: 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .card:hover {
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
@@ -756,20 +958,22 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-color);
   margin: 0;
+  letter-spacing: -0.025em;
 }
 
 .card-subtitle {
   color: var(--text-muted);
   font-size: 0.875rem;
-  margin: 0.25rem 0 0 0;
+  margin: 0.5rem 0 0 0;
+  font-weight: 400;
 }
 
 .dropdown-container {
@@ -779,13 +983,174 @@ export default {
   font-size: 0.875rem;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
 }
 
 .dropdown-container:hover {
   background-color: var(--hover-bg);
+  border-color: var(--primary-color);
+}
+
+/* PERFORMANCE METRICS CARD - DESIGN SIMPLES IGUAL À IMAGEM */
+.performance-metrics-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.metrics-header {
+  margin-bottom: 2rem;
+}
+
+.metrics-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.metrics-subtitle {
+  display: none;
+}
+
+.metrics-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.metric-card:hover {
+  background: transparent;
+  border: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metric-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.metric-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  text-align: right;
+}
+
+.progress-wrapper {
+  display: block;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #8b5cf6;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.progress-bar::after {
+  display: none;
+}
+
+.progress-percentage {
+  display: none;
+}
+
+.achievements-section {
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.achievements-header {
+  margin-bottom: 1rem;
+}
+
+.achievements-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.achievements-badge {
+  display: none;
+}
+
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.achievement-item {
+  display: block;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+.achievement-item:hover {
+  background: transparent;
+  border: none;
+  transform: none;
+}
+
+.achievement-icon {
+  display: none;
+}
+
+.achievement-content {
+  display: inline;
+}
+
+.achievement-student {
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.achievement-description {
+  color: var(--text-color);
+  font-weight: 400;
 }
 
 /* Chart */
@@ -812,218 +1177,578 @@ export default {
   border-radius: 50%;
 }
 
-.legend-dot.primary { background-color: #007bff; }
-.legend-dot.secondary { background-color: #9ca3af; }
+.legend-dot.primary { background-color: #6c5ce7; }
+.legend-dot.secondary { background-color: #a29bfe; }
 
-/* Performance Metrics */
-.metrics-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.metric-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.metric-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  color: var(--text-color);
-}
-
-.metric-value {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--text-color);
-}
-
-.progress-bar {
-  width: 100%;
-  height: 6px;
-  background-color: var(--border-color);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-  border-radius: 3px;
-  transition: width 0.6s ease;
-}
-
-/* Achievements */
-.achievements-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.achievements-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 1rem 0;
-}
-
-.achievement-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.achievement-item {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.achievement-name {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-/* Individual Analysis */
+/* ========= NOVA SEÇÃO DE ANÁLISE INDIVIDUAL - DESIGN MODERNO ========= */
 .individual-analysis-section {
   margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-title-container {
+  flex: 1;
 }
 
 .section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 2rem;
+  font-weight: 800;
   color: var(--text-color);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--text-color) 0%, var(--primary-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.table-container {
-  overflow-x: auto;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  background-color: var(--card-bg);
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.02);
-}
-
-.students-table {
-  width: 100%;
-  text-align: left;
-}
-
-.table-header {
-  background-color: var(--bg-secondary);
-}
-
-.table-th {
-  padding: 1rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+.section-subtitle {
   color: var(--text-muted);
-  border-bottom: 1px solid var(--border-color);
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
-.table-row {
-  transition: background-color 0.2s ease;
+.section-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
-.table-row:hover {
-  background-color: var(--bg-secondary);
-}
-
-.table-row:not(:last-child) {
-  border-bottom: 1px solid var(--border-color);
-}
-
-.table-cell {
-  padding: 1rem 1.5rem;
-  white-space: nowrap;
-  color: var(--text-color);
-}
-
-.text-center { text-align: center; }
-
-.student-info {
+.filter-btn,
+.export-btn {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.filter-btn:hover,
+.export-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+/* Students Grid - Layout Moderno */
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.student-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+}
+
+.student-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.student-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+  border-color: var(--primary-color);
+}
+
+.student-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Student Header */
+.student-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.student-avatar-container {
+  position: relative;
+  margin-right: 1rem;
 }
 
 .student-avatar {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
   background-size: cover;
   background-position: center;
+  border: 3px solid var(--card-bg);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
-.weight-progress,
-.trend-value {
+.student-card:hover .student-avatar {
+  transform: scale(1.05);
+  border-color: var(--primary-color);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: var(--success-color);
+  border: 2px solid var(--card-bg);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.student-basic-info {
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.student-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.01em;
+}
+
+.student-id {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+  font-weight: 500;
+  font-family: 'Fira Code', monospace;
+}
+
+.student-menu {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.student-card:hover .student-menu {
+  opacity: 1;
+}
+
+.menu-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  background: var(--hover-bg);
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.progress-icon,
-.trend-icon {
-  font-size: 1rem;
-}
-
-.positive { 
-  color: #4ade80;
-  background-color: rgba(74, 222, 128, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-.negative { 
-  color: #f87171;
-  background-color: rgba(248, 113, 113, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-.warning { 
-  color: #fbbf24;
-  background-color: rgba(251, 191, 36, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-.neutral { 
-  color: var(--text-muted);
-  background-color: rgba(156, 163, 175, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.adherence-value {
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.action-button {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 8px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.action-button:hover {
-  background-color: var(--primary-light);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
+.menu-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* Progress Stats */
+.progress-stats {
+  margin-bottom: 2rem;
+}
+
+.stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--hover-bg);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: translateX(4px);
+}
+
+.stat-item:hover .stat-icon {
+  color: white;
+  transform: scale(1.1);
+}
+
+.stat-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.stat-value-container {
+  display: flex;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.stat-value.positive {
+  color: var(--success-color);
+}
+
+.stat-value.negative {
+  color: var(--error-color);
+}
+
+.stat-value.neutral {
+  color: var(--text-muted);
+}
+
+/* Adherence Progress */
+.adherence-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.adherence-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.adherence-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.adherence-fill.excellent {
+  background: linear-gradient(90deg, var(--success-color) 0%, #34d399 100%);
+}
+
+.adherence-fill.good {
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+}
+
+.adherence-fill.warning {
+  background: linear-gradient(90deg, var(--warning-color) 0%, #fbbf24 100%);
+}
+
+.adherence-fill.poor {
+  background: linear-gradient(90deg, var(--error-color) 0%, #f87171 100%);
+}
+
+.adherence-value {
+  font-weight: 700;
+  font-size: 1rem;
+  min-width: 3rem;
+  text-align: right;
+}
+
+.adherence-value.excellent {
+  color: var(--success-color);
+}
+
+.adherence-value.good {
+  color: #3b82f6;
+}
+
+.adherence-value.warning {
+  color: var(--warning-color);
+}
+
+.adherence-value.poor {
+  color: var(--error-color);
+}
+
+/* Trend Analysis */
+.trend-analysis {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: var(--hover-bg);
+  border-radius: 16px;
+  margin-top: 1rem;
+}
+
+.trend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trend-icon {
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.trend-icon.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.trend-icon.stable {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.trend-icon.negative {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+}
+
+.trend-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.trend-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.trend-value.positive {
+  color: var(--success-color);
+}
+
+.trend-value.stable {
+  color: var(--warning-color);
+}
+
+.trend-value.negative {
+  color: var(--error-color);
+}
+
+.mini-chart {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.student-card:hover .mini-chart {
+  opacity: 1;
+}
+
+/* Card Footer */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 1.5rem;
+}
+
+.last-activity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.last-activity .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.view-details-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.view-details-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.view-details-btn:hover::before {
+  left: 100%;
+}
+
+.view-details-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+.view-details-btn:active {
+  transform: translateY(0);
+}
+
+/* Summary Stats */
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--card-bg) 0%, var(--hover-bg) 100%);
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+.summary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.summary-icon .material-symbols-outlined {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.summary-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* Bottom Section */
@@ -1061,7 +1786,7 @@ export default {
 
 .nav-btn:hover {
   background-color: var(--bg-secondary);
-  border-color: #007bff;
+  border-color: var(--primary-color);
 }
 
 .month-year {
@@ -1130,7 +1855,7 @@ export default {
 }
 
 .day-cell.today {
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
 }
 
@@ -1144,7 +1869,7 @@ export default {
 }
 
 .day-cell.has-events {
-  background-color: #f0f9ff;
+  background-color: rgba(99, 102, 241, 0.05);
 }
 
 .day-number {
@@ -1168,7 +1893,7 @@ export default {
 }
 
 .event-dot.personal {
-  background-color: #007bff;
+  background-color: var(--primary-color);
 }
 
 .event-dot.group {
@@ -1196,7 +1921,7 @@ export default {
 }
 
 .legend-dot.personal {
-  background-color: #007bff;
+  background-color: var(--primary-color);
 }
 
 .legend-dot.group {
@@ -1248,14 +1973,15 @@ export default {
   .bottom-section {
     grid-template-columns: 1fr;
   }
+
+  .students-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
-  .dashboard-container {
-    margin-left: 0;
-  }
-  
   .dashboard-main {
+    margin-left: 0;
     padding: 1rem;
   }
   
@@ -1273,6 +1999,61 @@ export default {
     padding: 1rem;
   }
   
+  .individual-analysis-section {
+    padding: 1rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .section-actions {
+    justify-content: center;
+  }
+
+  .students-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .student-card {
+    padding: 1.5rem;
+  }
+
+  .student-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .student-basic-info {
+    margin-left: 0;
+  }
+
+  .stat-row {
+    gap: 1rem;
+  }
+
+  .summary-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .summary-card {
+    padding: 1rem;
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+  }
+  
   .card-header-with-dropdown {
     flex-direction: column;
     gap: 1rem;
@@ -1282,10 +2063,6 @@ export default {
   .chart-legend {
     flex-direction: column;
     gap: 1rem;
-  }
-  
-  .table-container {
-    overflow-x: scroll;
   }
   
   .calendar-nav {
@@ -1341,10 +2118,10 @@ export default {
 }
 
 /* Animations */
-@keyframes slideIn {
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -1352,20 +2129,69 @@ export default {
   }
 }
 
-.card {
-  animation: slideIn 0.5s ease-out;
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.table-row:hover {
-  transform: translateX(2px);
+.student-card {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.student-card:nth-child(1) { animation-delay: 0.1s; }
+.student-card:nth-child(2) { animation-delay: 0.2s; }
+.student-card:nth-child(3) { animation-delay: 0.3s; }
+.student-card:nth-child(4) { animation-delay: 0.4s; }
+
+.summary-card {
+  animation: fadeInScale 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.summary-card:nth-child(1) { animation-delay: 0.1s; }
+.summary-card:nth-child(2) { animation-delay: 0.2s; }
+.summary-card:nth-child(3) { animation-delay: 0.3s; }
+.summary-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Advanced Hover Effects */
+.student-card:hover .adherence-fill {
+  animation: progressPulse 1s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.view-details-btn:hover .material-symbols-outlined {
+  animation: arrowBounce 0.6s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
 }
 
 /* Focus States */
 .nav-btn:focus,
-.action-button:focus,
-.dropdown-container:focus {
-  outline: 2px solid #007bff;
+.filter-btn:focus,
+.export-btn:focus,
+.view-details-btn:focus,
+.menu-btn:focus {
+  outline: 2px solid var(--primary-color);
   outline-offset: 2px;
+}
+
+.student-card:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 4px;
 }
 
 /* Loading States */
@@ -1379,28 +2205,26 @@ export default {
   font-style: italic;
 }
 
-/* Hover Effects */
-.student-avatar:hover {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
+/* Dark Mode Specific Adjustments */
+.dashboard-dark .student-card {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(45, 45, 63, 0.8) 100%);
 }
 
-.day-cell:hover .day-number {
-  font-weight: 600;
+.dashboard-dark .summary-stats {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(45, 45, 63, 0.6) 100%);
 }
 
-.metric-item:hover .progress-fill {
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+.dashboard-dark .individual-analysis-section {
+  background: linear-gradient(135deg, rgba(30, 30, 45, 0.9) 0%, rgba(23, 23, 35, 0.7) 100%);
 }
 
-/* Dark Mode Adjustments */
 .dashboard-dark .day-cell.has-events {
-  background-color: rgba(0, 123, 255, 0.1);
+  background-color: rgba(99, 102, 241, 0.1);
 }
 
 .dashboard-dark .nav-btn:hover {
   background-color: var(--hover-bg);
-  border-color: #007bff;
+  border-color: var(--primary-color);
 }
 
 .dashboard-dark .calendar-grid {
@@ -1409,17 +2233,105 @@ export default {
 
 /* Print Styles */
 @media print {
-  .dashboard-container {
+  .dashboard-main {
     margin-left: 0;
   }
   
   .nav-btn,
-  .action-button {
+  .filter-btn,
+  .export-btn,
+  .view-details-btn,
+  .menu-btn {
     display: none;
   }
   
-  .card {
+  .card,
+  .student-card {
     break-inside: avoid;
   }
+
+  .individual-analysis-section {
+    background: white !important;
+  }
+
+  .students-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .student-card {
+    border: 2px solid var(--text-color);
+  }
+  
+  .view-details-btn {
+    border: 2px solid white;
+  }
+}
+
+/* Selection Styles */
+::selection {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* Additional Utility Classes */
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 </style>

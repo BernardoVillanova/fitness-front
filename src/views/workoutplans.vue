@@ -140,7 +140,7 @@
           </div>
         </div>
 
-        <!-- Enhanced Plans Grid -->
+        <!-- Enhanced Plans Grid - LAYOUT MELHORADO -->
         <div class="plans-section">
           <div class="plans-grid">
             <div 
@@ -151,15 +151,18 @@
             >
               <div class="card-background"></div>
               
+              <!-- Header com melhor organização -->
               <div class="plan-header">
-                <div class="plan-title-area">
+                <div class="plan-title-section">
                   <h3 class="plan-name">{{ plan.name }}</h3>
-                  <span class="plan-date">{{ formatDate(plan.createdAt) }}</span>
+                  <div class="plan-meta">
+                    <span class="plan-date">{{ formatDate(plan.createdAt) }}</span>
+                  </div>
                 </div>
                 
                 <div class="plan-menu-wrapper" @click.stop>
                   <button class="menu-trigger" @click="togglePlanMenu(plan._id)">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="1"/>
                       <circle cx="12" cy="5" r="1"/>
                       <circle cx="12" cy="19" r="1"/>
@@ -193,53 +196,68 @@
                 </div>
               </div>
 
-              <div class="divisions-area">
-                <div 
-                  v-for="division in plan.divisions.slice(0, 3)" 
-                  :key="division._id"
-                  class="division-badge"
-                >
-                  <span class="division-text">{{ division.name }}</span>
-                  <span class="exercise-count">{{ division.exercises.length }}</span>
-                </div>
-                <div v-if="plan.divisions.length > 3" class="more-divisions">
-                  +{{ plan.divisions.length - 3 }} mais
-                </div>
-              </div>
-
-              <div class="plan-stats">
-                <div class="stat-item">
-                  <div class="stat-icon-small divisions-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <!-- Estatísticas principais reorganizadas -->
+              <div class="plan-stats-main">
+                <div class="stat-item-main">
+                  <div class="stat-icon-main divisions-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="3" width="7" height="7"/>
                       <rect x="14" y="3" width="7" height="7"/>
                       <rect x="14" y="14" width="7" height="7"/>
                       <rect x="3" y="14" width="7" height="7"/>
                     </svg>
                   </div>
-                  <div class="stat-info">
-                    <span class="stat-value">{{ plan.divisions.length }}</span>
-                    <span class="stat-text">Divisões</span>
+                  <div class="stat-details">
+                    <div class="stat-number-main">{{ plan.divisions.length }}</div>
+                    <div class="stat-label-main">Divisões</div>
                   </div>
                 </div>
                 
-                <div class="stat-item">
-                  <div class="stat-icon-small exercises-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="divider"></div>
+                
+                <div class="stat-item-main">
+                  <div class="stat-icon-main exercises-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                       <path d="M2 17l10 5 10-5"/>
                       <path d="M2 12l10 5 10-5"/>
                     </svg>
                   </div>
-                  <div class="stat-info">
-                    <span class="stat-value">{{ getTotalExercises(plan) }}</span>
-                    <span class="stat-text">Exercícios</span>
+                  <div class="stat-details">
+                    <div class="stat-number-main">{{ getTotalExercises(plan) }}</div>
+                    <div class="stat-label-main">Exercícios</div>
                   </div>
                 </div>
               </div>
 
+              <!-- Divisões com layout melhorado -->
+              <div class="divisions-section">
+                <h4 class="divisions-title">Divisões do Treino</h4>
+                <div class="divisions-container">
+                  <div 
+                    v-for="(division, idx) in plan.divisions.slice(0, 3)" 
+                    :key="division._id"
+                    class="division-item"
+                    :style="{ animationDelay: `${idx * 50}ms` }"
+                  >
+                    <div class="division-info">
+                      <span class="division-name">{{ division.name }}</span>
+                      <span class="exercise-count-badge">{{ division.exercises.length }} exercícios</span>
+                    </div>
+                  </div>
+                  
+                  <div v-if="plan.divisions.length > 3" class="more-divisions-indicator">
+                    <div class="more-divisions-content">
+                      <span class="more-text">+{{ plan.divisions.length - 3 }}</span>
+                      <span class="more-label">mais divisões</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ações com melhor alinhamento -->
               <div class="plan-actions">
-                <button @click="viewPlan(plan)" class="action-button view-btn">
+                <button @click="viewPlan(plan)" class="action-button primary-action">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
@@ -247,7 +265,7 @@
                   <span>Visualizar</span>
                 </button>
                 
-                <button @click="editPlan(plan)" class="action-button edit-btn">
+                <button @click="editPlan(plan)" class="action-button secondary-action">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -725,7 +743,7 @@ export default {
   bottom: 0;
   background: var(--bg-pattern);
   z-index: -1;
-  opacity: 0.02;
+  opacity: 0.3;
 }
 
 .dashboard-main {
@@ -746,40 +764,44 @@ export default {
 
 /* Theme Variables */
 .dashboard-light {
-  --bg-primary: #fafbfc;
-  --bg-secondary: rgba(255, 255, 255, 0.8);
+  --bg-primary: #ffffff;
+  --bg-secondary: rgba(248, 250, 252, 0.9);
   --bg-tertiary: rgba(255, 255, 255, 0.95);
-  --bg-pattern: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
-  --text-primary: #1a1d29;
+  --bg-pattern: radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(14, 165, 233, 0.2) 0%, transparent 50%);
+  
+  --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-tertiary: #94a3b8;
   --text-accent: #475569;
   
   --border-primary: rgba(226, 232, 240, 0.8);
   --border-secondary: rgba(241, 245, 249, 0.6);
-  --border-accent: rgba(99, 102, 241, 0.2);
+  --border-accent: rgba(37, 99, 235, 0.3);
   
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --gradient-accent: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --gradient-tertiary: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  --gradient-accent: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
   
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 10px 10px -5px rgba(37, 99, 235, 0.1);
   
   --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-border: rgba(255, 255, 255, 0.3);
-  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --glass-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
 }
 
 .dashboard-dark {
-  --bg-primary: #0a0b0f;
+  --bg-primary: #0a0a0a;
   --bg-secondary: rgba(15, 16, 23, 0.8);
   --bg-tertiary: rgba(26, 32, 44, 0.9);
-  --bg-pattern: radial-gradient(circle at 30% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+  --bg-pattern: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(192, 132, 252, 0.2) 0%, transparent 50%);
   
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
@@ -791,18 +813,18 @@ export default {
   --border-accent: rgba(139, 92, 246, 0.3);
   
   --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  --gradient-secondary: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
-  --gradient-tertiary: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  --gradient-accent: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  --gradient-tertiary: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  --gradient-accent: linear-gradient(135deg, #d8b4fe 0%, #c084fc 100%);
   
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(139, 92, 246, 0.3), 0 10px 10px -5px rgba(139, 92, 246, 0.2);
   
   --glass-bg: rgba(15, 16, 23, 0.4);
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
 }
 
 /* Floating Header */
@@ -1117,8 +1139,12 @@ export default {
 .search-input:focus {
   outline: none;
   border-color: var(--border-accent);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
   transform: scale(1.02);
+}
+
+.dashboard-dark .search-input:focus {
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
 }
 
 .search-input:focus + .search-bg {
@@ -1203,7 +1229,7 @@ export default {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Enhanced Plans Section */
+/* Enhanced Plans Section - LAYOUT MELHORADO */
 .plans-section {
   animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
 }
@@ -1211,7 +1237,9 @@ export default {
 .plans-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 32px;
+  gap: 28px;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .plan-card {
@@ -1219,16 +1247,19 @@ export default {
   background: var(--bg-secondary);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border-primary);
-  border-radius: 28px;
-  padding: 32px;
+  border-radius: 20px;
+  overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-md);
-  overflow: hidden;
   animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 480px;
 }
 
 .plan-card:hover {
-  transform: translateY(-12px) scale(1.02);
+  transform: translateY(-8px) scale(1.02);
   box-shadow: var(--shadow-xl);
   border-color: var(--border-accent);
 }
@@ -1242,53 +1273,66 @@ export default {
   background: var(--gradient-accent);
   opacity: 0;
   transition: opacity 0.4s ease;
-  border-radius: 28px;
 }
 
 .plan-card:hover .card-background {
   opacity: 0.03;
 }
 
+/* Header melhorado */
 .plan-header {
   position: relative;
   z-index: 1;
+  padding: 24px 24px 20px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-primary);
 }
 
-.plan-title-area {
+.plan-title-section {
   flex: 1;
+  padding-right: 16px;
 }
 
 .plan-name {
   margin: 0 0 8px 0;
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.3;
   letter-spacing: -0.01em;
+  word-wrap: break-word;
+}
+
+.plan-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .plan-date {
   font-size: 0.875rem;
   color: var(--text-tertiary);
   font-weight: 500;
+  padding: 4px 12px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-secondary);
 }
 
 .plan-menu-wrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .menu-trigger {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: var(--bg-primary);
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
   color: var(--text-secondary);
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1301,7 +1345,6 @@ export default {
   color: white;
   border-color: transparent;
   transform: scale(1.1);
-  box-shadow: var(--shadow-md);
 }
 
 .dropdown-menu {
@@ -1312,34 +1355,34 @@ export default {
   background: var(--bg-tertiary);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border-primary);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: var(--shadow-xl);
   z-index: 1000;
-  min-width: 180px;
+  min-width: 160px;
   padding: 8px;
   animation: dropdownFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dropdown-option {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border: none;
   background: transparent;
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-radius: 10px;
+  gap: 8px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .dropdown-option:hover {
   background: var(--bg-primary);
-  transform: translateX(4px);
+  transform: translateX(2px);
 }
 
 .dropdown-option.danger {
@@ -1353,96 +1396,42 @@ export default {
 .dropdown-separator {
   height: 1px;
   background: var(--border-primary);
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
-.divisions-area {
+/* Estatísticas principais melhoradas */
+.plan-stats-main {
   position: relative;
   z-index: 1;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
-}
-
-.division-badge {
-  background: var(--gradient-primary);
-  color: white;
-  padding: 10px 16px;
-  border-radius: 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.division-badge:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-md);
-}
-
-.exercise-count {
-  background: rgba(255, 255, 255, 0.25);
-  padding: 2px 8px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.more-divisions {
+  justify-content: space-between;
   background: var(--bg-primary);
-  border: 2px dashed var(--border-primary);
-  color: var(--text-tertiary);
-  padding: 10px 16px;
-  border-radius: 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  border-bottom: 1px solid var(--border-primary);
 }
 
-.more-divisions:hover {
-  border-color: var(--border-accent);
-  color: var(--text-accent);
-}
-
-.plan-stats {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.stat-item {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: 16px;
-  padding: 16px;
+.stat-item-main {
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: all 0.3s ease;
+  flex: 1;
 }
 
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-accent);
-}
-
-.stat-icon-small {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.stat-icon-main {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.plan-card:hover .stat-icon-main {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .divisions-icon {
@@ -1453,41 +1442,155 @@ export default {
   background: var(--gradient-tertiary);
 }
 
-.stat-info {
+.stat-details {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
+.stat-number-main {
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
 }
 
-.stat-text {
+.stat-label-main {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+.divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border-primary);
+  margin: 0 16px;
+}
+
+/* Seção de divisões melhorada */
+.divisions-section {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.divisions-title {
+  margin: 0 0 16px 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.divisions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 160px;
+  overflow-y: auto;
+}
+
+.division-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.division-item:hover {
+  transform: translateX(4px);
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.division-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.division-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  flex: 1;
+}
+
+.exercise-count-badge {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.more-divisions-indicator {
+  background: var(--bg-primary);
+  border: 2px dashed var(--border-primary);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.more-divisions-indicator:hover {
+  border-color: var(--border-accent);
+  background: var(--glass-bg);
+}
+
+.more-divisions-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.more-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.more-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Ações melhoradas - SEMPRE NA PARTE INFERIOR */
 .plan-actions {
   position: relative;
   z-index: 1;
+  padding: 20px 24px;
   display: flex;
   gap: 12px;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .action-button {
   flex: 1;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -1498,27 +1601,27 @@ export default {
   overflow: hidden;
 }
 
-.view-btn {
+.primary-action {
   background: var(--gradient-primary);
   color: white;
   box-shadow: var(--shadow-md);
 }
 
-.edit-btn {
-  background: var(--bg-primary);
+.secondary-action {
+  background: transparent;
   border: 2px solid var(--border-primary);
   color: var(--text-primary);
 }
 
 .action-button:hover {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-2px) scale(1.02);
 }
 
-.view-btn:hover {
+.primary-action:hover {
   box-shadow: var(--shadow-xl);
 }
 
-.edit-btn:hover {
+.secondary-action:hover {
   background: var(--gradient-primary);
   color: white;
   border-color: transparent;
@@ -1589,11 +1692,6 @@ export default {
   cursor: not-allowed;
 }
 
-.page-numbers {
-  display: flex;
-  gap: 6px;
-}
-
 .page-number {
   width: 44px;
   height: 44px;
@@ -1662,6 +1760,17 @@ export default {
   }
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes dropdownFade {
   from {
     opacity: 0;
@@ -1673,45 +1782,90 @@ export default {
   }
 }
 
-/* Responsive Design */
+/* Responsividade */
 @media (max-width: 1200px) {
-  .dashboard-container {
-    margin-left: 0;
-  }
-  
-  .floating-header {
-    left: 0;
-  }
-  
   .plans-grid {
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
   }
-}
-
-@media (max-width: 968px) {
+  
   .dashboard-content {
-    padding: 140px 24px 40px;
+    padding: 140px 24px 24px;
+    gap: 32px;
   }
   
   .floating-header {
     padding: 20px 24px;
   }
-  
-  .header-content {
-    flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
     gap: 20px;
-    text-align: center;
+  }
+  
+  .plan-card {
+    border-radius: 16px;
+  }
+  
+  .plan-header {
+    padding: 20px 20px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .plan-title-section {
+    padding-right: 0;
+    width: 100%;
+  }
+  
+  .plan-menu-wrapper {
+    align-self: flex-end;
+  }
+  
+  .plan-stats-main {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .stat-item-main {
+    justify-content: center;
+  }
+  
+  .divider {
+    width: 100%;
+    height: 1px;
+    margin: 0;
+  }
+  
+  .divisions-section {
+    padding: 16px 20px;
+  }
+  
+  .plan-actions {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .action-button {
+    padding: 16px;
+  }
+  
+  .dashboard-content {
+    padding: 140px 16px 16px;
+    gap: 24px;
   }
   
   .main-title {
     font-size: 2rem;
   }
   
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-  
   .filter-card {
+    padding: 24px;
     flex-direction: column;
     align-items: stretch;
     gap: 24px;
@@ -1725,177 +1879,26 @@ export default {
     justify-content: center;
   }
   
-  .plans-grid {
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-content {
-    padding: 120px 16px 40px;
-    gap: 32px;
-  }
-  
-  .floating-header {
-    padding: 16px 20px;
-  }
-  
-  .main-title {
-    font-size: 1.75rem;
-  }
-  
-  .subtitle {
-    font-size: 0.9rem;
-  }
-  
-  .create-button {
-    padding: 14px 24px;
-    font-size: 15px;
-  }
-  
-  .stat-card {
-    padding: 24px;
-  }
-  
-  .stat-number {
-    font-size: 2.5rem;
-  }
-  
-  .filter-card {
-    padding: 24px;
-  }
-  
-  .plans-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .plan-card {
-    padding: 24px;
-  }
-  
-  .plan-actions {
-    flex-direction: column;
-  }
-  
-  .action-button {
-    justify-content: flex-start;
-  }
-  
   .pagination-card {
+    padding: 20px 16px;
     flex-direction: column;
+    gap: 16px;
     text-align: center;
   }
   
   .pagination-controls {
-    flex-wrap: wrap;
     justify-content: center;
-  }
-}
-
-@media (max-width: 640px) {
-  .dashboard-content {
-    padding: 110px 12px 40px;
-  }
-  
-  .main-title {
-    font-size: 1.5rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .stat-card {
-    padding: 20px;
-  }
-  
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .stat-number {
-    font-size: 2rem;
-  }
-  
-  .filter-card {
-    padding: 20px;
-  }
-  
-  .filter-tabs {
-    gap: 8px;
-  }
-  
-  .filter-tab {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-  
-  .plan-card {
-    padding: 20px;
-    border-radius: 20px;
-  }
-  
-  .plan-name {
-    font-size: 1.25rem;
-  }
-  
-  .divisions-area {
-    gap: 8px;
-  }
-  
-  .division-badge {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-  
-  .plan-stats {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .stat-item {
-    padding: 12px;
-  }
-  
-  .stat-icon-small {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .stat-value {
-    font-size: 1.1rem;
-  }
-  
-  .action-button {
-    padding: 14px 16px;
-    font-size: 14px;
-  }
-  
-  .pagination-card {
-    padding: 20px;
-  }
-  
-  .page-number {
-    width: 40px;
-    height: 40px;
-    font-size: 13px;
+    flex-wrap: wrap;
   }
 }
 
 @media (max-width: 480px) {
+  .dashboard-container {
+    margin-left: 0;
+  }
+  
   .floating-header {
-    padding: 12px 16px;
-  }
-  
-  .header-content {
-    gap: 16px;
-  }
-  
-  .main-title {
-    font-size: 1.375rem;
+    left: 0;
   }
   
   .create-button {
@@ -1903,243 +1906,20 @@ export default {
     font-size: 14px;
   }
   
-  .button-content {
-    gap: 8px;
-  }
-  
-  .button-icon {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-/* Dark mode specific animations */
-.dashboard-dark .stat-card:hover .stat-background {
-  opacity: 0.08;
-}
-
-.dashboard-dark .card-background {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-}
-
-.dashboard-dark .plan-card:hover .card-background {
-  opacity: 0.06;
-}
-
-/* Loading states */
-.plan-card.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.plan-card.loading::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  animation: shimmer 1.5s infinite;
-  z-index: 1;
-}
-
-@keyframes shimmer {
-  100% {
-    left: 100%;
-  }
-}
-
-/* Accessibility improvements */
-.create-button:focus,
-.filter-tab:focus,
-.action-button:focus,
-.pagination-btn:focus,
-.page-number:focus,
-.menu-trigger:focus {
-  outline: 2px solid var(--border-accent);
-  outline-offset: 2px;
-}
-
-.search-input:focus {
-  outline: 2px solid var(--border-accent);
-  outline-offset: 2px;
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .dashboard-light {
-    --border-primary: #000000;
-    --text-secondary: #000000;
-    --text-tertiary: #333333;
-  }
-  
-  .dashboard-dark {
-    --border-primary: #ffffff;
-    --text-secondary: #ffffff;
-    --text-tertiary: #cccccc;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  
-  .plan-card {
-    animation: none;
-  }
-  
-  .stats-section,
-  .filter-section,
-  .plans-section,
-  .pagination-section {
-    animation: none;
-  }
-}
-
-/* Print styles */
-@media print {
-  .floating-header,
-  .filter-section,
-  .pagination-section {
-    display: none !important;
-  }
-  
-  .dashboard-content {
-    padding-top: 0;
-  }
-  
-  .plan-card {
-    break-inside: avoid;
-    box-shadow: none;
-    border: 2px solid #000;
-    margin-bottom: 20px;
-  }
-  
-  .plans-grid {
-    display: block;
-  }
-}
-
-/* Custom scrollbar */
-.dashboard-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dashboard-container::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-
-.dashboard-container::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
-  border-radius: 3px;
-}
-
-.dashboard-container::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
-}
-
-/* Selection styles */
-::selection {
-  background: rgba(99, 102, 241, 0.2);
-  color: var(--text-primary);
-}
-
-.dashboard-dark ::selection {
-  background: rgba(139, 92, 246, 0.3);
-  color: var(--text-primary);
-}
-
-/* Focus visible improvements */
-.create-button:focus-visible,
-.filter-tab:focus-visible,
-.action-button:focus-visible,
-.menu-trigger:focus-visible {
-  outline: 2px solid var(--border-accent);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-/* Enhanced glassmorphism effects */
-.floating-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: inherit;
-  backdrop-filter: inherit;
-  z-index: -1;
-}
-
-/* Improved hover states for touch devices */
-@media (hover: none) {
-  .stat-card:hover,
-  .plan-card:hover,
-  .filter-tab:hover,
-  .action-button:hover {
-    transform: none;
-  }
-  
-  .create-button:hover {
-    transform: none;
-  }
-}
-
-/* Enhanced loading animation */
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
-  }
-}
-
-.create-button.loading {
-  animation: pulseGlow 2s infinite;
-}
-
-/* Enhanced micro-interactions */
-.division-badge {
-  position: relative;
-  overflow: hidden;
-}
-
-.division-badge::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.division-badge:hover::before {
-  left: 100%;
-}
-
-/* Final responsive adjustments */
-@media (min-width: 1600px) {
-  .dashboard-content {
-    padding: 140px 60px 40px;
+  .button-content span {
+    display: none;
   }
   
   .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
   }
   
-  .plans-grid {
-    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
-    gap: 36px;
+  .stat-card {
+    padding: 24px;
+  }
+  
+  .page-numbers {
+    display: none;
   }
 }
 </style>
