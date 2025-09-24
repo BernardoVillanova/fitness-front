@@ -59,7 +59,43 @@ const routes = [
   },
   {
     path: '/dashboard-student',
-    component: DashboardTech,
+    component: () => import('../views/dashboardstudent.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  // Student Routes
+  {
+    path: '/student/workouts',
+    component: () => import('../views/StudentWorkouts.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/progress',
+    component: () => import('../views/StudentProgress.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/history',
+    component: () => import('../views/StudentHistory.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/instructor',
+    component: () => import('../views/StudentInstructor.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/goals',
+    component: () => import('../views/StudentGoals.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/profile',
+    component: () => import('../views/StudentProfile.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/settings',
+    component: () => import('../views/StudentSettings.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   }
 ];
