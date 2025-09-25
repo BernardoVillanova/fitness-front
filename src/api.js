@@ -21,33 +21,20 @@ api.interceptors.response.use(
   }
 );
 
-// Gym related API calls
-export const getAllGyms = () => {
-  return api.get("/gyms");
-};
+// API de Academias
+export const getAllGyms = () => api.get("/gyms");
+export const getGymById = (id) => api.get(`/gyms/${id}`);
+export const createGym = (gymData) => api.post("/gyms", gymData);
+export const updateGym = (id, gymData) => api.put(`/gyms/${id}`, gymData);
+export const deleteGym = (id) => api.delete(`/gyms/${id}`);
 
-export const getGymById = (id) => {
-  return api.get(`/gyms/${id}`);
-};
-
-export const createGym = (gymData) => {
-  return api.post("/gyms", gymData, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-};
-
-export const updateGym = (id, gymData) => {
-  return api.put(`/gyms/${id}`, gymData, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-};
-
-export const deleteGym = (id) => {
-  return api.delete(`/gyms/${id}`);
-};
+// API de Alunos
+export const getStudents = (params = {}) => api.get("/students", { params });
+export const getStudentById = (id) => api.get(`/students/${id}`);
+export const createStudent = (studentData) => api.post("/students", studentData);
+export const updateStudent = (id, studentData) => api.put(`/students/${id}`, studentData);
+export const deleteStudent = (id) => api.delete(`/students/${id}`);
+export const unassignInstructor = (studentId) => api.delete(`/students/${studentId}/instructor`);
+export const addStudentProgress = (studentId, progressData) => api.post(`/students/${studentId}/progress`, progressData);
 
 export default api;
