@@ -25,5 +25,8 @@ export const useAuthStore = defineStore('auth', {
       this.token = null;
       sessionStorage.removeItem('token');
     },
+    logout() {
+      this.clearToken();
+    },
   },
 });
