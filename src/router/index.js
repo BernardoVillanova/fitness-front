@@ -7,7 +7,7 @@ import WorkoutPlans from '../views/workoutplans.vue';
 import DashboardTech from '../views/dashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
-import StudentProfile from '../views/studentprofile.vue'
+import StudentProfile from '../views/StudentProfile.vue'
 import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/instructorregister.vue';
 import gymHome from '../views/gymHome.vue';
@@ -61,6 +61,42 @@ const routes = [
   {
     path: '/student-dashboard',
     component: DashboardStudent,
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  // Student Routes
+  {
+    path: '/student/workouts',
+    component: () => import('../views/StudentWorkouts.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/progress',
+    component: () => import('../views/StudentProgress.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/history',
+    component: () => import('../views/StudentHistory.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/instructor',
+    component: () => import('../views/StudentInstructor.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/goals',
+    component: () => import('../views/StudentGoals.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/profile',
+    component: () => import('../views/StudentProfile.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/settings',
+    component: () => import('../views/StudentSettings.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   }
 ];
