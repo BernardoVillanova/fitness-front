@@ -1,254 +1,344 @@
 <template>
-  <div class="dashboard">
-    <DashboardNavBar @toggle-theme="toggleTheme" />
+  <div class="student-profile">
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="fas fa-user"></i>
+        Meu Perfil
+      </h1>
+      <p class="page-subtitle">Gerencie suas informações pessoais</p>
+    </div>
 
-    <!-- TO-DO - Dados mockados -->
-
-    <div class="dashboard-container">
-      <section class="profile-header">
-        <img class="profile-photo" :src="user.photo" alt="Foto de perfil" />
-        <div class="profile-info">
-          <h2>{{ user.name }}</h2>
-          <p class="role">
-            <span class="highlight">{{ user.position }}</span> | {{ user.department }}
-          </p>
-        </div>
-        <div class="profile-extra">
-          <p><strong>Staff ID:</strong> {{ user.staffId }}</p>
-          <p><strong>Phone number:</strong> {{ user.phone }}</p>
-          <p><strong>Staff Account:</strong> {{ user.account }}</p>
-          <p><strong>Email:</strong> {{ user.email }}</p>
-        </div>
-      </section>
-
-      <!-- Seções de informação -->
-      <div class="info-grid">
-        <!-- Personal Information -->
-        <div class="info-card">
-          <h3>Personal information</h3>
-          <div class="info-row" v-for="(value, label) in personalInfo" :key="label">
-            <span class="label">{{ label }}</span>
-            <span class="value">{{ value }}</span>
+    <div class="profile-content">
+      <div class="profile-card">
+        <div class="avatar-section">
+          <div class="avatar-container">
+            <img :src="studentData.avatar" :alt="studentData.name" class="avatar-image" />
+            <button class="avatar-edit-btn">
+              <i class="fas fa-camera"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Education Information -->
-        <div class="info-card">
-          <h3>Education information</h3>
-          <div v-for="(edu, index) in education" :key="index" class="edu-item">
-            <p class="edu-title">{{ edu.degree }}</p>
-            <p class="edu-sub">{{ edu.institution }}</p>
-            <p class="edu-date">{{ edu.period }}</p>
+        <form @submit.prevent="saveProfile" class="profile-form">
+          <div class="form-section">
+            <h3>Informações Pessoais</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nome Completo</label>
+                <input v-model="studentData.name" type="text" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input v-model="studentData.email" type="email" class="form-input" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Telefone</label>
+                <input v-model="studentData.phone" type="tel" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input v-model="studentData.birthDate" type="date" class="form-input">
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Account Information -->
-        <div class="info-card">
-          <h3>Account information</h3>
-          <div class="info-row" v-for="(value, label) in accountInfo" :key="label">
-            <span class="label">{{ label }}</span>
-            <span class="value">{{ value }}</span>
+          <div class="form-section">
+            <h3>Informações Físicas</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Altura (cm)</label>
+                <input v-model="studentData.height" type="number" class="form-input">
+              </div>
+              <div class="form-group">
+                <label>Peso Atual (kg)</label>
+                <input v-model="studentData.weight" type="number" step="0.1" class="form-input">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Objetivo</label>
+                <select v-model="studentData.goal" class="form-select">
+                  <option value="lose-weight">Perder peso</option>
+                  <option value="gain-muscle">Ganhar massa muscular</option>
+                  <option value="maintain">Manter forma física</option>
+                  <option value="strength">Aumentar força</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Nível de Atividade</label>
+                <select v-model="studentData.activityLevel" class="form-select">
+                  <option value="sedentary">Sedentário</option>
+                  <option value="light">Levemente ativo</option>
+                  <option value="moderate">Moderadamente ativo</option>
+                  <option value="active">Muito ativo</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div class="form-section">
+            <h3>Informações Médicas</h3>
+            <div class="form-group">
+              <label>Condições Médicas</label>
+              <textarea v-model="studentData.medicalConditions" class="form-textarea" 
+                        placeholder="Descreva qualquer condição médica relevante..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Medicamentos</label>
+              <textarea v-model="studentData.medications" class="form-textarea"
+                        placeholder="Liste medicamentos em uso..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" @click="resetForm" class="btn-secondary">
+              <i class="fas fa-undo"></i>
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i>
+              Salvar Alterações
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import DashboardNavBar from "@/components/DashboardNavBar.vue";
+import { reactive } from 'vue';
 
 export default {
-  components: { DashboardNavBar },
-  name: "StaffProfile",
+  name: 'StudentProfile',
+  setup() {
+    const studentData = reactive({
+      name: 'João Silva',
+      email: 'joao.silva@email.com',
+      phone: '(11) 99999-9999',
+      birthDate: '1995-06-15',
+      height: 175,
+      weight: 78.5,
+      goal: 'gain-muscle',
+      activityLevel: 'moderate',
+      medicalConditions: '',
+      medications: '',
+      avatar: 'https://via.placeholder.com/120x120/6366f1/white?text=JS'
+    });
 
-  data() {
-    return {
-      user: {
-        name: "Hang Minh Nguyen",
-        position: "UI - UX Designer",
-        department: "Product Department",
-        staffId: "SJ53862",
-        phone: "0913 854 235",
-        account: "hangntm1",
-        email: "hangntm@sjlable.com",
-        photo: "https://via.placeholder.com/80"
-      },
-      personalInfo: {
-        Gender: "Female",
-        "Date of birth": "5th March, 1996",
-        "Identify code": "3234611342",
-        Hometown: "Hai Duong city",
-        Nationality: "Vietnam",
-        Religion: "None",
-        Language: "Vietnamese, English",
-        "Marital status": "Single",
-        "Permanent address": "5. Nguyen Chi Thanh Street, Tan Binh Ward, Hai Duong",
-        "Current address": "29. Nguyen Ngoc Doan Street, Dong Da District, Ha Noi"
-      },
-      education: [
-        {
-          degree: "Bachelor in Management Information System",
-          institution: "National Economic University",
-          period: "2014-2018"
-        },
-        {
-          degree: "Certificate of Graphic Design",
-          institution: "FPT Arena University",
-          period: "2018-2019"
-        }
-      ],
-      accountInfo: {
-        "Bank account": "02520613401",
-        "Account name": "Nguyen Thi Minh Hang",
-        Bank: "TPBank Duy Tan",
-        "Tax code": "8456120546",
-        "Insurance code": "8456120546"
-      }
+    const originalData = { ...studentData };
+
+    const saveProfile = () => {
+      console.log('Saving profile:', studentData);
+      // Here you would typically send data to API
+      alert('Perfil salvo com sucesso!');
     };
-  },
-  methods: {
-    toggleTheme() {
-      document.body.classList.toggle("dark");
-    }
+
+    const resetForm = () => {
+      Object.assign(studentData, originalData);
+    };
+
+    return {
+      studentData,
+      saveProfile,
+      resetForm
+    };
   }
 };
 </script>
 
 <style scoped>
-.dashboard {
-  background-color: var(--bg-color);
-  min-height: 100vh;
-  transition: background-color 0.3s ease;
-}
-
-.dashboard-container {
+.student-profile {
   padding: 2rem;
-  max-width: 1200px;
-  margin: auto;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.profile-tabs {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid var(--table-header-bg);
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
+.page-header {
+  margin-bottom: 2rem;
 }
 
-.profile-tabs a {
-  cursor: pointer;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-.profile-tabs a.active {
-  color: var(--text-color);
-  border-bottom: 2px solid #3b82f6;
-}
-
-.profile-header {
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: var(--card-shadow);
-  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.profile-photo {
-  width: 80px;
-  height: 80px;
+.page-title i {
+  color: var(--primary-color);
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.profile-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.avatar-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-image {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   object-fit: cover;
+  border: 4px solid var(--primary-color);
 }
 
-.profile-info h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: var(--text-color);
-}
-.profile-info .role {
-  margin: 0;
-  font-size: 0.95rem;
-}
-.highlight {
-  color: #3b82f6;
-}
-
-.profile-extra {
-  margin-left: auto;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.info-card {
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: var(--card-shadow);
-}
-
-.info-card h3 {
-  margin-bottom: 1rem;
-  color: var(--text-color);
-}
-
-.info-row {
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
   display: flex;
-  justify-content: space-between;
-  padding: 0.25rem 0;
+  align-items: center;
+  justify-content: center;
 }
 
-.label {
-  color: var(--text-muted);
-}
-.value {
-  color: var(--text-color);
-  text-align: right;
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.edu-item {
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
   margin-bottom: 1rem;
 }
-.edu-title {
-  font-weight: bold;
-  color: var(--text-color);
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
-.edu-sub {
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 0.9rem;
-  color: var(--text-muted);
-}
-.edu-date {
-  font-size: 0.85rem;
-  color: var(--text-muted);
 }
 
-/* Tema claro */
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .student-profile {
+    padding: 1rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
 :root {
-  --bg-color: #f9fafb;
-  --text-color: #1f2937;
-  --text-muted: #6b7280;
-  --card-bg: #ffffff;
-  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  --table-header-bg: #f3f4f6;
-}
-
-/* Tema escuro */
-body.dark {
-  --bg-color: #111827;
-  --text-color: #f3f4f6;
-  --text-muted: #9ca3af;
-  --card-bg: #1f2937;
-  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  --table-header-bg: #374151;
+  --primary-color: #6366f1;
+  --primary-hover: #5856eb;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
 }
 </style>
