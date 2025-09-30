@@ -17,7 +17,7 @@
     <ul :class="['nav-links', { 'menu-open': menuOpen }]">
       <!-- Dashboard Principal -->
       <li>
-        <router-link to="/dashboard-student" class="nav-item" active-class="active">
+        <router-link to="/student-dashboard" class="nav-item" active-class="active">
           <div class="nav-icon">
             <i class="fas fa-home"></i>
           </div>
