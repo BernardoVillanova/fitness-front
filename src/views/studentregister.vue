@@ -185,7 +185,7 @@ export default {
           // TODO - Ajustar payload para como está sendo salvo no banco
           const payload = {
             userId,
-            instructorId: {}, // TODO - Verificar como será feito a conexão de aluno e instrutor
+            // instructorId will be assigned later by instructor
             personalInfo: {
               height: this.form.personalInfo.height,
               weight: this.form.personalInfo.weight,

@@ -5,6 +5,7 @@ import LoginPage from '../views/login.vue';
 import RegisterPage from '../views/register.vue';
 import WorkoutPlans from '../views/workoutplans.vue';
 import DashboardTech from '../views/dashboardtech.vue';
+import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
 import StudentProfile from '../views/studentprofile.vue'
 import StudentRegister from '../views/studentregister.vue';
@@ -58,8 +59,8 @@ const routes = [
     // meta: { requiresAuth: true, role: 'personal' },  
   },
   {
-    path: '/dashboard-student',
-    component: DashboardTech,
+    path: '/student-dashboard',
+    component: DashboardStudent,
     // meta: { requiresAuth: true, role: 'student' },
   }
 ];
