@@ -87,7 +87,7 @@ export default {
 
         // Buscar dados completos do usuário
         let userData = {
-          id: decodedToken.userId,
+          id: decodedToken.userId || decodedToken.id || decodedToken.sub,
           email: this.email,
           role: decodedToken.role,
           name: decodedToken.name || 'Usuário'
@@ -96,9 +96,19 @@ export default {
         // Se for student, buscar dados completos
         if (decodedToken.role === 'student') {
           try {
-            const studentResponse = await api.get(`/students/${decodedToken.userId}`);
+            // O token contém o userId, precisamos buscar o student por userId
+            const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
+            
+            if (!userId) {
+              throw new Error('ID do estudante não encontrado no token');
+            }
+
+            // Buscar student por userId em vez de _id
+            const studentResponse = await api.get(`/students/user/${userId}`);
+            
             userData = {
               ...userData,
+              id: userId,
               studentId: studentResponse.data._id,
               name: studentResponse.data.name,
               email: studentResponse.data.email,
@@ -107,6 +117,34 @@ export default {
             };
           } catch (err) {
             console.error('Erro ao buscar dados do student:', err);
+            
+            // Fallback: tentar buscar todos os students e filtrar
+            try {
+              const allStudentsResponse = await api.get('/students');
+              const students = allStudentsResponse.data;
+              const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
+              
+              // Procurar o student pelo userId
+              const student = students.find(s => 
+                s.userId === userId || 
+                s.userId?._id === userId ||
+                s.userId?.$oid === userId
+              );
+              
+              if (student) {
+                userData = {
+                  ...userData,
+                  id: userId,
+                  studentId: student._id,
+                  name: student.name,
+                  email: student.email,
+                  phone: student.phone,
+                  instructorId: student.instructorId
+                };
+              }
+            } catch (fallbackErr) {
+              console.error('Erro no fallback:', fallbackErr);
+            }
           }
         }
 

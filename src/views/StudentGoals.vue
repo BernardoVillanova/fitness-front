@@ -166,42 +166,8 @@ const newGoal = reactive({
     }));
   } catch (error) {
     console.error('Erro ao buscar metas:', error);
-    // Fallback com dados de exemplo
-    goals.value = [
-      {
-        id: 1,
-        title: 'Supino 100kg',
-        description: 'Conseguir fazer supino reto com 100kg',
-        current: 85,
-        target: 100,
-        unit: 'kg',
-        progress: 85,
-        status: 'active',
-        deadline: '2024-12-31'
-      },
-      {
-        id: 2,
-        title: 'Perder 5kg',
-        description: 'Reduzir peso corporal em 5kg',
-        current: 3,
-        target: 5,
-        unit: 'kg',
-        progress: 60,
-        status: 'active',
-        deadline: '2024-11-30'
-      },
-      {
-        id: 3,
-        title: 'Correr 5km',
-        description: 'Correr 5km sem parar em menos de 30 minutos',
-        current: 3.5,
-        target: 5,
-        unit: 'km',
-        progress: 70,
-        status: 'active',
-        deadline: '2024-10-30'
-      }
-    ];
+    // No goals available
+    goals.value = [];
   } finally {
     loading.value = false;
   }

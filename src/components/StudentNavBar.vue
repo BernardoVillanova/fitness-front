@@ -191,30 +191,51 @@ export default {
         // Buscar dados do sessionStorage para evitar problemas com Proxy
         const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
-          console.log('Nenhum usuario no sessionStorage');
           hasInstructor.value = false;
           return;
         }
 
         const userData = JSON.parse(storedUser);
-        console.log('Verificando instrutor - UserData:', userData);
+        
+        // Se já tem instructorId no userData, usar direto
+        if (userData.instructorId) {
+          const instructorId = userData.instructorId?.$oid || 
+                              userData.instructorId?._id || 
+                              userData.instructorId;
+          hasInstructor.value = !!(instructorId && instructorId.toString().trim() !== '');
+          return;
+        }
         
         const studentId = userData.studentId || userData.id;
         
         if (!studentId) {
-          console.log('Nenhum ID encontrado no userData');
           hasInstructor.value = false;
           return;
         }
-
-        console.log('Student ID:', studentId);
         
-        const response = await api.get(`/students/${studentId}`);
-        console.log('Response data:', response.data);
-        console.log('Instructor ID:', response.data?.instructorId);
+        // Tentar buscar por studentId primeiro
+        let response;
+        try {
+          response = await api.get(`/students/${studentId}`);
+        } catch (err) {
+          // Fallback: buscar por userId
+          response = await api.get(`/students/user/${userData.id}`);
+        }
         
-        hasInstructor.value = !!(response.data?.instructorId);
-        console.log('Has Instructor:', hasInstructor.value);
+        let instructorId = null;
+        
+        // Se instructorId for um objeto (formato MongoDB)
+        if (response.data.instructorId && typeof response.data.instructorId === 'object') {
+          instructorId = response.data.instructorId.$oid || 
+                        response.data.instructorId._id || 
+                        response.data.instructorId.toString();
+        } else {
+          // Se for string direta
+          instructorId = response.data.instructorId;
+        }
+        
+        // Verificar se existe e não é null/undefined/string vazia
+        hasInstructor.value = !!(instructorId && instructorId.toString().trim() !== '');
       } catch (error) {
         console.error('Erro ao verificar instrutor:', error);
         hasInstructor.value = false;

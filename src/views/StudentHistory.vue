@@ -4,11 +4,11 @@
     <main class="main-content">
       <!-- Header -->
       <div class="header-section">
-      <div class="header-content">
-        <h1 class="page-title">Histórico de Treinos</h1>
-        <p class="page-subtitle">Veja todo seu progresso e treinos realizados</p>
+        <div class="header-content">
+          <h1 class="page-title">Histórico de Treinos</h1>
+          <p class="page-subtitle">Veja todo seu progresso e treinos realizados</p>
+        </div>
       </div>
-    </div>
 
     <!-- Filters -->
     <div class="filters-section">
@@ -147,22 +147,39 @@
             </div>
           </div>
 
-          <div v-if="selectedWorkout.exerciseDetails" class="exercise-details">
-            <h4>Exercícios Realizados</h4>
+          <div v-if="selectedWorkout.exerciseDetails && selectedWorkout.exerciseDetails.length > 0" class="exercise-details">
+            <h4>Exercícios Realizados ({{ selectedWorkout.exerciseDetails.length }})</h4>
             <div class="exercises-list">
               <div 
                 v-for="exercise in selectedWorkout.exerciseDetails" 
                 :key="exercise.id"
                 class="exercise-item"
+                :class="{ 'completed': exercise.completed }"
               >
-                <div class="exercise-name">{{ exercise.name }}</div>
-                <div class="exercise-stats">
-                  <span v-if="exercise.sets">{{ exercise.sets }} séries</span>
-                  <span v-if="exercise.reps">{{ exercise.reps }} reps</span>
-                  <span v-if="exercise.weight">{{ exercise.weight }}kg</span>
+                <div class="exercise-info">
+                  <div class="exercise-name">
+                    <i v-if="exercise.completed" class="fas fa-check-circle" style="color: var(--success-color); margin-right: 0.5rem;"></i>
+                    <i v-else class="fas fa-circle" style="color: var(--text-muted); margin-right: 0.5rem; font-size: 0.6rem;"></i>
+                    {{ exercise.name }}
+                  </div>
+                  <div class="exercise-stats">
+                    <span v-if="exercise.setsCompleted !== undefined && exercise.setsTotal">
+                      {{ exercise.setsCompleted }}/{{ exercise.setsTotal }} séries
+                    </span>
+                    <template v-if="exercise.sets && exercise.sets.length > 0">
+                      <span v-for="(set, idx) in exercise.sets" :key="idx" class="set-badge" :class="{ 'completed': set.completed }">
+                        S{{ set.setNumber }}: {{ set.reps }}x{{ set.weight || 0 }}kg
+                      </span>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+          
+          <div v-if="selectedWorkout.notes" class="workout-notes">
+            <h4>Observações</h4>
+            <p>{{ selectedWorkout.notes }}</p>
           </div>
         </div>
 
@@ -199,33 +216,76 @@ const workoutHistory = ref([])
 const fetchWorkoutHistory = async () => {
   try {
     loading.value = true
-    const response = await api.get('/student/sessions/history')
     
-    if (response.data && Array.isArray(response.data)) {
-      workoutHistory.value = response.data.map(session => ({
-        id: session._id || session.id,
-        name: session.workoutPlan?.name || session.name || 'Treino',
-        type: session.workoutPlan?.type || session.type || 'Força',
-        date: new Date(session.startTime || session.date),
-        duration: session.duration || Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000) || 0,
-        calories: session.caloriesBurned || 0,
-        completion: session.completionPercentage || 
-                   (session.completedExercises && session.totalExercises 
-                     ? Math.round((session.completedExercises / session.totalExercises) * 100) 
-                     : 0),
-        exercises: session.exercises?.length || session.totalExercises || 0,
-        exerciseDetails: session.exercises?.map(ex => ({
-          id: ex._id || ex.id,
-          name: ex.name || ex.exerciseName,
-          sets: ex.sets || ex.completedSets,
-          reps: ex.reps || ex.targetReps,
-          weight: ex.weight || ex.targetWeight
-        })) || []
-      }))
+    // Buscar histórico completo (sem limite para ter todos os dados)
+    const response = await api.get('/student/sessions/history', {
+      params: { limit: 1000 } // Buscar muitas sessões para estatísticas
+    })
+    
+    if (response.data && response.data.sessions) {
+      const sessions = response.data.sessions
+      
+      workoutHistory.value = sessions
+        .filter(session => session.status === 'completed') // Apenas completadas
+        .map(session => {
+          // Calcular duração se não estiver definida
+          let duration = session.duration
+          if (!duration && session.endTime && session.startTime) {
+            duration = Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000)
+          }
+          
+          // Calcular completion percentage
+          let completion = 100
+          if (session.completedExercises !== undefined && session.totalExercises) {
+            completion = Math.round((session.completedExercises / session.totalExercises) * 100)
+          }
+          
+          // Estimar calorias baseado na duração (aprox 5 cal/min)
+          const estimatedCalories = duration ? Math.round(duration * 5) : 0
+          
+          // Processar exercícios
+          const exerciseDetails = (session.exercises || []).map(ex => {
+            // Calcular quantos sets foram completados
+            const completedSets = ex.sets ? ex.sets.filter(s => s.completed).length : 0
+            const totalSets = ex.sets ? ex.sets.length : 0
+            
+            return {
+              id: ex.exerciseId || ex._id,
+              name: ex.exerciseName || ex.name || 'Exercício',
+              setsCompleted: completedSets,
+              setsTotal: totalSets,
+              sets: ex.sets || [],
+              completed: ex.completed || false
+            }
+          })
+          
+          // Determinar tipo do treino
+          const workoutName = session.workoutName || session.workoutPlanId?.name || 'Treino'
+          let type = 'Força'
+          if (workoutName.toLowerCase().includes('cardio')) type = 'Cardio'
+          else if (workoutName.toLowerCase().includes('flex')) type = 'Flexibilidade'
+          else if (session.workoutPlanId?.type) type = session.workoutPlanId.type
+          
+          return {
+            id: session._id,
+            name: `${workoutName} - ${session.divisionName || 'Treino'}`,
+            type: type,
+            date: new Date(session.endTime || session.startTime),
+            duration: duration || 0,
+            calories: session.caloriesBurned || estimatedCalories,
+            completion: completion,
+            exercises: exerciseDetails.length,
+            exerciseDetails: exerciseDetails,
+            status: session.status,
+            notes: session.notes
+          }
+        })
+        .sort((a, b) => b.date - a.date) // Ordenar por data (mais recente primeiro)
+    } else {
+      workoutHistory.value = []
     }
   } catch (error) {
     console.error('Erro ao buscar histórico de treinos:', error)
-    // Keep empty array on error
     workoutHistory.value = []
   } finally {
     loading.value = false
@@ -728,32 +788,86 @@ body:has(.navbar-collapsed) .main-content {
 }
 
 .exercise-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 1rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.exercise-item.completed {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.exercise-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .exercise-name {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-color);
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
 }
 
 .exercise-stats {
   display: flex;
   gap: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  flex-wrap: wrap;
+  font-size: 0.85rem;
 }
 
-.exercise-stats span {
+.exercise-stats > span {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.set-badge {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.set-badge.completed {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
+
+.workout-notes {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.workout-notes h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.75rem;
+}
+
+.workout-notes p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
 }
 
 .modal-footer {
@@ -867,13 +981,38 @@ body:has(.navbar-collapsed) .main-content {
   }
   
   .exercise-item {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
+    padding: 0.75rem;
+  }
+  
+  .exercise-info {
+    gap: 0.75rem;
+  }
+  
+  .exercise-name {
+    font-size: 0.9rem;
   }
   
   .exercise-stats {
-    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .set-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .workout-notes {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
+  
+  .workout-notes h4 {
+    font-size: 1rem;
+  }
+  
+  .workout-notes p {
+    font-size: 0.9rem;
+    padding: 0.75rem;
   }
 }
 </style>
