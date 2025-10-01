@@ -1,468 +1,371 @@
 <template>
   <div class="student-history">
-    <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-history"></i>
-        Histórico de Treinos
-      </h1>
-      <p class="page-subtitle">Visualize todos os seus treinos realizados</p>
+    <!-- Header -->
+    <div class="header-section">
+      <div class="header-content">
+        <h1 class="page-title">Histórico de Treinos</h1>
+        <p class="page-subtitle">Veja todo seu progresso e treinos realizados</p>
+      </div>
     </div>
 
     <!-- Filters -->
     <div class="filters-section">
       <div class="filter-group">
-        <label for="dateRange">Período:</label>
-        <select v-model="selectedPeriod" @change="filterWorkouts" id="dateRange" class="filter-select">
+        <label>Período:</label>
+        <select v-model="selectedPeriod" class="filter-select">
+          <option value="all">Todo o período</option>
           <option value="week">Última semana</option>
           <option value="month">Último mês</option>
           <option value="3months">Últimos 3 meses</option>
-          <option value="6months">Últimos 6 meses</option>
-          <option value="year">Último ano</option>
-          <option value="all">Todo o período</option>
-        </select>
-      </div>
-      
-      <div class="filter-group">
-        <label for="workoutType">Tipo de Treino:</label>
-        <select v-model="selectedType" @change="filterWorkouts" id="workoutType" class="filter-select">
-          <option value="all">Todos os tipos</option>
-          <option value="chest">Peito</option>
-          <option value="back">Costas</option>
-          <option value="legs">Pernas</option>
-          <option value="arms">Braços</option>
-          <option value="shoulders">Ombros</option>
-          <option value="cardio">Cardio</option>
         </select>
       </div>
 
       <div class="filter-group">
-        <label for="sortBy">Ordenar por:</label>
-        <select v-model="sortBy" @change="sortWorkouts" id="sortBy" class="filter-select">
-          <option value="date-desc">Data (mais recente)</option>
-          <option value="date-asc">Data (mais antigo)</option>
-          <option value="duration-desc">Duração (maior)</option>
-          <option value="duration-asc">Duração (menor)</option>
-          <option value="difficulty-desc">Dificuldade (maior)</option>
-          <option value="difficulty-asc">Dificuldade (menor)</option>
+        <label>Tipo de Treino:</label>
+        <select v-model="selectedType" class="filter-select">
+          <option value="all">Todos os tipos</option>
+          <option value="Força">Força</option>
+          <option value="Cardio">Cardio</option>
+          <option value="Flexibilidade">Flexibilidade</option>
         </select>
       </div>
+
+      <button @click="clearFilters" class="clear-filters-btn">
+        <i class="fas fa-times"></i>
+        Limpar Filtros
+      </button>
     </div>
 
-    <!-- Summary Stats -->
-    <div class="summary-stats">
-      <div class="stat-card">
-        <div class="stat-icon">
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+      <div class="summary-card">
+        <div class="summary-icon">
           <i class="fas fa-dumbbell"></i>
         </div>
-        <div class="stat-info">
-          <h3>{{ filteredWorkouts.length }}</h3>
-          <p>Treinos Realizados</p>
+        <div class="summary-details">
+          <div class="summary-number">{{ filteredHistory.length }}</div>
+          <div class="summary-label">Treinos Realizados</div>
         </div>
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
+
+      <div class="summary-card">
+        <div class="summary-icon">
           <i class="fas fa-clock"></i>
         </div>
-        <div class="stat-info">
-          <h3>{{ totalDuration }}h</h3>
-          <p>Tempo Total</p>
+        <div class="summary-details">
+          <div class="summary-number">{{ totalTimeFormatted }}</div>
+          <div class="summary-label">Tempo Total</div>
         </div>
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="fas fa-weight-hanging"></i>
-        </div>
-        <div class="stat-info">
-          <h3>{{ totalVolume }}kg</h3>
-          <p>Volume Total</p>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
+
+      <div class="summary-card">
+        <div class="summary-icon">
           <i class="fas fa-fire"></i>
         </div>
-        <div class="stat-info">
-          <h3>{{ averageIntensity }}%</h3>
-          <p>Intensidade Média</p>
+        <div class="summary-details">
+          <div class="summary-number">{{ totalCalories }}</div>
+          <div class="summary-label">Calorias Queimadas</div>
         </div>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Carregando histórico...</p>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="filteredWorkouts.length === 0" class="empty-state">
-      <i class="fas fa-calendar-times"></i>
+    <!-- History List -->
+    <div v-if="filteredHistory.length === 0" class="empty-state">
+      <i class="fas fa-history"></i>
       <h3>Nenhum treino encontrado</h3>
-      <p>Não há treinos no período selecionado. Altere os filtros ou realize mais treinos!</p>
+      <p>Não há treinos no período selecionado.</p>
     </div>
 
-    <!-- Workout History List -->
     <div v-else class="history-list">
-      <div class="list-header">
-        <h2>Histórico Detalhado</h2>
-        <button @click="exportHistory" class="btn-secondary">
-          <i class="fas fa-download"></i>
-          Exportar
-        </button>
-      </div>
+      <div 
+        v-for="workout in filteredHistory" 
+        :key="workout.id"
+        class="history-item"
+        @click="selectWorkout(workout)"
+      >
+        <div class="workout-date">
+          <div class="date-day">{{ formatDay(workout.date) }}</div>
+          <div class="date-month">{{ formatMonth(workout.date) }}</div>
+        </div>
 
-      <div class="workout-timeline">
-        <div 
-          v-for="workout in paginatedWorkouts" 
-          :key="workout.id"
-          class="workout-entry"
-          :class="{ 'completed': workout.status === 'completed' }"
-        >
-          <div class="workout-date">
-            <div class="date-circle">
-              <span class="day">{{ getDay(workout.completedAt) }}</span>
-              <span class="month">{{ getMonth(workout.completedAt) }}</span>
+        <div class="workout-info">
+          <h3 class="workout-name">{{ workout.name }}</h3>
+          <div class="workout-details">
+            <span class="detail-item">
+              <i class="fas fa-clock"></i>
+              {{ workout.duration }}min
+            </span>
+            <span class="detail-item">
+              <i class="fas fa-fire"></i>
+              {{ workout.calories }}kcal
+            </span>
+            <span class="detail-item">
+              <i class="fas fa-dumbbell"></i>
+              {{ workout.exercises || 0 }} exercícios
+            </span>
+          </div>
+        </div>
+
+        <div class="workout-status">
+          <div class="completion-badge" :class="workout.completion >= 100 ? 'completed' : 'partial'">
+            {{ workout.completion }}%
+          </div>
+          <div class="workout-type">{{ workout.type }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workout Details Modal -->
+    <div v-if="selectedWorkout" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>{{ selectedWorkout.name }}</h2>
+          <button @click="closeModal" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="workout-summary">
+            <div class="summary-row">
+              <span class="label">Data:</span>
+              <span class="value">{{ formatFullDate(selectedWorkout.date) }}</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Duração:</span>
+              <span class="value">{{ selectedWorkout.duration }} minutos</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Calorias:</span>
+              <span class="value">{{ selectedWorkout.calories }} kcal</span>
+            </div>
+            <div class="summary-row">
+              <span class="label">Conclusão:</span>
+              <span class="value">{{ selectedWorkout.completion }}%</span>
             </div>
           </div>
-          
-          <div class="workout-details">
-            <div class="workout-header">
-              <h3 class="workout-name">{{ workout.name }}</h3>
-              <div class="workout-meta">
-                <span class="duration">
-                  <i class="fas fa-clock"></i>
-                  {{ workout.actualDuration }}min
-                </span>
-                <span class="difficulty">
-                  <i class="fas fa-fire"></i>
-                  {{ workout.difficulty }}
-                </span>
-                <span class="status">
-                  <i class="fas fa-check-circle"></i>
-                  Concluído
-                </span>
-              </div>
-            </div>
-            
-            <div class="workout-stats">
-              <div class="stat-item">
-                <span class="stat-label">Exercícios:</span>
-                <span class="stat-value">{{ workout.exercises?.length || 0 }}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Volume:</span>
-                <span class="stat-value">{{ workout.totalVolume }}kg</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Intensidade:</span>
-                <span class="stat-value">{{ workout.intensity }}%</span>
-              </div>
-            </div>
 
-            <div class="workout-exercises" v-if="workout.showDetails">
-              <h4>Exercícios Realizados:</h4>
-              <div class="exercises-grid">
-                <div 
-                  v-for="exercise in workout.exercises" 
-                  :key="exercise.id"
-                  class="exercise-item"
-                >
-                  <div class="exercise-name">{{ exercise.name }}</div>
-                  <div class="exercise-sets">
-                    {{ exercise.completedSets }}x{{ exercise.reps }}
-                    <span v-if="exercise.weight"> - {{ exercise.weight }}kg</span>
-                  </div>
+          <div v-if="selectedWorkout.exerciseDetails" class="exercise-details">
+            <h4>Exercícios Realizados</h4>
+            <div class="exercises-list">
+              <div 
+                v-for="exercise in selectedWorkout.exerciseDetails" 
+                :key="exercise.id"
+                class="exercise-item"
+              >
+                <div class="exercise-name">{{ exercise.name }}</div>
+                <div class="exercise-stats">
+                  <span v-if="exercise.sets">{{ exercise.sets }} séries</span>
+                  <span v-if="exercise.reps">{{ exercise.reps }} reps</span>
+                  <span v-if="exercise.weight">{{ exercise.weight }}kg</span>
                 </div>
               </div>
             </div>
-
-            <div class="workout-actions">
-              <button 
-                @click="toggleDetails(workout)"
-                class="btn-text"
-              >
-                <i :class="workout.showDetails ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-                {{ workout.showDetails ? 'Menos detalhes' : 'Mais detalhes' }}
-              </button>
-              <button @click="repeatWorkout(workout)" class="btn-primary">
-                <i class="fas fa-redo"></i>
-                Repetir Treino
-              </button>
-            </div>
-
-            <div v-if="workout.notes" class="workout-notes">
-              <i class="fas fa-sticky-note"></i>
-              <span>{{ workout.notes }}</span>
-            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="pagination">
-        <button 
-          @click="currentPage = Math.max(1, currentPage - 1)"
-          :disabled="currentPage === 1"
-          class="pagination-btn"
-        >
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        
-        <span class="pagination-info">
-          Página {{ currentPage }} de {{ totalPages }}
-        </span>
-        
-        <button 
-          @click="currentPage = Math.min(totalPages, currentPage + 1)"
-          :disabled="currentPage === totalPages"
-          class="pagination-btn"
-        >
-          <i class="fas fa-chevron-right"></i>
-        </button>
+        <div class="modal-footer">
+          <button @click="closeModal" class="btn secondary">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, computed, onMounted } from 'vue';
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 
-export default {
-  name: 'StudentHistory',
-  
-  setup() {
-    // Reactive data
-    const loading = ref(true);
-    const selectedPeriod = ref('month');
-    const selectedType = ref('all');
-    const sortBy = ref('date-desc');
-    const currentPage = ref(1);
-    const itemsPerPage = 10;
-    
-    // Mock workout history data
-    const workoutHistory = ref([
-      {
-        id: 1,
-        name: 'Treino A - Peito e Tríceps',
-        type: 'chest',
-        difficulty: 'Intermediário',
-        completedAt: '2024-02-15',
-        actualDuration: 65,
-        totalVolume: 1250,
-        intensity: 85,
-        status: 'completed',
-        notes: 'Ótimo treino! Consegui aumentar a carga no supino.',
-        showDetails: false,
-        exercises: [
-          { id: 1, name: 'Supino Reto', completedSets: 4, reps: 12, weight: 60 },
-          { id: 2, name: 'Supino Inclinado', completedSets: 3, reps: 10, weight: 50 },
-          { id: 3, name: 'Crucifixo', completedSets: 3, reps: 12, weight: 20 },
-          { id: 4, name: 'Tríceps Pulley', completedSets: 4, reps: 15, weight: 30 }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Treino B - Costas e Bíceps',
-        type: 'back',
-        difficulty: 'Intermediário',
-        completedAt: '2024-02-13',
-        actualDuration: 70,
-        totalVolume: 1180,
-        intensity: 80,
-        status: 'completed',
-        notes: '',
-        showDetails: false,
-        exercises: [
-          { id: 5, name: 'Puxada Frente', completedSets: 4, reps: 12, weight: 45 },
-          { id: 6, name: 'Remada Baixa', completedSets: 4, reps: 10, weight: 50 },
-          { id: 7, name: 'Rosca Direta', completedSets: 3, reps: 12, weight: 15 },
-          { id: 8, name: 'Rosca Martelo', completedSets: 3, reps: 10, weight: 12 }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Treino C - Pernas',
-        type: 'legs',
-        difficulty: 'Avançado',
-        completedAt: '2024-02-11',
-        actualDuration: 75,
-        totalVolume: 1450,
-        intensity: 90,
-        status: 'completed',
-        notes: 'Treino intenso, senti bastante as pernas trabalharem.',
-        showDetails: false,
-        exercises: [
-          { id: 9, name: 'Agachamento', completedSets: 4, reps: 15, weight: 80 },
-          { id: 10, name: 'Leg Press', completedSets: 4, reps: 12, weight: 120 },
-          { id: 11, name: 'Cadeira Extensora', completedSets: 3, reps: 15, weight: 40 },
-          { id: 12, name: 'Mesa Flexora', completedSets: 3, reps: 12, weight: 35 }
-        ]
-      }
-    ]);
-    
-    // Computed properties
-    const filteredWorkouts = computed(() => {
-      let filtered = [...workoutHistory.value];
-      
-      // Filter by type
-      if (selectedType.value !== 'all') {
-        filtered = filtered.filter(workout => workout.type === selectedType.value);
-      }
-      
-      // Filter by period (simplified for demo)
-      // In a real app, you'd filter by actual dates
-      
-      return filtered;
-    });
-    
-    const sortedWorkouts = computed(() => {
-      const sorted = [...filteredWorkouts.value];
-      
-      switch (sortBy.value) {
-        case 'date-desc':
-          return sorted.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-        case 'date-asc':
-          return sorted.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
-        case 'duration-desc':
-          return sorted.sort((a, b) => b.actualDuration - a.actualDuration);
-        case 'duration-asc':
-          return sorted.sort((a, b) => a.actualDuration - b.actualDuration);
-        default:
-          return sorted;
-      }
-    });
-    
-    const totalPages = computed(() => {
-      return Math.ceil(sortedWorkouts.value.length / itemsPerPage);
-    });
-    
-    const paginatedWorkouts = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage;
-      const end = start + itemsPerPage;
-      return sortedWorkouts.value.slice(start, end);
-    });
-    
-    const totalDuration = computed(() => {
-      return Math.round(filteredWorkouts.value.reduce((total, workout) => total + workout.actualDuration, 0) / 60);
-    });
-    
-    const totalVolume = computed(() => {
-      return filteredWorkouts.value.reduce((total, workout) => total + workout.totalVolume, 0);
-    });
-    
-    const averageIntensity = computed(() => {
-      const total = filteredWorkouts.value.reduce((sum, workout) => sum + workout.intensity, 0);
-      return filteredWorkouts.value.length > 0 ? Math.round(total / filteredWorkouts.value.length) : 0;
-    });
-    
-    // Methods
-    const filterWorkouts = () => {
-      currentPage.value = 1; // Reset to first page when filtering
-    };
-    
-    const sortWorkouts = () => {
-      currentPage.value = 1; // Reset to first page when sorting
-    };
-    
-    const toggleDetails = (workout) => {
-      workout.showDetails = !workout.showDetails;
-    };
-    
-    const repeatWorkout = (workout) => {
-      console.log('Repeating workout:', workout.name);
-      // In a real app, navigate to workout execution with this template
-    };
-    
-    const exportHistory = () => {
-      console.log('Exporting workout history...');
-      // In a real app, generate and download CSV/PDF
-    };
-    
-    const getDay = (dateStr) => {
-      return new Date(dateStr).getDate().toString().padStart(2, '0');
-    };
-    
-    const getMonth = (dateStr) => {
-      const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                     'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      return months[new Date(dateStr).getMonth()];
-    };
-    
-    // Lifecycle
-    onMounted(() => {
-      setTimeout(() => {
-        loading.value = false;
-      }, 1000);
-    });
-    
-    return {
-      loading,
-      selectedPeriod,
-      selectedType,
-      sortBy,
-      currentPage,
-      filteredWorkouts,
-      paginatedWorkouts,
-      totalPages,
-      totalDuration,
-      totalVolume,
-      averageIntensity,
-      filterWorkouts,
-      sortWorkouts,
-      toggleDetails,
-      repeatWorkout,
-      exportHistory,
-      getDay,
-      getMonth
-    };
+// Reactive data
+const selectedPeriod = ref('all')
+const selectedType = ref('all')
+const selectedWorkout = ref(null)
+
+// Mock history data
+const workoutHistory = ref([
+  {
+    id: 1,
+    name: "Treino A - Peito e Tríceps",
+    type: "Força",
+    date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    duration: 45,
+    calories: 280,
+    completion: 100,
+    exercises: 7,
+    exerciseDetails: [
+      { id: 1, name: "Supino Reto", sets: 4, reps: 12, weight: 80 },
+      { id: 2, name: "Supino Inclinado", sets: 3, reps: 10, weight: 70 },
+      { id: 3, name: "Fly Máquina", sets: 3, reps: 15, weight: 50 },
+      { id: 4, name: "Cross Over", sets: 3, reps: 12, weight: 25 },
+      { id: 5, name: "Tríceps Pulley", sets: 4, reps: 12, weight: 40 },
+      { id: 6, name: "Tríceps Francês", sets: 3, reps: 10, weight: 30 },
+      { id: 7, name: "Mergulho", sets: 3, reps: 15 }
+    ]
+  },
+  {
+    id: 2,
+    name: "Treino C - Pernas",
+    type: "Força",
+    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    duration: 55,
+    calories: 380,
+    completion: 90,
+    exercises: 8,
+    exerciseDetails: [
+      { id: 1, name: "Agachamento Livre", sets: 4, reps: 12, weight: 100 },
+      { id: 2, name: "Leg Press", sets: 4, reps: 15, weight: 200 },
+      { id: 3, name: "Extensão de Pernas", sets: 3, reps: 15, weight: 60 },
+      { id: 4, name: "Mesa Flexora", sets: 4, reps: 12, weight: 50 }
+    ]
+  },
+  {
+    id: 3,
+    name: "Treino B - Costas e Bíceps",
+    type: "Força",
+    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+    duration: 50,
+    calories: 320,
+    completion: 100,
+    exercises: 6,
+    exerciseDetails: [
+      { id: 1, name: "Puxada Frontal", sets: 4, reps: 12, weight: 60 },
+      { id: 2, name: "Remada Curvada", sets: 4, reps: 10, weight: 70 },
+      { id: 3, name: "Rosca Direta", sets: 3, reps: 12, weight: 20 }
+    ]
+  },
+  {
+    id: 4,
+    name: "Cardio Intenso",
+    type: "Cardio",
+    date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    duration: 30,
+    calories: 250,
+    completion: 100,
+    exercises: 5
+  },
+  {
+    id: 5,
+    name: "Treino A - Peito e Tríceps",
+    type: "Força",
+    date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    duration: 42,
+    calories: 260,
+    completion: 85,
+    exercises: 7
   }
-};
+])
+
+// Computed
+const filteredHistory = computed(() => {
+  let filtered = workoutHistory.value
+
+  // Filter by period
+  if (selectedPeriod.value !== 'all') {
+    const now = new Date()
+    const periodDays = {
+      week: 7,
+      month: 30,
+      '3months': 90
+    }
+    const days = periodDays[selectedPeriod.value]
+    const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000))
+    filtered = filtered.filter(workout => workout.date >= cutoffDate)
+  }
+
+  // Filter by type
+  if (selectedType.value !== 'all') {
+    filtered = filtered.filter(workout => workout.type === selectedType.value)
+  }
+
+  return filtered.sort((a, b) => b.date - a.date)
+})
+
+const totalTimeFormatted = computed(() => {
+  const totalMinutes = filteredHistory.value.reduce((sum, workout) => sum + workout.duration, 0)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+})
+
+const totalCalories = computed(() => {
+  return filteredHistory.value.reduce((sum, workout) => sum + workout.calories, 0)
+})
+
+// Methods
+const formatDay = (date) => {
+  return new Date(date).getDate().toString().padStart(2, '0')
+}
+
+const formatMonth = (date) => {
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+  return months[new Date(date).getMonth()]
+}
+
+const formatFullDate = (date) => {
+  return new Date(date).toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+const selectWorkout = (workout) => {
+  selectedWorkout.value = workout
+}
+
+const closeModal = () => {
+  selectedWorkout.value = null
+}
+
+const clearFilters = () => {
+  selectedPeriod.value = 'all'
+  selectedType.value = 'all'
+}
+
+// Lifecycle
+onMounted(() => {
+  // Initialize component
+})
 </script>
 
 <style scoped>
 .student-history {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
 }
 
-.page-header {
+.header-section {
+  text-align: center;
   margin-bottom: 2rem;
 }
 
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.page-title i {
-  color: var(--primary-color);
+  color: white;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .page-subtitle {
   font-size: 1.1rem;
-  color: var(--text-secondary);
+  color: rgba(255,255,255,0.9);
   margin: 0;
 }
 
 /* Filters */
 .filters-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  align-items: end;
+  flex-wrap: wrap;
+  background: rgba(255,255,255,0.1);
   padding: 1.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
 }
 
 .filter-group {
@@ -473,481 +376,429 @@ export default {
 
 .filter-group label {
   font-weight: 600;
-  color: var(--text-primary);
+  color: white;
   font-size: 0.9rem;
 }
 
 .filter-select {
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: white;
+  color: #2d3748;
+  font-weight: 500;
   cursor: pointer;
+  min-width: 150px;
 }
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.3);
 }
 
-/* Summary Stats */
-.summary-stats {
+.clear-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.clear-filters-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Stats Summary */
+.stats-summary {
+  max-width: 800px;
+  margin: 0 auto 2rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  gap: 1rem;
 }
 
-.stat-card {
-  background: var(--bg-secondary);
+.summary-card {
+  background: white;
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   gap: 1rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.stat-icon {
+.summary-icon {
   width: 50px;
   height: 50px;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 10px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  color: white;
+  font-size: 1.2rem;
 }
 
-.stat-info h3 {
-  font-size: 2rem;
+.summary-details {
+  flex: 1;
+}
+
+.summary-number {
+  font-size: 1.8rem;
   font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
+  color: #2d3748;
+  line-height: 1;
 }
 
-.stat-info p {
-  color: var(--text-secondary);
-  margin: 0;
+.summary-label {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-top: 0.25rem;
+}
+
+/* History List */
+.history-list {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-item {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.history-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.workout-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 12px;
+}
+
+.date-day {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.date-month {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.workout-info {
+  flex: 1;
+}
+
+.workout-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.workout-details {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.detail-item i {
+  width: 14px;
+}
+
+.workout-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.completion-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
   font-size: 0.9rem;
 }
 
-/* Loading and Empty States */
-.loading-container {
-  text-align: center;
-  padding: 4rem 2rem;
+.completion-badge.completed {
+  background: #c6f6d5;
+  color: #22543d;
 }
 
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid var(--border-color);
-  border-top: 4px solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
+.completion-badge.partial {
+  background: #fed7d7;
+  color: #c53030;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.workout-type {
+  font-size: 0.8rem;
+  color: #718096;
+  background: #f7fafc;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
 }
 
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: var(--text-secondary);
+  color: rgba(255,255,255,0.9);
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .empty-state i {
   font-size: 4rem;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
-/* History List */
-.history-list {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+.empty-state h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.close-btn {
+  padding: 0.5rem;
+  border: none;
+  background: #f7fafc;
+  color: #718096;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.modal-body {
   padding: 2rem;
 }
 
-.list-header {
+.workout-summary {
+  margin-bottom: 2rem;
+}
+
+.summary-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f7fafc;
 }
 
-.list-header h2 {
-  margin: 0;
-  color: var(--text-primary);
+.summary-row:last-child {
+  border-bottom: none;
 }
 
-/* Workout Timeline */
-.workout-timeline {
-  position: relative;
+.summary-row .label {
+  font-weight: 600;
+  color: #4a5568;
 }
 
-.workout-timeline::before {
-  content: '';
-  position: absolute;
-  left: 30px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--border-color);
+.summary-row .value {
+  color: #2d3748;
 }
 
-.workout-entry {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  position: relative;
-}
-
-.workout-date {
-  flex-shrink: 0;
-}
-
-.date-circle {
-  width: 60px;
-  height: 60px;
-  background: var(--bg-primary);
-  border: 3px solid var(--primary-color);
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-}
-
-.day {
+.exercise-details h4 {
   font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1;
-}
-
-.month {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
   font-weight: 600;
-  text-transform: uppercase;
-}
-
-.workout-details {
-  flex: 1;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.workout-details:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.workout-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  color: #2d3748;
   margin-bottom: 1rem;
 }
 
-.workout-name {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.workout-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.workout-meta span {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.workout-stats {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-}
-
-.stat-item {
+.exercises-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.stat-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-/* Workout Exercises */
-.workout-exercises {
-  margin: 1rem 0;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-}
-
-.workout-exercises h4 {
-  margin: 0 0 1rem 0;
-  color: var(--text-primary);
-  font-size: 1rem;
-}
-
-.exercises-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 0.75rem;
 }
 
 .exercise-item {
-  padding: 0.75rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
 }
 
 .exercise-name {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #2d3748;
 }
 
-.exercise-sets {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-/* Workout Actions */
-.workout-actions {
+.exercise-stats {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.btn-text {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.btn-text:hover {
-  background: var(--bg-secondary);
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background: var(--bg-secondary);
-}
-
-/* Workout Notes */
-.workout-notes {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: var(--info-bg);
-  border: 1px solid var(--info-color);
-  border-radius: 8px;
-  display: flex;
-  align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: var(--info-color);
+  color: #718096;
 }
 
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border-color);
+.exercise-stats span {
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
 }
 
-.pagination-btn {
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.modal-footer {
+  padding: 1rem 2rem 2rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-.pagination-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  color: var(--text-secondary);
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn.secondary {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.btn.secondary:hover {
+  background: #edf2f7;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .student-history {
-    padding: 1rem;
+    padding: 1rem 0.5rem;
   }
-
+  
   .page-title {
     font-size: 2rem;
   }
-
+  
   .filters-section {
-    grid-template-columns: 1fr;
-  }
-
-  .summary-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .list-header {
     flex-direction: column;
-    gap: 1rem;
     align-items: stretch;
   }
-
-  .workout-timeline::before {
-    left: 15px;
+  
+  .filter-group {
+    width: 100%;
   }
-
-  .workout-entry {
-    gap: 1rem;
+  
+  .filter-select {
+    min-width: auto;
   }
-
-  .date-circle {
-    width: 30px;
-    height: 30px;
-    font-size: 0.7rem;
-  }
-
-  .workout-header {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .workout-meta {
-    flex-wrap: wrap;
-  }
-
-  .workout-stats {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .exercises-grid {
+  
+  .stats-summary {
     grid-template-columns: 1fr;
   }
-
-  .workout-actions {
+  
+  .history-item {
     flex-direction: column;
+    text-align: center;
+    gap: 1rem;
   }
-}
-
-/* CSS Variables */
-:root {
-  --primary-color: #6366f1;
-  --primary-hover: #5856eb;
-  --secondary-color: #8b5cf6;
-  --success-color: #10b981;
-  --success-bg: #d1fae5;
-  --info-color: #3b82f6;
-  --info-bg: #dbeafe;
-  --warning-color: #f59e0b;
-  --warning-bg: #fef3c7;
-  --error-color: #ef4444;
-  --error-bg: #fef2f2;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
+  
+  .workout-info {
+    order: 2;
+  }
+  
+  .workout-status {
+    order: 3;
+    align-items: center;
+  }
+  
+  .workout-details {
+    justify-content: center;
+  }
+  
+  .modal-content {
+    margin: 0.5rem;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem;
+  }
 }
 </style>
