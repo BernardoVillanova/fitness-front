@@ -4,13 +4,15 @@ import HomePage from '../views/home.vue';
 import LoginPage from '../views/login.vue';
 import RegisterPage from '../views/register.vue';
 import WorkoutPlans from '../views/workoutplans.vue';
+import StudentWorkoutPlans from '../views/StudentWorkoutPlans.vue';
 import DashboardTech from '../views/dashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
-import StudentProfile from '../views/StudentProfile.vue'
+import StudentProfile from '../views/studentprofile.vue'
 import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/instructorregister.vue';
 import gymHome from '../views/gymHome.vue';
+import NotFound from '../views/NotFound.vue';
 import { useAuthStore } from '../store/auth';
 
 const routes = [
@@ -65,8 +67,18 @@ const routes = [
   },
   // Student Routes
   {
+    path: '/student/dashboard',
+    component: DashboardStudent,
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
     path: '/student/workouts',
-    component: () => import('../views/StudentWorkouts.vue'),
+    component: StudentWorkoutPlans,
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/student/workout-session',
+    component: () => import('../views/WorkoutSession.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   },
   {
@@ -91,13 +103,14 @@ const routes = [
   },
   {
     path: '/student/profile',
-    component: () => import('../views/StudentProfile.vue'),
+    component: () => import('../views/studentprofile.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   },
+  // Catch all 404 - must be last
   {
-    path: '/student/settings',
-    component: () => import('../views/StudentSettings.vue'),
-    // meta: { requiresAuth: true, role: 'student' },
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFound
   }
 ];
 

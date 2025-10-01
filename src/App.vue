@@ -23,19 +23,33 @@ html, body, #app {
 }
 
 :root {
-  --bg-color: #ffffff;
-  --text-color: #333;
-  --highlight-color: #007bff;
-  --button-color: #007bff;
-  --button-hover-color: #0056b3;
+  /* Light Mode */
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --bg-secondary: #f8fafc;
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --success-color: #10b981;
+  --warning-color: #eab308;
+  --danger-color: #ef4444;
 }
 
 .dark-mode {
-  --bg-color: #1a1a1a;
-  --text-color: #f4f4f4;
-  --highlight-color: #a855f7;
-  --button-color: #6a0dad;
-  --button-hover-color: #531d99;
+  /* Dark Mode */
+  --card-bg: #1e1e2d;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-secondary: #6b7280;
+  --border-color: #2d2d3f;
+  --bg-secondary: #171723;
+  --primary-color: #667eea;
+  --primary-hover: #5568d3;
+  --success-color: #10b981;
+  --warning-color: #eab308;
+  --danger-color: #ef4444;
 }
 
 

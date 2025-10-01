@@ -1,1861 +1,1270 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div :class="isDarkMode ? 'dashboard-dark' : 'dashboard-light'" class="dashboard-container">
+  <div class="dashboard-container" :class="{ 'dark-mode': isDarkMode }">
     <StudentNavBar />
     
     <main class="dashboard-main">
-      <!-- Mobile Header -->
-      <header class="mobile-header">
-        <div class="user-greeting">
-          <div class="user-avatar">
-            <img :src="userAvatar" :alt="studentData?.name" />
-          </div>
-          <div class="greeting-text">
-            <h1 class="welcome-text">Olá, {{ studentData?.name || 'Aluno' }}!</h1>
-            <p class="motivational-text">{{ getMotivationalMessage() }}</p>
-          </div>
-        </div>
-        <button class="notification-btn" @click="toggleNotifications">
-          <i class="fas fa-bell"></i>
-          <span v-if="unreadNotifications > 0" class="notification-badge">{{ unreadNotifications }}</span>
-        </button>
-      </header>
-
-      <div class="dashboard-content">
-        <!-- Quick Stats Cards -->
-        <section class="quick-stats">
-          <div class="stat-card primary">
-            <div class="stat-icon">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="stat-content">
-              <h3 class="stat-number">{{ workoutStats.thisWeek }}</h3>
-              <p class="stat-label">Treinos desta semana</p>
-            </div>
+      <!-- Header Section -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-left">
+            <h1 class="page-title">
+              Olá, {{ getUserName() }}! 👋
+            </h1>
+            <p class="page-subtitle">
+              {{ getWelcomeMessage() }}
+            </p>
           </div>
           
-          <div class="stat-card secondary">
-            <div class="stat-icon">
-              <i class="fas fa-fire"></i>
-            </div>
-            <div class="stat-content">
-              <h3 class="stat-number">{{ workoutStats.streak }}</h3>
-              <p class="stat-label">Sequência de dias</p>
-            </div>
-          </div>
-          
-          <div class="stat-card tertiary">
-            <div class="stat-icon">
-              <i class="fas fa-weight"></i>
-            </div>
-            <div class="stat-content">
-              <h3 class="stat-number">{{ progressData.currentWeight }}kg</h3>
-              <p class="stat-label">Peso atual</p>
-            </div>
-          </div>
-          
-          <div class="stat-card quaternary">
-            <div class="stat-icon">
-              <i class="fas fa-trophy"></i>
-            </div>
-            <div class="stat-content">
-              <h3 class="stat-number">{{ goalsAchieved }}</h3>
-              <p class="stat-label">Metas alcançadas</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Today's Workout Section -->
-        <section class="todays-workout" v-if="todaysWorkout">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-dumbbell"></i>
-              Treino de Hoje - {{ todaysWorkout.name }}
-            </h2>
-            <div class="workout-status" :class="todaysWorkout.status">
-              <span>{{ getWorkoutStatusText(todaysWorkout.status) }}</span>
-            </div>
-          </div>
-          
-          <div class="workout-content">
-            <div class="exercises-list">
-              <div 
-                v-for="(exercise, index) in todaysWorkout.exercises" 
-                :key="index"
-                class="exercise-item"
-                :class="{ completed: exercise.completed }"
-              >
-                <div class="exercise-header">
-                  <div class="exercise-info">
-                    <h4 class="exercise-name">{{ exercise.name }}</h4>
-                    <p class="exercise-target">{{ exercise.sets }}x{{ exercise.reps }} - {{ exercise.idealWeight }}kg</p>
-                  </div>
-                  <button 
-                    class="complete-btn"
-                    @click="toggleExerciseCompletion(index)"
-                    :class="{ completed: exercise.completed }"
-                  >
-                    <i class="fas fa-check"></i>
-                  </button>
-                </div>
-                
-                <div class="exercise-tracking" v-if="exercise.expanded">
-                  <div class="sets-tracking">
-                    <div 
-                      v-for="setIndex in exercise.sets" 
-                      :key="setIndex"
-                      class="set-input"
-                    >
-                      <label>Série {{ setIndex }}</label>
-                      <div class="input-group">
-                        <input 
-                          type="number" 
-                          v-model="exercise.actualSets[setIndex - 1].weight"
-                          placeholder="Peso"
-                          class="weight-input"
-                        />
-                        <span class="input-suffix">kg</span>
-                        <input 
-                          type="number" 
-                          v-model="exercise.actualSets[setIndex - 1].reps"
-                          placeholder="Reps"
-                          class="reps-input"
-                        />
-                        <span class="input-suffix">x</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="exercise-actions">
-                    <button class="btn-secondary" @click="exercise.expanded = false">Fechar</button>
-                    <button class="btn-primary" @click="saveExerciseData(index)">Salvar</button>
-                  </div>
-                </div>
-                
-                <button 
-                  v-else
-                  class="expand-btn"
-                  @click="expandExercise(index)"
-                >
-                  Registrar séries
-                </button>
-              </div>
-            </div>
-            
-            <div class="workout-actions">
-              <button 
-                class="btn-outline"
-                @click="skipWorkout"
-                v-if="todaysWorkout.status === 'pending'"
-              >
-                Pular Treino
-              </button>
-              <button 
-                class="btn-primary"
-                @click="completeWorkout"
-                v-if="todaysWorkout.status === 'in-progress'"
-              >
-                Finalizar Treino
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- No Workout Today -->
-        <section class="no-workout" v-else>
-          <div class="empty-state">
-            <i class="fas fa-calendar-times"></i>
-            <h3>Nenhum treino programado para hoje</h3>
-            <p>Aproveite para descansar ou conversar com seu personal trainer!</p>
-          </div>
-        </section>
-
-        <!-- Progress Overview -->
-        <section class="progress-overview">
-          <div class="section-header">
-            <h2 class="section-title">
+          <div class="header-actions">
+            <button @click="startWorkout" class="btn-primary">
+              <i class="fas fa-play"></i>
+              <span>Iniciar Treino</span>
+            </button>
+            <button @click="viewProgress" class="btn-outline">
               <i class="fas fa-chart-line"></i>
-              Meu Progresso
-            </h2>
-            <select v-model="progressPeriod" class="period-selector">
-              <option value="week">Última semana</option>
-              <option value="month">Último mês</option>
-              <option value="3months">Últimos 3 meses</option>
-            </select>
-          </div>
-          
-          <div class="progress-content">
-            <div class="progress-chart">
-              <apexchart 
-                type="line" 
-                height="300" 
-                :options="progressChartOptions" 
-                :series="progressChartData" 
-              />
-            </div>
-            
-            <div class="progress-summary">
-              <div class="progress-item">
-                <h4>Evolução de Peso</h4>
-                <div class="progress-value">
-                  <span class="value">{{ progressData.weightChange }}kg</span>
-                  <span :class="['change', progressData.weightChange >= 0 ? 'positive' : 'negative']">
-                    <i :class="progressData.weightChange >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                    {{ Math.abs(progressData.weightChange) }}kg
-                  </span>
-                </div>
-              </div>
-              
-              <div class="progress-item">
-                <h4>Treinos Completados</h4>
-                <div class="progress-value">
-                  <span class="value">{{ workoutStats.totalCompleted }}</span>
-                  <span class="change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    {{ workoutStats.completionRate }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Goals Section -->
-        <section class="goals-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-target"></i>
-              Minhas Metas
-            </h2>
-            <button class="btn-outline" @click="showAddGoalModal = true">
-              <i class="fas fa-plus"></i>
-              Nova Meta
+              <span>Ver Progresso</span>
             </button>
           </div>
-          
-          <div class="goals-list">
-            <div 
-              v-for="goal in studentData?.goals || []" 
-              :key="goal._id"
-              class="goal-item"
-              :class="goal.status"
-            >
-              <div class="goal-icon">
-                <i :class="getGoalIcon(goal.description)"></i>
-              </div>
-              <div class="goal-content">
-                <h4 class="goal-title">{{ goal.description }}</h4>
-                <div class="goal-progress">
-                  <div class="progress-bar">
-                    <div 
-                      class="progress-fill" 
-                      :style="{ width: (goal.currentValue / goal.targetValue * 100) + '%' }"
-                    ></div>
-                  </div>
-                  <span class="progress-text">
-                    {{ goal.currentValue }} / {{ goal.targetValue }}
-                  </span>
-                </div>
-                <p class="goal-deadline">
-                  Meta: {{ formatDate(goal.endDate) }}
-                </p>
-              </div>
-              <div class="goal-status">
-                <span :class="['status-badge', goal.status]">
-                  {{ getGoalStatusText(goal.status) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
+      </div>
 
-        <!-- Workout History -->
-        <section class="workout-history">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-history"></i>
-              Histórico de Treinos
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-dumbbell"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ dashboardData.totalWorkouts }}</h3>
+            <p class="stat-label">Treinos Realizados</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ dashboardData.currentStreak }}</h3>
+            <p class="stat-label">Dias Consecutivos</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ dashboardData.completedThisWeek }}/{{ dashboardData.weeklyGoal }}</h3>
+            <p class="stat-label">Meta Semanal</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-value">{{ dashboardData.totalHours }}h</h3>
+            <p class="stat-label">Total de Horas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="content-grid">
+        <!-- Próximo Treino -->
+        <div class="content-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-dumbbell"></i>
+              Próximo Treino
             </h2>
-            <select v-model="historyFilter" class="period-selector">
-              <option value="all">Todos</option>
-              <option value="week">Esta semana</option>
-              <option value="month">Este mês</option>
-            </select>
+            <span v-if="nextWorkout" class="badge-success">Agendado</span>
           </div>
           
-          <div class="history-list">
-            <div 
-              v-for="workout in filteredWorkoutHistory" 
-              :key="workout._id"
-              class="history-item"
-              @click="viewWorkoutDetails(workout)"
-            >
-              <div class="workout-date">
-                <span class="day">{{ formatDay(workout.date) }}</span>
-                <span class="month-year">{{ formatMonthYear(workout.date) }}</span>
+          <div v-if="loading" class="card-loading">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+          </div>
+
+          <div v-else-if="nextWorkout" class="workout-preview">
+            <h3 class="workout-name">{{ nextWorkout.name }}</h3>
+            
+            <div class="workout-info">
+              <div class="info-item">
+                <i class="fas fa-layer-group"></i>
+                <span>{{ nextWorkout.divisions?.length || 0 }} divisões</span>
               </div>
-              <div class="workout-info">
-                <h4 class="workout-name">{{ workout.workoutPlanName }}</h4>
-                <p class="workout-summary">
-                  {{ workout.exercisesCompleted?.length || 0 }} exercícios - 
-                  {{ calculateWorkoutDuration(workout) }}min
-                </p>
+              <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <span>{{ nextWorkout.estimatedTime || 45 }} min</span>
               </div>
-              <div class="workout-status">
-                <span :class="['status-badge', workout.status]">
-                  {{ getWorkoutStatusText(workout.status) }}
-                </span>
+              <div class="info-item">
+                <i class="fas fa-fire"></i>
+                <span>~{{ nextWorkout.estimatedCalories || 0 }} cal</span>
+              </div>
+            </div>
+
+            <div class="workout-exercises">
+              <h4 class="exercises-title">Exercícios Preview</h4>
+              <div 
+                v-for="(exercise, index) in getPreviewExercises(nextWorkout)" 
+                :key="index"
+                class="exercise-item"
+              >
+                <span class="exercise-name">{{ exercise.name }}</span>
+                <span class="exercise-details">{{ exercise.sets }}x{{ exercise.reps }}</span>
+              </div>
+              <p v-if="getTotalExercises(nextWorkout) > 3" class="more-exercises">
+                +{{ getTotalExercises(nextWorkout) - 3 }} exercícios
+              </p>
+            </div>
+
+            <button @click="startWorkout" class="btn-start-workout">
+              <i class="fas fa-play"></i>
+              Iniciar Treino
+            </button>
+          </div>
+
+          <div v-else class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h3>Nenhum treino agendado</h3>
+            <p>Consulte seus treinos disponíveis</p>
+            <button @click="viewWorkouts" class="btn-secondary">
+              Ver Treinos
+            </button>
+          </div>
+        </div>
+
+        <!-- Progresso Semanal -->
+        <div class="content-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-chart-bar"></i>
+              Progresso Semanal
+            </h2>
+            <router-link to="/student/progress" class="link-view-all">Ver Tudo</router-link>
+          </div>
+
+          <div class="week-progress">
+            <div class="progress-stats">
+              <div class="progress-stat">
+                <span class="progress-number">{{ dashboardData.completedThisWeek }}</span>
+                <span class="progress-text">Concluídos</span>
+              </div>
+              <div class="progress-stat">
+                <span class="progress-number">{{ dashboardData.weeklyGoal }}</span>
+                <span class="progress-text">Meta</span>
+              </div>
+              <div class="progress-stat">
+                <span class="progress-number">{{ getWeekProgress() }}%</span>
+                <span class="progress-text">Progresso</span>
+              </div>
+            </div>
+
+            <div class="progress-bar-container">
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  :style="{ width: getWeekProgress() + '%' }"
+                ></div>
+              </div>
+            </div>
+
+            <div class="week-calendar">
+              <div 
+                v-for="day in weekDays" 
+                :key="day.name"
+                :class="['day-item', { 
+                  completed: day.completed, 
+                  today: day.isToday 
+                }]"
+              >
+                <span class="day-name">{{ day.name }}</span>
+                <div class="day-indicator">
+                  <i v-if="day.completed" class="fas fa-check"></i>
+                  <i v-else-if="day.isToday" class="fas fa-circle"></i>
+                  <span v-else>-</span>
+                </div>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+
+        <!-- Atividade Recente -->
+        <div class="content-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-history"></i>
+              Atividade Recente
+            </h2>
+            <router-link to="/student/history" class="link-view-all">Ver Tudo</router-link>
+          </div>
+
+          <div v-if="recentActivities.length > 0" class="activity-list">
+            <div 
+              v-for="activity in recentActivities.slice(0, 5)" 
+              :key="activity.id"
+              class="activity-item"
+            >
+              <div :class="['activity-icon', activity.type]">
+                <i :class="getActivityIcon(activity.type)"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-title">{{ activity.title }}</p>
+                <p class="activity-time">{{ formatDate(activity.date) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="empty-state-small">
+            <i class="fas fa-inbox"></i>
+            <p>Nenhuma atividade recente</p>
+          </div>
+        </div>
+
+        <!-- Metas -->
+        <div class="content-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-bullseye"></i>
+              Minhas Metas
+            </h2>
+            <router-link to="/student/goals" class="link-view-all">Ver Tudo</router-link>
+          </div>
+
+          <div v-if="goals.length > 0" class="goals-list">
+            <div 
+              v-for="goal in goals.slice(0, 3)" 
+              :key="goal.id"
+              class="goal-item"
+            >
+              <div class="goal-header">
+                <p class="goal-text">{{ goal.title }}</p>
+                <span class="goal-percentage">{{ goal.progress }}%</span>
+              </div>
+              <div class="goal-progress-bar">
+                <div 
+                  class="goal-progress-fill" 
+                  :style="{ width: goal.progress + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="empty-state-small">
+            <i class="fas fa-target"></i>
+            <p>Nenhuma meta definida</p>
+            <button @click="goToGoals" class="btn-secondary">
+              Criar Meta
+            </button>
+          </div>
+        </div>
       </div>
     </main>
-
-    <!-- Add Goal Modal -->
-    <div v-if="showAddGoalModal" class="modal-overlay" @click="showAddGoalModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Nova Meta</h3>
-          <button class="close-btn" @click="showAddGoalModal = false">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="addNewGoal">
-            <div class="form-group">
-              <label>Descrição da Meta</label>
-              <input 
-                type="text" 
-                v-model="newGoal.description" 
-                placeholder="Ex: Perder 5kg"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label>Valor Atual</label>
-              <input 
-                type="number" 
-                v-model="newGoal.currentValue" 
-                placeholder="0"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label>Valor Meta</label>
-              <input 
-                type="number" 
-                v-model="newGoal.targetValue" 
-                placeholder="100"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label>Data Limite</label>
-              <input 
-                type="date" 
-                v-model="newGoal.endDate" 
-                required
-              />
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn-outline" @click="showAddGoalModal = false">
-                Cancelar
-              </button>
-              <button type="submit" class="btn-primary">
-                Criar Meta
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
-<script>
-import StudentNavBar from "@/components/StudentNavBar.vue";
-import { useThemeStore } from "@/store/theme";
-import { useAuthStore } from "@/store/auth";
-import { storeToRefs } from "pinia";
-import VueApexCharts from "vue3-apexcharts";
-import api from "@/api";
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/store/auth'
+import { useThemeStore } from '@/store/theme'
+import StudentNavBar from '@/components/StudentNavBar.vue'
+import api from '@/api'
 
-export default {
-  name: "DashboardStudent",
-  components: { 
-    StudentNavBar, 
-    apexchart: VueApexCharts 
-  },
+const router = useRouter()
+const authStore = useAuthStore()
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
+
+// Reactive data
+const loading = ref(false)
+const dashboardData = ref({
+  totalWorkouts: 0,
+  currentStreak: 0,
+  weeklyGoal: 4,
+  completedThisWeek: 0,
+  totalHours: 0
+})
+const nextWorkout = ref(null)
+const recentActivities = ref([])
+const goals = ref([])
+const weekDays = ref([])
+
+// Computed
+const getUserName = () => {
+  const user = authStore.currentUser
+  if (user?.name) {
+    return user.name.split(' ')[0]
+  }
+  return 'Atleta'
+}
+
+const getWelcomeMessage = () => {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Boa noite! Ainda dá tempo de treinar!'
+  if (hour < 18) return 'Boa tarde! Que tal um treino?'
+  return 'Boa noite! Vamos treinar?'
+}
+
+const getWeekProgress = () => {
+  if (dashboardData.value.weeklyGoal === 0) return 0
+  return Math.round((dashboardData.value.completedThisWeek / dashboardData.value.weeklyGoal) * 100)
+}
+
+const getPreviewExercises = (workout) => {
+  if (!workout?.divisions?.length) return []
+  const firstDivision = workout.divisions[0]
+  if (!firstDivision?.exercises?.length) return []
+  return firstDivision.exercises.slice(0, 3)
+}
+
+const getTotalExercises = (workout) => {
+  if (!workout?.divisions?.length) return 0
+  return workout.divisions.reduce((total, div) => {
+    return total + (div.exercises?.length || 0)
+  }, 0)
+}
+
+const formatDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  const now = new Date()
+  const diffTime = Math.abs(now - d)
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
   
-  setup() {
-    const themeStore = useThemeStore();
-    const authStore = useAuthStore();
-    const { isDarkMode } = storeToRefs(themeStore);
-    const { user } = storeToRefs(authStore);
+  if (diffDays === 0) return 'Hoje'
+  if (diffDays === 1) return 'Ontem'
+  if (diffDays < 7) return `Há ${diffDays} dias`
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
 
-    return { 
-      isDarkMode,
-      user
-    };
-  },
+const getActivityIcon = (type) => {
+  const icons = {
+    workout: 'fas fa-dumbbell',
+    progress: 'fas fa-chart-line',
+    goal: 'fas fa-bullseye',
+    achievement: 'fas fa-trophy'
+  }
+  return icons[type] || 'fas fa-check'
+}
 
-  data() {
-    return {
-      loading: true,
-      studentData: null,
-      todaysWorkout: null,
-      workoutHistory: [],
-      unreadNotifications: 3,
-      showAddGoalModal: false,
-      progressPeriod: 'month',
-      historyFilter: 'week',
-      
-      // Stats
-      workoutStats: {
-        thisWeek: 3,
-        streak: 7,
-        totalCompleted: 45,
-        completionRate: 85
-      },
-      
-      progressData: {
-        currentWeight: 75.5,
-        weightChange: -2.3
-      },
-      
-      // New Goal Form
-      newGoal: {
-        description: '',
-        currentValue: 0,
-        targetValue: 0,
-        endDate: ''
-      },
-
-      // Chart data
-      progressChartData: [
-        {
-          name: 'Peso (kg)',
-          data: [78, 77.5, 77, 76.5, 76, 75.8, 75.5]
-        }
-      ],
-      
-      progressChartOptions: {
-        chart: {
-          type: 'line',
-          toolbar: { show: false },
-          fontFamily: 'Inter, sans-serif'
-        },
-        colors: ['#6366f1'],
-        stroke: {
-          curve: 'smooth',
-          width: 3
-        },
-        xaxis: {
-          categories: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
-          labels: {
-            style: {
-              colors: '#6b7280'
-            }
-          }
-        },
-        yaxis: {
-          labels: {
-            style: {
-              colors: '#6b7280'
-            }
-          }
-        },
-        grid: {
-          borderColor: '#e5e7eb',
-          strokeDashArray: 5
-        },
-        markers: {
-          size: 6,
-          colors: ['#6366f1'],
-          strokeColors: '#fff',
-          strokeWidth: 2
-        }
-      }
-    };
-  },
-
-  async mounted() {
-    await this.loadStudentData();
-    await this.loadTodaysWorkout();
-    await this.loadWorkoutHistory();
-    this.loading = false;
-  },
-
-  computed: {
-    userAvatar() {
-      return this.studentData?.avatar || '/default-avatar.jpg';
-    },
+// Methods
+const fetchDashboardData = async () => {
+  loading.value = true
+  try {
+    // Buscar histórico de sessões para calcular stats
+    const historyResponse = await api.get('/student/sessions/history')
+    const sessions = historyResponse.data || []
     
-    goalsAchieved() {
-      return this.studentData?.goals?.filter(goal => goal.status === 'achieved').length || 0;
-    },
+    // Calcular stats a partir das sessões
+    const now = new Date()
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const sessionsThisWeek = sessions.filter(s => new Date(s.startTime) >= weekAgo)
     
-    filteredWorkoutHistory() {
-      if (!this.workoutHistory) return [];
-      
-      const now = new Date();
-      const filterDate = new Date();
-      
-      switch (this.historyFilter) {
-        case 'week':
-          filterDate.setDate(now.getDate() - 7);
-          break;
-        case 'month':
-          filterDate.setMonth(now.getMonth() - 1);
-          break;
-        default:
-          return this.workoutHistory;
-      }
-      
-      return this.workoutHistory.filter(workout => 
-        new Date(workout.date) >= filterDate
-      );
+    // Calcular total de horas
+    const totalMinutes = sessions.reduce((sum, s) => {
+      return sum + (s.duration || 0)
+    }, 0)
+    
+    // Calcular streak
+    const streak = calculateStreak(sessions)
+    
+    dashboardData.value = {
+      totalWorkouts: sessions.length,
+      currentStreak: streak,
+      weeklyGoal: 4,
+      completedThisWeek: sessionsThisWeek.length,
+      totalHours: Math.round(totalMinutes / 60)
     }
-  },
-
-  methods: {
-    async loadStudentData() {
-      try {
-        if (!this.user?.id) return;
-        
-        // Buscar dados do aluno usando o userId
-        const response = await api.get(`/students/user/${this.user.id}`);
-        this.studentData = response.data;
-        
-        // Atualizar dados de progresso
-        if (this.studentData.progressHistory?.length > 0) {
-          const latest = this.studentData.progressHistory[this.studentData.progressHistory.length - 1];
-          this.progressData.currentWeight = latest.weight;
-          
-          if (this.studentData.progressHistory.length > 1) {
-            const previous = this.studentData.progressHistory[this.studentData.progressHistory.length - 2];
-            this.progressData.weightChange = latest.weight - previous.weight;
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados do aluno:', error);
+    
+    // Buscar próximo treino (workouts ativos)
+    try {
+      const workoutsResponse = await api.get('/student/workouts')
+      if (workoutsResponse.data && workoutsResponse.data.length > 0) {
+        nextWorkout.value = workoutsResponse.data[0]
       }
-    },
-
-    async loadTodaysWorkout() {
-      try {
-        if (!this.studentData?.currentWorkoutPlanId) return;
-        
-        // Simular treino de hoje baseado no plano atual
-        const today = new Date().getDay(); // 0 = domingo, 1 = segunda, etc.
-        const workoutDays = ['A', 'B', 'C', 'A', 'B', 'C', 'Rest'];
-        const todaysDivision = workoutDays[today];
-        
-        if (todaysDivision === 'Rest') {
-          this.todaysWorkout = null;
-          return;
-        }
-        
-        // Mock data para demonstração
-        this.todaysWorkout = {
-          name: `Treino ${todaysDivision}`,
-          status: 'pending', // pending, in-progress, completed
-          exercises: [
-            {
-              name: 'Supino Reto',
-              sets: 3,
-              reps: 12,
-              idealWeight: 60,
-              completed: false,
-              expanded: false,
-              actualSets: [
-                { weight: 0, reps: 0 },
-                { weight: 0, reps: 0 },
-                { weight: 0, reps: 0 }
-              ]
-            },
-            {
-              name: 'Agachamento',
-              sets: 4,
-              reps: 10,
-              idealWeight: 80,
-              completed: false,
-              expanded: false,
-              actualSets: [
-                { weight: 0, reps: 0 },
-                { weight: 0, reps: 0 },
-                { weight: 0, reps: 0 },
-                { weight: 0, reps: 0 }
-              ]
-            }
-          ]
-        };
-      } catch (error) {
-        console.error('Erro ao carregar treino de hoje:', error);
+    } catch (err) {
+      console.log('Nenhum workout encontrado')
+    }
+    
+    // Processar atividades recentes das últimas 5 sessões
+    if (sessions.length > 0) {
+      recentActivities.value = sessions.slice(0, 5).map((session, index) => ({
+        id: session._id || index,
+        type: 'workout',
+        title: `${session.workoutPlan?.name || 'Treino'} concluído`,
+        date: new Date(session.startTime || session.date)
+      }))
+    }
+    
+    // Gerar metas baseadas no progresso
+    goals.value = [
+      {
+        id: 1,
+        title: `Treinar ${dashboardData.value.weeklyGoal}x por semana`,
+        progress: Math.min(100, Math.round((dashboardData.value.completedThisWeek / dashboardData.value.weeklyGoal) * 100))
+      },
+      {
+        id: 2,
+        title: 'Manter sequência de treinos',
+        progress: Math.min(100, dashboardData.value.currentStreak * 20)
       }
-    },
+    ]
+    
+    // Configurar calendário semanal
+    const weekCompletions = Array(7).fill(0)
+    sessionsThisWeek.forEach(session => {
+      const sessionDay = new Date(session.startTime).getDay()
+      weekCompletions[sessionDay] = 1
+    })
+    generateWeekCalendar(weekCompletions)
+  } catch (error) {
+    console.error('Erro ao buscar dados do dashboard:', error)
+    // Usar dados mock para desenvolvimento
+    loadMockData()
+  } finally {
+    loading.value = false
+  }
+}
 
-    async loadWorkoutHistory() {
-      try {
-        if (!this.studentData?._id) return;
-        
-        // Mock data para demonstração
-        this.workoutHistory = [
-          {
-            _id: '1',
-            date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            workoutPlanName: 'Treino A',
-            status: 'completed',
-            exercisesCompleted: [1, 2, 3, 4],
-            duration: 45
-          },
-          {
-            _id: '2',
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            workoutPlanName: 'Treino B',
-            status: 'completed',
-            exercisesCompleted: [1, 2, 3],
-            duration: 38
-          },
-          {
-            _id: '3',
-            date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-            workoutPlanName: 'Treino C',
-            status: 'partial',
-            exercisesCompleted: [1, 2],
-            duration: 25
-          }
-        ];
-      } catch (error) {
-        console.error('Erro ao carregar histórico:', error);
-      }
-    },
-
-    getMotivationalMessage() {
-      const messages = [
-        "Vamos conquistar mais um dia!",
-        "Sua dedicação faz a diferença!",
-        "Cada treino te deixa mais forte!",
-        "Continue focado nos seus objetivos!",
-        "Você está no caminho certo!"
-      ];
-      return messages[Math.floor(Math.random() * messages.length)];
-    },
-
-    toggleNotifications() {
-      // Implementar lógica de notificações
-      console.log('Toggle notifications');
-    },
-
-    toggleExerciseCompletion(index) {
-      this.todaysWorkout.exercises[index].completed = !this.todaysWorkout.exercises[index].completed;
-      
-      // Atualizar status do treino
-      const completedCount = this.todaysWorkout.exercises.filter(ex => ex.completed).length;
-      if (completedCount > 0 && this.todaysWorkout.status === 'pending') {
-        this.todaysWorkout.status = 'in-progress';
-      }
-    },
-
-    expandExercise(index) {
-      this.todaysWorkout.exercises[index].expanded = true;
-    },
-
-    async saveExerciseData(index) {
-      try {
-        const exercise = this.todaysWorkout.exercises[index];
-        
-        // Salvar dados do exercício no backend
-        const exerciseData = {
-          exerciseId: exercise.id,
-          sets: exercise.actualSets.filter(set => set.weight > 0 && set.reps > 0).length,
-          reps: exercise.actualSets.map(set => set.reps),
-          weightUsed: exercise.actualSets[0].weight, // Usar o peso da primeira série como referência
-          notes: ''
-        };
-        
-        // Mock - em produção faria chamada para API
-        console.log('Salvando dados do exercício:', exerciseData);
-        
-        exercise.expanded = false;
-        exercise.completed = true;
-      } catch (error) {
-        console.error('Erro ao salvar dados do exercício:', error);
-      }
-    },
-
-    async completeWorkout() {
-      try {
-        const workoutData = {
-          workoutPlanId: this.studentData.currentWorkoutPlanId,
-          date: new Date(),
-          exercisesCompleted: this.todaysWorkout.exercises.map(ex => ({
-            exerciseId: ex.id,
-            sets: ex.actualSets.filter(set => set.weight > 0 && set.reps > 0).length,
-            reps: ex.actualSets.map(set => set.reps),
-            weightUsed: ex.actualSets[0]?.weight || 0
-          })),
-          status: 'completed'
-        };
-        
-        // Salvar treino no backend
-        await api.post(`/students/${this.studentData._id}/workout-history`, workoutData);
-        
-        this.todaysWorkout.status = 'completed';
-        this.workoutStats.thisWeek++;
-        
-        // Recarregar histórico
-        await this.loadWorkoutHistory();
-      } catch (error) {
-        console.error('Erro ao finalizar treino:', error);
-      }
-    },
-
-    async skipWorkout() {
-      try {
-        const workoutData = {
-          workoutPlanId: this.studentData.currentWorkoutPlanId,
-          date: new Date(),
-          exercisesCompleted: [],
-          status: 'missed'
-        };
-        
-        await api.post(`/students/${this.studentData._id}/workout-history`, workoutData);
-        this.todaysWorkout = null;
-      } catch (error) {
-        console.error('Erro ao pular treino:', error);
-      }
-    },
-
-    async addNewGoal() {
-      try {
-        const goalData = {
-          ...this.newGoal,
-          startDate: new Date(),
-          status: 'in-progress'
-        };
-        
-        // Adicionar meta no backend
-        await api.post(`/students/${this.studentData._id}/goals`, goalData);
-        
-        // Atualizar dados locais
-        if (!this.studentData.goals) this.studentData.goals = [];
-        this.studentData.goals.push({
-          ...goalData,
-          _id: Date.now().toString()
-        });
-        
-        this.showAddGoalModal = false;
-        this.newGoal = { description: '', currentValue: 0, targetValue: 0, endDate: '' };
-      } catch (error) {
-        console.error('Erro ao adicionar meta:', error);
-      }
-    },
-
-    getWorkoutStatusText(status) {
-      const statusMap = {
-        pending: 'Pendente',
-        'in-progress': 'Em Andamento',
-        completed: 'Concluído',
-        partial: 'Parcial',
-        missed: 'Perdido'
-      };
-      return statusMap[status] || status;
-    },
-
-    getGoalStatusText(status) {
-      const statusMap = {
-        'in-progress': 'Em Progresso',
-        achieved: 'Alcançada',
-        canceled: 'Cancelada'
-      };
-      return statusMap[status] || status;
-    },
-
-    getGoalIcon(description) {
-      const desc = description.toLowerCase();
-      if (desc.includes('peso') || desc.includes('kg')) return 'fas fa-weight';
-      if (desc.includes('força') || desc.includes('musculo')) return 'fas fa-dumbbell';
-      if (desc.includes('corrida') || desc.includes('cardio')) return 'fas fa-running';
-      return 'fas fa-target';
-    },
-
-    formatDate(date) {
-      return new Date(date).toLocaleDateString('pt-BR');
-    },
-
-    formatDay(date) {
-      return new Date(date).getDate().toString().padStart(2, '0');
-    },
-
-    formatMonthYear(date) {
-      return new Date(date).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-    },
-
-    calculateWorkoutDuration(workout) {
-      return workout.duration || 30;
-    },
-
-    viewWorkoutDetails(workout) {
-      // Implementar visualização detalhada do treino
-      console.log('Ver detalhes do treino:', workout);
+const calculateStreak = (sessions) => {
+  if (!sessions || sessions.length === 0) return 0
+  
+  const sortedSessions = [...sessions].sort((a, b) => 
+    new Date(b.startTime) - new Date(a.startTime)
+  )
+  
+  let streak = 0
+  let currentDate = new Date()
+  currentDate.setHours(0, 0, 0, 0)
+  
+  for (const session of sortedSessions) {
+    const sessionDate = new Date(session.startTime)
+    sessionDate.setHours(0, 0, 0, 0)
+    
+    const daysDiff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24))
+    
+    if (daysDiff === streak) {
+      streak++
+      currentDate = sessionDate
+    } else if (daysDiff > streak) {
+      break
     }
   }
-};
+  
+  return streak
+}
+
+const loadMockData = () => {
+  dashboardData.value = {
+    totalWorkouts: 24,
+    currentStreak: 5,
+    weeklyGoal: 4,
+    completedThisWeek: 2,
+    totalHours: 32
+  }
+  
+  nextWorkout.value = {
+    _id: '1',
+    name: 'Treino A - Peito e Tríceps',
+    estimatedTime: 45,
+    estimatedCalories: 280,
+    divisions: [
+      {
+        name: 'Divisão A1',
+        exercises: [
+          { id: 1, name: 'Supino Reto', sets: 4, reps: 12 },
+          { id: 2, name: 'Supino Inclinado', sets: 3, reps: 10 },
+          { id: 3, name: 'Fly Máquina', sets: 3, reps: 15 },
+          { id: 4, name: 'Tríceps Pulley', sets: 4, reps: 12 }
+        ]
+      }
+    ]
+  }
+  
+  recentActivities.value = [
+    { id: 1, type: 'workout', title: 'Treino A - Peito e Tríceps concluído', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+    { id: 2, type: 'progress', title: 'Peso atualizado para 78.5kg', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+    { id: 3, type: 'goal', title: 'Meta semanal de 3 treinos atingida', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
+  ]
+  
+  goals.value = [
+    { id: 1, title: 'Perder 5kg', progress: 60 },
+    { id: 2, title: 'Treinar 4x por semana', progress: 75 },
+    { id: 3, title: 'Aumentar carga em 10kg', progress: 40 }
+  ]
+  
+  generateWeekCalendar([1, 1, 0, 0, 1, 0, 0]) // DOM, SEG, TER, QUA, QUI, SEX, SAB
+}
+
+const generateWeekCalendar = (completions = []) => {
+  const days = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
+  const today = new Date().getDay()
+  
+  weekDays.value = days.map((name, index) => ({
+    name,
+    completed: completions[index] === 1,
+    isToday: index === today
+  }))
+}
+
+const startWorkout = () => {
+  if (nextWorkout.value) {
+    router.push('/student/workout-session')
+  } else {
+    router.push('/student/workouts')
+  }
+}
+
+const viewProgress = () => {
+  router.push('/student/progress')
+}
+
+const viewWorkouts = () => {
+  router.push('/student/workouts')
+}
+
+const goToGoals = () => {
+  router.push('/student/goals')
+}
+
+// Lifecycle
+onMounted(() => {
+  fetchDashboardData()
+})
 </script>
 
 <style scoped>
-/* Font Awesome Import */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-/* Main Container */
+/* Layout Principal */
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  margin-left: 280px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  background: var(--bg-secondary);
+}
+
+.dark-mode.dashboard-container {
+  background: #16213e;
 }
 
 .dashboard-main {
   flex: 1;
-  background: var(--bg-primary);
+  margin-left: 280px;
+  padding: 2rem;
+  background: var(--bg-secondary);
   min-height: 100vh;
-  overflow-x: hidden;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dashboard-content {
+.dark-mode .dashboard-main {
+  background: #16213e;
+}
+
+/* Detecta quando o navbar está colapsado globalmente */
+.dashboard-main {
+  margin-left: 280px;
+}
+
+body:has(.navbar-collapsed) .dashboard-main,
+.dashboard-container:has(.navbar-collapsed) .dashboard-main {
+  margin-left: 0 !important;
+}
+
+/* Header */
+.page-header {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding-top: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.dark-mode .page-header {
+  background: #2d2d3d;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.header-content {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   gap: 2rem;
 }
 
-/* Theme Variables */
-.dashboard-light {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e1;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-  --primary-color: #6366f1;
-  --primary-light: #818cf8;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-}
-
-.dashboard-dark {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --border-primary: #334155;
-  --border-secondary: #475569;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
-  --primary-color: #8b5cf6;
-  --primary-light: #a78bfa;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-}
-
-/* Mobile Header */
-.mobile-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-}
-
-.user-greeting {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.greeting-text h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.motivational-text {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.notification-btn {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 12px;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notification-btn:hover {
-  background: var(--primary-color);
-  color: white;
-  transform: scale(1.05);
-}
-
-.notification-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  background: var(--danger-color);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.125rem 0.375rem;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
-}
-
-/* Quick Stats */
-.quick-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.stat-card {
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-primary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--gradient-primary);
-}
-
-.stat-card.secondary::before { background: var(--gradient-success); }
-.stat-card.tertiary::before { background: var(--gradient-warning); }
-.stat-card.quaternary::before { background: var(--gradient-danger); }
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--gradient-primary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.stat-card.secondary .stat-icon { background: var(--gradient-success); }
-.stat-card.tertiary .stat-icon { background: var(--gradient-warning); }
-.stat-card.quaternary .stat-icon { background: var(--gradient-danger); }
-
-.stat-content h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.stat-label {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.section-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.section-title i {
-  color: var(--primary-color);
-}
-
-/* Today's Workout */
-.todays-workout, .no-workout {
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-primary);
-  overflow: hidden;
-}
-
-.workout-status {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.workout-status.pending {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-}
-
-.workout-status.in-progress {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.workout-status.completed {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-}
-
-.workout-content {
-  padding: 2rem;
-}
-
-.exercises-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.exercise-item {
-  background: var(--bg-tertiary);
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.exercise-item.completed {
-  border-color: var(--success-color);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.exercise-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.exercise-name {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.exercise-target {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.complete-btn {
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--border-secondary);
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary);
-}
-
-.complete-btn.completed {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  color: white;
-}
-
-.exercise-tracking {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-primary);
-}
-
-.sets-tracking {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.set-input {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.set-input label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.input-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.weight-input, .reps-input {
+.header-left {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.page-subtitle {
   font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0;
 }
 
-.input-suffix {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  min-width: 20px;
-}
-
-.exercise-actions {
+.header-actions {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
 }
 
-.expand-btn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.expand-btn:hover {
-  background: var(--primary-light);
-  transform: translateY(-2px);
-}
-
-.workout-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-/* Buttons */
-.btn-primary {
-  background: var(--gradient-primary);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.btn-primary,
+.btn-outline {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
 }
 
 .btn-primary:hover {
+  background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.dark-mode .btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .btn-outline {
   background: transparent;
-  color: var(--text-secondary);
-  border: 2px solid var(--border-primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
 }
 
 .btn-outline:hover {
-  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .stat-card {
+  background: #2d2d3d;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.dark-mode .stat-card:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.blue {
+  background: var(--primary-color);
+}
+
+.stat-icon.orange {
+  background: var(--warning-color);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+  line-height: 1;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Content Grid */
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1.5rem;
+}
+
+.content-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .content-card {
+  background: #2d2d3d;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.card-title i {
   color: var(--primary-color);
+}
+
+.badge-success {
+  background: var(--success-color);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.link-view-all {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.link-view-all:hover {
+  color: var(--primary-hover);
+}
+
+/* Loading */
+.card-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Workout Preview */
+.workout-preview {
+  padding: 0.5rem 0;
+}
+
+.workout-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 1rem 0;
+}
+
+.workout-info {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.info-item i {
+  color: var(--primary-color);
+}
+
+.workout-exercises {
+  margin-bottom: 1.5rem;
+}
+
+.exercises-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+}
+
+.exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.dark-mode .exercise-item {
+  background: #1a1a2e;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.exercise-name {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.exercise-details {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.more-exercises {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.btn-start-workout {
+  width: 100%;
+  padding: 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-start-workout:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .btn-start-workout:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
-  color: var(--text-secondary);
+  padding: 3rem 1rem;
+  color: var(--text-muted);
 }
 
 .empty-state i {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.5;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+  color: var(--primary-color);
 }
 
 .empty-state h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* Progress Overview */
-.progress-overview {
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-primary);
-  overflow: hidden;
-}
-
-.progress-content {
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  align-items: center;
-}
-
-.progress-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.progress-item h4 {
+  font-size: 1.2rem;
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
-.progress-value {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.empty-state p {
+  margin: 0 0 1.5rem 0;
 }
 
-.progress-value .value {
+.empty-state-small {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.empty-state-small i {
   font-size: 2rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  opacity: 0.3;
+  color: var(--primary-color);
 }
 
-.change {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
+.empty-state-small p {
+  margin: 0 0 1rem 0;
+}
+
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 12px;
+  cursor: pointer;
   font-weight: 600;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-}
-
-.change.positive {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-}
-
-.change.negative {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger-color);
-}
-
-.period-selector {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 0.875rem;
-}
-
-/* Goals Section */
-.goals-section {
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-primary);
-  overflow: hidden;
-}
-
-.goals-list {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.goal-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--bg-tertiary);
-  border-radius: 16px;
-  border: 2px solid transparent;
   transition: all 0.3s ease;
 }
 
-.goal-item.achieved {
-  border-color: var(--success-color);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.goal-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--gradient-primary);
+.btn-secondary:hover {
+  background: var(--primary-color);
   color: white;
+}
+
+/* Week Progress */
+.week-progress {
+  padding: 0.5rem 0;
+}
+
+.progress-stats {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  flex-shrink: 0;
+  justify-content: space-around;
+  margin-bottom: 1.5rem;
 }
 
-.goal-content {
-  flex: 1;
-}
-
-.goal-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.goal-progress {
+.progress-stat {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+}
+
+.progress-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.progress-bar-container {
+  margin-bottom: 2rem;
 }
 
 .progress-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
+  width: 100%;
+  height: 12px;
+  background: var(--border-color);
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: var(--gradient-primary);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  background: var(--primary-color);
+  border-radius: 6px;
+  transition: width 0.5s ease;
 }
 
-.progress-text {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  min-width: 80px;
+.week-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
 }
 
-.goal-deadline {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-}
-
-.status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-badge.in-progress {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.status-badge.achieved {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-}
-
-.status-badge.completed {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-}
-
-.status-badge.canceled {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger-color);
-}
-
-/* Workout History */
-.workout-history {
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-primary);
-  overflow: hidden;
-}
-
-.history-list {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--bg-tertiary);
+.day-item {
+  text-align: center;
+  padding: 1rem 0.5rem;
   border-radius: 12px;
-  cursor: pointer;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-muted);
   transition: all 0.3s ease;
 }
 
-.history-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-sm);
-}
-
-.workout-date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  min-width: 60px;
-  flex-shrink: 0;
-}
-
-.workout-date .day {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.workout-date .month-year {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-}
-
-.workout-info {
-  flex: 1;
-}
-
-.workout-name {
-  margin: 0 0 0.25rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.workout-summary {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.close-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-  background: var(--danger-color);
+.day-item.completed {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: white;
 }
 
-.modal-body {
-  padding: 2rem;
+.day-item.today {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
-.form-group {
-  margin-bottom: 1.5rem;
+.dark-mode .day-item.today {
+  background: rgba(102, 126, 234, 0.1);
 }
 
-.form-group label {
+.day-name {
+  font-size: 0.75rem;
+  font-weight: 600;
   display: block;
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  text-transform: uppercase;
 }
 
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-size: 1rem;
-  transition: all 0.3s ease;
+.day-indicator {
+  font-size: 1.2rem;
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.form-actions {
+/* Activity List */
+.activity-list {
   display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-/* Responsive Design */
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.activity-item:hover {
+  background: var(--border-color);
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.activity-icon.workout {
+  background: var(--primary-color);
+}
+
+.activity-icon.progress {
+  background: var(--success-color);
+}
+
+.activity-icon.goal {
+  background: var(--warning-color);
+}
+
+.activity-icon.achievement {
+  background: #8b5cf6;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.activity-time {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+/* Goals */
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.goal-item {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.goal-text {
+  color: var(--text-color);
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.goal-percentage {
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.goal-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
-  .dashboard-container {
+  .dashboard-main {
     margin-left: 0;
-  }
-  
-  .progress-content {
-    grid-template-columns: 1fr;
-  }
-  
-  .quick-stats {
-    grid-template-columns: repeat(2, 1fr);
+    padding: 1.5rem 1rem;
   }
 }
 
 @media (max-width: 768px) {
-  .dashboard-content {
-    padding: 1rem;
-    gap: 1.5rem;
+  .page-header {
+    padding: 1.5rem;
   }
   
-  .mobile-header {
-    padding: 1rem;
-  }
-  
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .greeting-text h1 {
-    font-size: 1.25rem;
-  }
-  
-  .quick-stats {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .stat-card {
-    padding: 1rem;
-  }
-  
-  .section-header {
+  .header-content {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
   }
   
-  .section-title {
-    font-size: 1.25rem;
-  }
-  
-  .workout-content {
-    padding: 1.5rem;
-  }
-  
-  .exercise-item {
-    padding: 1rem;
-  }
-  
-  .input-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .sets-tracking {
-    gap: 0.75rem;
-  }
-  
-  .workout-actions,
-  .exercise-actions {
-    flex-direction: column;
-  }
-  
-  .progress-content {
-    padding: 1.5rem;
-  }
-  
-  .goals-list {
-    padding: 1.5rem;
-  }
-  
-  .goal-item {
-    padding: 1rem;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-  }
-  
-  .goal-progress {
+  .header-actions {
     width: 100%;
-  }
-  
-  .history-list {
-    padding: 1.5rem;
-  }
-  
-  .history-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
   }
   
-  .workout-date {
-    align-self: flex-start;
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    justify-content: center;
   }
   
-  .modal-content {
-    margin: 1rem;
-    max-width: none;
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
   
-  .modal-header,
-  .modal-body {
-    padding: 1.5rem;
+  .content-grid {
+    grid-template-columns: 1fr;
   }
   
-  .form-actions {
-    flex-direction: column;
+  .week-calendar {
+    gap: 0.5rem;
+  }
+  
+  .day-item {
+    padding: 0.75rem 0.25rem;
+  }
+  
+  .day-name {
+    font-size: 0.7rem;
   }
 }
 
 @media (max-width: 480px) {
-  .dashboard-content {
-    padding: 0.75rem;
+  .dashboard-main {
+    padding: 1rem 0.75rem;
   }
   
-  .mobile-header {
-    padding: 0.75rem;
-  }
-  
-  .greeting-text h1 {
-    font-size: 1.125rem;
-  }
-  
-  .motivational-text {
-    font-size: 0.8125rem;
+  .page-title {
+    font-size: 1.5rem;
   }
   
   .stat-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.75rem;
-  }
-  
-  .stat-content h3 {
-    font-size: 1.75rem;
-  }
-  
-  .workout-content,
-  .progress-content,
-  .goals-list,
-  .history-list {
     padding: 1rem;
   }
   
-  .modal-header,
-  .modal-body {
-    padding: 1rem;
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
   }
 }
-
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stat-card,
-.todays-workout,
-.progress-overview,
-.goals-section,
-.workout-history {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.stat-card:nth-child(1) { animation-delay: 0.1s; }
-.stat-card:nth-child(2) { animation-delay: 0.2s; }
-.stat-card:nth-child(3) { animation-delay: 0.3s; }
-.stat-card:nth-child(4) { animation-delay: 0.4s; }
 </style>

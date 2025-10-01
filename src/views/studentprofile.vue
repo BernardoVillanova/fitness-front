@@ -1,14 +1,23 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="student-profile">
-    <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-user"></i>
-        Meu Perfil
-      </h1>
-      <p class="page-subtitle">Gerencie suas informações pessoais</p>
-    </div>
+  <div :class="['student-profile', { 'dark-mode': isDarkMode }]">
+    <StudentNavBar />
+    
+    <div class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">
+          <i class="fas fa-user"></i>
+          Meu Perfil
+        </h1>
+        <p class="page-subtitle">Gerencie suas informações pessoais</p>
+      </div>
 
-    <div class="profile-content">
+      <div v-if="loading" class="loading-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Carregando perfil...</p>
+      </div>
+
+      <div v-else class="profile-content">
       <div class="profile-card">
         <div class="avatar-section">
           <div class="avatar-container">
@@ -97,61 +106,195 @@
               <i class="fas fa-undo"></i>
               Cancelar
             </button>
-            <button type="submit" class="btn-primary">
-              <i class="fas fa-save"></i>
-              Salvar Alterações
+            <button type="submit" class="btn-primary" :disabled="saving">
+              <i :class="saving ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
+              {{ saving ? 'Salvando...' : 'Salvar Alterações' }}
             </button>
           </div>
         </form>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
-<script>
-import { reactive } from 'vue';
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { useThemeStore } from '@/store/theme';
+import { storeToRefs } from 'pinia';
+import StudentNavBar from '@/components/StudentNavBar.vue';
+import api from '@/api';
 
-export default {
-  name: 'StudentProfile',
-  setup() {
-    const studentData = reactive({
-      name: 'João Silva',
-      email: 'joao.silva@email.com',
-      phone: '(11) 99999-9999',
-      birthDate: '1995-06-15',
-      height: 175,
-      weight: 78.5,
-      goal: 'gain-muscle',
+const themeStore = useThemeStore();
+const { isDarkMode } = storeToRefs(themeStore);
+
+const loading = ref(false);
+const saving = ref(false);
+const studentId = ref(null);
+
+const studentData = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+  height: null,
+  weight: null,
+  goal: 'maintain',
+  activityLevel: 'moderate',
+  medicalConditions: '',
+  medications: '',
+  avatar: ''
+});
+
+const originalData = ref({});
+
+const fetchProfile = async () => {
+  loading.value = true;
+  try {
+    const storedUser = sessionStorage.getItem('user');
+    
+    if (!storedUser) {
+      console.error('Nenhum usuario no sessionStorage');
+      useFallbackData();
+      loading.value = false;
+      return;
+    }
+
+    const userData = JSON.parse(storedUser);
+    console.log('UserData parseado:', userData);
+    
+    const studentIdToFetch = userData.studentId || userData.id;
+    
+    if (!studentIdToFetch) {
+      console.error('Nenhum ID encontrado no userData');
+      useFallbackData();
+      loading.value = false;
+      return;
+    }
+
+    console.log('Buscando perfil com ID:', studentIdToFetch);
+    const response = await api.get(`/students/${studentIdToFetch}`);
+    const data = response.data;
+    console.log('Dados recebidos:', data);
+    
+    studentId.value = data._id || studentIdToFetch;
+    
+    Object.assign(studentData, {
+      name: data.name || userData.name || '',
+      email: data.email || userData.email || '',
+      phone: data.phone || '',
+      birthDate: data.birthDate ? new Date(data.birthDate).toISOString().split('T')[0] : '',
+      height: data.personalInfo?.height || data.height || null,
+      weight: data.personalInfo?.weight || data.weight || null,
+      goal: mapGoalFromAPI(data.goals?.[0]?.description) || 'maintain',
+      activityLevel: data.personalInfo?.trainingExperience || 'moderate',
+      medicalConditions: data.healthRestrictions?.notes || '',
+      medications: data.healthRestrictions?.medications?.join(', ') || '',
+      avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}&background=667eea&color=fff&size=120`
+    });
+
+    originalData.value = { ...studentData };
+  } catch (error) {
+    console.error('Erro ao buscar perfil:', error);
+    useFallbackData();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const useFallbackData = () => {
+  const storedUser = sessionStorage.getItem('user');
+  if (storedUser) {
+    const userData = JSON.parse(storedUser);
+    Object.assign(studentData, {
+      name: userData.name || 'Usuário',
+      email: userData.email || '',
+      phone: '',
+      birthDate: '',
+      height: null,
+      weight: null,
+      goal: 'maintain',
       activityLevel: 'moderate',
       medicalConditions: '',
       medications: '',
-      avatar: 'https://via.placeholder.com/120x120/6366f1/white?text=JS'
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=667eea&color=fff&size=120`
     });
-
-    const originalData = { ...studentData };
-
-    const saveProfile = () => {
-      console.log('Saving profile:', studentData);
-      // Here you would typically send data to API
-      alert('Perfil salvo com sucesso!');
-    };
-
-    const resetForm = () => {
-      Object.assign(studentData, originalData);
-    };
-
-    return {
-      studentData,
-      saveProfile,
-      resetForm
-    };
+    originalData.value = { ...studentData };
   }
 };
+
+const mapGoalFromAPI = (goalDescription) => {
+  if (!goalDescription) return 'maintain';
+  const goal = goalDescription.toLowerCase();
+  if (goal.includes('perder') || goal.includes('peso')) return 'lose-weight';
+  if (goal.includes('ganhar') || goal.includes('massa')) return 'gain-muscle';
+  if (goal.includes('força')) return 'strength';
+  return 'maintain';
+};
+
+const saveProfile = async () => {
+  if (!studentId.value) {
+    alert('Erro: ID do aluno não encontrado');
+    return;
+  }
+
+  saving.value = true;
+  try {
+    const updateData = {
+      name: studentData.name,
+      email: studentData.email,
+      phone: studentData.phone,
+      birthDate: studentData.birthDate,
+      personalInfo: {
+        height: studentData.height,
+        weight: studentData.weight,
+        trainingExperience: studentData.activityLevel
+      },
+      healthRestrictions: {
+        notes: studentData.medicalConditions,
+        medications: studentData.medications ? studentData.medications.split(',').map(m => m.trim()) : []
+      }
+    };
+
+    await api.put(`/students/${studentId.value}`, updateData);
+    originalData.value = { ...studentData };
+    alert('Perfil atualizado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao salvar perfil:', error);
+    alert('Erro ao salvar perfil. Tente novamente.');
+  } finally {
+    saving.value = false;
+  }
+};
+
+const resetForm = () => {
+  Object.assign(studentData, originalData.value);
+};
+
+onMounted(() => {
+  fetchProfile();
+});
 </script>
 
 <style scoped>
 .student-profile {
+  margin-left: 280px;
   padding: 2rem;
+  background: var(--bg-secondary);
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-mode.student-profile {
+  background: #16213e;
+}
+
+/* Detecta quando o navbar está colapsado globalmente */
+body:has(.navbar-collapsed) .student-profile {
+  margin-left: 0 !important;
+}
+
+.profile-content {
   max-width: 800px;
   margin: 0 auto;
 }
@@ -181,10 +324,27 @@ export default {
 }
 
 .profile-card {
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 16px;
+  padding: 2.5rem 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .profile-card {
+  background: #2d2d3d !important;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .profile-card * {
+  background-color: transparent;
+}
+
+.dark-mode .profile-card .form-input,
+.dark-mode .profile-card .form-textarea,
+.dark-mode .profile-card .form-select {
+  background: #1a1a2e !important;
 }
 
 .avatar-section {
@@ -219,16 +379,31 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.avatar-edit-btn:hover {
+  transform: scale(1.1);
+}
+
+.dark-mode .avatar-image {
+  border-color: #667eea;
 }
 
 .form-section {
   margin-bottom: 2rem;
   padding-bottom: 2rem;
   border-bottom: 1px solid var(--border-color);
+  background: transparent;
 }
 
 .form-section:last-of-type {
   border-bottom: none;
+}
+
+.dark-mode .form-section {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
 }
 
 .form-section h3 {
@@ -237,14 +412,32 @@ export default {
   font-size: 1.2rem;
 }
 
+.dark-mode .form-section h3,
+.dark-mode .form-group label,
+.dark-mode .page-title,
+.dark-mode .page-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark-mode .page-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  background: transparent;
 }
 
 .form-group {
   margin-bottom: 1rem;
+  background: transparent;
+}
+
+.dark-mode .form-row,
+.dark-mode .form-group {
+  background: transparent;
 }
 
 .form-group label {
@@ -261,9 +454,22 @@ export default {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--bg-primary);
+  background: white;
   color: var(--text-primary);
   font-size: 0.9rem;
+}
+
+.dark-mode .form-input,
+.dark-mode .form-textarea,
+.dark-mode .form-select {
+  background: #1a1a2e !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark-mode .form-input::placeholder,
+.dark-mode .form-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .form-textarea {
@@ -316,6 +522,15 @@ export default {
 
 .btn-secondary:hover {
   background: var(--bg-secondary);
+}
+
+.dark-mode .btn-secondary {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 768px) {
