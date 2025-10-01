@@ -4,6 +4,7 @@ import HomePage from '../views/home.vue';
 import LoginPage from '../views/login.vue';
 import RegisterPage from '../views/register.vue';
 import WorkoutPlans from '../views/workoutplans.vue';
+import StudentWorkoutPlans from '../views/StudentWorkoutPlans.vue';
 import DashboardTech from '../views/dashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
@@ -72,7 +73,7 @@ const routes = [
   },
   {
     path: '/student/workouts',
-    component: WorkoutPlans,
+    component: StudentWorkoutPlans,
     // meta: { requiresAuth: true, role: 'student' },
   },
   {

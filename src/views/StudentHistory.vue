@@ -1,7 +1,9 @@
 <template>
-  <div class="student-history">
-    <!-- Header -->
-    <div class="header-section">
+  <div class="student-history" :class="{ 'dark-mode': isDarkMode }">
+    <StudentNavBar />
+    <main class="main-content">
+      <!-- Header -->
+      <div class="header-section">
       <div class="header-content">
         <h1 class="page-title">Histórico de Treinos</h1>
         <p class="page-subtitle">Veja todo seu progresso e treinos realizados</p>
@@ -169,90 +171,66 @@
         </div>
       </div>
     </div>
+    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useThemeStore } from '@/store/theme'
+import StudentNavBar from '@/components/StudentNavBar.vue'
+import api from '@/api'
+
+// Theme
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
 
 // Reactive data
 const selectedPeriod = ref('all')
 const selectedType = ref('all')
 const selectedWorkout = ref(null)
+const loading = ref(false)
 
-// Mock history data
-const workoutHistory = ref([
-  {
-    id: 1,
-    name: "Treino A - Peito e Tríceps",
-    type: "Força",
-    date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    duration: 45,
-    calories: 280,
-    completion: 100,
-    exercises: 7,
-    exerciseDetails: [
-      { id: 1, name: "Supino Reto", sets: 4, reps: 12, weight: 80 },
-      { id: 2, name: "Supino Inclinado", sets: 3, reps: 10, weight: 70 },
-      { id: 3, name: "Fly Máquina", sets: 3, reps: 15, weight: 50 },
-      { id: 4, name: "Cross Over", sets: 3, reps: 12, weight: 25 },
-      { id: 5, name: "Tríceps Pulley", sets: 4, reps: 12, weight: 40 },
-      { id: 6, name: "Tríceps Francês", sets: 3, reps: 10, weight: 30 },
-      { id: 7, name: "Mergulho", sets: 3, reps: 15 }
-    ]
-  },
-  {
-    id: 2,
-    name: "Treino C - Pernas",
-    type: "Força",
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    duration: 55,
-    calories: 380,
-    completion: 90,
-    exercises: 8,
-    exerciseDetails: [
-      { id: 1, name: "Agachamento Livre", sets: 4, reps: 12, weight: 100 },
-      { id: 2, name: "Leg Press", sets: 4, reps: 15, weight: 200 },
-      { id: 3, name: "Extensão de Pernas", sets: 3, reps: 15, weight: 60 },
-      { id: 4, name: "Mesa Flexora", sets: 4, reps: 12, weight: 50 }
-    ]
-  },
-  {
-    id: 3,
-    name: "Treino B - Costas e Bíceps",
-    type: "Força",
-    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    duration: 50,
-    calories: 320,
-    completion: 100,
-    exercises: 6,
-    exerciseDetails: [
-      { id: 1, name: "Puxada Frontal", sets: 4, reps: 12, weight: 60 },
-      { id: 2, name: "Remada Curvada", sets: 4, reps: 10, weight: 70 },
-      { id: 3, name: "Rosca Direta", sets: 3, reps: 12, weight: 20 }
-    ]
-  },
-  {
-    id: 4,
-    name: "Cardio Intenso",
-    type: "Cardio",
-    date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    duration: 30,
-    calories: 250,
-    completion: 100,
-    exercises: 5
-  },
-  {
-    id: 5,
-    name: "Treino A - Peito e Tríceps",
-    type: "Força",
-    date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    duration: 42,
-    calories: 260,
-    completion: 85,
-    exercises: 7
+// History data from API
+const workoutHistory = ref([])
+
+// Fetch workout history from API
+const fetchWorkoutHistory = async () => {
+  try {
+    loading.value = true
+    const response = await api.get('/student/sessions/history')
+    
+    if (response.data && Array.isArray(response.data)) {
+      workoutHistory.value = response.data.map(session => ({
+        id: session._id || session.id,
+        name: session.workoutPlan?.name || session.name || 'Treino',
+        type: session.workoutPlan?.type || session.type || 'Força',
+        date: new Date(session.startTime || session.date),
+        duration: session.duration || Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000) || 0,
+        calories: session.caloriesBurned || 0,
+        completion: session.completionPercentage || 
+                   (session.completedExercises && session.totalExercises 
+                     ? Math.round((session.completedExercises / session.totalExercises) * 100) 
+                     : 0),
+        exercises: session.exercises?.length || session.totalExercises || 0,
+        exerciseDetails: session.exercises?.map(ex => ({
+          id: ex._id || ex.id,
+          name: ex.name || ex.exerciseName,
+          sets: ex.sets || ex.completedSets,
+          reps: ex.reps || ex.targetReps,
+          weight: ex.weight || ex.targetWeight
+        })) || []
+      }))
+    }
+  } catch (error) {
+    console.error('Erro ao buscar histórico de treinos:', error)
+    // Keep empty array on error
+    workoutHistory.value = []
+  } finally {
+    loading.value = false
   }
-])
+}
 
 // Computed
 const filteredHistory = computed(() => {
@@ -324,15 +302,21 @@ const clearFilters = () => {
 
 // Lifecycle
 onMounted(() => {
-  // Initialize component
+  fetchWorkoutHistory()
 })
 </script>
 
 <style scoped>
 .student-history {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem 1rem;
+  background-color: var(--bg-secondary);
+  display: flex;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 2rem;
 }
 
 .header-section {
@@ -343,14 +327,13 @@ onMounted(() => {
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .page-subtitle {
   font-size: 1.1rem;
-  color: rgba(255,255,255,0.9);
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -362,10 +345,15 @@ onMounted(() => {
   gap: 1rem;
   align-items: end;
   flex-wrap: wrap;
-  background: rgba(255,255,255,0.1);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   padding: 1.5rem;
   border-radius: 16px;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.dark-mode .filters-section {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .filter-group {
@@ -376,24 +364,30 @@ onMounted(() => {
 
 .filter-group label {
   font-weight: 600;
-  color: white;
+  color: var(--text-color);
   font-size: 0.9rem;
 }
 
 .filter-select {
   padding: 0.75rem 1rem;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  background: white;
-  color: #2d3748;
+  background: var(--bg-secondary);
+  color: var(--text-color);
   font-weight: 500;
   cursor: pointer;
   min-width: 150px;
+  transition: all 0.2s ease;
 }
 
 .filter-select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.3);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .filter-select:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .clear-filters-btn {
@@ -401,9 +395,9 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border: none;
-  background: rgba(255,255,255,0.2);
-  color: white;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-color);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -411,7 +405,7 @@ onMounted(() => {
 }
 
 .clear-filters-btn:hover {
-  background: rgba(255,255,255,0.3);
+  background: var(--border-color);
 }
 
 /* Stats Summary */
@@ -424,20 +418,35 @@ onMounted(() => {
 }
 
 .summary-card {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   padding: 1.5rem;
   border-radius: 16px;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .summary-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.dark-mode .summary-card:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
 }
 
 .summary-icon {
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -452,13 +461,13 @@ onMounted(() => {
 .summary-number {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-color);
   line-height: 1;
 }
 
 .summary-label {
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
   margin-top: 0.25rem;
 }
 
@@ -472,7 +481,8 @@ onMounted(() => {
 }
 
 .history-item {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
@@ -480,12 +490,21 @@ onMounted(() => {
   gap: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.dark-mode .history-item {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .history-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+  border-color: var(--primary-color);
+}
+
+.dark-mode .history-item:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
 }
 
 .workout-date {
@@ -494,7 +513,7 @@ onMounted(() => {
   align-items: center;
   min-width: 60px;
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--primary-color);
   color: white;
   border-radius: 12px;
 }
@@ -518,7 +537,7 @@ onMounted(() => {
 .workout-name {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
 }
 
@@ -533,11 +552,12 @@ onMounted(() => {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
 }
 
 .detail-item i {
   width: 14px;
+  color: var(--primary-color);
 }
 
 .workout-status {
@@ -555,19 +575,20 @@ onMounted(() => {
 }
 
 .completion-badge.completed {
-  background: #c6f6d5;
-  color: #22543d;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
 }
 
 .completion-badge.partial {
-  background: #fed7d7;
-  color: #c53030;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
 }
 
 .workout-type {
   font-size: 0.8rem;
-  color: #718096;
-  background: #f7fafc;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
 }
@@ -576,7 +597,9 @@ onMounted(() => {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: rgba(255,255,255,0.9);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   max-width: 400px;
   margin: 0 auto;
 }
@@ -584,17 +607,19 @@ onMounted(() => {
 .empty-state i {
   font-size: 4rem;
   margin-bottom: 1rem;
+  color: var(--text-muted);
   opacity: 0.6;
 }
 
 .empty-state h3 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
+  color: var(--text-color);
 }
 
 .empty-state p {
   font-size: 1rem;
-  opacity: 0.8;
+  color: var(--text-muted);
 }
 
 /* Modal */
@@ -604,16 +629,18 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   max-width: 600px;
   width: 100%;
@@ -627,29 +654,29 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin: 0;
 }
 
 .close-btn {
   padding: 0.5rem;
   border: none;
-  background: #f7fafc;
-  color: #718096;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: #edf2f7;
-  color: #4a5568;
+  background: var(--border-color);
+  color: var(--text-color);
 }
 
 .modal-body {
@@ -665,7 +692,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #f7fafc;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .summary-row:last-child {
@@ -674,17 +701,17 @@ onMounted(() => {
 
 .summary-row .label {
   font-weight: 600;
-  color: #4a5568;
+  color: var(--text-secondary);
 }
 
 .summary-row .value {
-  color: #2d3748;
+  color: var(--text-color);
 }
 
 .exercise-details h4 {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin-bottom: 1rem;
 }
 
@@ -699,31 +726,33 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
 }
 
 .exercise-name {
   font-weight: 500;
-  color: #2d3748;
+  color: var(--text-color);
 }
 
 .exercise-stats {
   display: flex;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
 }
 
 .exercise-stats span {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
 }
 
 .modal-footer {
   padding: 1rem 2rem 2rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .btn {
@@ -736,28 +765,44 @@ onMounted(() => {
 }
 
 .btn.secondary {
-  background: #f7fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
 }
 
 .btn.secondary:hover {
-  background: #edf2f7;
+  background: var(--border-color);
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .student-history {
-    padding: 1rem 0.5rem;
+    flex-direction: column;
+  }
+  
+  .main-content {
+    padding: 1rem;
   }
   
   .page-title {
     font-size: 2rem;
   }
   
+  .page-subtitle {
+    font-size: 1rem;
+  }
+  
   .filters-section {
     flex-direction: column;
     align-items: stretch;
+    padding: 1rem;
   }
   
   .filter-group {
@@ -768,14 +813,28 @@ onMounted(() => {
     min-width: auto;
   }
   
+  .clear-filters-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
   .stats-summary {
     grid-template-columns: 1fr;
+  }
+  
+  .summary-card {
+    padding: 1rem;
   }
   
   .history-item {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .workout-date {
+    min-width: auto;
   }
   
   .workout-info {
@@ -798,7 +857,17 @@ onMounted(() => {
   .modal-header,
   .modal-body,
   .modal-footer {
-    padding: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .exercise-item {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .exercise-stats {
+    justify-content: center;
   }
 }
 </style>

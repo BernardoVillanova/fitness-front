@@ -1,604 +1,1267 @@
-<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="workout-plans">
-    <!-- Enhanced Header with better typography -->
-    <div class="header-section">
-      <div class="header-content">
-        <h1 class="page-title">Meus Treinos</h1>
-        <p class="page-subtitle">Escolha seu treino e comece a treinar</p>
-      </div>
-    </div>
-
-    <!-- Enhanced Filter System -->
-    <div class="filter-section">
-      <div class="filter-tabs">
-        <button 
-          v-for="filter in filters" 
-          :key="filter.value"
-          :class="['filter-tab', { active: activeFilter === filter.value }]"
-          @click="setFilter(filter.value)"
-        >
-          <i :class="filter.icon"></i>
-          <span class="tab-text">{{ filter.label }}</span>
-          <span v-if="filter.count" class="tab-count">{{ filter.count }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-if="filteredWorkouts.length === 0" class="empty-state">
-      <i class="fas fa-calendar-times"></i>
-      <h3>Nenhum treino encontrado</h3>
-      <p>Não há treinos disponíveis para o filtro selecionado.</p>
-    </div>
-
-    <!-- Enhanced Plans Grid -->
-    <div v-else class="plans-section">
-      <div class="plans-grid">
-        <div 
-          v-for="plan in filteredWorkouts" 
-          :key="plan._id" 
-          class="plan-card"
-          @click="openWorkoutModal(plan)"
-        >
-          <div class="card-background"></div>
+  <div :class="isDarkMode ? 'dashboard-dark' : 'dashboard-light'" class="dashboard-container">
+    <DashboardNavBar />
+    
+    <main class="dashboard-main">
+      <!-- Floating Header -->
+      <div class="floating-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="title-section">
+              <h1 class="main-title">
+                <span class="title-gradient">Planos de Exercícios</span>
+              </h1>
+              <p class="subtitle">Gerencie e organize todos os treinos dos seus alunos com elegância</p>
+            </div>
+          </div>
           
-          <!-- Header com melhor organização -->
-          <div class="plan-header">
-            <div class="plan-title-section">
-              <h3 class="plan-name">{{ plan.name }}</h3>
-              <div class="plan-meta">
-                <span class="plan-date">{{ formatDate(plan.createdAt) }}</span>
-              </div>
-            </div>
-            
-            <div class="plan-menu-wrapper" @click.stop>
-              <button class="menu-trigger" @click="togglePlanMenu(plan._id)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="1"/>
-                  <circle cx="12" cy="5" r="1"/>
-                  <circle cx="12" cy="19" r="1"/>
+          <div class="header-right">
+            <button @click="openCreateModal" class="create-button">
+              <div class="button-glow"></div>
+              <div class="button-content">
+                <svg class="button-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14M5 12h14"/>
                 </svg>
-              </button>
-              
-              <div v-if="openMenuId === plan._id" class="dropdown-menu">
-                <button class="dropdown-item" @click="duplicatePlan(plan)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                  </svg>
-                  Duplicar
-                </button>
-                
-                <div class="dropdown-separator"></div>
-                
-                <button class="dropdown-item danger" @click="deletePlan(plan._id)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18"/>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                  </svg>
-                  Excluir
-                </button>
+                <span>Criar Plano</span>
               </div>
-            </div>
-          </div>
-
-          <!-- Stats Grid Melhorado -->
-          <div class="plan-stats">
-            <div class="stat-item">
-              <div class="stat-icon">
-                <i class="fas fa-dumbbell"></i>
-              </div>
-              <div class="stat-details">
-                <div class="stat-number-main">{{ plan.divisions.length }}</div>
-                <div class="stat-label-main">Divisões</div>
-              </div>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <div class="stat-item">
-              <div class="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-              </div>
-              <div class="stat-details">
-                <div class="stat-number-main">{{ plan.estimatedTime || 45 }}min</div>
-                <div class="stat-label-main">Duração</div>
-              </div>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <div class="stat-item">
-              <div class="stat-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M2 12l10 5 10-5"/>
-                  <path d="M22 7l-10 5L2 7"/>
-                </svg>
-              </div>
-              <div class="stat-details">
-                <div class="stat-number-main">{{ plan.difficulty || 'Médio' }}</div>
-                <div class="stat-label-main">Nível</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Progress bar melhorada -->
-          <div class="progress-section">
-            <div class="progress-header">
-              <span class="progress-label">Progresso</span>
-              <span class="progress-percentage">{{ Math.round((plan.completedSessions || 0) / (plan.totalSessions || 12) * 100) }}%</span>
-            </div>
-            <div class="progress-bar">
-              <div 
-                class="progress-fill" 
-                :style="{ width: Math.round((plan.completedSessions || 0) / (plan.totalSessions || 12) * 100) + '%' }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Action buttons melhorados -->
-          <div class="card-actions">
-            <button 
-              class="action-btn primary" 
-              @click.stop="startWorkout(plan)"
-              :disabled="!!activeWorkoutSession"
-            >
-              <i class="fas fa-play"></i>
-              {{ activeWorkoutSession ? 'Treino ativo' : 'Iniciar Treino' }}
             </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Modal de Detalhes do Treino -->
-    <div v-if="selectedWorkout" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>{{ selectedWorkout.name }}</h2>
-          <button @click="closeModal" class="close-btn">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div class="workout-overview">
-            <div class="overview-stats">
-              <div class="overview-stat">
-                <i class="fas fa-clock"></i>
-                <div>
-                  <span class="stat-value">{{ selectedWorkout.estimatedTime }}</span>
-                  <span class="stat-label">minutos</span>
+      <div class="dashboard-content">
+        <!-- Enhanced Stats Cards -->
+        <div class="stats-section">
+          <div class="stats-grid">
+            <div class="stat-card stat-primary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-header">
+                  <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                  </div>
+                  <div class="stat-trend">
+                    <span class="trend-value">+12%</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div class="overview-stat">
-                <i class="fas fa-fire"></i>
-                <div>
-                  <span class="stat-value">{{ selectedWorkout.estimatedCalories }}</span>
-                  <span class="stat-label">calorias</span>
-                </div>
-              </div>
-              
-              <div class="overview-stat">
-                <i class="fas fa-chart-line"></i>
-                <div>
-                  <span class="stat-value">{{ selectedWorkout.difficulty }}</span>
-                  <span class="stat-label">dificuldade</span>
+                <div class="stat-body">
+                  <div class="stat-number">{{ workoutPlans.length }}</div>
+                  <div class="stat-label">Total de Planos</div>
                 </div>
               </div>
             </div>
-            
-            <div class="workout-description">
-              <h4>Descrição</h4>
-              <p>{{ selectedWorkout.fullDescription || selectedWorkout.description }}</p>
+
+            <div class="stat-card stat-secondary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-header">
+                  <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </div>
+                  <div class="stat-trend">
+                    <span class="trend-value">+8%</span>
+                  </div>
+                </div>
+                <div class="stat-body">
+                  <div class="stat-number">{{ totalStudents }}</div>
+                  <div class="stat-label">Alunos Ativos</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card stat-tertiary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-header">
+                  <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </div>
+                  <div class="stat-trend">
+                    <span class="trend-value">+24%</span>
+                  </div>
+                </div>
+                <div class="stat-body">
+                  <div class="stat-number">{{ newPlansThisMonth }}</div>
+                  <div class="stat-label">Planos este Mês</div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Divisões com layout melhorado -->
-          <div class="divisions-section">
-            <h4 class="divisions-title">Divisões do Treino</h4>
+        <!-- Enhanced Filter Section -->
+        <div class="filter-section">
+          <div class="filter-card">
+            <div class="search-area">
+              <div class="search-wrapper">
+                <div class="search-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                </div>
+                <input 
+                  v-model="searchQuery" 
+                  type="text" 
+                  placeholder="Pesquisar planos de exercício..."
+                  class="search-input"
+                >
+                <div class="search-bg"></div>
+              </div>
+            </div>
             
-            <div class="divisions-list">
-              <div 
-                v-for="(division, index) in selectedWorkout.divisions" 
-                :key="index"
-                class="division-card"
+            <div class="filter-tabs">
+              <button 
+                v-for="filter in filters"
+                :key="filter.key"
+                @click="filterBy = filter.key"
+                :class="{ active: filterBy === filter.key }"
+                class="filter-tab"
               >
-                <div class="division-header">
-                  <h5>{{ division.name }}</h5>
-                  <span class="exercises-count">{{ division.exercises.length }} exercícios</span>
+                <span class="tab-text">{{ filter.label }}</span>
+                <span v-if="filter.count" class="tab-count">{{ filter.count }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enhanced Plans Grid - LAYOUT MELHORADO -->
+        <div class="plans-section">
+          <div class="plans-grid">
+            <div 
+              v-for="(plan, index) in paginatedPlans" 
+              :key="plan._id || plan.id" 
+              class="plan-card"
+              :style="{ animationDelay: `${index * 100}ms` }"
+            >
+              <div class="card-background"></div>
+              
+              <!-- Header com melhor organização -->
+              <div class="plan-header">
+                <div class="plan-title-section">
+                  <h3 class="plan-name">{{ plan.name }}</h3>
+                  <div class="plan-meta">
+                    <span class="plan-date">{{ formatDate(plan.createdAt) }}</span>
+                  </div>
                 </div>
                 
-                <div class="exercises-preview">
+                <div class="plan-menu-wrapper" @click.stop>
+                  <button class="menu-trigger" @click="togglePlanMenu(plan._id)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="12" cy="5" r="1"/>
+                      <circle cx="12" cy="19" r="1"/>
+                    </svg>
+                  </button>
+                  
+                  <div v-if="openMenuId === plan._id" class="dropdown-menu" @click.stop>
+                    <button @click="assignPlan(plan)" class="dropdown-option">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                      </svg>
+                      Atribuir
+                    </button>
+                    <button @click="duplicatePlan(plan)" class="dropdown-option">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                      </svg>
+                      Duplicar
+                    </button>
+                    <div class="dropdown-separator"></div>
+                    <button @click="deletePlan(plan)" class="dropdown-option danger">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                      </svg>
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estatísticas principais reorganizadas -->
+              <div class="plan-stats-main">
+                <div class="stat-item-main">
+                  <div class="stat-icon-main divisions-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="7" height="7"/>
+                      <rect x="14" y="3" width="7" height="7"/>
+                      <rect x="14" y="14" width="7" height="7"/>
+                      <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  </div>
+                  <div class="stat-details">
+                    <div class="stat-number-main">{{ plan.divisions.length }}</div>
+                    <div class="stat-label-main">Divisões</div>
+                  </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="stat-item-main">
+                  <div class="stat-icon-main exercises-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/>
+                      <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                  </div>
+                  <div class="stat-details">
+                    <div class="stat-number-main">{{ getTotalExercises(plan) }}</div>
+                    <div class="stat-label-main">Exercícios</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Divisões com layout melhorado -->
+              <div class="divisions-section">
+                <h4 class="divisions-title">Divisões do Treino</h4>
+                <div class="divisions-container">
                   <div 
-                    v-for="exercise in division.exercises.slice(0, 3)" 
-                    :key="exercise.id"
-                    class="exercise-preview"
+                    v-for="(division, idx) in plan.divisions.slice(0, 3)" 
+                    :key="division._id"
+                    class="division-item"
+                    :style="{ animationDelay: `${idx * 50}ms` }"
                   >
-                    <span class="exercise-name">{{ exercise.name }}</span>
-                    <div class="exercise-specs">
-                      <span v-if="exercise.sets" class="spec">{{ exercise.sets }}x{{ exercise.reps || exercise.duration }}</span>
-                      <span v-if="exercise.weight" class="spec">{{ exercise.weight }}kg</span>
-                      <span v-if="exercise.restTime" class="spec">{{ exercise.restTime }}s descanso</span>
+                    <div class="division-info">
+                      <span class="division-name">{{ division.name }}</span>
+                      <span class="exercise-count-badge">{{ division.exercises.length }} exercícios</span>
                     </div>
                   </div>
                   
-                  <div v-if="division.exercises.length > 3" class="more-exercises">
-                    +{{ division.exercises.length - 3 }} exercícios
+                  <div v-if="plan.divisions.length > 3" class="more-divisions-indicator">
+                    <div class="more-divisions-content">
+                      <span class="more-text">+{{ plan.divisions.length - 3 }}</span>
+                      <span class="more-label">mais divisões</span>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Ações com melhor alinhamento -->
+              <div class="plan-actions">
+                <button @click="viewPlan(plan)" class="action-button primary-action">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <span>Visualizar</span>
+                </button>
+                
+                <button @click="editPlan(plan)" class="action-button secondary-action">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  <span>Editar</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button @click="closeModal" class="btn secondary">
-            Fechar
-          </button>
-          <button 
-            @click="startWorkout(selectedWorkout)" 
-            class="btn primary"
-            :disabled="!!activeWorkoutSession"
-          >
-            <i class="fas fa-play"></i>
-            {{ activeWorkoutSession ? 'Treino ativo' : 'Iniciar Treino' }}
-          </button>
+        <!-- Enhanced Pagination -->
+        <div class="pagination-section" v-if="totalPages > 1">
+          <div class="pagination-card">
+            <div class="pagination-info">
+              <span class="info-text">
+                Mostrando <strong>{{ (currentPage - 1) * plansPerPage + 1 }}</strong> - 
+                <strong>{{ Math.min(currentPage * plansPerPage, filteredPlans.length) }}</strong> 
+                de <strong>{{ filteredPlans.length }}</strong> planos
+              </span>
+            </div>
+            
+            <div class="pagination-controls">
+              <button 
+                @click="currentPage--" 
+                :disabled="currentPage === 1"
+                class="pagination-btn prev-btn"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15,18 9,12 15,6"/>
+                </svg>
+                Anterior
+              </button>
+              
+              <div class="page-numbers">
+                <button
+                  v-for="page in visiblePages" 
+                  :key="page"
+                  @click="currentPage = page"
+                  :class="{ active: currentPage === page, dots: page === '...' }"
+                  :disabled="page === '...'"
+                  class="page-number"
+                >
+                  {{ page }}
+                </button>
+              </div>
+              
+              <button 
+                @click="currentPage++" 
+                :disabled="currentPage === totalPages"
+                class="pagination-btn next-btn"
+              >
+                Próximo
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9,18 15,12 9,6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
+
+    <!-- Modals -->
+    <WorkoutPlanModal
+      v-if="showModal"
+      :show="showModal"
+      :isEditing="isEditing"
+      :planData="selectedPlan"
+      @close="closeModal"
+      @save="savePlan"
+    />
+
+    <AssignPlanModal
+      v-if="showAssignModal"
+      :show="showAssignModal"
+      :plan="selectedPlan"
+      @close="closeAssignModal"
+      @assign="assignPlanToStudent"
+    />
+
+    <ViewPlanModal
+      v-if="showViewModal"
+      :show="showViewModal"
+      :plan="selectedPlan"
+      @close="closeViewModal"
+    />
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+<script>
+import DashboardNavBar from "@/components/DashboardNavBar.vue";
+import WorkoutPlanModal from "@/components/WorkoutPlanModal.vue";
+import AssignPlanModal from "@/components/AssignPlanModal.vue";
+import ViewPlanModal from "@/components/ViewPlanModal.vue";
+import { useThemeStore } from "@/store/theme";
+import { storeToRefs } from "pinia";
 
-const router = useRouter()
-
-// Reactive data
-const activeFilter = ref('all')
-const selectedWorkout = ref(null)
-const activeWorkoutSession = ref(null)
-const openMenuId = ref(null)
-
-// Mock data para desenvolvimento
-const mockWorkouts = ref([
-  {
-    _id: 1,
-    name: "Treino A - Peito e Tríceps",
-    type: "Força",
-    difficulty: "Intermediário",
-    description: "Desenvolvimento do peitoral e tríceps",
-    fullDescription: "Treino focado no desenvolvimento da musculatura do peitoral maior e menor, juntamente com o fortalecimento dos tríceps. Ideal para quem busca ganho de massa muscular na parte superior do corpo.",
-    estimatedTime: 45,
-    estimatedCalories: 280,
-    lastCompleted: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    bestTime: 38,
-    completedSessions: 8,
-    totalSessions: 12,
-    createdAt: new Date(),
-    divisions: [
-      {
-        name: "Divisão A1 - Peito",
-        exercises: [
-          { id: 1, name: "Supino Reto", sets: 4, reps: 12, weight: 80, restTime: 90 },
-          { id: 2, name: "Supino Inclinado", sets: 3, reps: 10, weight: 70, restTime: 90 },
-          { id: 3, name: "Fly Máquina", sets: 3, reps: 15, weight: 50, restTime: 60 },
-          { id: 4, name: "Cross Over", sets: 3, reps: 12, weight: 25, restTime: 60 }
-        ]
-      },
-      {
-        name: "Divisão A2 - Tríceps",
-        exercises: [
-          { id: 5, name: "Tríceps Pulley", sets: 4, reps: 12, weight: 40, restTime: 60 },
-          { id: 6, name: "Tríceps Francês", sets: 3, reps: 10, weight: 30, restTime: 90 },
-          { id: 7, name: "Mergulho", sets: 3, reps: 15, restTime: 60 }
-        ]
-      }
-    ]
+export default {
+  name: "WorkoutPlans",
+  components: { 
+    DashboardNavBar, 
+    WorkoutPlanModal,
+    AssignPlanModal,
+    ViewPlanModal
   },
-  {
-    _id: 2,
-    name: "Treino B - Costas e Bíceps",
-    type: "Força",
-    difficulty: "Intermediário",
-    description: "Desenvolvimento das costas e bíceps",
-    fullDescription: "Treino completo para o desenvolvimento da musculatura das costas (latíssimo do dorso, romboides, trapézio) e bíceps. Foco em movimentos de puxada e rosca para ganho de força e massa muscular.",
-    estimatedTime: 50,
-    estimatedCalories: 320,
-    lastCompleted: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    bestTime: 45,
-    completedSessions: 5,
-    totalSessions: 12,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    divisions: [
-      {
-        name: "Divisão B1 - Costas",
-        exercises: [
-          { id: 8, name: "Puxada Frontal", sets: 4, reps: 12, weight: 60, restTime: 90 },
-          { id: 9, name: "Remada Curvada", sets: 4, reps: 10, weight: 70, restTime: 90 },
-          { id: 10, name: "Remada Sentado", sets: 3, reps: 12, weight: 50, restTime: 60 },
-          { id: 11, name: "Pulley Costas", sets: 3, reps: 15, weight: 45, restTime: 60 }
-        ]
-      },
-      {
-        name: "Divisão B2 - Bíceps",
-        exercises: [
-          { id: 12, name: "Rosca Direta", sets: 3, reps: 12, weight: 20, restTime: 60 },
-          { id: 13, name: "Rosca Martelo", sets: 3, reps: 10, weight: 18, restTime: 60 },
-          { id: 14, name: "Rosca Concentrada", sets: 3, reps: 12, weight: 15, restTime: 45 }
-        ]
-      }
-    ]
+  setup() {
+    const themeStore = useThemeStore();
+    const { isDarkMode } = storeToRefs(themeStore);
+    return { isDarkMode };
   },
-  {
-    _id: 3,
-    name: "Treino C - Pernas",
-    type: "Força",
-    difficulty: "Avançado",
-    description: "Treino completo de membros inferiores",
-    fullDescription: "Treino intenso focado no desenvolvimento completo dos membros inferiores. Inclui exercícios para quadríceps, posteriores de coxa, glúteos e panturrilhas. Ideal para ganho de força e massa muscular nas pernas.",
-    estimatedTime: 60,
-    estimatedCalories: 400,
-    lastCompleted: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    bestTime: 55,
-    completedSessions: 10,
-    totalSessions: 12,
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    divisions: [
-      {
-        name: "Divisão C1 - Quadríceps e Glúteos",
-        exercises: [
-          { id: 15, name: "Agachamento Livre", sets: 4, reps: 12, weight: 100, restTime: 120 },
-          { id: 16, name: "Leg Press", sets: 4, reps: 15, weight: 200, restTime: 90 },
-          { id: 17, name: "Extensão de Pernas", sets: 3, reps: 15, weight: 60, restTime: 60 },
-          { id: 18, name: "Afundo", sets: 3, reps: 12, weight: 20, restTime: 60 }
-        ]
-      },
-      {
-        name: "Divisão C2 - Posteriores e Panturrilha",
-        exercises: [
-          { id: 19, name: "Mesa Flexora", sets: 4, reps: 12, weight: 50, restTime: 90 },
-          { id: 20, name: "Stiff", sets: 3, reps: 10, weight: 60, restTime: 90 },
-          { id: 21, name: "Panturrilha Sentado", sets: 4, reps: 20, weight: 40, restTime: 45 },
-          { id: 22, name: "Panturrilha em Pé", sets: 4, reps: 15, weight: 80, restTime: 60 }
-        ]
+  data() {
+    return {
+      searchQuery: '',
+      filterBy: 'all',
+      currentPage: 1,
+      plansPerPage: 6,
+      showModal: false,
+      showAssignModal: false,
+      showViewModal: false,
+      isEditing: false,
+      selectedPlan: null,
+      workoutPlans: [],
+      loading: false,
+      error: null,
+      openMenuId: null,
+      filters: [
+        { key: 'all', label: 'Todos', count: null },
+        { key: 'recent', label: 'Recentes', count: null },
+        { key: 'assigned', label: 'Atribuídos', count: null }
+      ]
+    }
+  },
+  computed: {
+    filteredPlans() {
+      let filtered = this.workoutPlans.filter(plan => {
+        const matchesSearch = plan.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+        
+        if (this.filterBy === 'recent') {
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          return matchesSearch && new Date(plan.createdAt) > oneWeekAgo;
+        }
+        
+        return matchesSearch;
+      });
+      return filtered;
+    },
+    paginatedPlans() {
+      const start = (this.currentPage - 1) * this.plansPerPage;
+      const end = start + this.plansPerPage;
+      return this.filteredPlans.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredPlans.length / this.plansPerPage);
+    },
+    visiblePages() {
+      const pages = [];
+      const total = this.totalPages;
+      const current = this.currentPage;
+      
+      if (total <= 7) {
+        for (let i = 1; i <= total; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (current <= 4) {
+          for (let i = 1; i <= 5; i++) pages.push(i);
+          pages.push('...');
+          pages.push(total);
+        } else if (current >= total - 3) {
+          pages.push(1);
+          pages.push('...');
+          for (let i = total - 4; i <= total; i++) pages.push(i);
+        } else {
+          pages.push(1);
+          pages.push('...');
+          for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+          pages.push('...');
+          pages.push(total);
+        }
       }
-    ]
-  }
-])
+      return pages;
+    },
+    totalStudents() {
+      return 125;
+    },
+    newPlansThisMonth() {
+      const thisMonth = new Date().getMonth();
+      const thisYear = new Date().getFullYear();
+      return this.workoutPlans.filter(plan => {
+        const planDate = new Date(plan.createdAt);
+        return planDate.getMonth() === thisMonth && planDate.getFullYear() === thisYear;
+      }).length;
+    }
+  },
+  watch: {
+    searchQuery() {
+      this.currentPage = 1;
+    },
+    filterBy() {
+      this.currentPage = 1;
+    }
+  },
+  async mounted() {
+    await this.fetchWorkoutPlans();
+  },
+  methods: {
+    async fetchWorkoutPlans() {
+      this.loading = true;
+      try {
+        const response = await fetch('/api/workout/workout-plans');
+        if (response.ok) {
+          this.workoutPlans = await response.json();
+        } else {
+          throw new Error('Erro ao carregar planos');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar planos:', error);
+        this.error = error.message;
+        // Dados de exemplo para desenvolvimento
+        this.workoutPlans = [
+          {
+            _id: '1',
+            name: 'Treino Funcional Básico',
+            divisions: [
+              {
+                _id: 'd1',
+                name: 'Treino A - Upper',
+                exercises: [
+                  { name: 'Agachamento', sets: 3, reps: 12, idealWeight: 20 },
+                  { name: 'Flexão', sets: 3, reps: 10, idealWeight: 0 }
+                ]
+              },
+              {
+                _id: 'd2',
+                name: 'Treino B - Lower',
+                exercises: [
+                  { name: 'Leg Press', sets: 4, reps: 15, idealWeight: 80 }
+                ]
+              }
+            ],
+            createdAt: new Date().toISOString()
+          },
+          {
+            _id: '2',
+            name: 'Hipertrofia Avançada',
+            divisions: [
+              {
+                _id: 'd3',
+                name: 'Treino A - Peito/Tríceps',
+                exercises: [
+                  { name: 'Supino Reto', sets: 4, reps: 8, idealWeight: 60 },
+                  { name: 'Inclinado Halteres', sets: 3, reps: 10, idealWeight: 30 }
+                ]
+              },
+              {
+                _id: 'd4',
+                name: 'Treino B - Costas/Bíceps',
+                exercises: [
+                  { name: 'Puxada Frontal', sets: 4, reps: 8, idealWeight: 50 },
+                  { name: 'Remada Curvada', sets: 3, reps: 10, idealWeight: 40 }
+                ]
+              },
+              {
+                _id: 'd5',
+                name: 'Treino C - Pernas',
+                exercises: [
+                  { name: 'Agachamento Livre', sets: 5, reps: 6, idealWeight: 100 },
+                  { name: 'Leg Press', sets: 4, reps: 12, idealWeight: 120 }
+                ]
+              },
+              {
+                _id: 'd6',
+                name: 'Treino D - Ombros',
+                exercises: [
+                  { name: 'Desenvolvimento', sets: 4, reps: 8, idealWeight: 40 }
+                ]
+              }
+            ],
+            createdAt: new Date(Date.now() - 86400000).toISOString()
+          },
+          {
+            _id: '3',
+            name: 'Condicionamento Físico',
+            divisions: [
+              {
+                _id: 'd7',
+                name: 'HIIT Cardio',
+                exercises: [
+                  { name: 'Burpees', sets: 5, reps: 15, idealWeight: 0 },
+                  { name: 'Mountain Climbers', sets: 4, reps: 20, idealWeight: 0 }
+                ]
+              }
+            ],
+            createdAt: new Date(Date.now() - 172800000).toISOString()
+          }
+        ];
+      } finally {
+        this.loading = false;
+      }
+    },
 
-// Computed
-const filters = computed(() => [
-  { value: 'all', label: 'Todos', icon: 'fas fa-list', count: mockWorkouts.value.length },
-  { value: 'Força', label: 'Força', icon: 'fas fa-dumbbell', count: mockWorkouts.value.filter(w => w.type === 'Força').length },
-  { value: 'Cardio', label: 'Cardio', icon: 'fas fa-heartbeat', count: mockWorkouts.value.filter(w => w.type === 'Cardio').length },
-  { value: 'recent', label: 'Recentes', icon: 'fas fa-clock', count: mockWorkouts.value.filter(w => isRecent(w.createdAt)).length }
-])
+    async savePlan(planData) {
+      try {
+        const url = this.isEditing 
+          ? `/api/workout/workout-plans/${planData._id}`
+          : '/api/workout/workout-plans';
+        
+        const method = this.isEditing ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(planData)
+        });
 
-const filteredWorkouts = computed(() => {
-  if (activeFilter.value === 'all') return mockWorkouts.value
-  if (activeFilter.value === 'recent') {
-    return mockWorkouts.value.filter(workout => isRecent(workout.createdAt))
-  }
-  return mockWorkouts.value.filter(workout => workout.type === activeFilter.value)
-})
+        if (response.ok) {
+          const savedPlan = await response.json();
+          
+          if (this.isEditing) {
+            const index = this.workoutPlans.findIndex(p => p._id === savedPlan._id);
+            if (index > -1) {
+              this.workoutPlans[index] = savedPlan;
+            }
+          } else {
+            this.workoutPlans.push(savedPlan);
+          }
+          
+          this.closeModal();
+        } else {
+          throw new Error('Erro ao salvar plano');
+        }
+      } catch (error) {
+        console.error('Erro ao salvar plano:', error);
+        alert('Erro ao salvar plano: ' + error.message);
+      }
+    },
 
-// Methods
-const setFilter = (filter) => {
-  activeFilter.value = filter
-  openMenuId.value = null
-}
+    async assignPlanToStudent(assignmentData) {
+      try {
+        const response = await fetch(`/api/students/${assignmentData.studentId}/assign-workout-plan`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ workoutPlanId: assignmentData.planId })
+        });
 
-const isRecent = (date) => {
-  const now = new Date()
-  const workoutDate = new Date(date)
-  const diffTime = Math.abs(now - workoutDate)
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return diffDays <= 7
-}
+        if (response.ok) {
+          alert('Plano atribuído com sucesso!');
+          this.closeAssignModal();
+        } else {
+          throw new Error('Erro ao atribuir plano');
+        }
+      } catch (error) {
+        console.error('Erro ao atribuir plano:', error);
+        alert('Erro ao atribuir plano: ' + error.message);
+      }
+    },
 
-const formatDate = (date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
+    async deletePlan(plan) {
+      if (confirm(`Tem certeza que deseja excluir o plano "${plan.name}"?`)) {
+        try {
+          const response = await fetch(`/api/workout/workout-plans/${plan._id}`, {
+            method: 'DELETE'
+          });
 
-const togglePlanMenu = (planId) => {
-  openMenuId.value = openMenuId.value === planId ? null : planId
-}
+          if (response.ok) {
+            const index = this.workoutPlans.findIndex(p => p._id === plan._id);
+            if (index > -1) {
+              this.workoutPlans.splice(index, 1);
+            }
+          } else {
+            throw new Error('Erro ao excluir plano');
+          }
+        } catch (error) {
+          console.error('Erro ao excluir plano:', error);
+          alert('Erro ao excluir plano: ' + error.message);
+        }
+      }
+    },
 
-const openWorkoutModal = (workout) => {
-  selectedWorkout.value = workout
-  openMenuId.value = null
-}
+    getTotalExercises(plan) {
+      return plan.divisions.reduce((total, division) => total + division.exercises.length, 0);
+    },
 
-const closeModal = () => {
-  selectedWorkout.value = null
-}
+    formatDate(dateString) {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    },
 
-const startWorkout = (workout) => {
-  if (activeWorkoutSession.value) return
-  
-  // Salvar dados da sessão no sessionStorage
-  const workoutSession = {
-    workoutId: workout._id,
-    workoutName: workout.name,
-    startTime: new Date().toISOString(),
-    currentDivision: 0,
-    currentExercise: 0,
-    divisions: workout.divisions,
-    completedExercises: []
-  }
-  
-  sessionStorage.setItem('activeWorkoutSession', JSON.stringify(workoutSession))
-  activeWorkoutSession.value = workoutSession
-  
-  // Fechar modal se estiver aberto
-  closeModal()
-  
-  // Navegar para a página de sessão de treino
-  router.push('/student/workout-session')
-}
+    togglePlanMenu(planId) {
+      this.openMenuId = this.openMenuId === planId ? null : planId;
+    },
 
-const duplicatePlan = (plan) => {
-  console.log('Duplicating plan:', plan.name)
-  openMenuId.value = null
-  // Implementar lógica de duplicação
-}
+    openCreateModal() {
+      this.isEditing = false;
+      this.selectedPlan = null;
+      this.showModal = true;
+    },
 
-const deletePlan = (planId) => {
-  if (confirm('Tem certeza que deseja excluir este treino?')) {
-    const index = mockWorkouts.value.findIndex(w => w._id === planId)
-    if (index > -1) {
-      mockWorkouts.value.splice(index, 1)
+    editPlan(plan) {
+      this.isEditing = true;
+      this.selectedPlan = { ...plan };
+      this.showModal = true;
+    },
+
+    viewPlan(plan) {
+      this.selectedPlan = plan;
+      this.showViewModal = true;
+    },
+
+    assignPlan(plan) {
+      this.selectedPlan = plan;
+      this.showAssignModal = true;
+    },
+
+    duplicatePlan(plan) {
+      const newPlan = {
+        ...plan,
+        _id: null,
+        name: `${plan.name} (Cópia)`,
+        createdAt: new Date().toISOString()
+      };
+      this.selectedPlan = newPlan;
+      this.isEditing = false;
+      this.showModal = true;
+    },
+
+    closeModal() {
+      this.showModal = false;
+      this.selectedPlan = null;
+    },
+
+    closeAssignModal() {
+      this.showAssignModal = false;
+      this.selectedPlan = null;
+    },
+
+    closeViewModal() {
+      this.showViewModal = false;
+      this.selectedPlan = null;
     }
   }
-  openMenuId.value = null
 }
-
-// Lifecycle
-onMounted(() => {
-  // Verificar se há sessão ativa
-  const savedSession = sessionStorage.getItem('activeWorkoutSession')
-  if (savedSession) {
-    activeWorkoutSession.value = JSON.parse(savedSession)
-  }
-  
-  // Fechar menus ao clicar fora
-  document.addEventListener('click', () => {
-    openMenuId.value = null
-  })
-})
 </script>
 
 <style scoped>
-/* Estilos principais */
-.workout-plans {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem 1rem;
+* {
+  box-sizing: border-box;
 }
 
-.header-section {
-  text-align: center;
-  margin-bottom: 2.5rem;
+:root {
+  --font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  margin-left: 80px;
+  font-family: var(--font-family);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-pattern);
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 0;
+  background: var(--bg-primary);
+  position: relative;
+}
+
+.dashboard-content {
+  padding: 140px 40px 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Theme Variables */
+.dashboard-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: rgba(248, 250, 252, 0.9);
+  --bg-tertiary: rgba(255, 255, 255, 0.95);
+  --bg-pattern: radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(14, 165, 233, 0.2) 0%, transparent 50%);
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --text-accent: #475569;
+  
+  --border-primary: rgba(226, 232, 240, 0.8);
+  --border-secondary: rgba(241, 245, 249, 0.6);
+  --border-accent: rgba(37, 99, 235, 0.3);
+  
+  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --gradient-tertiary: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  --gradient-accent: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 10px 10px -5px rgba(37, 99, 235, 0.1);
+  
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+}
+
+.dashboard-dark {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: rgba(15, 16, 23, 0.8);
+  --bg-tertiary: rgba(26, 32, 44, 0.9);
+  --bg-pattern: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(192, 132, 252, 0.2) 0%, transparent 50%);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-accent: #e2e8f0;
+  
+  --border-primary: rgba(51, 65, 85, 0.6);
+  --border-secondary: rgba(30, 41, 59, 0.4);
+  --border-accent: rgba(139, 92, 246, 0.3);
+  
+  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  --gradient-tertiary: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  --gradient-accent: linear-gradient(135deg, #d8b4fe 0%, #c084fc 100%);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(139, 92, 246, 0.3), 0 10px 10px -5px rgba(139, 92, 246, 0.2);
+  
+  --glass-bg: rgba(15, 16, 23, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+}
+
+/* Floating Header */
+.floating-header {
+  position: fixed;
+  top: 0;
+  left: 80px;
+  right: 0;
+  z-index: 100;
+  padding: 24px 40px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .header-content {
-  max-width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1600px;
   margin: 0 auto;
+  gap: 32px;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.header-left {
+  flex: 1;
 }
 
-.page-subtitle {
-  font-size: 1.1rem;
-  color: rgba(255,255,255,0.9);
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.main-title {
   margin: 0;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
-/* Filter System */
+.title-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.create-button {
+  position: relative;
+  padding: 16px 28px;
+  border: none;
+  border-radius: 16px;
+  background: var(--gradient-primary);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-lg);
+}
+
+.create-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+}
+
+.create-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.button-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.create-button:hover .button-glow {
+  opacity: 1;
+}
+
+.button-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+
+.button-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+
+/* Enhanced Stats Section */
+.stats-section {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.stat-card {
+  position: relative;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  padding: 32px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-accent);
+}
+
+.stat-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 24px;
+}
+
+.stat-card.stat-primary .stat-background {
+  background: var(--gradient-primary);
+}
+
+.stat-card.stat-secondary .stat-background {
+  background: var(--gradient-secondary);
+}
+
+.stat-card.stat-tertiary .stat-background {
+  background: var(--gradient-tertiary);
+}
+
+.stat-card:hover .stat-background {
+  opacity: 0.05;
+}
+
+.stat-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.stat-card.stat-primary .stat-icon {
+  background: var(--gradient-primary);
+}
+
+.stat-card.stat-secondary .stat-icon {
+  background: var(--gradient-secondary);
+}
+
+.stat-card.stat-tertiary .stat-icon {
+  background: var(--gradient-tertiary);
+}
+
+.stat-card:hover .stat-icon {
+  transform: rotate(5deg) scale(1.1);
+}
+
+.stat-trend {
+  padding: 6px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+}
+
+.trend-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Enhanced Filter Section */
 .filter-section {
-  max-width: 800px;
-  margin: 0 auto 2rem;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+}
+
+.filter-card {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  flex-wrap: wrap;
+}
+
+.search-area {
+  flex: 1;
+  min-width: 320px;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-tertiary);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  z-index: -1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 18px 20px 18px 56px;
+  border: 2px solid var(--border-primary);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.search-input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.8;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  transform: scale(1.02);
+}
+
+.dashboard-dark .search-input:focus {
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.search-input:focus + .search-bg {
+  transform: scale(1.02);
+  background: var(--glass-bg);
+}
+
+.search-icon-wrapper {
+  position: absolute;
+  left: 18px;
+  z-index: 2;
+  color: var(--text-tertiary);
+  transition: all 0.3s ease;
+}
+
+.search-input:focus ~ .search-icon-wrapper {
+  color: var(--text-accent);
 }
 
 .filter-tabs {
   display: flex;
-  gap: 0.5rem;
-  background: rgba(255,255,255,0.1);
-  padding: 0.5rem;
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  overflow-x: auto;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .filter-tab {
+  position: relative;
+  padding: 14px 24px;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.8);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  min-width: fit-content;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.filter-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-primary);
+  transition: left 0.3s ease;
+  z-index: -1;
 }
 
 .filter-tab:hover {
-  background: rgba(255,255,255,0.1);
-  color: white;
+  transform: translateY(-2px);
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-lg);
 }
 
 .filter-tab.active {
-  background: white;
-  color: #667eea;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-.tab-text {
-  font-weight: 600;
+.filter-tab.active::before {
+  left: 0;
 }
 
 .tab-count {
-  background: rgba(102,126,234,0.2);
-  color: inherit;
-  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
   border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .filter-tab.active .tab-count {
-  background: rgba(102,126,234,0.1);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* Plans Grid */
+/* Enhanced Plans Section - LAYOUT MELHORADO */
 .plans-section {
-  max-width: 1200px;
-  margin: 0 auto;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
 }
 
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 28px;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .plan-card {
   position: relative;
-  background: white;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-primary);
   border-radius: 20px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
   overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-md);
+  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 480px;
 }
 
 .plan-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-accent);
 }
 
 .card-background {
@@ -606,528 +1269,570 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  bottom: 0;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
+.plan-card:hover .card-background {
+  opacity: 0.03;
+}
+
+/* Header melhorado */
 .plan-header {
+  position: relative;
+  z-index: 1;
+  padding: 24px 24px 20px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .plan-title-section {
   flex: 1;
+  padding-right: 16px;
 }
 
 .plan-name {
-  font-size: 1.3rem;
+  margin: 0 0 8px 0;
+  font-size: 1.375rem;
   font-weight: 700;
-  color: #2d3748;
-  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
   line-height: 1.3;
+  letter-spacing: -0.01em;
+  word-wrap: break-word;
 }
 
 .plan-meta {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 12px;
 }
 
 .plan-date {
-  color: #718096;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  padding: 4px 12px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-secondary);
 }
 
 .plan-menu-wrapper {
   position: relative;
+  flex-shrink: 0;
 }
 
 .menu-trigger {
-  padding: 0.5rem;
-  border: none;
-  background: transparent;
-  color: #718096;
-  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
   border-radius: 8px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .menu-trigger:hover {
-  background: #f7fafc;
-  color: #4a5568;
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  transform: scale(1.1);
 }
 
 .dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
+  margin-top: 8px;
+  background: var(--bg-tertiary);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-xl);
+  z-index: 1000;
   min-width: 160px;
-  z-index: 10;
-  overflow: hidden;
+  padding: 8px;
+  animation: dropdownFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.dropdown-option {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 10px 12px;
   border: none;
   background: transparent;
+  color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  color: #4a5568;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-.dropdown-item:hover {
-  background: #f7fafc;
+.dropdown-option:hover {
+  background: var(--bg-primary);
+  transform: translateX(2px);
 }
 
-.dropdown-item.danger {
-  color: #e53e3e;
+.dropdown-option.danger {
+  color: #ef4444;
 }
 
-.dropdown-item.danger:hover {
-  background: #fed7d7;
+.dropdown-option.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .dropdown-separator {
   height: 1px;
-  background: #e2e8f0;
-  margin: 0.25rem 0;
+  background: var(--border-primary);
+  margin: 6px 0;
 }
 
-/* Stats Grid */
-.plan-stats {
+/* Estatísticas principais melhoradas */
+.plan-stats-main {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
+  justify-content: space-between;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
 }
 
-.stat-item {
+.stat-item-main {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
   flex: 1;
 }
 
-.stat-icon {
-  width: 40px;
-  height: 40px;
+.stat-icon-main {
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
-  font-size: 1rem;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.plan-card:hover .stat-icon-main {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.divisions-icon {
+  background: var(--gradient-secondary);
+}
+
+.exercises-icon {
+  background: var(--gradient-tertiary);
 }
 
 .stat-details {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .stat-number-main {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
   line-height: 1;
 }
 
 .stat-label-main {
-  font-size: 0.8rem;
-  color: #718096;
-  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .divider {
   width: 1px;
-  height: 30px;
-  background: #e2e8f0;
-  margin: 0 1rem;
-}
-
-/* Progress Section */
-.progress-section {
-  margin-bottom: 1.5rem;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.progress-label {
-  font-weight: 600;
-  color: #4a5568;
-  font-size: 0.9rem;
-}
-
-.progress-percentage {
-  font-weight: 700;
-  color: #667eea;
-  font-size: 0.9rem;
-}
-
-.progress-bar {
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-/* Action Buttons */
-.card-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.action-btn {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.action-btn.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-}
-
-.action-btn.primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102,126,234,0.3);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: rgba(255,255,255,0.9);
-}
-
-.empty-state i {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.6;
-}
-
-.empty-state h3 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-  font-size: 1rem;
-  opacity: 0.8;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 20px;
-  max-width: 800px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.modal-header h2 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0;
-}
-
-.close-btn {
-  padding: 0.5rem;
-  border: none;
-  background: #f7fafc;
-  color: #718096;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: #edf2f7;
-  color: #4a5568;
-}
-
-.modal-body {
-  padding: 2rem;
-}
-
-.workout-overview {
-  margin-bottom: 2rem;
-}
-
-.overview-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.overview-stat {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
-}
-
-.overview-stat i {
-  width: 40px;
   height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: var(--border-primary);
+  margin: 0 16px;
 }
 
-.stat-value {
-  display: block;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #2d3748;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #718096;
-}
-
-.workout-description h4 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
-}
-
-.workout-description p {
-  color: #4a5568;
-  line-height: 1.6;
-}
-
-/* Divisions Section */
+/* Seção de divisões melhorada */
 .divisions-section {
-  margin-top: 2rem;
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .divisions-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 1rem;
+  margin: 0 0 16px 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
 }
 
-.divisions-list {
+.divisions-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.division-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: #f8fafc;
-}
-
-.division-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.division-header h5 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
-}
-
-.exercises-count {
-  font-size: 0.9rem;
-  color: #718096;
-  background: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 8px;
-}
-
-.exercises-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.exercise-preview {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: white;
-  border-radius: 8px;
-}
-
-.exercise-name {
-  font-weight: 500;
-  color: #2d3748;
-}
-
-.exercise-specs {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.spec {
-  font-size: 0.8rem;
-  color: #718096;
-  background: #edf2f7;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-}
-
-.more-exercises {
-  text-align: center;
-  padding: 1rem;
-  color: #718096;
-  font-style: italic;
-  background: white;
-  border-radius: 8px;
-  border: 2px dashed #e2e8f0;
-}
-
-/* Modal Footer */
-.modal-footer {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem 2rem 2rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-.btn {
+  gap: 10px;
   flex: 1;
-  padding: 0.75rem 1.5rem;
+  min-height: 160px;
+  overflow-y: auto;
+}
+
+.division-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.division-item:hover {
+  transform: translateX(4px);
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.division-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.division-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  flex: 1;
+}
+
+.exercise-count-badge {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.more-divisions-indicator {
+  background: var(--bg-primary);
+  border: 2px dashed var(--border-primary);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.more-divisions-indicator:hover {
+  border-color: var(--border-accent);
+  background: var(--glass-bg);
+}
+
+.more-divisions-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.more-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.more-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* Ações melhoradas - SEMPRE NA PARTE INFERIOR */
+.plan-actions {
+  position: relative;
+  z-index: 1;
+  padding: 20px 24px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.action-button {
+  flex: 1;
+  padding: 14px 18px;
   border: none;
   border-radius: 12px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
 }
 
-.btn.secondary {
-  background: #f7fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-}
-
-.btn.secondary:hover {
-  background: #edf2f7;
-}
-
-.btn.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+.primary-action {
+  background: var(--gradient-primary);
   color: white;
+  box-shadow: var(--shadow-md);
 }
 
-.btn.primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+.secondary-action {
+  background: transparent;
+  border: 2px solid var(--border-primary);
+  color: var(--text-primary);
 }
 
-.btn:disabled {
+.action-button:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.primary-action:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+.secondary-action:hover {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Enhanced Pagination */
+.pagination-section {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+}
+
+.pagination-card {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  padding: 28px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.pagination-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.info-text strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  padding: 12px 20px;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none !important;
 }
 
-/* Responsive Design */
+.page-number {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-number:hover:not(:disabled) {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+
+.page-number.active {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.1);
+}
+
+.page-number.dots {
+  cursor: default;
+  border: none;
+  background: transparent;
+}
+
+.page-number.dots:hover {
+  transform: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(60px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+  .plans-grid {
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
+  }
+  
+  .dashboard-content {
+    padding: 140px 24px 24px;
+    gap: 32px;
+  }
+  
+  .floating-header {
+    padding: 20px 24px;
+  }
+}
+
 @media (max-width: 768px) {
-  .workout-plans {
-    padding: 1rem 0.5rem;
-  }
-  
-  .page-title {
-    font-size: 2rem;
-  }
-  
   .plans-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 20px;
   }
   
-  .plan-stats {
+  .plan-card {
+    border-radius: 16px;
+  }
+  
+  .plan-header {
+    padding: 20px 20px 16px;
     flex-direction: column;
-    gap: 1rem;
+    align-items: flex-start;
+    gap: 12px;
   }
   
-  .stat-item {
+  .plan-title-section {
+    padding-right: 0;
+    width: 100%;
+  }
+  
+  .plan-menu-wrapper {
+    align-self: flex-end;
+  }
+  
+  .plan-stats-main {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .stat-item-main {
     justify-content: center;
-    text-align: center;
   }
   
   .divider {
@@ -1136,54 +1841,85 @@ onMounted(() => {
     margin: 0;
   }
   
-  .filter-tabs {
-    padding: 0.25rem;
+  .divisions-section {
+    padding: 16px 20px;
   }
   
-  .filter-tab {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-  }
-  
-  .modal-content {
-    margin: 0.5rem;
-    max-height: 95vh;
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1.5rem 1rem;
-  }
-  
-  .overview-stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .modal-footer {
+  .plan-actions {
+    padding: 16px 20px;
     flex-direction: column;
+    gap: 8px;
+  }
+  
+  .action-button {
+    padding: 16px;
+  }
+  
+  .dashboard-content {
+    padding: 140px 16px 16px;
+    gap: 24px;
+  }
+  
+  .main-title {
+    font-size: 2rem;
+  }
+  
+  .filter-card {
+    padding: 24px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+  
+  .search-area {
+    min-width: auto;
+  }
+  
+  .filter-tabs {
+    justify-content: center;
+  }
+  
+  .pagination-card {
+    padding: 20px 16px;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .pagination-controls {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 
 @media (max-width: 480px) {
-  .plan-card {
-    padding: 1rem;
+  .dashboard-container {
+    margin-left: 0;
   }
   
-  .plan-name {
-    font-size: 1.1rem;
+  .floating-header {
+    left: 0;
   }
   
-  .filter-tab {
-    padding: 0.5rem;
+  .create-button {
+    padding: 12px 20px;
+    font-size: 14px;
   }
   
-  .tab-text {
+  .button-content span {
     display: none;
   }
   
-  .filter-tab.active .tab-text {
-    display: inline;
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    padding: 24px;
+  }
+  
+  .page-numbers {
+    display: none;
   }
 }
 </style>

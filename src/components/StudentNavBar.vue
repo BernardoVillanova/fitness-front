@@ -1,10 +1,25 @@
 <template>
-  <nav :class="['navbar', { 'navbar-dark': isDarkMode, 'navbar-light': !isDarkMode, 'navbar-mobile': isMobile }]">
+  <!-- Botão Flutuante para Expandir Menu -->
+  <button 
+    v-if="isCollapsed && !isMobile" 
+    @click="toggleCollapsed" 
+    class="expand-menu-btn"
+    title="Expandir menu"
+  >
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <nav :class="['navbar', { 'navbar-dark': isDarkMode, 'navbar-light': !isDarkMode, 'navbar-mobile': isMobile, 'navbar-collapsed': isCollapsed }]">
     <!-- Logo -->
     <div class="logo-section" v-if="!isMobile">
-      <router-link to="/dashboard-student" class="logo-link">
-        <h1 class="logo-text">Winx Fitness</h1>
-      </router-link>
+      <div class="logo-header">
+        <router-link to="/student-dashboard" class="logo-link">
+          <h1 class="logo-text">Winx Fitness</h1>
+        </router-link>
+        <button @click="toggleCollapsed" class="collapse-btn" title="Recolher menu">
+          <i class="fas fa-angle-left"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Mobile hamburger button -->
@@ -15,7 +30,7 @@
     <!-- Navigation links -->
     <ul :class="['nav-links', { 'menu-open': menuOpen }]">
       <li>
-        <router-link to="/dashboard-student" class="nav-item" active-class="active">
+        <router-link to="/student-dashboard" class="nav-item" active-class="active">
           <div class="nav-icon">
             <i class="fas fa-th-large"></i>
           </div>
@@ -46,7 +61,7 @@
           <span v-if="!isMobile">Histórico</span>
         </router-link>
       </li>
-      <li>
+      <li v-if="hasInstructor">
         <router-link to="/student/instructor" class="nav-item" active-class="active">
           <div class="nav-icon">
             <i class="fas fa-user-tie"></i>
@@ -75,14 +90,6 @@
             <i class="fas fa-user"></i>
           </div>
           <span>Meu Perfil</span>
-        </router-link>
-      </li>
-      <li>
-        <router-link to="/student/settings" class="nav-item">
-          <div class="nav-icon">
-            <i class="fas fa-cog"></i>
-          </div>
-          <span>Configurações</span>
         </router-link>
       </li>
 
@@ -135,9 +142,16 @@ import { useAuthStore } from '@/store/auth';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { ref, onMounted, onUnmounted } from 'vue';
+import api from '@/api';
 
 export default {
   name: "StudentNavBar",
+  props: {
+    collapsed: {
+      type: Boolean,
+      default: false
+    }
+  },
 
   setup() {
     const themeStore = useThemeStore();
@@ -148,6 +162,13 @@ export default {
     
     const isMobile = ref(window.innerWidth <= 768);
     const menuOpen = ref(false);
+    const hasInstructor = ref(false);
+    const isCollapsed = ref(false);
+
+    const toggleCollapsed = () => {
+      isCollapsed.value = !isCollapsed.value;
+      localStorage.setItem('sidebarCollapsed', isCollapsed.value.toString());
+    };
 
     const checkScreenSize = () => {
       isMobile.value = window.innerWidth <= 768;
@@ -165,8 +186,50 @@ export default {
       router.push('/login');
     };
 
+    const checkInstructor = async () => {
+      try {
+        // Buscar dados do sessionStorage para evitar problemas com Proxy
+        const storedUser = sessionStorage.getItem('user');
+        if (!storedUser) {
+          console.log('Nenhum usuario no sessionStorage');
+          hasInstructor.value = false;
+          return;
+        }
+
+        const userData = JSON.parse(storedUser);
+        console.log('Verificando instrutor - UserData:', userData);
+        
+        const studentId = userData.studentId || userData.id;
+        
+        if (!studentId) {
+          console.log('Nenhum ID encontrado no userData');
+          hasInstructor.value = false;
+          return;
+        }
+
+        console.log('Student ID:', studentId);
+        
+        const response = await api.get(`/students/${studentId}`);
+        console.log('Response data:', response.data);
+        console.log('Instructor ID:', response.data?.instructorId);
+        
+        hasInstructor.value = !!(response.data?.instructorId);
+        console.log('Has Instructor:', hasInstructor.value);
+      } catch (error) {
+        console.error('Erro ao verificar instrutor:', error);
+        hasInstructor.value = false;
+      }
+    };
+
     onMounted(() => {
       window.addEventListener('resize', checkScreenSize);
+      checkInstructor();
+      
+      // Carregar estado do sidebar
+      const saved = localStorage.getItem('sidebarCollapsed');
+      if (saved !== null) {
+        isCollapsed.value = saved === 'true';
+      }
     });
 
     onUnmounted(() => {
@@ -179,7 +242,10 @@ export default {
       logout, 
       isMobile, 
       menuOpen, 
-      toggleMenu
+      toggleMenu,
+      hasInstructor,
+      isCollapsed,
+      toggleCollapsed
     };
   }
 };
@@ -199,10 +265,10 @@ export default {
   z-index: 1000;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  top: 0;
-  z-index: 1000;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-collapsed {
+  transform: translateX(-280px);
 }
 
 /* Cores tema light - AZUL #007bff */
@@ -219,7 +285,89 @@ export default {
 
 /* Logo section */
 .logo-section {
-  padding: 32px 32px 24px 32px;
+  padding: 32px 20px 24px 32px;
+}
+
+.logo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.collapse-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.navbar-dark .collapse-btn {
+  background: rgba(100, 65, 165, 0.2);
+  color: #8b5cf6;
+}
+
+.collapse-btn:hover {
+  background: rgba(0, 123, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.navbar-dark .collapse-btn:hover {
+  background: rgba(100, 65, 165, 0.3);
+}
+
+.navbar-collapsed .collapse-btn i {
+  transform: rotate(180deg);
+}
+
+/* Botão flutuante para expandir menu */
+.expand-menu-btn {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  z-index: 1001;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-mode .expand-menu-btn {
+  background: linear-gradient(135deg, #6441a5 0%, #8b5fd9 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.expand-menu-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
+}
+
+.dark-mode .expand-menu-btn:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+}
+
+.expand-menu-btn:active {
+  transform: scale(0.95);
+}
+
+.logo-section {
   border-bottom: 1px solid rgba(37, 99, 235, 0.15);
   transition: all 0.3s ease;
 }
@@ -510,6 +658,11 @@ input:checked + .toggle-label:before {
   .navbar-mobile.navbar-dark {
     background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 100%);
     border-top: 1px solid rgba(139, 92, 246, 0.2);
+  }
+
+  /* Esconder botão expandir no mobile */
+  .expand-menu-btn {
+    display: none;
   }
 
   .nav-links {

@@ -85,6 +85,34 @@ export default {
 
         sessionStorage.setItem("token", token);
 
+        // Buscar dados completos do usuário
+        let userData = {
+          id: decodedToken.userId,
+          email: this.email,
+          role: decodedToken.role,
+          name: decodedToken.name || 'Usuário'
+        };
+
+        // Se for student, buscar dados completos
+        if (decodedToken.role === 'student') {
+          try {
+            const studentResponse = await api.get(`/students/${decodedToken.userId}`);
+            userData = {
+              ...userData,
+              studentId: studentResponse.data._id,
+              name: studentResponse.data.name,
+              email: studentResponse.data.email,
+              phone: studentResponse.data.phone,
+              instructorId: studentResponse.data.instructorId
+            };
+          } catch (err) {
+            console.error('Erro ao buscar dados do student:', err);
+          }
+        }
+
+        // Salvar no sessionStorage
+        sessionStorage.setItem("user", JSON.stringify(userData));
+
         if (decodedToken.role === "personal") {
           this.$router.push("/dashboard");
         } else {

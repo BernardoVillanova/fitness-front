@@ -1,7 +1,10 @@
 <template>
-  <div class="student-progress">
-    <!-- Header -->
-    <div class="header-section">
+  <div class="student-progress" :class="{ 'dark-mode': isDarkMode }">
+    <StudentNavBar />
+    
+    <main class="main-content">
+      <!-- Header -->
+      <div class="header-section">
       <div class="header-content">
         <h1 class="page-title">Meu Progresso</h1>
         <p class="page-subtitle">Acompanhe sua evolução e conquistas</p>
@@ -255,86 +258,55 @@
         </div>
       </div>
     </div>
+    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useThemeStore } from '@/store/theme'
+import StudentNavBar from '@/components/StudentNavBar.vue'
+import api from '@/api'
+
+// Stores
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
 
 // Reactive data
 const showAddGoal = ref(false)
+const loading = ref(true)
 const newGoal = ref({
   type: 'workouts',
   target: '',
   description: ''
 })
 
-// Mock data
+// Data from API
 const progressData = ref({
-  completedWorkouts: 18,
-  totalWorkouts: 24,
-  totalCalories: 4320,
-  totalTime: 32,
-  currentStreak: 7,
-  totalGoals: 3
+  completedWorkouts: 0,
+  totalWorkouts: 0,
+  totalCalories: 0,
+  totalTime: 0,
+  currentStreak: 0,
+  totalGoals: 0
 })
 
-// eslint-disable-next-line no-unused-vars
 const weeklyData = ref([
   { day: 'Dom', workouts: 0, calories: 0 },
-  { day: 'Seg', workouts: 1, calories: 280 },
+  { day: 'Seg', workouts: 0, calories: 0 },
   { day: 'Ter', workouts: 0, calories: 0 },
-  { day: 'Qua', workouts: 2, calories: 420 },
-  { day: 'Qui', workouts: 1, calories: 310 },
-  { day: 'Sex', workouts: 2, calories: 380 },
-  { day: 'Sáb', workouts: 1, calories: 250 }
+  { day: 'Qua', workouts: 0, calories: 0 },
+  { day: 'Qui', workouts: 0, calories: 0 },
+  { day: 'Sex', workouts: 0, calories: 0 },
+  { day: 'Sáb', workouts: 0, calories: 0 }
 ])
 
-const monthlyGoals = ref([
-  {
-    id: 1,
-    title: 'Treinos no Mês',
-    description: 'Completar 20 treinos em Setembro',
-    icon: 'fas fa-dumbbell',
-    current: 18,
-    target: 20,
-    unit: 'treinos',
-    progress: 90
-  },
-  {
-    id: 2,
-    title: 'Queimar Calorias',
-    description: 'Queimar 5000 calorias no mês',
-    icon: 'fas fa-fire',
-    current: 4320,
-    target: 5000,
-    unit: 'kcal',
-    progress: 86.4
-  },
-  {
-    id: 3,
-    title: 'Tempo de Exercício',
-    description: 'Exercitar por 40 horas no mês',
-    icon: 'fas fa-clock',
-    current: 32,
-    target: 40,
-    unit: 'horas',
-    progress: 80
-  },
-  {
-    id: 4,
-    title: 'Perder Peso',
-    description: 'Perder 2kg neste mês',
-    icon: 'fas fa-weight',
-    current: 1.3,
-    target: 2,
-    unit: 'kg',
-    progress: 65
-  }
-])
+const monthlyGoals = ref([])
 
 // Computed
 const overallProgress = computed(() => {
+  if (progressData.value.totalWorkouts === 0) return 0
   return Math.round((progressData.value.completedWorkouts / progressData.value.totalWorkouts) * 100)
 })
 
@@ -342,10 +314,173 @@ const completedWorkouts = computed(() => progressData.value.completedWorkouts)
 const totalGoals = computed(() => progressData.value.totalGoals)
 const totalCalories = computed(() => progressData.value.totalCalories)
 const totalTime = computed(() => progressData.value.totalTime)
-// eslint-disable-next-line no-unused-vars
 const currentStreak = computed(() => progressData.value.currentStreak)
 
 // Methods
+const fetchProgressData = async () => {
+  try {
+    loading.value = true
+    
+    // Buscar histórico de treinos
+    const historyResponse = await api.get('/student/sessions/history')
+    const sessions = historyResponse.data
+    
+    // Calcular dados de progresso
+    const completedSessions = sessions.filter(s => s.status === 'completed')
+    progressData.value.completedWorkouts = completedSessions.length
+    
+    // Calcular total de treinos disponíveis
+    const workoutsResponse = await api.get('/student/workouts')
+    const workouts = workoutsResponse.data
+    progressData.value.totalWorkouts = workouts.reduce((total, plan) => {
+      return total + (plan.divisions?.length || 0) * 4 // 4 sessões por divisão/mês
+    }, 0) || 24
+    
+    // Calcular calorias e tempo total
+    progressData.value.totalCalories = completedSessions.reduce((total, session) => {
+      return total + (session.caloriesBurned || 0)
+    }, 0)
+    
+    progressData.value.totalTime = completedSessions.reduce((total, session) => {
+      const duration = session.endTime && session.startTime 
+        ? (new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60 * 60)
+        : 0
+      return total + duration
+    }, 0)
+    
+    progressData.value.totalTime = Math.round(progressData.value.totalTime)
+    
+    // Calcular sequência
+    calculateStreak(sessions)
+    
+    // Processar dados semanais
+    processWeeklyData(sessions)
+    
+    // Buscar metas
+    await fetchGoals()
+    
+  } catch (error) {
+    console.error('Erro ao buscar dados de progresso:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const calculateStreak = (sessions) => {
+  if (!sessions || sessions.length === 0) {
+    progressData.value.currentStreak = 0
+    return
+  }
+  
+  const completedSessions = sessions
+    .filter(s => s.status === 'completed')
+    .sort((a, b) => new Date(b.endTime) - new Date(a.endTime))
+  
+  if (completedSessions.length === 0) {
+    progressData.value.currentStreak = 0
+    return
+  }
+  
+  let streak = 0
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  for (let i = 0; i < completedSessions.length; i++) {
+    const sessionDate = new Date(completedSessions[i].endTime)
+    sessionDate.setHours(0, 0, 0, 0)
+    
+    const daysDiff = Math.floor((today - sessionDate) / (1000 * 60 * 60 * 24))
+    
+    if (daysDiff === streak) {
+      streak++
+    } else if (daysDiff > streak) {
+      break
+    }
+  }
+  
+  progressData.value.currentStreak = streak
+}
+
+const processWeeklyData = (sessions) => {
+  const completedSessions = sessions.filter(s => s.status === 'completed')
+  const now = new Date()
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - now.getDay())
+  weekStart.setHours(0, 0, 0, 0)
+  
+  // Reset weekly data
+  weeklyData.value = [
+    { day: 'Dom', workouts: 0, calories: 0 },
+    { day: 'Seg', workouts: 0, calories: 0 },
+    { day: 'Ter', workouts: 0, calories: 0 },
+    { day: 'Qua', workouts: 0, calories: 0 },
+    { day: 'Qui', workouts: 0, calories: 0 },
+    { day: 'Sex', workouts: 0, calories: 0 },
+    { day: 'Sáb', workouts: 0, calories: 0 }
+  ]
+  
+  completedSessions.forEach(session => {
+    const sessionDate = new Date(session.endTime)
+    if (sessionDate >= weekStart) {
+      const dayOfWeek = sessionDate.getDay()
+      weeklyData.value[dayOfWeek].workouts++
+      weeklyData.value[dayOfWeek].calories += session.caloriesBurned || 0
+    }
+  })
+}
+
+const fetchGoals = async () => {
+  try {
+    // Por enquanto, criar metas baseadas nos dados reais
+    const goals = []
+    
+    // Meta de treinos
+    const workoutsGoal = {
+      id: 1,
+      title: 'Treinos no Mês',
+      description: 'Completar 20 treinos este mês',
+      icon: 'fas fa-dumbbell',
+      current: progressData.value.completedWorkouts,
+      target: 20,
+      unit: 'treinos',
+      progress: Math.min(100, (progressData.value.completedWorkouts / 20) * 100)
+    }
+    goals.push(workoutsGoal)
+    
+    // Meta de calorias
+    const caloriesGoal = {
+      id: 2,
+      title: 'Queimar Calorias',
+      description: 'Queimar 5000 calorias no mês',
+      icon: 'fas fa-fire',
+      current: progressData.value.totalCalories,
+      target: 5000,
+      unit: 'kcal',
+      progress: Math.min(100, (progressData.value.totalCalories / 5000) * 100)
+    }
+    goals.push(caloriesGoal)
+    
+    // Meta de tempo
+    const timeGoal = {
+      id: 3,
+      title: 'Tempo de Exercício',
+      description: 'Exercitar por 40 horas no mês',
+      icon: 'fas fa-clock',
+      current: progressData.value.totalTime,
+      target: 40,
+      unit: 'horas',
+      progress: Math.min(100, (progressData.value.totalTime / 40) * 100)
+    }
+    goals.push(timeGoal)
+    
+    monthlyGoals.value = goals
+    progressData.value.totalGoals = goals.filter(g => g.progress >= 100).length
+    
+  } catch (error) {
+    console.error('Erro ao buscar metas:', error)
+  }
+}
+
 const addGoal = () => {
   if (!newGoal.value.target || !newGoal.value.description) return
   
@@ -387,34 +522,44 @@ const addGoal = () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  // Initialize component
+onMounted(async () => {
+  await fetchProgressData()
 })
 </script>
 
 <style scoped>
 .student-progress {
+  display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem 1rem;
+  background-color: var(--bg-secondary);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
 }
 
 .header-section {
-  text-align: center;
   margin-bottom: 2rem;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .page-subtitle {
   font-size: 1.1rem;
-  color: rgba(255,255,255,0.9);
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -428,10 +573,16 @@ onMounted(() => {
 }
 
 .overview-card {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .overview-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .overview-card.main {
@@ -448,14 +599,14 @@ onMounted(() => {
 .card-header h3 {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin: 0;
 }
 
 .period {
   font-size: 0.9rem;
-  color: #718096;
-  background: #f7fafc;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
 }
@@ -482,13 +633,13 @@ onMounted(() => {
 .progress-percentage {
   font-size: 2rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-color);
   line-height: 1;
 }
 
 .progress-label {
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
   margin-top: 0.25rem;
 }
 
@@ -507,13 +658,13 @@ onMounted(() => {
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-color);
   line-height: 1;
 }
 
 .detail-label {
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
   margin-top: 0.25rem;
 }
 
@@ -521,7 +672,7 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -537,14 +688,14 @@ onMounted(() => {
 .card-number {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-color);
   line-height: 1;
   margin-bottom: 0.25rem;
 }
 
 .card-label {
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -557,7 +708,7 @@ onMounted(() => {
 }
 
 .card-change.positive {
-  color: #38a169;
+  color: var(--success-color);
 }
 
 .card-change i {
@@ -571,10 +722,16 @@ onMounted(() => {
 }
 
 .chart-card {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .chart-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .chart-header {
@@ -587,7 +744,7 @@ onMounted(() => {
 .chart-header h3 {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin: 0;
 }
 
@@ -601,7 +758,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
 }
 
 .legend-color {
@@ -611,11 +768,11 @@ onMounted(() => {
 }
 
 .legend-color.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--primary-color);
 }
 
 .legend-color.secondary {
-  background: linear-gradient(135deg, #f093fb, #f5576c);
+  background: var(--warning-color);
 }
 
 .chart-container {
@@ -636,7 +793,7 @@ onMounted(() => {
 
 .grid-line {
   height: 1px;
-  background: #e2e8f0;
+  background: var(--border-color);
 }
 
 .chart-bars {
@@ -674,16 +831,16 @@ onMounted(() => {
 }
 
 .bar.primary {
-  background: linear-gradient(180deg, #667eea, #764ba2);
+  background: var(--primary-color);
 }
 
 .bar.secondary {
-  background: linear-gradient(180deg, #f093fb, #f5576c);
+  background: var(--warning-color);
 }
 
 .bar-label {
   font-size: 0.8rem;
-  color: #718096;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -703,7 +860,7 @@ onMounted(() => {
 .section-header h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: white;
+  color: var(--text-color);
   margin: 0;
 }
 
@@ -712,9 +869,9 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border: none;
-  background: rgba(255,255,255,0.2);
-  color: white;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -722,7 +879,9 @@ onMounted(() => {
 }
 
 .add-goal-btn:hover {
-  background: rgba(255,255,255,0.3);
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .goals-grid {
@@ -732,20 +891,30 @@ onMounted(() => {
 }
 
 .goal-card {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   transition: all 0.3s ease;
 }
 
+.dark-mode .goal-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
 .goal-card.completed {
-  background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success-color);
 }
 
 .goal-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.dark-mode .goal-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 
 .goal-header {
@@ -759,7 +928,7 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -769,7 +938,7 @@ onMounted(() => {
 }
 
 .goal-card.completed .goal-icon {
-  background: linear-gradient(135deg, #38a169, #2f855a);
+  background: var(--success-color);
 }
 
 .goal-info {
@@ -779,22 +948,22 @@ onMounted(() => {
 .goal-info h4 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin: 0 0 0.25rem 0;
 }
 
 .goal-card.completed .goal-info h4 {
-  color: #22543d;
+  color: var(--success-color);
 }
 
 .goal-info p {
   font-size: 0.9rem;
-  color: #718096;
+  color: var(--text-muted);
   margin: 0;
 }
 
 .goal-card.completed .goal-info p {
-  color: #2f855a;
+  color: var(--text-secondary);
 }
 
 .goal-progress {
@@ -803,34 +972,34 @@ onMounted(() => {
 
 .progress-bar {
   height: 8px;
-  background: #e2e8f0;
+  background: var(--border-color);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 0.5rem;
 }
 
 .goal-card.completed .progress-bar {
-  background: rgba(34, 84, 61, 0.2);
+  background: rgba(16, 185, 129, 0.2);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: var(--primary-color);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 .goal-card.completed .progress-fill {
-  background: linear-gradient(90deg, #38a169, #2f855a);
+  background: var(--success-color);
 }
 
 .progress-text {
   font-size: 0.9rem;
-  color: #4a5568;
+  color: var(--text-secondary);
 }
 
 .goal-card.completed .progress-text {
-  color: #22543d;
+  color: var(--success-color);
 }
 
 .current {
@@ -852,13 +1021,13 @@ onMounted(() => {
 }
 
 .status-badge.completed {
-  background: #22543d;
+  background: var(--success-color);
   color: white;
 }
 
 .status-badge.in-progress {
-  background: #edf2f7;
-  color: #4a5568;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 /* Modal */
@@ -868,16 +1037,18 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   max-width: 500px;
   width: 100%;
@@ -891,29 +1062,29 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin: 0;
 }
 
 .close-btn {
   padding: 0.5rem;
   border: none;
-  background: #f7fafc;
-  color: #718096;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: #edf2f7;
-  color: #4a5568;
+  background: var(--border-color);
+  color: var(--text-color);
 }
 
 .modal-body {
@@ -927,7 +1098,7 @@ onMounted(() => {
 .form-group label {
   display: block;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
 }
 
@@ -935,8 +1106,10 @@ onMounted(() => {
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
+  color: var(--text-color);
   font-size: 1rem;
   transition: all 0.2s ease;
 }
@@ -944,15 +1117,20 @@ onMounted(() => {
 .form-select:focus,
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .form-select:focus,
+.dark-mode .form-input:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .modal-footer {
   display: flex;
   gap: 1rem;
   padding: 1rem 2rem 2rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .btn {
@@ -966,27 +1144,37 @@ onMounted(() => {
 }
 
 .btn.secondary {
-  background: #f7fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
 }
 
 .btn.secondary:hover {
-  background: #edf2f7;
+  background: var(--border-color);
 }
 
 .btn.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--primary-color);
   color: white;
 }
 
 .btn.primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: var(--primary-hover);
+}
+
+.dark-mode .btn.primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+  
   .progress-overview {
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
@@ -1006,11 +1194,19 @@ onMounted(() => {
     flex-direction: column;
     gap: 1rem;
   }
+  
+  .chart-container {
+    padding: 1.5rem;
+  }
 }
 
 @media (max-width: 768px) {
   .student-progress {
     padding: 1rem 0.5rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
   }
   
   .page-title {
@@ -1019,6 +1215,10 @@ onMounted(() => {
   
   .progress-overview {
     grid-template-columns: 1fr;
+  }
+  
+  .overview-card {
+    padding: 1.5rem;
   }
   
   .overview-card.main {
@@ -1034,16 +1234,42 @@ onMounted(() => {
     padding: 1.5rem 1rem;
   }
   
+  .chart-container {
+    padding: 1rem;
+  }
+  
   .chart-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
   
+  .goals-section {
+    padding: 1.5rem;
+  }
+  
   .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    padding: 1rem 1.5rem 1.5rem;
+  }
+  
+  .btn {
+    width: 100%;
   }
   
   .goals-grid {

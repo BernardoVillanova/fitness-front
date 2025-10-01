@@ -4,11 +4,20 @@ const api = axios.create({
   baseURL: "http://localhost:3000/api",
 });
 
-// Configura interceptors para logging
-api.interceptors.request.use(request => {
-  console.log('API Request:', request);
-  return request;
-});
+// Adiciona o token JWT em todas as requisições
+api.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    console.log('API Request:', config);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 api.interceptors.response.use(
   response => {
@@ -17,6 +26,15 @@ api.interceptors.response.use(
   },
   error => {
     console.error('API Error:', error.response);
+    
+    // Se receber 401, pode limpar o token e redirecionar para login
+    if (error.response && error.response.status === 401) {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      // Opcional: redirecionar para login
+      // window.location.href = '/login';
+    }
+    
     return Promise.reject(error);
   }
 );

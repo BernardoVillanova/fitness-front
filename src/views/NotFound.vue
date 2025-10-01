@@ -1,5 +1,5 @@
 <template>
-  <div class="not-found">
+  <div class="not-found" :class="{ 'dark-mode': isDarkMode }">
     <div class="not-found-container">
       <div class="error-animation">
         <div class="error-number">404</div>
@@ -39,18 +39,25 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'NotFound',
-  methods: {
-    goHome() {
-      this.$router.push('/');
-    },
-    goBack() {
-      this.$router.go(-1);
-    }
-  }
-};
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useThemeStore } from '@/store/theme'
+import { useRouter } from 'vue-router'
+
+// Stores
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
+
+// Router
+const router = useRouter()
+
+const goHome = () => {
+  router.push('/')
+}
+
+const goBack = () => {
+  router.go(-1)
+}
 </script>
 
 <style scoped>
@@ -59,17 +66,24 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: var(--bg-secondary);
   padding: 2rem;
+  transition: background 0.3s ease;
 }
 
 .not-found-container {
   text-align: center;
   max-width: 600px;
-  background: white;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 3rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .not-found-container {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .error-animation {
@@ -80,15 +94,19 @@ export default {
 .error-number {
   font-size: 8rem;
   font-weight: 900;
-  color: #007bff;
+  color: var(--primary-color);
   line-height: 1;
   margin-bottom: 1rem;
-  text-shadow: 0 10px 30px rgba(0, 123, 255, 0.3);
+  text-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .error-number {
+  text-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
 .error-icon {
   font-size: 3rem;
-  color: #0056b3;
+  color: var(--primary-color);
   animation: bounce 2s infinite;
 }
 
@@ -106,14 +124,14 @@ export default {
 
 .error-title {
   font-size: 2.5rem;
-  color: #2d3748;
+  color: var(--text-color);
   margin-bottom: 1rem;
   font-weight: 700;
 }
 
 .error-message {
   font-size: 1.2rem;
-  color: #718096;
+  color: var(--text-muted);
   margin-bottom: 2rem;
   line-height: 1.6;
 }
@@ -141,38 +159,45 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: var(--primary-color);
   color: white;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+  background: var(--primary-hover);
+}
+
+.dark-mode .btn-primary:hover {
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
 }
 
 .btn-secondary {
-  background: #f7fafc;
-  color: #4a5568;
-  border: 2px solid #e2e8f0;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
+  background: var(--border-color);
+  border-color: var(--text-muted);
 }
 
 .helpful-links {
   text-align: left;
-  background: #f7fafc;
+  background: var(--bg-secondary);
   padding: 1.5rem;
   border-radius: 10px;
   margin-top: 2rem;
+  border: 1px solid var(--border-color);
 }
 
 .helpful-links h3 {
-  color: #2d3748;
+  color: var(--text-color);
   margin-bottom: 1rem;
   font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .helpful-links ul {
@@ -186,20 +211,25 @@ export default {
 }
 
 .helpful-links a {
-  color: #007bff;
+  color: var(--primary-color);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .helpful-links a:hover {
-  color: #0056b3;
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
 @media (max-width: 768px) {
+  .not-found {
+    padding: 1rem;
+  }
+  
   .not-found-container {
     padding: 2rem;
-    margin: 1rem;
+    margin: 0;
   }
   
   .error-number {
@@ -212,6 +242,12 @@ export default {
   
   .error-actions {
     flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

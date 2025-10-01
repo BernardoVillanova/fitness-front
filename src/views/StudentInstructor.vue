@@ -1,6 +1,8 @@
 <template>
-  <div class="student-instructor">
-    <div class="page-header">
+  <div class="student-instructor" :class="{ 'dark-mode': isDarkMode }">
+    <StudentNavBar />
+    <main class="main-content">
+      <div class="page-header">
       <h1 class="page-title">
         <i class="fas fa-user-tie"></i>
         Meu Instrutor
@@ -26,14 +28,14 @@
             </div>
           </div>
           <div class="contact-actions">
-            <button @click="sendMessage" class="btn-primary">
-              <i class="fas fa-comment"></i>
-              Enviar Mensagem
-            </button>
-            <button @click="scheduleSession" class="btn-secondary">
-              <i class="fas fa-calendar-plus"></i>
-              Agendar Sessão
-            </button>
+            <a v-if="instructor.phone" :href="`tel:${instructor.phone}`" class="btn-primary">
+              <i class="fas fa-phone"></i>
+              Ligar
+            </a>
+            <a v-if="instructor.email" :href="`mailto:${instructor.email}`" class="btn-secondary">
+              <i class="fas fa-envelope"></i>
+              Enviar Email
+            </a>
           </div>
         </div>
 
@@ -62,54 +64,55 @@
       </div>
     </div>
 
-    <!-- Communication -->
-    <div class="communication-section">
+    <!-- Contact Information -->
+    <div class="contact-section">
       <h2 class="section-title">
-        <i class="fas fa-comments"></i>
-        Comunicação
+        <i class="fas fa-address-book"></i>
+        Informações de Contato
       </h2>
       
-      <div class="communication-grid">
-        <div class="recent-messages">
-          <h3>Mensagens Recentes</h3>
-          <div v-if="messages.length === 0" class="empty-messages">
-            <i class="fas fa-inbox"></i>
-            <p>Nenhuma mensagem ainda</p>
-          </div>
-          <div v-else class="messages-list">
-            <div v-for="message in messages" :key="message.id" class="message-item">
-              <div class="message-header">
-                <strong>{{ message.sender === 'instructor' ? instructor.name : 'Você' }}</strong>
-                <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-              </div>
-              <p class="message-content">{{ message.content }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="quick-contact">
-          <h3>Contato Rápido</h3>
-          <div class="contact-options">
-            <div class="contact-item">
+      <div class="contact-card">
+        <div class="contact-options">
+          <div class="contact-item">
+            <div class="contact-icon">
               <i class="fas fa-phone"></i>
-              <div>
-                <strong>Telefone</strong>
-                <p>{{ instructor?.phone || 'Não informado' }}</p>
-              </div>
             </div>
-            <div class="contact-item">
+            <div>
+              <strong>Telefone</strong>
+              <p>{{ instructor?.phone || 'Não informado' }}</p>
+              <a v-if="instructor?.phone" :href="`tel:${instructor.phone}`" class="contact-link">
+                <i class="fas fa-phone-alt"></i> Ligar agora
+              </a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">
               <i class="fas fa-envelope"></i>
-              <div>
-                <strong>Email</strong>
-                <p>{{ instructor?.email || 'Não informado' }}</p>
-              </div>
             </div>
-            <div class="contact-item">
+            <div>
+              <strong>Email</strong>
+              <p>{{ instructor?.email || 'Não informado' }}</p>
+              <a v-if="instructor?.email" :href="`mailto:${instructor.email}`" class="contact-link">
+                <i class="fas fa-paper-plane"></i> Enviar email
+              </a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">
               <i class="fas fa-clock"></i>
-              <div>
-                <strong>Horário de Atendimento</strong>
-                <p>{{ instructor?.availableHours || 'Segunda a Sexta: 8h-18h' }}</p>
-              </div>
+            </div>
+            <div>
+              <strong>Horário de Atendimento</strong>
+              <p>{{ instructor?.availableHours || 'Consulte com a academia' }}</p>
+            </div>
+          </div>
+          <div v-if="instructor?.location" class="contact-item">
+            <div class="contact-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div>
+              <strong>Localização</strong>
+              <p>{{ instructor.location }}</p>
             </div>
           </div>
         </div>
@@ -165,180 +168,149 @@
         </div>
       </div>
     </div>
-
-    <!-- Message Modal -->
-    <div v-if="showMessageModal" class="modal-overlay" @click="closeMessageModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Enviar Mensagem</h2>
-          <button @click="closeMessageModal" class="modal-close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitMessage" class="message-form">
-            <div class="form-group">
-              <label>Assunto</label>
-              <input v-model="newMessage.subject" type="text" required class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Mensagem</label>
-              <textarea v-model="newMessage.content" required class="form-textarea" rows="5"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button @click="closeMessageModal" class="btn-secondary">Cancelar</button>
-          <button @click="submitMessage" class="btn-primary">Enviar</button>
-        </div>
-      </div>
-    </div>
+    </main>
   </div>
 </template>
 
-<script>
-import { ref, reactive } from 'vue';
+<script setup>
+import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useThemeStore } from '@/store/theme'
+import StudentNavBar from '@/components/StudentNavBar.vue'
+import api from '@/api'
 
-export default {
-  name: 'StudentInstructor',
-  
-  setup() {
-    // Reactive data
-    const showMessageModal = ref(false);
+// Theme
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
+
+// Reactive data
+const loading = ref(true)
+const instructor = ref(null)
+const upcomingSessions = ref([])
+
+// Fetch instructor data
+const fetchInstructorData = async () => {
+  loading.value = true
+  try {
+    // Buscar dados do estudante para pegar o instructor ID
+    const studentResponse = await api.get('/student/profile')
+    const instructorId = studentResponse.data?.instructor || studentResponse.data?.instructorId
     
-    // Mock instructor data
-    const instructor = ref({
-      id: 1,
-      name: 'Carlos Silva',
-      speciality: 'Personal Trainer & Nutricionista',
-      avatar: 'https://via.placeholder.com/120x120/6366f1/white?text=CS',
-      rating: 4.8,
-      reviews: 156,
-      bio: 'Personal trainer com mais de 8 anos de experiência em treinamento funcional e musculação. Especializado em transformação corporal e acompanhamento nutricional.',
-      specialties: ['Musculação', 'Treinamento Funcional', 'Nutrição Esportiva', 'Reabilitação'],
-      certifications: [
-        'CREF 123456-G/SP',
-        'Certificação ACSM',
-        'Curso de Nutrição Esportiva',
-        'Treinamento Funcional - FMS'
-      ],
-      phone: '(11) 99999-9999',
-      email: 'carlos.silva@fitness.com',
-      availableHours: 'Segunda a Sexta: 6h-22h | Sábado: 8h-16h'
-    });
-
-    const messages = ref([
-      {
-        id: 1,
-        sender: 'instructor',
-        content: 'Ótimo treino hoje! Continue assim que logo veremos resultados.',
-        timestamp: '2024-02-15T14:30:00'
-      },
-      {
-        id: 2,
-        sender: 'student',
-        content: 'Obrigado! Estou me sentindo mais forte a cada treino.',
-        timestamp: '2024-02-15T15:00:00'
+    if (instructorId) {
+      // Buscar dados completos do instrutor
+      const instructorResponse = await api.get(`/instructors/${instructorId}`)
+      
+      if (instructorResponse.data) {
+        const data = instructorResponse.data
+        instructor.value = {
+          id: data._id || data.id,
+          name: data.name || data.user?.name || 'Instrutor',
+          speciality: data.speciality || data.specialty || 'Personal Trainer',
+          avatar: data.avatar || data.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Instrutor')}&background=3b82f6&color=fff&size=120`,
+          rating: data.rating || 5.0,
+          reviews: data.reviews || 0,
+          bio: data.bio || data.description || 'Profissional dedicado ao seu desenvolvimento físico e bem-estar.',
+          specialties: data.specialties || data.specializations || ['Musculação', 'Treinamento Funcional'],
+          certifications: data.certifications || data.certificates || ['Certificado CREF'],
+          phone: data.phone || data.contact?.phone || null,
+          email: data.email || data.user?.email || data.contact?.email || null,
+          availableHours: data.availableHours || data.schedule || 'Consulte a academia',
+          location: data.location || data.gym?.name || null
+        }
+        
+        // Buscar sessões agendadas (se houver endpoint)
+        try {
+          const sessionsResponse = await api.get('/student/sessions/upcoming')
+          if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
+            upcomingSessions.value = sessionsResponse.data.map(s => ({
+              id: s._id || s.id,
+              type: s.type || s.title || 'Sessão de Treino',
+              date: s.date || s.scheduledDate,
+              time: s.time || new Date(s.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              location: s.location || instructor.value.location || 'Academia'
+            }))
+          }
+        } catch (err) {
+          console.log('Nenhuma sessão agendada encontrada')
+        }
       }
-    ]);
-
-    const upcomingSessions = ref([
-      {
-        id: 1,
-        type: 'Avaliação Física',
-        date: '2024-02-20',
-        time: '15:00',
-        location: 'Sala de Avaliação - Academia Central'
-      },
-      {
-        id: 2,
-        type: 'Sessão de Treino',
-        date: '2024-02-22',
-        time: '09:00',
-        location: 'Área de Musculação - Academia Central'
-      }
-    ]);
-
-    const newMessage = reactive({
-      subject: '',
-      content: ''
-    });
-
-    // Methods
-    const sendMessage = () => {
-      showMessageModal.value = true;
-    };
-
-    const closeMessageModal = () => {
-      showMessageModal.value = false;
-      newMessage.subject = '';
-      newMessage.content = '';
-    };
-
-    const submitMessage = () => {
-      if (newMessage.subject && newMessage.content) {
-        messages.value.push({
-          id: messages.value.length + 1,
-          sender: 'student',
-          content: newMessage.content,
-          timestamp: new Date().toISOString()
-        });
-        closeMessageModal();
-      }
-    };
-
-    const scheduleSession = () => {
-      console.log('Opening session scheduling...');
-      // In a real app, open scheduling modal or navigate to scheduling page
-    };
-
-    const rescheduleSession = (session) => {
-      console.log('Rescheduling session:', session);
-    };
-
-    const cancelSession = (session) => {
-      console.log('Canceling session:', session);
-    };
-
-    const formatTime = (timestamp) => {
-      return new Date(timestamp).toLocaleString('pt-BR');
-    };
-
-    const getDay = (dateStr) => {
-      return new Date(dateStr).getDate().toString().padStart(2, '0');
-    };
-
-    const getMonth = (dateStr) => {
-      const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                     'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      return months[new Date(dateStr).getMonth()];
-    };
-
-    return {
-      instructor,
-      messages,
-      upcomingSessions,
-      showMessageModal,
-      newMessage,
-      sendMessage,
-      closeMessageModal,
-      submitMessage,
-      scheduleSession,
-      rescheduleSession,
-      cancelSession,
-      formatTime,
-      getDay,
-      getMonth
-    };
+    } else {
+      // Se não tem instrutor, usar fallback
+      useFallbackData()
+    }
+  } catch (error) {
+    console.error('Erro ao buscar dados do instrutor:', error)
+    useFallbackData()
+  } finally {
+    loading.value = false
   }
-};
+}
+
+// Fallback data quando não há instrutor ou erro na API
+const useFallbackData = () => {
+  instructor.value = {
+    id: null,
+    name: 'Instrutor não atribuído',
+    speciality: 'Entre em contato com a academia',
+    avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=94a3b8&color=fff&size=120',
+    rating: 0,
+    reviews: 0,
+    bio: 'Você ainda não possui um instrutor atribuído. Entre em contato com a recepção da academia para solicitar um acompanhamento personalizado.',
+    specialties: [],
+    certifications: [],
+    phone: null,
+    email: null,
+    availableHours: 'Consulte a academia',
+    location: null
+  }
+}
+
+// Schedule session
+const scheduleSession = () => {
+  console.log('Opening session scheduling...')
+  // TODO: Implementar modal de agendamento
+}
+
+const rescheduleSession = (session) => {
+  console.log('Rescheduling session:', session)
+  // TODO: Implementar reagendamento
+}
+
+const cancelSession = (session) => {
+  if (confirm('Deseja realmente cancelar esta sessão?')) {
+    console.log('Canceling session:', session)
+    // TODO: Chamar API para cancelar
+    upcomingSessions.value = upcomingSessions.value.filter(s => s.id !== session.id)
+  }
+}
+
+const getDay = (dateStr) => {
+  return new Date(dateStr).getDate().toString().padStart(2, '0')
+}
+
+const getMonth = (dateStr) => {
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+                 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+  return months[new Date(dateStr).getMonth()]
+}
+
+// Lifecycle
+onMounted(() => {
+  fetchInstructorData()
+})
 </script>
 
 <style scoped>
 .student-instructor {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-secondary);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .page-header {
@@ -348,7 +320,7 @@ export default {
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
   display: flex;
   align-items: center;
@@ -361,7 +333,7 @@ export default {
 
 .page-subtitle {
   font-size: 1.1rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -371,10 +343,15 @@ export default {
 }
 
 .profile-card {
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .profile-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .profile-header {
@@ -403,7 +380,7 @@ export default {
 .instructor-info h2 {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
 }
 
@@ -421,11 +398,11 @@ export default {
 }
 
 .rating-stars {
-  color: #fbbf24;
+  color: var(--warning-color);
 }
 
 .rating-text {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
@@ -443,12 +420,12 @@ export default {
 
 .detail-section h3 {
   font-size: 1.2rem;
-  color: var(--text-primary);
+  color: var(--text-color);
   margin: 0 0 1rem 0;
 }
 
 .detail-section p {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   line-height: 1.6;
   margin: 0;
 }
@@ -476,23 +453,32 @@ export default {
 
 .certifications li {
   padding: 0.5rem 0;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.certifications li:before {
+  content: '✓';
+  color: var(--success-color);
+  font-weight: bold;
 }
 
 .certifications li:last-child {
   border-bottom: none;
 }
 
-/* Communication Section */
-.communication-section {
+/* Contact Section */
+.contact-section {
   margin-bottom: 3rem;
 }
 
 .section-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-color);
   margin: 0 0 1.5rem 0;
   display: flex;
   align-items: center;
@@ -503,24 +489,16 @@ export default {
   color: var(--primary-color);
 }
 
-.communication-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-}
-
-.recent-messages,
-.quick-contact {
-  background: var(--bg-secondary);
+.contact-card {
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.recent-messages h3,
-.quick-contact h3 {
-  margin: 0 0 1rem 0;
-  color: var(--text-primary);
+.dark-mode .contact-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .empty-messages {
@@ -567,33 +545,71 @@ export default {
 }
 
 .contact-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 .contact-item {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
-.contact-item i {
-  width: 20px;
-  color: var(--primary-color);
-  margin-top: 0.25rem;
+.contact-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .contact-item:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.contact-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .contact-item strong {
   display: block;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
 }
 
 .contact-item p {
-  margin: 0;
-  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
   font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.contact-link:hover {
+  color: var(--primary-hover);
+  gap: 0.75rem;
 }
 
 /* Schedule Section */
@@ -604,16 +620,32 @@ export default {
 .empty-schedule {
   text-align: center;
   padding: 3rem;
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-secondary);
+  border-radius: 16px;
+  color: var(--text-muted);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .empty-schedule {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .empty-schedule i {
   font-size: 4rem;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  opacity: 0.3;
+  color: var(--primary-color);
+}
+
+.empty-schedule h3 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.empty-schedule p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
 }
 
 .sessions-list {
@@ -627,15 +659,24 @@ export default {
   align-items: center;
   gap: 1.5rem;
   padding: 1.5rem;
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .session-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .session-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.dark-mode .session-card:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
 }
 
 .session-date {
@@ -672,18 +713,23 @@ export default {
 
 .session-details h4 {
   margin: 0 0 0.5rem 0;
-  color: var(--text-primary);
+  color: var(--text-color);
   font-size: 1.2rem;
 }
 
 .session-time,
 .session-location {
   margin: 0.25rem 0;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.session-time i,
+.session-location i {
+  color: var(--primary-color);
 }
 
 .session-actions {
@@ -712,21 +758,29 @@ export default {
 .btn-primary {
   background: var(--primary-color);
   color: white;
+  text-decoration: none;
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--text-primary);
+  color: var(--text-color);
   border: 1px solid var(--border-color);
+  text-decoration: none;
 }
 
 .btn-secondary:hover {
   background: var(--bg-secondary);
+  border-color: var(--primary-color);
 }
 
 .btn-text {
@@ -745,118 +799,32 @@ export default {
 }
 
 .btn-text:hover {
-  background: var(--bg-primary);
-}
-
-.btn-text.danger {
-  color: var(--error-color);
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 2rem;
-}
-
-.modal-content {
-  background: var(--bg-primary);
-  border-radius: 12px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-}
-
-.modal-close:hover {
   background: var(--bg-secondary);
 }
 
-.modal-body {
-  padding: 1.5rem;
+.btn-text.danger {
+  color: var(--danger-color);
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
 }
 
-/* Form Styles */
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-input,
-.form-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-
-.form-textarea {
-  resize: vertical;
-}
-
-.form-input:focus,
-.form-textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-/* Responsive */
 @media (max-width: 768px) {
-  .student-instructor {
+  .main-content {
     padding: 1rem;
   }
 
   .page-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.9rem;
   }
 
   .profile-header {
@@ -864,52 +832,29 @@ export default {
     text-align: center;
   }
 
+  .instructor-avatar {
+    margin: 0 auto;
+  }
+
   .contact-actions {
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
   }
 
   .profile-details {
     grid-template-columns: 1fr;
   }
 
-  .communication-grid {
+  .contact-options {
     grid-template-columns: 1fr;
   }
 
   .session-card {
     flex-direction: column;
-    text-align: center;
     gap: 1rem;
   }
 
   .session-actions {
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
   }
-
-  .modal-overlay {
-    padding: 1rem;
-  }
-}
-
-/* CSS Variables */
-:root {
-  --primary-color: #6366f1;
-  --primary-hover: #5856eb;
-  --secondary-color: #8b5cf6;
-  --success-color: #10b981;
-  --success-bg: #d1fae5;
-  --info-color: #3b82f6;
-  --info-bg: #dbeafe;
-  --warning-color: #f59e0b;
-  --warning-bg: #fef3c7;
-  --error-color: #ef4444;
-  --error-bg: #fef2f2;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
 }
 </style>

@@ -1,14 +1,22 @@
 <template>
-  <div class="student-profile">
-    <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-user"></i>
-        Meu Perfil
-      </h1>
-      <p class="page-subtitle">Gerencie suas informações pessoais</p>
-    </div>
+  <div :class="['student-profile', { 'dark-mode': isDarkMode }]">
+    <StudentNavBar />
+    
+    <div class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">
+          <i class="fas fa-user"></i>
+          Meu Perfil
+        </h1>
+        <p class="page-subtitle">Gerencie suas informações pessoais</p>
+      </div>
 
-    <div class="profile-content">
+      <div v-if="loading" class="loading-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Carregando perfil...</p>
+      </div>
+
+      <div v-else class="profile-content">
       <div class="profile-card">
         <div class="avatar-section">
           <div class="avatar-container">
@@ -97,63 +105,209 @@
               <i class="fas fa-undo"></i>
               Cancelar
             </button>
-            <button type="submit" class="btn-primary">
-              <i class="fas fa-save"></i>
-              Salvar Alterações
+            <button type="submit" class="btn-primary" :disabled="saving">
+              <i :class="saving ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
+              {{ saving ? 'Salvando...' : 'Salvar Alterações' }}
             </button>
           </div>
         </form>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
-<script>
-import { reactive } from 'vue';
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { useThemeStore } from '@/store/theme';
+import { storeToRefs } from 'pinia';
+import StudentNavBar from '@/components/StudentNavBar.vue';
+import api from '@/api';
 
-export default {
-  name: 'StudentProfile',
-  setup() {
-    const studentData = reactive({
-      name: 'João Silva',
-      email: 'joao.silva@email.com',
-      phone: '(11) 99999-9999',
-      birthDate: '1995-06-15',
-      height: 175,
-      weight: 78.5,
-      goal: 'gain-muscle',
+const themeStore = useThemeStore();
+const { isDarkMode } = storeToRefs(themeStore);
+
+const loading = ref(false);
+const saving = ref(false);
+const studentId = ref(null);
+
+const studentData = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+  height: null,
+  weight: null,
+  goal: 'maintain',
+  activityLevel: 'moderate',
+  medicalConditions: '',
+  medications: '',
+  avatar: ''
+});
+
+const originalData = ref({});
+
+const fetchProfile = async () => {
+  loading.value = true;
+  try {
+    // Buscar dados do sessionStorage diretamente
+    const storedUser = sessionStorage.getItem('user');
+    
+    if (!storedUser) {
+      console.error('Nenhum usuario no sessionStorage');
+      useFallbackData();
+      loading.value = false;
+      return;
+    }
+
+    const userData = JSON.parse(storedUser);
+    console.log('UserData parseado:', userData);
+    
+    // Usar studentId primeiro, depois id
+    const studentIdToFetch = userData.studentId || userData.id;
+    
+    if (!studentIdToFetch) {
+      console.error('Nenhum ID encontrado no userData');
+      useFallbackData();
+      loading.value = false;
+      return;
+    }
+
+    console.log('Buscando perfil com ID:', studentIdToFetch);
+    const response = await api.get(`/students/${studentIdToFetch}`);
+    const data = response.data;
+    console.log('Dados recebidos:', data);
+    
+    studentId.value = data._id || studentIdToFetch;
+    
+    Object.assign(studentData, {
+      name: data.name || userData.name || '',
+      email: data.email || userData.email || '',
+      phone: data.phone || '',
+      birthDate: data.birthDate ? new Date(data.birthDate).toISOString().split('T')[0] : '',
+      height: data.personalInfo?.height || data.height || null,
+      weight: data.personalInfo?.weight || data.weight || null,
+      goal: mapGoalFromAPI(data.goals?.[0]?.description) || 'maintain',
+      activityLevel: data.personalInfo?.trainingExperience || 'moderate',
+      medicalConditions: data.healthRestrictions?.notes || '',
+      medications: data.healthRestrictions?.medications?.join(', ') || '',
+      avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}&background=667eea&color=fff&size=120`
+    });
+
+    originalData.value = { ...studentData };
+  } catch (error) {
+    console.error('Erro ao buscar perfil:', error);
+    useFallbackData();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const useFallbackData = () => {
+  const storedUser = sessionStorage.getItem('user');
+  if (storedUser) {
+    const userData = JSON.parse(storedUser);
+    Object.assign(studentData, {
+      name: userData.name || 'Usuário',
+      email: userData.email || '',
+      phone: '',
+      birthDate: '',
+      height: null,
+      weight: null,
+      goal: 'maintain',
       activityLevel: 'moderate',
       medicalConditions: '',
       medications: '',
-      avatar: 'https://via.placeholder.com/120x120/6366f1/white?text=JS'
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=667eea&color=fff&size=120`
     });
-
-    const originalData = { ...studentData };
-
-    const saveProfile = () => {
-      console.log('Saving profile:', studentData);
-      // Here you would typically send data to API
-      alert('Perfil salvo com sucesso!');
-    };
-
-    const resetForm = () => {
-      Object.assign(studentData, originalData);
-    };
-
-    return {
-      studentData,
-      saveProfile,
-      resetForm
-    };
+    originalData.value = { ...studentData };
   }
 };
+
+const mapGoalFromAPI = (goalDescription) => {
+  if (!goalDescription) return 'maintain';
+  const goal = goalDescription.toLowerCase();
+  if (goal.includes('perder') || goal.includes('peso')) return 'lose-weight';
+  if (goal.includes('ganhar') || goal.includes('massa')) return 'gain-muscle';
+  if (goal.includes('força')) return 'strength';
+  return 'maintain';
+};
+
+const saveProfile = async () => {
+  if (!studentId.value) {
+    alert('Erro: ID do aluno não encontrado');
+    return;
+  }
+
+  saving.value = true;
+  try {
+    const updateData = {
+      name: studentData.name,
+      email: studentData.email,
+      phone: studentData.phone,
+      birthDate: studentData.birthDate,
+      personalInfo: {
+        height: studentData.height,
+        weight: studentData.weight,
+        trainingExperience: studentData.activityLevel
+      },
+      healthRestrictions: {
+        notes: studentData.medicalConditions,
+        medications: studentData.medications ? studentData.medications.split(',').map(m => m.trim()) : []
+      }
+    };
+
+    await api.put(`/students/${studentId.value}`, updateData);
+    originalData.value = { ...studentData };
+    alert('Perfil atualizado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao salvar perfil:', error);
+    alert('Erro ao salvar perfil. Tente novamente.');
+  } finally {
+    saving.value = false;
+  }
+};
+
+const resetForm = () => {
+  Object.assign(studentData, originalData.value);
+};
+
+onMounted(() => {
+  fetchProfile();
+});
 </script>
 
 <style scoped>
 .student-profile {
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.main-content {
+  margin-left: 280px;
+  padding: 2.5rem;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:global(.navbar-collapsed) ~ .student-profile .main-content {
+  margin-left: 0;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+  color: var(--text-muted);
+}
+
+.loading-state i {
+  font-size: 3rem;
+  color: var(--primary-color);
 }
 
 .page-header {
@@ -329,6 +483,52 @@ export default {
 
   .form-actions {
     flex-direction: column;
+  }
+}
+
+.profile-content {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.profile-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 2.5rem 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .profile-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .form-input,
+.dark-mode .form-textarea,
+.dark-mode .form-select {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+}
+
+.dark-mode .form-input:focus,
+.dark-mode .form-textarea:focus,
+.dark-mode .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.2);
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1.5rem 1rem;
   }
 }
 
