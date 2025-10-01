@@ -106,11 +106,6 @@ const routes = [
     component: () => import('../views/studentprofile.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   },
-  {
-    path: '/student/settings',
-    component: () => import('../views/StudentSettings.vue'),
-    // meta: { requiresAuth: true, role: 'student' },
-  },
   // Catch all 404 - must be last
   {
     path: '/:pathMatch(.*)*',

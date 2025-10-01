@@ -794,7 +794,12 @@ onUnmounted(() => {
   flex: 1;
   margin-left: 280px;
   padding: 2rem;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Detecta quando o navbar está colapsado globalmente */
+body:has(.navbar-collapsed) .main-content {
+  margin-left: 0 !important;
 }
 
 /* Header */

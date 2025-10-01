@@ -291,6 +291,12 @@ onMounted(() => {
   margin-left: 280px;
   padding: 2rem;
   max-width: 100%;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Detecta quando o navbar está colapsado globalmente */
+body:has(.navbar-collapsed) .main-content {
+  margin-left: 0 !important;
 }
 
 .page-header {

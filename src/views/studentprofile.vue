@@ -278,7 +278,23 @@ onMounted(() => {
 
 <style scoped>
 .student-profile {
+  margin-left: 280px;
   padding: 2rem;
+  background: var(--bg-secondary);
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-mode.student-profile {
+  background: #16213e;
+}
+
+/* Detecta quando o navbar está colapsado globalmente */
+body:has(.navbar-collapsed) .student-profile {
+  margin-left: 0 !important;
+}
+
+.profile-content {
   max-width: 800px;
   margin: 0 auto;
 }
@@ -308,10 +324,27 @@ onMounted(() => {
 }
 
 .profile-card {
-  background: var(--bg-secondary);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 16px;
+  padding: 2.5rem 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .profile-card {
+  background: #2d2d3d !important;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .profile-card * {
+  background-color: transparent;
+}
+
+.dark-mode .profile-card .form-input,
+.dark-mode .profile-card .form-textarea,
+.dark-mode .profile-card .form-select {
+  background: #1a1a2e !important;
 }
 
 .avatar-section {
@@ -346,16 +379,31 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.avatar-edit-btn:hover {
+  transform: scale(1.1);
+}
+
+.dark-mode .avatar-image {
+  border-color: #667eea;
 }
 
 .form-section {
   margin-bottom: 2rem;
   padding-bottom: 2rem;
   border-bottom: 1px solid var(--border-color);
+  background: transparent;
 }
 
 .form-section:last-of-type {
   border-bottom: none;
+}
+
+.dark-mode .form-section {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
 }
 
 .form-section h3 {
@@ -364,14 +412,32 @@ onMounted(() => {
   font-size: 1.2rem;
 }
 
+.dark-mode .form-section h3,
+.dark-mode .form-group label,
+.dark-mode .page-title,
+.dark-mode .page-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark-mode .page-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  background: transparent;
 }
 
 .form-group {
   margin-bottom: 1rem;
+  background: transparent;
+}
+
+.dark-mode .form-row,
+.dark-mode .form-group {
+  background: transparent;
 }
 
 .form-group label {
@@ -388,9 +454,22 @@ onMounted(() => {
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--bg-primary);
+  background: white;
   color: var(--text-primary);
   font-size: 0.9rem;
+}
+
+.dark-mode .form-input,
+.dark-mode .form-textarea,
+.dark-mode .form-select {
+  background: #1a1a2e !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark-mode .form-input::placeholder,
+.dark-mode .form-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .form-textarea {
@@ -443,6 +522,15 @@ onMounted(() => {
 
 .btn-secondary:hover {
   background: var(--bg-secondary);
+}
+
+.dark-mode .btn-secondary {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 768px) {

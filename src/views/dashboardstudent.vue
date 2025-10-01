@@ -544,20 +544,34 @@ onMounted(() => {
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-primary);
+  background: var(--bg-secondary);
+}
+
+.dark-mode.dashboard-container {
+  background: #16213e;
 }
 
 .dashboard-main {
   flex: 1;
   margin-left: 280px;
   padding: 2rem;
-  background-color: var(--bg-secondary);
+  background: var(--bg-secondary);
   min-height: 100vh;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-collapsed .dashboard-main {
-  margin-left: 0;
+.dark-mode .dashboard-main {
+  background: #16213e;
+}
+
+/* Detecta quando o navbar está colapsado globalmente */
+.dashboard-main {
+  margin-left: 280px;
+}
+
+body:has(.navbar-collapsed) .dashboard-main,
+.dashboard-container:has(.navbar-collapsed) .dashboard-main {
+  margin-left: 0 !important;
 }
 
 /* Header */
@@ -573,6 +587,8 @@ onMounted(() => {
 }
 
 .dark-mode .page-header {
+  background: #2d2d3d;
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -668,6 +684,8 @@ onMounted(() => {
 }
 
 .dark-mode .stat-card {
+  background: #2d2d3d;
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -734,6 +752,8 @@ onMounted(() => {
 }
 
 .dark-mode .content-card {
+  background: #2d2d3d;
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -855,6 +875,11 @@ onMounted(() => {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
+}
+
+.dark-mode .exercise-item {
+  background: #1a1a2e;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .exercise-name {
