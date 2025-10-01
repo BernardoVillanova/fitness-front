@@ -1,15 +1,11 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="dashboard-container" :class="{ 'dark-mode': isDarkMode, 'sidebar-collapsed': sidebarCollapsed }">
-    <StudentNavBar :collapsed="sidebarCollapsed" />
+  <div class="dashboard-container" :class="{ 'dark-mode': isDarkMode }">
+    <StudentNavBar />
     
     <main class="dashboard-main">
       <!-- Header Section -->
       <div class="page-header">
-        <button @click="toggleSidebar" class="sidebar-toggle" title="Alternar menu">
-          <i :class="sidebarCollapsed ? 'fas fa-bars' : 'fas fa-times'"></i>
-        </button>
-        
         <div class="header-content">
           <div class="header-left">
             <h1 class="page-title">
@@ -287,7 +283,6 @@ const { isDarkMode } = storeToRefs(themeStore)
 
 // Reactive data
 const loading = ref(false)
-const sidebarCollapsed = ref(false)
 const dashboardData = ref({
   totalWorkouts: 0,
   currentStreak: 0,
@@ -299,12 +294,6 @@ const nextWorkout = ref(null)
 const recentActivities = ref([])
 const goals = ref([])
 const weekDays = ref([])
-
-// Toggle sidebar
-const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value
-  localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value)
-}
 
 // Computed
 const getUserName = () => {
@@ -547,12 +536,6 @@ const goToGoals = () => {
 // Lifecycle
 onMounted(() => {
   fetchDashboardData()
-  
-  // Carregar estado do sidebar
-  const savedState = localStorage.getItem('sidebarCollapsed')
-  if (savedState !== null) {
-    sidebarCollapsed.value = savedState === 'true'
-  }
 })
 </script>
 
@@ -575,40 +558,6 @@ onMounted(() => {
 
 .sidebar-collapsed .dashboard-main {
   margin-left: 0;
-}
-
-/* Sidebar Toggle Button */
-.sidebar-toggle {
-  position: fixed;
-  top: 1.5rem;
-  left: 1.5rem;
-  z-index: 1001;
-  width: 44px;
-  height: 44px;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  transition: all 0.3s ease;
-}
-
-.sidebar-collapsed .sidebar-toggle {
-  left: 1.5rem;
-}
-
-.sidebar-toggle:hover {
-  background: var(--primary-hover);
-  transform: scale(1.05);
-}
-
-.dark-mode .sidebar-toggle {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 /* Header */

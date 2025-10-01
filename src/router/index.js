@@ -8,7 +8,7 @@ import StudentWorkoutPlans from '../views/StudentWorkoutPlans.vue';
 import DashboardTech from '../views/dashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
-import StudentProfile from '../views/StudentProfile.vue'
+import StudentProfile from '../views/studentprofile.vue'
 import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/instructorregister.vue';
 import gymHome from '../views/gymHome.vue';
@@ -103,7 +103,7 @@ const routes = [
   },
   {
     path: '/student/profile',
-    component: () => import('../views/StudentProfile.vue'),
+    component: () => import('../views/studentprofile.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   },
   {

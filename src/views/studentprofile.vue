@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div :class="['student-profile', { 'dark-mode': isDarkMode }]">
     <StudentNavBar />
@@ -150,7 +151,6 @@ const originalData = ref({});
 const fetchProfile = async () => {
   loading.value = true;
   try {
-    // Buscar dados do sessionStorage diretamente
     const storedUser = sessionStorage.getItem('user');
     
     if (!storedUser) {
@@ -163,7 +163,6 @@ const fetchProfile = async () => {
     const userData = JSON.parse(storedUser);
     console.log('UserData parseado:', userData);
     
-    // Usar studentId primeiro, depois id
     const studentIdToFetch = userData.studentId || userData.id;
     
     if (!studentIdToFetch) {
@@ -279,35 +278,9 @@ onMounted(() => {
 
 <style scoped>
 .student-profile {
-  min-height: 100vh;
-  background: var(--bg-primary);
-  color: var(--text-color);
-  transition: all 0.3s ease;
-}
-
-.main-content {
-  margin-left: 280px;
-  padding: 2.5rem;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:global(.navbar-collapsed) ~ .student-profile .main-content {
-  margin-left: 0;
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  gap: 1rem;
-  color: var(--text-muted);
-}
-
-.loading-state i {
-  font-size: 3rem;
-  color: var(--primary-color);
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .page-header {
@@ -483,52 +456,6 @@ onMounted(() => {
 
   .form-actions {
     flex-direction: column;
-  }
-}
-
-.profile-content {
-  max-width: 1000px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.profile-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2.5rem 3rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.dark-mode .profile-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .form-input,
-.dark-mode .form-textarea,
-.dark-mode .form-select {
-  background: rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-color);
-}
-
-.dark-mode .form-input:focus,
-.dark-mode .form-textarea:focus,
-.dark-mode .form-select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.2);
-}
-
-@media (max-width: 1024px) {
-  .main-content {
-    margin-left: 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding: 1.5rem 1rem;
   }
 }
 
