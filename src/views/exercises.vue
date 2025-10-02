@@ -892,7 +892,6 @@ export default {
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  margin-left: 80px;
   font-family: var(--font-family);
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
@@ -914,12 +913,21 @@ export default {
 .dashboard-main {
   flex: 1;
   padding: 0;
+  margin-left: 280px;
   background: var(--bg-primary);
   position: relative;
+  z-index: 1;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Detecta quando o navbar está colapsado */
+body:has(.navbar-collapsed) .dashboard-main,
+.dashboard-container:has(.navbar-collapsed) .dashboard-main {
+  margin-left: 0 !important;
 }
 
 .dashboard-content {
-  padding: 140px 40px 40px;
+  padding: 100px 40px 40px;
   max-width: 1600px;
   margin: 0 auto;
   display: flex;
@@ -996,15 +1004,21 @@ export default {
 .floating-header {
   position: fixed;
   top: 0;
-  left: 80px;
+  left: 280px;
   right: 0;
-  z-index: 100;
+  z-index: 50;
   padding: 24px 40px;
   background: var(--glass-bg);
   backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ajusta header quando navbar está colapsado */
+body:has(.navbar-collapsed) .floating-header,
+.dashboard-container:has(.navbar-collapsed) .floating-header {
+  left: 0 !important;
 }
 
 .header-content {

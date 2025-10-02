@@ -298,6 +298,13 @@ export default {
 .dashboard-container {
   padding: 2rem;
   margin-left: 280px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Detecta quando o navbar está colapsado */
+body:has(.navbar-collapsed) .dashboard-container,
+.gym-home:has(.navbar-collapsed) .dashboard-container {
+  margin-left: 0 !important;
 }
 
 .content-wrapper {
