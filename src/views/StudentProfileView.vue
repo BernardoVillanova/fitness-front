@@ -121,23 +121,62 @@
                 </div>
               </div>
 
-              <!-- Card Objetivos -->
+              <!-- Card Objetivos e Metas -->
               <div class="info-card">
                 <div class="card-header">
-                  <h3><i class="fas fa-bullseye"></i> Objetivos Mensais</h3>
+                  <h3><i class="fas fa-bullseye"></i> Objetivos e Metas</h3>
                 </div>
                 <div class="card-body">
                   <div class="info-row">
+                    <span class="label">Objetivo Principal:</span>
+                    <span class="value badge-goal">{{ student.goals?.primary?.type || 'Não definido' }}</span>
+                  </div>
+                  <div v-if="student.goals?.primary?.description" class="info-row">
+                    <span class="label">Descrição:</span>
+                    <span class="value">{{ student.goals.primary.description }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Peso Alvo:</span>
+                    <span class="value">{{ student.goals?.weight?.target || '-' }} kg</span>
+                  </div>
+                  <div v-if="student.goals?.monthlyWorkouts" class="info-row">
                     <span class="label">Meta de Treinos:</span>
-                    <span class="value">{{ student.goals?.monthlyWorkouts }} treinos/mês</span>
+                    <span class="value">{{ student.goals.monthlyWorkouts }} treinos/mês</span>
                   </div>
-                  <div class="info-row">
+                  <div v-if="student.goals?.monthlyCalories" class="info-row">
                     <span class="label">Meta de Calorias:</span>
-                    <span class="value">{{ student.goals?.monthlyCalories }} kcal/mês</span>
+                    <span class="value">{{ student.goals.monthlyCalories }} kcal/mês</span>
                   </div>
-                  <div class="info-row">
+                  <div v-if="student.goals?.monthlyHours" class="info-row">
                     <span class="label">Meta de Horas:</span>
-                    <span class="value">{{ student.goals?.monthlyHours }} horas/mês</span>
+                    <span class="value">{{ student.goals.monthlyHours }} horas/mês</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Metas Pessoais -->
+              <div v-if="student.goals?.personal && student.goals.personal.length > 0" class="info-card full-width">
+                <div class="card-header">
+                  <h3><i class="fas fa-star"></i> Metas Pessoais</h3>
+                </div>
+                <div class="card-body">
+                  <div class="goals-list">
+                    <div 
+                      v-for="(goal, index) in student.goals.personal" 
+                      :key="index"
+                      class="goal-item"
+                    >
+                      <div class="goal-checkbox">
+                        <i :class="goal.achieved ? 'fas fa-check-circle achieved' : 'far fa-circle'"></i>
+                      </div>
+                      <div class="goal-content">
+                        <span class="goal-description">{{ goal.description }}</span>
+                        <div class="goal-meta">
+                          <span class="goal-category badge-category">{{ goal.category }}</span>
+                          <span :class="['goal-priority', 'priority-' + goal.priority]">{{ goal.priority }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -215,77 +254,186 @@
             </div>
 
             <!-- Measurements Cards -->
-            <div class="measurements-grid">
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-arrows-up-down"></i>
-                </div>
-                <div class="measure-info">
-                  <span class="measure-label">Ombro</span>
-                  <span class="measure-value">{{ getLatestMeasurement('shoulder') }} cm</span>
-                </div>
+            <div class="measurements-section">
+              <div class="section-header">
+                <h3><i class="fas fa-ruler-combined"></i> Medidas Corporais</h3>
+                <p class="section-subtitle">Acompanhe a evolução das suas medidas</p>
               </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-vest"></i>
+              <div class="measurements-grid-improved">
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved shoulder">
+                      <i class="fas fa-arrows-up-down"></i>
+                    </div>
+                    <span class="measure-label-improved">Ombro</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('shoulder').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('shoulder').change" 
+                      :class="['measure-badge', getMeasurementWithChange('shoulder').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('shoulder').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('shoulder').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-                <div class="measure-info">
-                  <span class="measure-label">Peito</span>
-                  <span class="measure-value">{{ getLatestMeasurement('chest') }} cm</span>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved chest">
+                      <i class="fas fa-vest"></i>
+                    </div>
+                    <span class="measure-label-improved">Peito</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('chest').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('chest').change" 
+                      :class="['measure-badge', getMeasurementWithChange('chest').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('chest').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('chest').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-hand-fist"></i>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved arm">
+                      <i class="fas fa-hand-fist"></i>
+                    </div>
+                    <span class="measure-label-improved">Braço</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('arm').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('arm').change" 
+                      :class="['measure-badge', getMeasurementWithChange('arm').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('arm').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('arm').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-                <div class="measure-info">
-                  <span class="measure-label">Braço</span>
-                  <span class="measure-value">{{ getLatestMeasurement('rightArm') }} cm</span>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved forearm">
+                      <i class="fas fa-hand"></i>
+                    </div>
+                    <span class="measure-label-improved">Antebraço</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('forearm').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('forearm').change" 
+                      :class="['measure-badge', getMeasurementWithChange('forearm').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('forearm').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('forearm').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-hand"></i>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved waist">
+                      <i class="fas fa-grip-lines"></i>
+                    </div>
+                    <span class="measure-label-improved">Cintura</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('waist').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('waist').change" 
+                      :class="['measure-badge', getMeasurementWithChange('waist').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('waist').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('waist').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-                <div class="measure-info">
-                  <span class="measure-label">Antebraço</span>
-                  <span class="measure-value">{{ getLatestMeasurement('forearm') }} cm</span>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved hip">
+                      <i class="fas fa-circle-dot"></i>
+                    </div>
+                    <span class="measure-label-improved">Quadril</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('hip').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('hip').change" 
+                      :class="['measure-badge', getMeasurementWithChange('hip').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('hip').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('hip').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-grip-lines"></i>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved thigh">
+                      <i class="fas fa-person-walking"></i>
+                    </div>
+                    <span class="measure-label-improved">Coxa</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('thigh').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('thigh').change" 
+                      :class="['measure-badge', getMeasurementWithChange('thigh').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('thigh').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('thigh').change.value) }}%
+                    </div>
+                  </div>
                 </div>
-                <div class="measure-info">
-                  <span class="measure-label">Cintura</span>
-                  <span class="measure-value">{{ getLatestMeasurement('waist') }} cm</span>
-                </div>
-              </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-circle-dot"></i>
-                </div>
-                <div class="measure-info">
-                  <span class="measure-label">Quadril</span>
-                  <span class="measure-value">{{ getLatestMeasurement('hip') }} cm</span>
-                </div>
-              </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-person-walking"></i>
-                </div>
-                <div class="measure-info">
-                  <span class="measure-label">Coxa</span>
-                  <span class="measure-value">{{ getLatestMeasurement('rightThigh') }} cm</span>
-                </div>
-              </div>
-              <div class="measure-card">
-                <div class="measure-icon">
-                  <i class="fas fa-shoe-prints"></i>
-                </div>
-                <div class="measure-info">
-                  <span class="measure-label">Panturrilha</span>
-                  <span class="measure-value">{{ getLatestMeasurement('calf') }} cm</span>
+
+                <div class="measure-card-improved">
+                  <div class="measure-card-header">
+                    <div class="measure-icon-improved calf">
+                      <i class="fas fa-shoe-prints"></i>
+                    </div>
+                    <span class="measure-label-improved">Panturrilha</span>
+                  </div>
+                  <div class="measure-card-body">
+                    <div class="measure-value-improved">
+                      {{ getMeasurementWithChange('calf').value }}
+                      <span class="measure-unit">cm</span>
+                    </div>
+                    <div 
+                      v-if="getMeasurementWithChange('calf').change" 
+                      :class="['measure-badge', getMeasurementWithChange('calf').change.isPositive ? 'positive' : 'negative']"
+                    >
+                      <i :class="getMeasurementWithChange('calf').change.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                      {{ Math.abs(getMeasurementWithChange('calf').change.value) }}%
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -294,21 +442,99 @@
             <div class="timeline-card">
               <div class="card-header">
                 <h3><i class="fas fa-history"></i> Histórico de Registros</h3>
+                <span class="timeline-count">{{ progressTimeline.length }} registro(s)</span>
               </div>
               <div class="card-body">
                 <div v-if="progressTimeline.length === 0" class="empty-timeline">
                   <i class="fas fa-clipboard-list"></i>
                   <p>Nenhum registro de progresso</p>
+                  <p class="empty-subtitle">Adicione o primeiro registro para começar o acompanhamento</p>
                 </div>
-                <div v-else class="timeline">
-                  <div v-for="(entry, idx) in progressTimeline" :key="idx" class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                      <div class="timeline-date">{{ formatDateFull(entry.date) }}</div>
-                      <div class="timeline-data">
-                        <span v-if="entry.weight">Peso: {{ entry.weight }} kg</span>
-                        <span v-if="entry.bodyFatPercentage">BF: {{ entry.bodyFatPercentage }}%</span>
-                        <span v-if="entry.notes" class="timeline-notes">{{ entry.notes }}</span>
+                <div v-else class="timeline-improved">
+                  <div v-for="(entry, idx) in progressTimeline" :key="idx" class="timeline-entry">
+                    <div class="entry-header">
+                      <div class="entry-date">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>{{ formatDateFull(entry.date) }}</span>
+                      </div>
+                      <div v-if="idx === 0" class="latest-badge">
+                        <i class="fas fa-star"></i> Mais recente
+                      </div>
+                    </div>
+                    <div class="entry-body">
+                      <div class="entry-stats">
+                        <div v-if="entry.weight" class="stat-item">
+                          <div class="stat-icon weight">
+                            <i class="fas fa-weight-scale"></i>
+                          </div>
+                          <div class="stat-info">
+                            <span class="stat-label">Peso</span>
+                            <span class="stat-value">{{ entry.weight }} kg</span>
+                          </div>
+                        </div>
+                        <div v-if="entry.bodyFatPercentage" class="stat-item">
+                          <div class="stat-icon bodyfat">
+                            <i class="fas fa-percent"></i>
+                          </div>
+                          <div class="stat-info">
+                            <span class="stat-label">Gordura</span>
+                            <span class="stat-value">{{ entry.bodyFatPercentage }}%</span>
+                          </div>
+                        </div>
+                        <div v-if="entry.muscleMass" class="stat-item">
+                          <div class="stat-icon muscle">
+                            <i class="fas fa-dumbbell"></i>
+                          </div>
+                          <div class="stat-info">
+                            <span class="stat-label">Massa Muscular</span>
+                            <span class="stat-value">{{ entry.muscleMass }} kg</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div v-if="entry.measurements && Object.keys(entry.measurements).length > 0" class="entry-measurements">
+                        <div class="measurements-header">
+                          <i class="fas fa-ruler"></i> Medidas Corporais
+                        </div>
+                        <div class="measurements-grid">
+                          <div v-if="entry.measurements.shoulder" class="measurement-chip">
+                            <span class="chip-label">Ombro</span>
+                            <span class="chip-value">{{ entry.measurements.shoulder }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.chest" class="measurement-chip">
+                            <span class="chip-label">Peito</span>
+                            <span class="chip-value">{{ entry.measurements.chest }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.arm" class="measurement-chip">
+                            <span class="chip-label">Braço</span>
+                            <span class="chip-value">{{ entry.measurements.arm }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.forearm" class="measurement-chip">
+                            <span class="chip-label">Antebraço</span>
+                            <span class="chip-value">{{ entry.measurements.forearm }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.waist" class="measurement-chip">
+                            <span class="chip-label">Cintura</span>
+                            <span class="chip-value">{{ entry.measurements.waist }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.hip" class="measurement-chip">
+                            <span class="chip-label">Quadril</span>
+                            <span class="chip-value">{{ entry.measurements.hip }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.thigh" class="measurement-chip">
+                            <span class="chip-label">Coxa</span>
+                            <span class="chip-value">{{ entry.measurements.thigh }} cm</span>
+                          </div>
+                          <div v-if="entry.measurements.calf" class="measurement-chip">
+                            <span class="chip-label">Panturrilha</span>
+                            <span class="chip-value">{{ entry.measurements.calf }} cm</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div v-if="entry.notes" class="entry-notes">
+                        <i class="fas fa-note-sticky"></i>
+                        <p>{{ entry.notes }}</p>
                       </div>
                     </div>
                   </div>
@@ -568,7 +794,7 @@
               </div>
               <div class="form-group">
                 <label><i class="fas fa-hand-fist"></i> Braço (cm)</label>
-                <input v-model.number="progressForm.measurements.rightArm" type="number" step="0.1" class="form-input" placeholder="Ex: 38" />
+                <input v-model.number="progressForm.measurements.arm" type="number" step="0.1" class="form-input" placeholder="Ex: 38" />
               </div>
               <div class="form-group">
                 <label><i class="fas fa-hand"></i> Antebraço (cm)</label>
@@ -584,7 +810,7 @@
               </div>
               <div class="form-group">
                 <label><i class="fas fa-person-walking"></i> Coxa (cm)</label>
-                <input v-model.number="progressForm.measurements.rightThigh" type="number" step="0.1" class="form-input" placeholder="Ex: 58" />
+                <input v-model.number="progressForm.measurements.thigh" type="number" step="0.1" class="form-input" placeholder="Ex: 58" />
               </div>
               <div class="form-group">
                 <label><i class="fas fa-shoe-prints"></i> Panturrilha (cm)</label>
@@ -720,11 +946,11 @@ export default {
       measurements: {
         shoulder: null,
         chest: null,
-        rightArm: null,
+        arm: null,
         forearm: null,
         waist: null,
         hip: null,
-        rightThigh: null,
+        thigh: null,
         calf: null
       },
       notes: ''
@@ -875,13 +1101,55 @@ export default {
     };
 
     const getLatestMeasurement = (measurement) => {
-      if (!student.value.progressHistory || student.value.progressHistory.length === 0) return '-';
+      // Tenta pegar do progressHistory primeiro
+      if (student.value.progressHistory && student.value.progressHistory.length > 0) {
+        const latest = [...student.value.progressHistory]
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .find(log => log.measurements && log.measurements[measurement]);
+        
+        if (latest?.measurements[measurement]) {
+          return latest.measurements[measurement];
+        }
+      }
       
-      const latest = [...student.value.progressHistory]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .find(log => log.measurements && log.measurements[measurement]);
+      // Fallback para initialMeasurements
+      if (student.value.personalInfo?.initialMeasurements?.[measurement]) {
+        return student.value.personalInfo.initialMeasurements[measurement];
+      }
       
-      return latest?.measurements[measurement] || '-';
+      return '-';
+    };
+
+    const getMeasurementWithChange = (measurement) => {
+      const initial = student.value.personalInfo?.initialMeasurements?.[measurement];
+      let current = null;
+      
+      // Pega a medida atual do progressHistory
+      if (student.value.progressHistory && student.value.progressHistory.length > 0) {
+        const latest = [...student.value.progressHistory]
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .find(log => log.measurements && log.measurements[measurement]);
+        current = latest?.measurements[measurement];
+      }
+      
+      // Se não tem progresso, usa initial como atual
+      if (!current) {
+        current = initial;
+      }
+      
+      const value = current || '-';
+      let change = null;
+      
+      // Calcula a diferença percentual se tiver ambos os valores
+      if (initial && current && initial !== current) {
+        const percentage = ((current - initial) / initial * 100).toFixed(1);
+        change = {
+          value: percentage,
+          isPositive: current > initial
+        };
+      }
+      
+      return { value, change };
     };
 
     const formatDate = (date) => {
@@ -1228,6 +1496,7 @@ export default {
       formatExperience,
       hasHealthRestrictions,
       getLatestMeasurement,
+      getMeasurementWithChange,
       formatDate,
       formatDateFull,
       formatStatus,
@@ -1309,7 +1578,7 @@ export default {
 
 .btn-retry {
   padding: 0.75rem 1.5rem;
-  background: #3b82f6;
+  background: #8b5cf6;
   color: white;
   border: none;
   border-radius: 8px;
@@ -1449,6 +1718,15 @@ export default {
   box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
 }
 
+.dark-mode .btn-primary {
+  background: #8b5cf6;
+}
+
+.dark-mode .btn-primary:hover {
+  background: #7c3aed;
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+}
+
 .btn-secondary {
   background: #3498db;
   color: white;
@@ -1467,6 +1745,16 @@ export default {
 
 .btn-outline:hover {
   background: #3b82f6;
+  color: white;
+}
+
+.dark-mode .btn-outline {
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.dark-mode .btn-outline:hover {
+  background: #8b5cf6;
   color: white;
 }
 
@@ -1522,6 +1810,11 @@ export default {
   background: #3b82f6;
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.dark-mode .tab-btn.active {
+  background: #8b5cf6;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
 }
 
 .tab-btn i {
@@ -1638,6 +1931,137 @@ export default {
   border-radius: 6px;
   font-size: 0.8125rem;
   font-weight: 600;
+}
+
+.dark-mode .badge-exp {
+  background: #8b5cf6;
+}
+
+.badge-goal {
+  background: #8b5cf6;
+  color: white;
+  padding: 0.375rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-category {
+  background: #06b6d4;
+  color: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Goals List */
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.goal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+  transition: all 0.2s;
+}
+
+.dark-mode .goal-item {
+  background: #2d2d3f;
+  border-left-color: #8b5cf6;
+}
+
+.goal-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.goal-checkbox {
+  margin-top: 2px;
+}
+
+.goal-checkbox i {
+  font-size: 1.25rem;
+  color: #cbd5e1;
+}
+
+.goal-checkbox i.achieved {
+  color: #10b981;
+}
+
+.goal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.goal-description {
+  font-size: 0.9375rem;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.dark-mode .goal-description {
+  color: #f9fafb;
+}
+
+.goal-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goal-priority {
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.goal-priority.priority-alta {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.goal-priority.priority-media {
+  background: #fed7aa;
+  color: #9a3412;
+}
+
+.goal-priority.priority-baixa {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Measure Change */
+.measure-change {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+}
+
+.measure-change.positive {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.measure-change.negative {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 /* Health Section */
@@ -2033,6 +2457,220 @@ export default {
   color: #f9fafb;
 }
 
+/* Measurements Section Improved */
+.measurements-section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.dark-mode .section-header {
+  border-bottom-color: #2d3748;
+}
+
+.section-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dark-mode .section-header h3 {
+  color: #f9fafb;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.dark-mode .section-subtitle {
+  color: #94a3b8;
+}
+
+.measurements-grid-improved {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.measure-card-improved {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.measure-card-improved::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--card-color, #3b82f6), transparent);
+  transition: height 0.3s ease;
+}
+
+.measure-card-improved:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: var(--card-color, #3b82f6);
+}
+
+.measure-card-improved:hover::before {
+  height: 4px;
+}
+
+.dark-mode .measure-card-improved {
+  background: #1e1e2d;
+  border-color: #2d3748;
+}
+
+.dark-mode .measure-card-improved:hover {
+  box-shadow: 0 12px 24px rgba(139, 92, 246, 0.3);
+}
+
+.measure-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.measure-icon-improved {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.measure-icon-improved.shoulder {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.measure-icon-improved.chest {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+}
+
+.measure-icon-improved.arm {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.measure-icon-improved.forearm {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.measure-icon-improved.waist {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.measure-icon-improved.hip {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+.measure-icon-improved.thigh {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.measure-icon-improved.calf {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.measure-label-improved {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark-mode .measure-label-improved {
+  color: #cbd5e1;
+}
+
+.measure-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.measure-value-improved {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.dark-mode .measure-value-improved {
+  color: #f9fafb;
+}
+
+.measure-unit {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.dark-mode .measure-unit {
+  color: #94a3b8;
+}
+
+.measure-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.measure-badge.positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.measure-badge.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.dark-mode .measure-badge.positive {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.dark-mode .measure-badge.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.measure-badge i {
+  font-size: 0.625rem;
+}
+
 /* Timeline */
 .timeline-card {
   background: #ffffff;
@@ -2047,6 +2685,21 @@ export default {
   border-color: #2d2d3f;
 }
 
+.timeline-count {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark-mode .timeline-count {
+  background: #2d2d3f;
+  color: #9ca3af;
+}
+
 .empty-timeline {
   display: flex;
   flex-direction: column;
@@ -2059,79 +2712,285 @@ export default {
 
 .empty-timeline i {
   font-size: 3rem;
+  color: #cbd5e1;
 }
 
-.timeline {
-  padding: 1rem;
+.empty-subtitle {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin-top: -0.5rem;
 }
 
-.timeline-item {
+.timeline-improved {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 1.5rem;
   padding: 1rem;
-  position: relative;
 }
 
-.timeline-item:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  left: 19px;
-  top: 40px;
-  bottom: -16px;
-  width: 2px;
-  background: #e2e8f0;
+.timeline-entry {
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-.dark-mode .timeline-item:not(:last-child)::before {
+.dark-mode .timeline-entry {
+  background: #262637;
+  border-color: #2d2d3f;
+}
+
+.timeline-entry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .timeline-entry:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark-mode .entry-header {
   background: #2d2d3f;
+  border-bottom-color: #3a3a4f;
 }
 
-.timeline-marker {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: 3px solid #ffffff;
-  flex-shrink: 0;
-  margin-top: 6px;
-  z-index: 1;
-}
-
-.dark-mode .timeline-marker {
-  border-color: #1e1e2d;
-}
-
-.timeline-content {
-  flex: 1;
-}
-
-.timeline-date {
+.entry-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 0.5rem;
   font-size: 0.9375rem;
 }
 
-.dark-mode .timeline-date {
+.dark-mode .entry-date {
   color: #f9fafb;
 }
 
-.timeline-data {
+.entry-date i {
+  color: #8b5cf6;
+  font-size: 1rem;
+}
+
+.latest-badge {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  color: #64748b;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.latest-badge i {
   font-size: 0.875rem;
 }
 
-.dark-mode .timeline-data {
+.entry-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entry-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.dark-mode .stat-item {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.weight {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.stat-icon.bodyfat {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.stat-icon.muscle {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .stat-label {
   color: #9ca3af;
 }
 
-.timeline-notes {
-  width: 100%;
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dark-mode .stat-value {
+  color: #f9fafb;
+}
+
+.entry-measurements {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.dark-mode .entry-measurements {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.measurements-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-bottom: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .measurements-header {
+  color: #9ca3af;
+}
+
+.measurements-header i {
+  color: #8b5cf6;
+}
+
+.measurements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.625rem;
+}
+
+.measurement-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.625rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 0.25rem;
+  transition: all 0.2s;
+}
+
+.dark-mode .measurement-chip {
+  background: #262637;
+  border-color: #3a3a4f;
+}
+
+.measurement-chip:hover {
+  border-color: #8b5cf6;
+  transform: translateY(-2px);
+}
+
+.chip-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark-mode .chip-label {
+  color: #9ca3af;
+}
+
+.chip-value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dark-mode .chip-value {
+  color: #f9fafb;
+}
+
+.entry-notes {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+}
+
+.dark-mode .entry-notes {
+  background: #3a2f1f;
+  border-left-color: #f59e0b;
+}
+
+.entry-notes i {
+  color: #f59e0b;
+  font-size: 1rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.entry-notes p {
+  margin: 0;
+  color: #78350f;
+  font-size: 0.9375rem;
+  line-height: 1.5;
   font-style: italic;
-  color: #999;
+}
+
+.dark-mode .entry-notes p {
+  color: #fde68a;
 }
 
 /* Workout Section */

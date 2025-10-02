@@ -10,7 +10,6 @@ import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
 import StudentProfile from '../views/studentprofile.vue'
 import InstructorProfile from '../views/InstructorProfile.vue';
-// import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/InstructorRegisterNew.vue';
 import gymHome from '../views/gymHome.vue';
 import NotFound from '../views/NotFound.vue';
@@ -55,7 +54,7 @@ const routes = [
     path: '/student/:id/profile',
     name: 'StudentProfileView',
     component: () => import('../views/StudentProfileView.vue'),
-    meta: { requiresAuth: true, role: 'personal' },
+    // meta: { requiresAuth: true, role: 'personal' },
     props: true
   },
   { path: '/about', component: AboutUs },

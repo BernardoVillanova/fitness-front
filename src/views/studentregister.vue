@@ -53,13 +53,11 @@
             <h4 style="grid-column: 1 / -1; margin: 1rem 0 0.5rem; color: #333; font-size: 1.1rem;">Medidas Corporais (opcional)</h4>
             <input v-model.number="form.personalInfo.initialMeasurements.shoulder" type="number" step="0.1" placeholder="Ombro (cm)" class="input" />
             <input v-model.number="form.personalInfo.initialMeasurements.chest" type="number" step="0.1" placeholder="Peito (cm)" class="input" />
-            <input v-model.number="form.personalInfo.initialMeasurements.rightArm" type="number" step="0.1" placeholder="Braço Direito (cm)" class="input" />
-            <input v-model.number="form.personalInfo.initialMeasurements.leftArm" type="number" step="0.1" placeholder="Braço Esquerdo (cm)" class="input" />
+            <input v-model.number="form.personalInfo.initialMeasurements.arm" type="number" step="0.1" placeholder="Braço (cm)" class="input" />
             <input v-model.number="form.personalInfo.initialMeasurements.forearm" type="number" step="0.1" placeholder="Antebraço (cm)" class="input" />
             <input v-model.number="form.personalInfo.initialMeasurements.waist" type="number" step="0.1" placeholder="Cintura (cm)" class="input" />
             <input v-model.number="form.personalInfo.initialMeasurements.hip" type="number" step="0.1" placeholder="Quadril (cm)" class="input" />
-            <input v-model.number="form.personalInfo.initialMeasurements.rightThigh" type="number" step="0.1" placeholder="Coxa Direita (cm)" class="input" />
-            <input v-model.number="form.personalInfo.initialMeasurements.leftThigh" type="number" step="0.1" placeholder="Coxa Esquerda (cm)" class="input" />
+            <input v-model.number="form.personalInfo.initialMeasurements.thigh" type="number" step="0.1" placeholder="Coxa (cm)" class="input" />
             <input v-model.number="form.personalInfo.initialMeasurements.calf" type="number" step="0.1" placeholder="Panturrilha (cm)" class="input" />
             <input v-model.number="form.personalInfo.initialMeasurements.bodyFatPercentage" type="number" step="0.1" placeholder="% Gordura Corporal" class="input" />
           </div>
@@ -246,13 +244,11 @@ export default {
           initialMeasurements: {
             shoulder: null,
             chest: null,
-            rightArm: null,
-            leftArm: null,
+            arm: null,
             forearm: null,
             waist: null,
             hip: null,
-            rightThigh: null,
-            leftThigh: null,
+            thigh: null,
             calf: null,
             bodyFatPercentage: null
           }
@@ -358,13 +354,11 @@ export default {
               initialMeasurements: {
                 shoulder: this.form.personalInfo.initialMeasurements.shoulder,
                 chest: this.form.personalInfo.initialMeasurements.chest,
-                rightArm: this.form.personalInfo.initialMeasurements.rightArm,
-                leftArm: this.form.personalInfo.initialMeasurements.leftArm,
+                arm: this.form.personalInfo.initialMeasurements.arm,
                 forearm: this.form.personalInfo.initialMeasurements.forearm,
                 waist: this.form.personalInfo.initialMeasurements.waist,
                 hip: this.form.personalInfo.initialMeasurements.hip,
-                rightThigh: this.form.personalInfo.initialMeasurements.rightThigh,
-                leftThigh: this.form.personalInfo.initialMeasurements.leftThigh,
+                thigh: this.form.personalInfo.initialMeasurements.thigh,
                 calf: this.form.personalInfo.initialMeasurements.calf,
                 bodyFatPercentage: this.form.personalInfo.initialMeasurements.bodyFatPercentage
               }
@@ -494,13 +488,11 @@ export default {
           initialMeasurements: {
             shoulder: null,
             chest: null,
-            rightArm: null,
-            leftArm: null,
+            arm: null,
             forearm: null,
             waist: null,
             hip: null,
-            rightThigh: null,
-            leftThigh: null,
+            thigh: null,
             calf: null,
             bodyFatPercentage: null
           }
