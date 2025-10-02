@@ -54,6 +54,7 @@ const routes = [
   { path: '/student-register', component: StudentRegister },
   { path: '/instructor-register', component: InstructorRegister },
   { path: '/exercises', component: () => import('../views/exercises.vue') },
+  { path: '/machines', component: () => import('../views/machines.vue') },
   { path: '/workout-plans', component: WorkoutPlans },
   {
     path: '/dashboard',

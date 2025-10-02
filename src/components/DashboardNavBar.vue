@@ -58,6 +58,14 @@
             </router-link>
           </li>
           <li>
+            <router-link to="/machines" class="nav-item submenu-item" active-class="active">
+              <div class="nav-icon">
+                <i class="fas fa-cogs"></i>
+              </div>
+              <span>Aparelhos</span>
+            </router-link>
+          </li>
+          <li>
             <router-link to="/workout-plans" class="nav-item submenu-item" active-class="active">
               <div class="nav-icon">
                 <i class="fas fa-clipboard-list"></i>

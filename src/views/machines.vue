@@ -1,0 +1,1800 @@
+<template>
+  <div :class="isDarkMode ? 'dashboard-dark' : 'dashboard-light'" class="dashboard-container">
+    <DashboardNavBar />
+    <main class="dashboard-main">
+      <!-- Floating Header -->
+      <header class="floating-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="title-section">
+              <h1 class="main-title">
+                <span class="title-gradient">Aparelhos</span>
+              </h1>
+              <p class="subtitle">Gerencie todos os aparelhos e equipamentos da sua academia</p>
+            </div>
+          </div>
+          <div class="header-right">
+            <button class="create-button" @click="openCreateMachineModal">
+              <div class="button-glow"></div>
+              <div class="button-content">
+                <svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Novo Aparelho
+              </div>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <div class="dashboard-content">
+        <!-- Stats Section -->
+        <section class="stats-section">
+          <div class="stats-grid">
+            <div class="stat-card stat-primary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-header">
+                  <div class="stat-icon">
+                    <i class="fas fa-cogs"></i>
+                  </div>
+                  <div class="stat-trend">
+                    <span class="trend-value">+8%</span>
+                  </div>
+                </div>
+                <div class="stat-body">
+                  <span class="stat-number">{{ machinesStats.total }}</span>
+                  <span class="stat-label">Total de Aparelhos</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card stat-secondary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-header">
+                  <div class="stat-icon">
+                    <i class="fas fa-th-large"></i>
+                  </div>
+                  <div class="stat-trend">
+                    <span class="trend-value">{{ machinesStats.categories }}</span>
+                  </div>
+                </div>
+                <div class="stat-body">
+                  <span class="stat-number">{{ machinesStats.categories }}</span>
+                  <span class="stat-label">Categorias</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card stat-tertiary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-header">
+                  <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                  <div class="stat-trend">
+                    <span class="trend-value">Ativo</span>
+                  </div>
+                </div>
+                <div class="stat-body">
+                  <span class="stat-number">{{ machinesStats.available }}</span>
+                  <span class="stat-label">Disponíveis</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="clean-filter-section">
+          <div class="clean-filter-container">
+            <!-- Categories Grid -->
+            <div class="clean-categories-grid">
+              <div 
+                v-for="category in categories" 
+                :key="category.id"
+                :class="['clean-category-card', { 'card-selected': selectedCategory === category.id }]"
+                @click="filterByCategory(category.id)"
+              >
+                <div class="category-icon-clean">
+                  <i :class="category.icon"></i>
+                </div>
+                <div class="category-content-clean">
+                  <h3 class="category-title-clean">{{ category.name }}</h3>
+                  <span class="category-count-clean">{{ category.count }} aparelhos</span>
+                </div>
+                <div class="category-arrow-clean" v-if="selectedCategory === category.id">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section-clean" v-if="selectedCategory">
+              <div class="results-info-wrapper">
+                <div class="results-badge-clean">
+                  <div class="results-icon-clean">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                  </div>
+                  <span class="results-text-clean">
+                    {{ filteredMachines.length }} aparelhos encontrados
+                  </span>
+                  <span class="active-filter-chip">{{ getCategoryName(selectedCategory) }}</span>
+                </div>
+              </div>
+              <div class="results-actions-clean">
+                <button class="clear-filters-btn" @click="clearFilters">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                  Limpar Filtros
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Machines Grid -->
+        <section class="exercises-section">
+          <div class="exercises-grid" v-if="displayedMachines.length > 0">
+            <div 
+              v-for="machine in displayedMachines" 
+              :key="machine.id"
+              class="exercise-card"
+            >
+              <div class="card-glow"></div>
+              
+              <!-- Image Section -->
+              <div class="exercise-header">
+                <div class="exercise-image">
+                  <div class="image-container" v-if="machine.image">
+                    <img :src="machine.image" :alt="machine.name">
+                    <div class="image-gradient"></div>
+                  </div>
+                  <div class="image-placeholder" v-else>
+                    <div class="placeholder-icon">
+                      <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="placeholder-text">Sem imagem</span>
+                  </div>
+                  
+                  <!-- Overlay with Actions -->
+                  <div class="image-overlay">
+                    <div class="overlay-actions">
+                      <button class="modern-overlay-btn preview-btn" @click="previewMachine(machine)">
+                        <div class="btn-glow-effect"></div>
+                        <div class="btn-icon-wrapper">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                          </svg>
+                        </div>
+                        <span class="btn-tooltip">Visualizar</span>
+                      </button>
+                      
+                      <button class="modern-overlay-btn edit-btn" @click="editMachine(machine)">
+                        <div class="btn-glow-effect"></div>
+                        <div class="btn-icon-wrapper">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                          </svg>
+                        </div>
+                        <span class="btn-tooltip">Editar</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Machine Info -->
+              <div class="exercise-info">
+                <div class="exercise-meta">
+                  <span class="category-badge">
+                    <i :class="getCategoryIcon(machine.category)"></i>
+                    {{ machine.category }}
+                  </span>
+                  <span :class="['difficulty-indicator', machine.status?.toLowerCase()]">
+                    <span class="difficulty-dot"></span>
+                    {{ machine.status || 'Disponível' }}
+                  </span>
+                </div>
+
+                <h3 class="exercise-name">{{ machine.name }}</h3>
+                <p class="exercise-description">{{ machine.description || 'Aparelho de musculação para treinos específicos' }}</p>
+
+                <!-- Machine Stats -->
+                <div class="exercise-stats">
+                  <div class="stats-row">
+                    <div class="stat-item">
+                      <div class="stat-icon-wrapper">
+                        <i class="fas fa-users"></i>
+                      </div>
+                      <div class="stat-content">
+                        <span class="stat-label">Usuários</span>
+                        <span class="stat-value">{{ machine.users || 0 }}</span>
+                      </div>
+                    </div>
+
+                    <div class="stat-item">
+                      <div class="stat-icon-wrapper">
+                        <i class="fas fa-clipboard-list"></i>
+                      </div>
+                      <div class="stat-content">
+                        <span class="stat-label">Treinos</span>
+                        <span class="stat-value">{{ machine.workouts || 0 }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="exercise-actions">
+                  <button class="action-button secondary-action" @click="viewDetails(machine)">
+                    <div class="button-shine"></div>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    <span class="button-text">Ver Detalhes</span>
+                  </button>
+                  
+                  <button class="action-button primary-action" @click="editMachine(machine)">
+                    <div class="button-particles"></div>
+                    <div class="button-shine"></div>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    <span class="button-text">Editar</span>
+                    <div class="button-arrow">→</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" v-else>
+            <div class="empty-icon">
+              <i class="fas fa-cogs"></i>
+            </div>
+            <h3 class="empty-title">Nenhum aparelho encontrado</h3>
+            <p class="empty-description">
+              {{ selectedCategory ? 'Não há aparelhos nesta categoria.' : 'Comece adicionando seu primeiro aparelho de academia.' }}
+            </p>
+            <button class="create-first-button" @click="openCreateMachineModal" v-if="!selectedCategory">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Adicionar Primeiro Aparelho
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Equipment Modal -->
+    <div v-if="showEquipmentModal" class="modal-overlay-equipment" @click.self="closeEquipmentModal">
+      <EquipmentModal @close="closeEquipmentModal" @equipment-added="handleEquipmentAdded" />
+    </div>
+  </div>
+</template>
+
+<script>
+import DashboardNavBar from "@/components/DashboardNavBar.vue";
+import EquipmentModal from "@/components/EquipmentModal.vue";
+import { useThemeStore } from "@/store/theme";
+import { storeToRefs } from "pinia";
+
+export default {
+  name: "MachinesView",
+  components: {
+    DashboardNavBar,
+    EquipmentModal,
+  },
+  setup() {
+    const themeStore = useThemeStore();
+    const { isDarkMode } = storeToRefs(themeStore);
+    
+    return {
+      isDarkMode,
+    };
+  },
+  data() {
+    return {
+      selectedCategory: null,
+      showEquipmentModal: false,
+      machinesStats: {
+        total: 12,
+        categories: 6,
+        available: 11,
+      },
+      categories: [
+        { id: 'todos', name: 'Todos', icon: 'fas fa-th-large', count: 12 },
+        { id: 'cardiovascular', name: 'Cardiovascular', icon: 'fas fa-heartbeat', count: 3 },
+        { id: 'forca', name: 'Força', icon: 'fas fa-dumbbell', count: 6 },
+        { id: 'livre', name: 'Peso Livre', icon: 'fas fa-weight-hanging', count: 2 },
+        { id: 'funcional', name: 'Funcional', icon: 'fas fa-running', count: 1 },
+        { id: 'acessorios', name: 'Acessórios', icon: 'fas fa-tools', count: 0 },
+      ],
+      machines: [
+        {
+          id: 1,
+          name: 'Esteira Ergométrica',
+          category: 'Cardiovascular',
+          description: 'Esteira profissional com programas de treino variados',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=500&h=300&fit=crop',
+          users: 45,
+          workouts: 120,
+        },
+        {
+          id: 2,
+          name: 'Leg Press 45°',
+          category: 'Força',
+          description: 'Aparelho para treino de pernas e glúteos',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1584735175315-9d5df23860bc?w=500&h=300&fit=crop',
+          users: 32,
+          workouts: 89,
+        },
+        {
+          id: 3,
+          name: 'Supino Reto',
+          category: 'Força',
+          description: 'Banco de supino para treino de peito',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500&h=300&fit=crop',
+          users: 38,
+          workouts: 95,
+        },
+        {
+          id: 4,
+          name: 'Bicicleta Ergométrica',
+          category: 'Cardiovascular',
+          description: 'Bike estacionária com monitor de frequência cardíaca',
+          status: 'Manutenção',
+          image: 'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=500&h=300&fit=crop',
+          users: 28,
+          workouts: 76,
+        },
+        {
+          id: 5,
+          name: 'Crossover',
+          category: 'Força',
+          description: 'Aparelho multifuncional para diversos exercícios',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&h=300&fit=crop',
+          users: 41,
+          workouts: 102,
+        },
+        {
+          id: 6,
+          name: 'Elíptico',
+          category: 'Cardiovascular',
+          description: 'Elíptico com baixo impacto nas articulações',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=500&h=300&fit=crop',
+          users: 25,
+          workouts: 68,
+        },
+        {
+          id: 7,
+          name: 'Remada Baixa',
+          category: 'Força',
+          description: 'Aparelho para treino de costas e dorsais',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&h=300&fit=crop',
+          users: 29,
+          workouts: 82,
+        },
+        {
+          id: 8,
+          name: 'Cadeira Extensora',
+          category: 'Força',
+          description: 'Treino isolado de quadríceps',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1590487988256-9ed24133863e?w=500&h=300&fit=crop',
+          users: 24,
+          workouts: 67,
+        },
+        {
+          id: 9,
+          name: 'Barra Fixa',
+          category: 'Peso Livre',
+          description: 'Barra fixa para exercícios de tração',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500&h=300&fit=crop',
+          users: 52,
+          workouts: 145,
+        },
+        {
+          id: 10,
+          name: 'Smith Machine',
+          category: 'Força',
+          description: 'Barra guiada para exercícios seguros e controlados',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1584466977773-e625c37cdd50?w=500&h=300&fit=crop',
+          users: 36,
+          workouts: 93,
+        },
+        {
+          id: 11,
+          name: 'TRX',
+          category: 'Funcional',
+          description: 'Treinamento suspenso para todo o corpo',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&h=300&fit=crop',
+          users: 18,
+          workouts: 54,
+        },
+        {
+          id: 12,
+          name: 'Kettlebells',
+          category: 'Peso Livre',
+          description: 'Conjunto de kettlebells de 4kg a 32kg',
+          status: 'Disponível',
+          image: 'https://images.unsplash.com/photo-1580086319619-3ed498161c77?w=500&h=300&fit=crop',
+          users: 33,
+          workouts: 88,
+        },
+      ],
+    };
+  },
+  computed: {
+    filteredMachines() {
+      if (!this.selectedCategory || this.selectedCategory === 'todos') {
+        return this.machines;
+      }
+      return this.machines.filter(machine => 
+        machine.category.toLowerCase() === this.getCategoryName(this.selectedCategory).toLowerCase()
+      );
+    },
+    displayedMachines() {
+      return this.filteredMachines;
+    },
+  },
+  methods: {
+    filterByCategory(categoryId) {
+      this.selectedCategory = categoryId;
+    },
+    clearFilters() {
+      this.selectedCategory = null;
+    },
+    getCategoryName(categoryId) {
+      const category = this.categories.find(cat => cat.id === categoryId);
+      return category ? category.name : '';
+    },
+    getCategoryIcon(categoryName) {
+      const categoryMap = {
+        'Cardiovascular': 'fas fa-heartbeat',
+        'Força': 'fas fa-dumbbell',
+        'Peso Livre': 'fas fa-weight-hanging',
+        'Funcional': 'fas fa-running',
+        'Acessórios': 'fas fa-tools',
+      };
+      return categoryMap[categoryName] || 'fas fa-cogs';
+    },
+    openCreateMachineModal() {
+      this.showEquipmentModal = true;
+    },
+    closeEquipmentModal() {
+      this.showEquipmentModal = false;
+    },
+    handleEquipmentAdded(equipment) {
+      console.log('Novo equipamento adicionado:', equipment);
+      // Aqui você pode adicionar o equipamento à lista local ou fazer uma requisição para a API
+    },
+    editMachine(machine) {
+      console.log('Editar aparelho:', machine);
+      // TODO: Implementar edição
+    },
+    previewMachine(machine) {
+      console.log('Visualizar aparelho:', machine);
+      // TODO: Implementar preview
+    },
+    viewDetails(machine) {
+      console.log('Ver detalhes do aparelho:', machine);
+      // TODO: Implementar visualização de detalhes
+    },
+  },
+};
+</script>
+
+<style scoped>
+/* Reusing the same styles from exercises.vue */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-container {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+}
+
+.dashboard-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-pattern);
+  z-index: -1;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.dashboard-main {
+  margin-left: 280px;
+  padding: 0;
+  position: relative;
+  flex: 1;
+  background: var(--bg-primary);
+}
+
+.dashboard-content {
+  padding: 140px 40px 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Theme Variables */
+.dashboard-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: rgba(248, 250, 252, 0.9);
+  --bg-tertiary: rgba(255, 255, 255, 0.95);
+  --bg-pattern: radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(96, 165, 250, 0.15) 0%, transparent 50%);
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --text-accent: #475569;
+  
+  --border-primary: rgba(226, 232, 240, 0.8);
+  --border-secondary: rgba(241, 245, 249, 0.6);
+  --border-accent: rgba(37, 99, 235, 0.3);
+  
+  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --gradient-tertiary: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  --gradient-accent: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(37, 99, 235, 0.15), 0 10px 10px -5px rgba(37, 99, 235, 0.1);
+  
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+  
+  --primary-color: #2563eb;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  background: #ffffff;
+}
+
+.dashboard-dark {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: rgba(15, 16, 23, 0.8);
+  --bg-tertiary: rgba(26, 32, 44, 0.9);
+  --bg-pattern: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(192, 132, 252, 0.15) 0%, transparent 50%);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-accent: #e2e8f0;
+  
+  --border-primary: rgba(51, 65, 85, 0.6);
+  --border-secondary: rgba(30, 41, 59, 0.4);
+  --border-accent: rgba(139, 92, 246, 0.3);
+  
+  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  --gradient-tertiary: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  --gradient-accent: linear-gradient(135deg, #d8b4fe 0%, #c084fc 100%);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(139, 92, 246, 0.3), 0 10px 10px -5px rgba(139, 92, 246, 0.2);
+  
+  --glass-bg: rgba(15, 16, 23, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+  
+  --primary-color: #8b5cf6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  background: #0a0a0a;
+}
+
+/* Floating Header */
+.floating-header {
+  position: fixed;
+  top: 0;
+  left: 280px;
+  right: 0;
+  z-index: 100;
+  padding: 24px 40px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.main-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.title-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.header-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.create-button {
+  position: relative;
+  padding: 16px 28px;
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.create-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+}
+
+.button-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.create-button:hover .button-glow {
+  opacity: 1;
+}
+
+.button-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+
+.button-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+
+/* Stats Section */
+.stats-section {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.stat-card {
+  position: relative;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  padding: 32px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-accent);
+}
+
+.stat-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 24px;
+}
+
+.stat-card.stat-primary .stat-background {
+  background: var(--gradient-primary);
+}
+
+.stat-card.stat-secondary .stat-background {
+  background: var(--gradient-secondary);
+}
+
+.stat-card.stat-tertiary .stat-background {
+  background: var(--gradient-tertiary);
+}
+
+.stat-card:hover .stat-background {
+  opacity: 0.05;
+}
+
+.stat-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 2rem;
+}
+
+.stat-card.stat-primary .stat-icon {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-primary .stat-icon {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.stat-card.stat-secondary .stat-icon {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-secondary .stat-icon {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.stat-card.stat-tertiary .stat-icon {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-tertiary .stat-icon {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.stat-card:hover .stat-icon {
+  transform: rotate(5deg) scale(1.1);
+}
+
+.stat-icon i {
+  font-size: 2rem;
+}
+
+.stat-trend {
+  padding: 6px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+}
+
+.trend-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Filter Section */
+.clean-filter-section {
+  margin-bottom: 32px;
+}
+
+.clean-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.clean-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.clean-category-card {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.clean-category-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow);
+}
+
+.card-selected {
+  background: var(--primary-gradient);
+  border-color: transparent;
+  color: white;
+}
+
+.category-icon-clean {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.card-selected .category-icon-clean {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.category-content-clean {
+  flex: 1;
+}
+
+.category-title-clean {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.card-selected .category-title-clean {
+  color: white;
+}
+
+.category-count-clean {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.card-selected .category-count-clean {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.category-arrow-clean {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.category-arrow-clean svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Results Section */
+.results-section-clean {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+
+.results-info-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results-badge-clean {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 10px;
+}
+
+.dashboard-dark .results-badge-clean {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.results-icon-clean {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-color);
+}
+
+.results-icon-clean svg {
+  width: 100%;
+  height: 100%;
+}
+
+.results-text-clean {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.active-filter-chip {
+  padding: 4px 12px;
+  background: var(--primary-gradient);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.results-actions-clean {
+  display: flex;
+  gap: 12px;
+}
+
+.clear-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-filters-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.clear-filters-btn:hover {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Machines Grid */
+.exercises-section {
+  margin-top: 32px;
+}
+
+.exercises-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 32px;
+}
+
+.exercise-card {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.exercise-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.exercise-card:hover .card-glow {
+  opacity: 1;
+}
+
+.exercise-header {
+  position: relative;
+}
+
+.exercise-image {
+  width: 100%;
+  height: 240px;
+  position: relative;
+  overflow: hidden;
+}
+
+.image-container {
+  width: 100%;
+  height: 100%;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.exercise-card:hover .image-container img {
+  transform: scale(1.05);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  position: relative;
+}
+
+.dashboard-dark .image-placeholder {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+}
+
+.image-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(45deg, transparent 45%, var(--border-color) 45%, var(--border-color) 55%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, var(--border-color) 45%, var(--border-color) 55%, transparent 55%);
+  background-size: 30px 30px;
+  opacity: 0.05;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+}
+
+.placeholder-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.image-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.exercise-card:hover .image-overlay {
+  opacity: 1;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 12px;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.exercise-card:hover .overlay-actions {
+  transform: translateY(0);
+}
+
+.modern-overlay-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.modern-overlay-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modern-overlay-btn:hover::before {
+  opacity: 1;
+}
+
+.btn-glow-effect {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modern-overlay-btn:hover .btn-glow-effect {
+  opacity: 1;
+}
+
+.btn-icon-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.btn-icon-wrapper svg {
+  width: 100%;
+  height: 100%;
+}
+
+.modern-overlay-btn:hover .btn-icon-wrapper {
+  transform: scale(1.1);
+}
+
+.btn-tooltip {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.btn-tooltip::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.9);
+}
+
+.modern-overlay-btn:hover .btn-tooltip {
+  opacity: 1;
+  bottom: -32px;
+}
+
+/* Exercise Info */
+.exercise-info {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.exercise-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.dashboard-dark .category-badge {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.difficulty-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.difficulty-indicator.disponível {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.difficulty-indicator.manutenção {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.difficulty-indicator.indisponível {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.difficulty-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.exercise-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.exercise-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.exercise-stats {
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stats-row {
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: var(--bg-primary);
+}
+
+.stat-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+}
+
+.dashboard-dark .stat-icon-wrapper {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.stat-icon-wrapper i {
+  font-size: 1rem;
+}
+
+.stat-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Action Buttons */
+.exercise-actions {
+  position: relative;
+  z-index: 1;
+  padding: 24px 28px;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  gap: 12px;
+}
+
+.action-button {
+  position: relative;
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+.action-button svg {
+  width: 18px;
+  height: 18px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.button-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.6s ease;
+  z-index: 1;
+}
+
+.action-button:hover .button-shine {
+  left: 100%;
+}
+
+/* Primary Action - Gradient with Glow */
+.primary-action {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 
+    0 4px 20px rgba(37, 99, 235, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+
+.dashboard-dark .primary-action {
+  box-shadow: 
+    0 4px 20px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.button-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.primary-action:hover .button-particles {
+  opacity: 1;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.button-arrow {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: absolute;
+  right: 20px;
+}
+
+.primary-action:hover .button-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.primary-action:hover .button-text {
+  transform: translateX(-8px);
+}
+
+.primary-action:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 12px 35px rgba(37, 99, 235, 0.4),
+    0 6px 20px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-dark .primary-action:hover {
+  box-shadow: 
+    0 12px 35px rgba(139, 92, 246, 0.5),
+    0 6px 20px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.primary-action:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+/* Secondary Action - Glass Morphism */
+.secondary-action {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid var(--border-primary);
+  color: var(--text-primary);
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.secondary-action:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--border-accent);
+  background: var(--bg-tertiary);
+  box-shadow: 
+    0 8px 25px rgba(37, 99, 235, 0.15),
+    0 4px 15px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dashboard-dark .secondary-action:hover {
+  box-shadow: 
+    0 8px 25px rgba(139, 92, 246, 0.2),
+    0 4px 15px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.secondary-action:hover svg {
+  transform: scale(1.15);
+}
+
+.secondary-action:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 32px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 24px;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.empty-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 32px 0;
+}
+
+.create-first-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.create-first-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.create-first-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-main {
+    margin-left: 0;
+    padding-bottom: 80px;
+  }
+
+  .floating-header {
+    left: 0;
+    padding: 16px 24px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dashboard-content {
+    padding: 100px 24px 24px;
+  }
+
+  .exercises-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clean-categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .results-section-clean {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-actions {
+    flex-direction: column;
+  }
+}
+
+/* Modal Overlay */
+.modal-overlay-equipment {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeInModal 0.3s ease;
+  overflow-y: auto;
+}
+
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+</style>
