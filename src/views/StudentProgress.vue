@@ -57,6 +57,14 @@
             <div class="detail-item">
               <span class="detail-number">{{ completedWorkouts }}</span>
               <span class="detail-label">Treinos Concluídos</span>
+              <span 
+                v-if="comparisons.workouts.trend !== 'neutral'" 
+                class="detail-comparison" 
+                :class="comparisons.workouts.trend"
+              >
+                <i :class="comparisons.workouts.trend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                {{ comparisons.workouts.value }}%
+              </span>
             </div>
             <div class="detail-item">
               <span class="detail-number">{{ totalGoals }}</span>
@@ -73,9 +81,13 @@
         <div class="card-content">
           <div class="card-number">{{ totalCalories }}</div>
           <div class="card-label">Calorias Queimadas</div>
-          <div class="card-change positive">
-            <i class="fas fa-arrow-up"></i>
-            +12% vs mês anterior
+          <div 
+            v-if="comparisons.calories.trend !== 'neutral'" 
+            class="card-change" 
+            :class="comparisons.calories.trend === 'up' ? 'positive' : 'negative'"
+          >
+            <i :class="comparisons.calories.trend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+            {{ comparisons.calories.trend === 'up' ? '+' : '-' }}{{ comparisons.calories.value }}% vs mês anterior
           </div>
         </div>
       </div>
@@ -87,9 +99,13 @@
         <div class="card-content">
           <div class="card-number">{{ totalTime }}h</div>
           <div class="card-label">Tempo de Treino</div>
-          <div class="card-change positive">
-            <i class="fas fa-arrow-up"></i>
-            +8% vs mês anterior
+          <div 
+            v-if="comparisons.time.trend !== 'neutral'" 
+            class="card-change" 
+            :class="comparisons.time.trend === 'up' ? 'positive' : 'negative'"
+          >
+            <i :class="comparisons.time.trend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+            {{ comparisons.time.trend === 'up' ? '+' : '-' }}{{ comparisons.time.value }}% vs mês anterior
           </div>
         </div>
       </div>
@@ -101,9 +117,19 @@
         <div class="card-content">
           <div class="card-number">{{ currentStreak }}</div>
           <div class="card-label">Sequência Atual</div>
-          <div class="card-change">
-            <i class="fas fa-calendar"></i>
-            dias consecutivos
+          <div class="card-change-group">
+            <div class="card-change neutral">
+              <i class="fas fa-calendar"></i>
+              dias consecutivos
+            </div>
+            <div 
+              v-if="comparisons.streak.trend !== 'neutral'" 
+              class="card-change" 
+              :class="comparisons.streak.trend === 'up' ? 'positive' : 'negative'"
+            >
+              <i :class="comparisons.streak.trend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+              {{ comparisons.streak.trend === 'up' ? '+' : '-' }}{{ comparisons.streak.value }}% vs mês anterior
+            </div>
           </div>
         </div>
       </div>
@@ -292,6 +318,21 @@ const progressData = ref({
   totalGoals: 0
 })
 
+// Comparação com mês anterior
+const lastMonthData = ref({
+  completedWorkouts: 0,
+  totalCalories: 0,
+  totalTime: 0,
+  currentStreak: 0
+})
+
+const comparisons = ref({
+  workouts: { value: 0, trend: 'neutral' },
+  calories: { value: 0, trend: 'neutral' },
+  time: { value: 0, trend: 'neutral' },
+  streak: { value: 0, trend: 'neutral' }
+})
+
 const weeklyData = ref([
   { day: 'Dom', workouts: 0, calories: 0 },
   { day: 'Seg', workouts: 0, calories: 0 },
@@ -321,40 +362,60 @@ const fetchProgressData = async () => {
   try {
     loading.value = true
     
-    // Buscar histórico de treinos
-    const historyResponse = await api.get('/student/sessions/history')
-    const sessions = historyResponse.data
+    // Buscar histórico de treinos completo
+    const historyResponse = await api.get('/student/sessions/history', {
+      params: { limit: 1000 }
+    })
+    
+    const allSessions = historyResponse.data?.sessions || []
+    const completedSessions = allSessions.filter(s => s.status === 'completed')
     
     // Calcular dados de progresso
-    const completedSessions = sessions.filter(s => s.status === 'completed')
     progressData.value.completedWorkouts = completedSessions.length
     
-    // Calcular total de treinos disponíveis
-    const workoutsResponse = await api.get('/student/workouts')
-    const workouts = workoutsResponse.data
-    progressData.value.totalWorkouts = workouts.reduce((total, plan) => {
-      return total + (plan.divisions?.length || 0) * 4 // 4 sessões por divisão/mês
-    }, 0) || 24
+    // Calcular total de treinos disponíveis (estimativa)
+    try {
+      const workoutsResponse = await api.get('/student/workouts')
+      const workouts = workoutsResponse.data || []
+      
+      // Cada divisão pode ser feita 4x por mês
+      progressData.value.totalWorkouts = workouts.reduce((total, plan) => {
+        return total + (plan.divisions?.length || 0) * 4
+      }, 0) || 24
+    } catch (err) {
+      progressData.value.totalWorkouts = 24 // Valor padrão
+    }
     
-    // Calcular calorias e tempo total
+    // Calcular calorias totais (com estimativa se não houver dados)
     progressData.value.totalCalories = completedSessions.reduce((total, session) => {
-      return total + (session.caloriesBurned || 0)
+      // Estimar 5 cal/min se não tiver valor registrado
+      let calories = session.caloriesBurned || 0
+      if (!calories && session.duration) {
+        calories = session.duration * 5
+      }
+      return total + calories
     }, 0)
     
+    // Calcular tempo total em HORAS
     progressData.value.totalTime = completedSessions.reduce((total, session) => {
-      const duration = session.endTime && session.startTime 
-        ? (new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60 * 60)
-        : 0
-      return total + duration
+      let duration = session.duration // já em minutos
+      if (!duration && session.endTime && session.startTime) {
+        duration = Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000)
+      }
+      return total + (duration || 0)
     }, 0)
     
-    progressData.value.totalTime = Math.round(progressData.value.totalTime)
+    // Converter minutos para horas
+    progressData.value.totalTime = Math.round(progressData.value.totalTime / 60)
     
     // Calcular sequência
-    calculateStreak(sessions)
+    calculateStreak(completedSessions)
     
     // Processar dados semanais
-    processWeeklyData(sessions)
+    processWeeklyData(completedSessions)
+    
+    // Calcular comparações com mês anterior
+    calculateMonthComparisons(completedSessions)
     
     // Buscar metas
     await fetchGoals()
@@ -363,6 +424,107 @@ const fetchProgressData = async () => {
     console.error('Erro ao buscar dados de progresso:', error)
   } finally {
     loading.value = false
+  }
+}
+
+const calculateMonthComparisons = (sessions) => {
+  const now = new Date()
+  
+  // Mês anterior
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+  lastMonthEnd.setHours(23, 59, 59, 999)
+  
+  // Filtrar sessões do mês anterior
+  const lastMonthSessions = sessions.filter(s => {
+    const sessionDate = new Date(s.endTime)
+    return sessionDate >= lastMonthStart && sessionDate <= lastMonthEnd
+  })
+  
+  // Calcular métricas do mês anterior
+  lastMonthData.value.completedWorkouts = lastMonthSessions.length
+  
+  lastMonthData.value.totalCalories = lastMonthSessions.reduce((total, session) => {
+    let calories = session.caloriesBurned || 0
+    if (!calories && session.duration) {
+      calories = session.duration * 5
+    }
+    return total + calories
+  }, 0)
+  
+  lastMonthData.value.totalTime = lastMonthSessions.reduce((total, session) => {
+    let duration = session.duration
+    if (!duration && session.endTime && session.startTime) {
+      duration = Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000)
+    }
+    return total + (duration || 0)
+  }, 0)
+  lastMonthData.value.totalTime = Math.round(lastMonthData.value.totalTime / 60)
+  
+  // Calcular streak do mês anterior (último dia do mês anterior)
+  const lastMonthStreakSessions = sessions.filter(s => {
+    const sessionDate = new Date(s.endTime)
+    return sessionDate <= lastMonthEnd
+  }).sort((a, b) => new Date(b.endTime) - new Date(a.endTime))
+  
+  let lastStreak = 0
+  if (lastMonthStreakSessions.length > 0) {
+    const lastMonthDate = new Date(lastMonthEnd)
+    lastMonthDate.setHours(0, 0, 0, 0)
+    
+    for (let i = 0; i < lastMonthStreakSessions.length; i++) {
+      const sessionDate = new Date(lastMonthStreakSessions[i].endTime)
+      sessionDate.setHours(0, 0, 0, 0)
+      const daysDiff = Math.floor((lastMonthDate - sessionDate) / (1000 * 60 * 60 * 24))
+      
+      if (daysDiff === lastStreak) {
+        lastStreak++
+      } else if (daysDiff > lastStreak) {
+        break
+      }
+    }
+  }
+  lastMonthData.value.currentStreak = lastStreak
+  
+  // Calcular comparações percentuais
+  // Treinos
+  if (lastMonthData.value.completedWorkouts > 0) {
+    const workoutsDiff = progressData.value.completedWorkouts - lastMonthData.value.completedWorkouts
+    const workoutsPercent = Math.round((workoutsDiff / lastMonthData.value.completedWorkouts) * 100)
+    comparisons.value.workouts = {
+      value: Math.abs(workoutsPercent),
+      trend: workoutsDiff > 0 ? 'up' : workoutsDiff < 0 ? 'down' : 'neutral'
+    }
+  }
+  
+  // Calorias
+  if (lastMonthData.value.totalCalories > 0) {
+    const caloriesDiff = progressData.value.totalCalories - lastMonthData.value.totalCalories
+    const caloriesPercent = Math.round((caloriesDiff / lastMonthData.value.totalCalories) * 100)
+    comparisons.value.calories = {
+      value: Math.abs(caloriesPercent),
+      trend: caloriesDiff > 0 ? 'up' : caloriesDiff < 0 ? 'down' : 'neutral'
+    }
+  }
+  
+  // Tempo
+  if (lastMonthData.value.totalTime > 0) {
+    const timeDiff = progressData.value.totalTime - lastMonthData.value.totalTime
+    const timePercent = Math.round((timeDiff / lastMonthData.value.totalTime) * 100)
+    comparisons.value.time = {
+      value: Math.abs(timePercent),
+      trend: timeDiff > 0 ? 'up' : timeDiff < 0 ? 'down' : 'neutral'
+    }
+  }
+  
+  // Streak
+  if (lastMonthData.value.currentStreak > 0) {
+    const streakDiff = progressData.value.currentStreak - lastMonthData.value.currentStreak
+    const streakPercent = Math.round((streakDiff / lastMonthData.value.currentStreak) * 100)
+    comparisons.value.streak = {
+      value: Math.abs(streakPercent),
+      trend: streakDiff > 0 ? 'up' : streakDiff < 0 ? 'down' : 'neutral'
+    }
   }
 }
 
@@ -424,54 +586,111 @@ const processWeeklyData = (sessions) => {
     if (sessionDate >= weekStart) {
       const dayOfWeek = sessionDate.getDay()
       weeklyData.value[dayOfWeek].workouts++
-      weeklyData.value[dayOfWeek].calories += session.caloriesBurned || 0
+      
+      // Calcular calorias (estimar se não houver dados)
+      let calories = session.caloriesBurned || 0
+      if (!calories && session.duration) {
+        calories = session.duration * 5 // ~5 cal/min
+      }
+      weeklyData.value[dayOfWeek].calories += calories
     }
   })
 }
 
 const fetchGoals = async () => {
   try {
-    // Por enquanto, criar metas baseadas nos dados reais
+    // Buscar dados do estudante para pegar metas personalizadas
+    const userData = JSON.parse(sessionStorage.getItem('user'))
+    const studentId = userData.studentId || userData.id
+    
+    let studentGoals = null
+    try {
+      const studentResponse = await api.get(`/students/${studentId}`)
+      studentGoals = studentResponse.data?.goals
+    } catch (err) {
+      console.log('Não foi possível buscar metas do aluno')
+    }
+    
     const goals = []
     
-    // Meta de treinos
+    // Meta de treinos mensal
+    const monthlyWorkoutTarget = studentGoals?.monthlyWorkouts || 20
     const workoutsGoal = {
       id: 1,
       title: 'Treinos no Mês',
-      description: 'Completar 20 treinos este mês',
+      description: `Completar ${monthlyWorkoutTarget} treinos este mês`,
       icon: 'fas fa-dumbbell',
       current: progressData.value.completedWorkouts,
-      target: 20,
+      target: monthlyWorkoutTarget,
       unit: 'treinos',
-      progress: Math.min(100, (progressData.value.completedWorkouts / 20) * 100)
+      progress: Math.min(100, Math.round((progressData.value.completedWorkouts / monthlyWorkoutTarget) * 100))
     }
     goals.push(workoutsGoal)
     
     // Meta de calorias
+    const caloriesTarget = studentGoals?.monthlyCalories || 5000
     const caloriesGoal = {
       id: 2,
       title: 'Queimar Calorias',
-      description: 'Queimar 5000 calorias no mês',
+      description: `Queimar ${caloriesTarget} calorias no mês`,
       icon: 'fas fa-fire',
       current: progressData.value.totalCalories,
-      target: 5000,
+      target: caloriesTarget,
       unit: 'kcal',
-      progress: Math.min(100, (progressData.value.totalCalories / 5000) * 100)
+      progress: Math.min(100, Math.round((progressData.value.totalCalories / caloriesTarget) * 100))
     }
     goals.push(caloriesGoal)
     
     // Meta de tempo
+    const timeTarget = studentGoals?.monthlyHours || 40
     const timeGoal = {
       id: 3,
       title: 'Tempo de Exercício',
-      description: 'Exercitar por 40 horas no mês',
+      description: `Exercitar por ${timeTarget} horas no mês`,
       icon: 'fas fa-clock',
       current: progressData.value.totalTime,
-      target: 40,
+      target: timeTarget,
       unit: 'horas',
-      progress: Math.min(100, (progressData.value.totalTime / 40) * 100)
+      progress: Math.min(100, Math.round((progressData.value.totalTime / timeTarget) * 100))
     }
     goals.push(timeGoal)
+    
+    // Meta de peso (se o aluno tiver)
+    if (studentGoals?.targetWeight) {
+      try {
+        const progressHistoryResponse = await api.get('/student/progress/history', {
+          params: { limit: 1 }
+        })
+        const latestProgress = progressHistoryResponse.data?.[0]
+        
+        if (latestProgress && latestProgress.weight) {
+          const currentWeight = latestProgress.weight
+          const targetWeight = studentGoals.targetWeight
+          const initialWeight = studentGoals.initialWeight || currentWeight
+          
+          // Calcular progresso de peso
+          const totalWeightGoal = Math.abs(initialWeight - targetWeight)
+          const weightProgress = Math.abs(initialWeight - currentWeight)
+          const progressPercentage = totalWeightGoal > 0 
+            ? Math.min(100, Math.round((weightProgress / totalWeightGoal) * 100))
+            : 0
+          
+          const weightGoal = {
+            id: 4,
+            title: initialWeight > targetWeight ? 'Perder Peso' : 'Ganhar Peso',
+            description: `Atingir ${targetWeight}kg`,
+            icon: 'fas fa-weight',
+            current: currentWeight,
+            target: targetWeight,
+            unit: 'kg',
+            progress: progressPercentage
+          }
+          goals.push(weightGoal)
+        }
+      } catch (err) {
+        console.log('Não foi possível buscar progresso de peso')
+      }
+    }
     
     monthlyGoals.value = goals
     progressData.value.totalGoals = goals.filter(g => g.progress >= 100).length
@@ -718,6 +937,50 @@ body:has(.navbar-collapsed) .main-content {
 
 .card-change i {
   font-size: 0.7rem;
+}
+
+.card-change.positive {
+  color: var(--success-color);
+}
+
+.card-change.negative {
+  color: var(--danger-color);
+}
+
+.card-change.neutral {
+  color: var(--text-muted);
+}
+
+.card-change-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-comparison {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.detail-comparison.up {
+  color: var(--success-color);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.detail-comparison.down {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.detail-comparison i {
+  font-size: 0.65rem;
 }
 
 /* Chart Section */

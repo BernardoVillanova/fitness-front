@@ -220,71 +220,25 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue';
-// import { useAuthStore } from '@/store/auth';
-// import api from '@/api';
+import { useRouter } from 'vue-router';
+import api from '@/api';
 
 export default {
   name: 'StudentWorkouts',
   
   setup() {
-    // const authStore = useAuthStore();
+    const router = useRouter();
     
     // Reactive data
     const loading = ref(true);
     const error = ref(null);
     const workouts = ref([]);
+    const workoutSessions = ref([]);
     const selectedFilter = ref('all');
     const showWorkoutModal = ref(false);
     const selectedWorkout = ref(null);
-    
-    // Mock data for development
-    const mockWorkouts = [
-      {
-        id: 1,
-        name: 'Treino A - Peito e Tríceps',
-        description: 'Foco no desenvolvimento do peitoral e tríceps',
-        estimatedTime: 60,
-        difficulty: 'Intermediário',
-        status: 'active',
-        progress: 75,
-        exercises: [
-          { id: 1, name: 'Supino Reto', sets: 4, reps: 12, weight: 60 },
-          { id: 2, name: 'Supino Inclinado', sets: 3, reps: 10, weight: 50 },
-          { id: 3, name: 'Crucifixo', sets: 3, reps: 12, weight: 20 },
-          { id: 4, name: 'Tríceps Pulley', sets: 4, reps: 15, weight: 30 }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Treino B - Costas e Bíceps',
-        description: 'Desenvolvimento da musculatura das costas e bíceps',
-        estimatedTime: 65,
-        difficulty: 'Intermediário',
-        status: 'active',
-        progress: 0,
-        exercises: [
-          { id: 5, name: 'Puxada Frente', sets: 4, reps: 12, weight: 45 },
-          { id: 6, name: 'Remada Baixa', sets: 4, reps: 10, weight: 50 },
-          { id: 7, name: 'Rosca Direta', sets: 3, reps: 12, weight: 15 },
-          { id: 8, name: 'Rosca Martelo', sets: 3, reps: 10, weight: 12 }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Treino C - Pernas',
-        description: 'Treino completo para membros inferiores',
-        estimatedTime: 70,
-        difficulty: 'Avançado',
-        status: 'completed',
-        progress: 100,
-        exercises: [
-          { id: 9, name: 'Agachamento', sets: 4, reps: 15, weight: 80 },
-          { id: 10, name: 'Leg Press', sets: 4, reps: 12, weight: 120 },
-          { id: 11, name: 'Cadeira Extensora', sets: 3, reps: 15, weight: 40 },
-          { id: 12, name: 'Mesa Flexora', sets: 3, reps: 12, weight: 35 }
-        ]
-      }
-    ];
+    const completedThisWeek = ref(0);
+    const streak = ref(0);
 
     // Computed properties
     const filteredWorkouts = computed(() => {
@@ -293,21 +247,25 @@ export default {
     });
 
     const todaysWorkout = computed(() => {
+      // Return the first active workout with divisions
       return workouts.value.find(workout => 
-        workout.status === 'active' && workout.progress < 100
+        workout.status === 'active' && workout.divisions && workout.divisions.length > 0
       );
     });
 
     const completedWorkoutsThisWeek = computed(() => {
-      return workouts.value.filter(workout => workout.status === 'completed').length;
+      return completedThisWeek.value;
     });
 
     const currentStreak = computed(() => {
-      return 5; // Mock value
+      return streak.value;
     });
 
     const totalWorkouts = computed(() => {
-      return workouts.value.length;
+      // Total divisions across all active plans
+      return workouts.value.reduce((total, plan) => {
+        return total + (plan.divisions?.length || 0);
+      }, 0);
     });
 
     // Methods
@@ -316,13 +274,67 @@ export default {
         loading.value = true;
         error.value = null;
         
-        // In a real app, this would be an API call
-        // const response = await api.get(`/students/${authStore.user.id}/workouts`);
-        // workouts.value = response.data;
+        // Fetch workout plans
+        const plansResponse = await api.get('/student/workouts');
+        const plans = plansResponse.data || [];
         
-        // Using mock data for now
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-        workouts.value = mockWorkouts;
+        // Fetch session history for stats
+        const sessionsResponse = await api.get('/student/sessions/history', {
+          params: { limit: 1000 }
+        });
+        const allSessions = sessionsResponse.data?.sessions || [];
+        const completedSessions = allSessions.filter(s => s.status === 'completed');
+        workoutSessions.value = completedSessions;
+        
+        // Calculate this week's completions
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        
+        completedThisWeek.value = completedSessions.filter(session => {
+          const sessionDate = new Date(session.endTime);
+          return sessionDate >= weekStart;
+        }).length;
+        
+        // Calculate streak
+        streak.value = calculateStreak(completedSessions);
+        
+        // Transform plans into workout cards
+        workouts.value = plans.flatMap(plan => {
+          if (!plan.divisions || plan.divisions.length === 0) return [];
+          
+          return plan.divisions.map(division => {
+            const divisionSessions = completedSessions.filter(s => 
+              s.divisionId?.toString() === division._id?.toString()
+            );
+            
+            const totalSessions = divisionSessions.length;
+            const estimatedTime = division.exercises?.reduce((total, ex) => {
+              return total + (ex.sets || 3) * 2; // ~2 min per set
+            }, 0) || 45;
+            
+            return {
+              id: division._id,
+              planId: plan._id,
+              name: `${plan.name} - ${division.name}`,
+              description: division.description || plan.description || 'Treino personalizado',
+              estimatedTime: estimatedTime,
+              difficulty: plan.difficulty || 'Intermediário',
+              status: plan.status === 'active' ? 'active' : 'paused',
+              progress: 0, // Progress is per-session, not per-division
+              exercises: (division.exercises || []).map(ex => ({
+                id: ex._id,
+                name: ex.name,
+                sets: ex.sets || 3,
+                reps: ex.reps || 12,
+                weight: ex.weight || null,
+                restTime: ex.restTime || 60
+              })),
+              completedSessions: totalSessions
+            };
+          });
+        });
         
       } catch (err) {
         error.value = 'Erro ao carregar treinos. Tente novamente.';
@@ -332,14 +344,45 @@ export default {
       }
     };
 
+    const calculateStreak = (sessions) => {
+      if (sessions.length === 0) return 0;
+      
+      const sortedSessions = [...sessions].sort((a, b) => 
+        new Date(b.endTime) - new Date(a.endTime)
+      );
+      
+      let streak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      for (const session of sortedSessions) {
+        const sessionDate = new Date(session.endTime);
+        sessionDate.setHours(0, 0, 0, 0);
+        const daysDiff = Math.floor((today - sessionDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff === streak) {
+          streak++;
+        } else if (daysDiff > streak) {
+          break;
+        }
+      }
+      
+      return streak;
+    };
+
     const filterWorkouts = () => {
       // Filter logic is handled by computed property
     };
 
     const startWorkout = (workout) => {
-      // In a real app, navigate to workout execution page
-      console.log('Starting workout:', workout.name);
-      // this.$router.push(`/student/workout/${workout.id}/execute`);
+      // Navigate to workout session page
+      router.push({
+        name: 'WorkoutSession',
+        params: { 
+          planId: workout.planId,
+          divisionId: workout.id
+        }
+      });
     };
 
     const viewWorkoutDetails = (workout) => {

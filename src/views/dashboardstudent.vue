@@ -271,13 +271,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/store/auth'
 import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import api from '@/api'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
@@ -295,19 +293,18 @@ const recentActivities = ref([])
 const goals = ref([])
 const weekDays = ref([])
 
+// Reactive data for user
+const userName = ref('Atleta')
+
 // Computed
 const getUserName = () => {
-  const user = authStore.currentUser
-  if (user?.name) {
-    return user.name.split(' ')[0]
-  }
-  return 'Atleta'
+  return userName.value
 }
 
 const getWelcomeMessage = () => {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Boa noite! Ainda dá tempo de treinar!'
-  if (hour < 18) return 'Boa tarde! Que tal um treino?'
+  if (hour < 12) return 'Bom dia! Que tal um treino?'
+  if (hour < 18) return 'Boa tarde! Hora de treinar!'
   return 'Boa noite! Vamos treinar?'
 }
 
@@ -357,71 +354,182 @@ const getActivityIcon = (type) => {
 const fetchDashboardData = async () => {
   loading.value = true
   try {
-    // Buscar histórico de sessões para calcular stats
-    const historyResponse = await api.get('/student/sessions/history')
-    const sessions = historyResponse.data || []
+    // Buscar dados do estudante do sessionStorage
+    const userData = JSON.parse(sessionStorage.getItem('user'))
+    const studentId = userData.studentId || userData.id
+    
+    // Definir nome do usuário
+    userName.value = userData.name ? userData.name.split(' ')[0] : 'Atleta'
+    
+    // Buscar dados completos do estudante
+    const studentResponse = await api.get(`/students/${studentId}`)
+    const studentData = studentResponse.data
+    
+    // Atualizar nome com dados mais completos se disponível
+    if (studentData.name) {
+      userName.value = studentData.name.split(' ')[0]
+    }
+    
+    // 1. Buscar histórico de sessões para calcular stats
+    const historyResponse = await api.get('/student/sessions/history', {
+      params: { limit: 100 }
+    })
+    const allSessions = historyResponse.data?.sessions || []
+    const completedSessions = allSessions.filter(s => s.status === 'completed')
     
     // Calcular stats a partir das sessões
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const sessionsThisWeek = sessions.filter(s => new Date(s.startTime) >= weekAgo)
+    const sessionsThisWeek = completedSessions.filter(s => new Date(s.startTime) >= weekAgo)
     
     // Calcular total de horas
-    const totalMinutes = sessions.reduce((sum, s) => {
+    const totalMinutes = completedSessions.reduce((sum, s) => {
       return sum + (s.duration || 0)
     }, 0)
     
     // Calcular streak
-    const streak = calculateStreak(sessions)
+    const streak = calculateStreak(completedSessions)
+    
+    // Meta semanal do aluno (padrão 4 ou do perfil)
+    const weeklyGoal = studentData.weeklyGoal || studentData.goals?.weeklyWorkouts || 4
     
     dashboardData.value = {
-      totalWorkouts: sessions.length,
+      totalWorkouts: completedSessions.length,
       currentStreak: streak,
-      weeklyGoal: 4,
+      weeklyGoal: weeklyGoal,
       completedThisWeek: sessionsThisWeek.length,
       totalHours: Math.round(totalMinutes / 60)
     }
     
-    // Buscar próximo treino (workouts ativos)
+    // 2. Buscar próximo treino (plano de treino ativo)
     try {
       const workoutsResponse = await api.get('/student/workouts')
-      if (workoutsResponse.data && workoutsResponse.data.length > 0) {
-        nextWorkout.value = workoutsResponse.data[0]
+      const workouts = workoutsResponse.data || []
+      
+      if (workouts.length > 0) {
+        // Pegar o primeiro plano ativo
+        const activePlan = workouts.find(w => w.isActive !== false) || workouts[0]
+        
+        // Calcular qual divisão fazer baseado no histórico
+        const planSessions = completedSessions.filter(s => 
+          s.workoutPlanId?._id === activePlan._id || 
+          s.workoutPlanId === activePlan._id
+        )
+        
+        const nextDivisionIndex = planSessions.length % (activePlan.divisions?.length || 1)
+        const nextDivision = activePlan.divisions?.[nextDivisionIndex]
+        
+        if (nextDivision) {
+          nextWorkout.value = {
+            _id: activePlan._id,
+            name: `${activePlan.name} - ${nextDivision.name}`,
+            divisionIndex: nextDivisionIndex,
+            estimatedTime: calculateEstimatedTime(nextDivision),
+            estimatedCalories: calculateEstimatedCalories(nextDivision),
+            divisions: [nextDivision]
+          }
+        }
       }
     } catch (err) {
-      console.log('Nenhum workout encontrado')
+      nextWorkout.value = null
     }
     
-    // Processar atividades recentes das últimas 5 sessões
-    if (sessions.length > 0) {
-      recentActivities.value = sessions.slice(0, 5).map((session, index) => ({
-        id: session._id || index,
+    // 3. Processar atividades recentes (apenas sessões realmente completadas)
+    recentActivities.value = []
+    
+    // Adicionar últimas sessões completadas (com status 'completed')
+    const recentCompletedSessions = completedSessions
+      .filter(s => s.status === 'completed' && s.endTime) // Apenas com endTime
+      .slice(0, 3)
+    
+    recentCompletedSessions.forEach((session, index) => {
+      recentActivities.value.push({
+        id: `workout-${index}`,
         type: 'workout',
-        title: `${session.workoutPlan?.name || 'Treino'} concluído`,
-        date: new Date(session.startTime || session.date)
-      }))
+        title: `${session.workoutName} - ${session.divisionName} concluído`,
+        date: new Date(session.endTime)
+      })
+    })
+    
+    // Buscar progresso recente
+    try {
+      const progressResponse = await api.get('/student/progress/history', {
+        params: { limit: 3 }
+      })
+      const progressLogs = progressResponse.data || []
+      
+      progressLogs.forEach((log, index) => {
+        if (log.weight) {
+          recentActivities.value.push({
+            id: `progress-${index}`,
+            type: 'progress',
+            title: `Peso atualizado para ${log.weight}kg`,
+            date: new Date(log.date)
+          })
+        }
+      })
+    } catch (err) {
+      // Sem histórico de progresso disponível
     }
     
-    // Gerar metas baseadas no progresso
-    goals.value = [
-      {
-        id: 1,
-        title: `Treinar ${dashboardData.value.weeklyGoal}x por semana`,
-        progress: Math.min(100, Math.round((dashboardData.value.completedThisWeek / dashboardData.value.weeklyGoal) * 100))
-      },
-      {
-        id: 2,
-        title: 'Manter sequência de treinos',
-        progress: Math.min(100, dashboardData.value.currentStreak * 20)
-      }
-    ]
+    // Ordenar por data mais recente
+    recentActivities.value.sort((a, b) => b.date - a.date)
+    recentActivities.value = recentActivities.value.slice(0, 5)
     
-    // Configurar calendário semanal
+    // 4. Gerar metas baseadas nos dados reais do aluno
+    goals.value = []
+    
+    if (studentData.goals) {
+      // Meta de peso
+      if (studentData.goals.targetWeight && studentData.currentWeight) {
+        const weightDiff = Math.abs(studentData.currentWeight - studentData.goals.targetWeight)
+        const targetDiff = Math.abs(studentData.initialWeight || studentData.currentWeight - studentData.goals.targetWeight)
+        const progress = targetDiff > 0 ? Math.round(((targetDiff - weightDiff) / targetDiff) * 100) : 0
+        
+        goals.value.push({
+          id: 'weight',
+          title: `Atingir ${studentData.goals.targetWeight}kg`,
+          progress: Math.min(Math.max(progress, 0), 100)
+        })
+      }
+      
+      // Meta de treinos semanais
+      const weeklyProgress = weeklyGoal > 0 ? Math.round((sessionsThisWeek.length / weeklyGoal) * 100) : 0
+      goals.value.push({
+        id: 'weekly',
+        title: `Treinar ${weeklyGoal}x por semana`,
+        progress: Math.min(weeklyProgress, 100)
+      })
+      
+      // Meta de streak
+      if (streak > 0) {
+        const streakGoal = 7
+        const streakProgress = Math.round((streak / streakGoal) * 100)
+        goals.value.push({
+          id: 'streak',
+          title: `Manter sequência de ${streakGoal} dias`,
+          progress: Math.min(streakProgress, 100)
+        })
+      }
+    } else {
+      // Metas padrão se não tiver dados
+      const weeklyProgress = weeklyGoal > 0 ? Math.round((sessionsThisWeek.length / weeklyGoal) * 100) : 0
+      goals.value.push({
+        id: 'weekly',
+        title: `Treinar ${weeklyGoal}x por semana`,
+        progress: Math.min(weeklyProgress, 100)
+      })
+    }
+    
+    // 5. Configurar calendário semanal (apenas sessões completadas)
     const weekCompletions = Array(7).fill(0)
-    sessionsThisWeek.forEach(session => {
-      const sessionDay = new Date(session.startTime).getDay()
-      weekCompletions[sessionDay] = 1
-    })
+    sessionsThisWeek
+      .filter(s => s.status === 'completed' && s.endTime) // Apenas completadas
+      .forEach(session => {
+        const sessionDate = new Date(session.endTime) // Usar endTime
+        const sessionDay = sessionDate.getDay()
+        weekCompletions[sessionDay] = 1
+      })
     generateWeekCalendar(weekCompletions)
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error)
@@ -458,6 +566,20 @@ const calculateStreak = (sessions) => {
   }
   
   return streak
+}
+
+const calculateEstimatedTime = (division) => {
+  if (!division?.exercises) return 45
+  // ~2min por exercício + 1min descanso por série
+  const totalSets = division.exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0)
+  return Math.round((division.exercises.length * 2) + (totalSets * 1))
+}
+
+const calculateEstimatedCalories = (division) => {
+  if (!division?.exercises) return 250
+  // ~10 calorias por exercício * número de séries
+  const totalSets = division.exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0)
+  return Math.round(totalSets * 10)
 }
 
 const loadMockData = () => {

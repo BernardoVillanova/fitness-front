@@ -4,7 +4,12 @@
     <main class="main-content">
       <div class="page-header">
       <h1 class="page-title">
-        <i class="fas fa-user-tie"></i>
+        <i class="fas fa-            })
+          }
+        } catch (err) {
+          // Nenhuma sessão agendada
+          upcomingSessions.value = []
+        }tie"></i>
         Meu Instrutor
       </h1>
       <p class="page-subtitle">Informações sobre seu personal trainer</p>
@@ -192,9 +197,31 @@ const upcomingSessions = ref([])
 const fetchInstructorData = async () => {
   loading.value = true
   try {
-    // Buscar dados do estudante para pegar o instructor ID
-    const studentResponse = await api.get('/student/profile')
-    const instructorId = studentResponse.data?.instructor || studentResponse.data?.instructorId
+    // Buscar dados do estudante do sessionStorage
+    const storedUser = sessionStorage.getItem('user')
+    if (!storedUser) {
+      useFallbackData()
+      loading.value = false
+      return
+    }
+
+    const userData = JSON.parse(storedUser)
+    const studentId = userData.studentId || userData.id
+    
+    if (!studentId) {
+      useFallbackData()
+      loading.value = false
+      return
+    }
+
+    // Buscar dados completos do estudante
+    const studentResponse = await api.get(`/students/${studentId}`)
+    let instructorId = studentResponse.data?.instructorId
+    
+    // Extrair ID se for objeto MongoDB
+    if (instructorId && typeof instructorId === 'object') {
+      instructorId = instructorId.$oid || instructorId._id || instructorId.toString()
+    }
     
     if (instructorId) {
       // Buscar dados completos do instrutor
@@ -202,20 +229,22 @@ const fetchInstructorData = async () => {
       
       if (instructorResponse.data) {
         const data = instructorResponse.data
+        const instructorName = data.name || data.user?.name || 'Instrutor'
+        
         instructor.value = {
           id: data._id || data.id,
-          name: data.name || data.user?.name || 'Instrutor',
+          name: instructorName,
           speciality: data.speciality || data.specialty || 'Personal Trainer',
-          avatar: data.avatar || data.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Instrutor')}&background=3b82f6&color=fff&size=120`,
+          avatar: data.avatar || data.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&background=667eea&color=fff&size=120`,
           rating: data.rating || 5.0,
-          reviews: data.reviews || 0,
-          bio: data.bio || data.description || 'Profissional dedicado ao seu desenvolvimento físico e bem-estar.',
-          specialties: data.specialties || data.specializations || ['Musculação', 'Treinamento Funcional'],
-          certifications: data.certifications || data.certificates || ['Certificado CREF'],
-          phone: data.phone || data.contact?.phone || null,
+          reviews: data.reviews || data.reviewCount || 0,
+          bio: data.bio || data.description || data.about || `${instructorName} é um profissional dedicado ao seu desenvolvimento físico e bem-estar.`,
+          specialties: data.specialties || data.specializations || data.expertise || ['Musculação', 'Treinamento Funcional'],
+          certifications: data.certifications || data.certificates || data.qualifications || ['Certificado CREF'],
+          phone: data.phone || data.contact?.phone || data.user?.phone || null,
           email: data.email || data.user?.email || data.contact?.email || null,
-          availableHours: data.availableHours || data.schedule || 'Consulte a academia',
-          location: data.location || data.gym?.name || null
+          availableHours: data.availableHours || data.schedule || data.workingHours || 'Segunda a Sexta: 6h - 22h | Sábado: 8h - 14h',
+          location: data.location || data.gym?.name || studentResponse.data.gym?.name || 'Academia'
         }
         
         // Buscar sessões agendadas (se houver endpoint)
