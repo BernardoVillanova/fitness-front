@@ -18,15 +18,15 @@
             </div>
             <div class="hero-stats">
               <div class="stat-highlight">
-                <span class="stat-number">10K+</span>
-                <span class="stat-label">Usuários Ativos</span>
+                <span class="stat-number">1.2K+</span>
+                <span class="stat-label">Alunos Ativos</span>
               </div>
               <div class="stat-highlight">
-                <span class="stat-number">500+</span>
-                <span class="stat-label">Organizações</span>
+                <span class="stat-number">45+</span>
+                <span class="stat-label">Instrutores</span>
               </div>
               <div class="stat-highlight">
-                <span class="stat-number">91%</span>
+                <span class="stat-number">94%</span>
                 <span class="stat-label">Satisfação</span>
               </div>
             </div>
@@ -637,20 +637,20 @@
         <div class="container">
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-number">10K+</div>
+              <div class="stat-number">1.2K+</div>
               <div class="stat-label">Alunos Ativos</div>
             </div>
             <div class="stat-item">
-              <div class="stat-number">500+</div>
-              <div class="stat-label">Instrutores e Academias Cadastradas</div>
+              <div class="stat-number">45+</div>
+              <div class="stat-label">Instrutores Parceiros</div>
             </div>
             <div class="stat-item">
-              <div class="stat-number">91%</div>
+              <div class="stat-number">94%</div>
               <div class="stat-label">Taxa de Satisfação</div>
             </div>
             <div class="stat-item">
-              <div class="stat-number">24/7</div>
-              <div class="stat-label">Disponibilidade</div>
+              <div class="stat-number">15+</div>
+              <div class="stat-label">Academias Parceiras</div>
             </div>
           </div>
         </div>
@@ -659,27 +659,53 @@
       <footer>
         <div class="footer-content">
           <div class="footer-brand">
-            <h3>TrainingPlatform</h3>
+            <h3>FitnessTCC</h3>
             <p>
-              Potencializando sua evolução nos treinos com tecnologia e
-              praticidade.
+              Plataforma completa de gestão de treinos que conecta alunos e instrutores,
+              facilitando o acompanhamento do progresso físico e o alcance de objetivos.
             </p>
+            <div class="footer-stats">
+              <div class="footer-stat">
+                <span class="footer-stat-number">1.2K+</span>
+                <span class="footer-stat-label">Alunos</span>
+              </div>
+              <div class="footer-stat">
+                <span class="footer-stat-number">45+</span>
+                <span class="footer-stat-label">Instrutores</span>
+              </div>
+              <div class="footer-stat">
+                <span class="footer-stat-number">94%</span>
+                <span class="footer-stat-label">Satisfação</span>
+              </div>
+            </div>
           </div>
           <div class="footer-links">
             <div class="link-group">
-              <h4>Plataforma</h4>
-              <a href="#">Preço</a>
+              <h4>Recursos</h4>
+              <a href="#">Planos de Treino</a>
+              <a href="#">Acompanhamento</a>
+              <a href="#">Relatórios</a>
               <a href="#">Suporte</a>
             </div>
             <div class="link-group">
-              <h4>Empresa</h4>
-              <a href="#">Sobre nós</a>
+              <h4>Para Instrutores</h4>
+              <a href="#">Cadastro</a>
+              <a href="#">Gestão de Alunos</a>
+              <a href="#">Criar Planos</a>
+              <a href="#">Análises</a>
+            </div>
+            <div class="link-group">
+              <h4>Suporte</h4>
+              <a href="#">Central de Ajuda</a>
               <a href="#">Contato</a>
+              <a href="#">FAQ</a>
+              <a href="#">Termos de Uso</a>
             </div>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2025 TrainingPlatform. Todos os direitos reservados.</p>
+          <p>&copy; 2025 FitnessTCC - Plataforma de Gestão de Treinos. Todos os direitos reservados.</p>
+          <p class="footer-tagline">Transformando vidas através do movimento</p>
         </div>
       </footer>
     </div>
@@ -1508,8 +1534,8 @@ footer {
 
 .footer-content {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 50px;
+  grid-template-columns: 1.5fr 2fr;
+  gap: 60px;
   padding: 60px 0;
   max-width: 1200px;
   margin: 0 auto;
@@ -1518,20 +1544,54 @@ footer {
 }
 
 .footer-brand h3 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 15px;
-  color: var(--text-color);
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .footer-brand p {
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+.footer-stats {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.footer-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.footer-stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.footer-stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .footer-links {
   display: flex;
-  gap: 50px;
+  gap: 40px;
+  justify-content: flex-end;
 }
 
 .link-group h4 {
@@ -1557,6 +1617,16 @@ footer {
   padding: 30px 20px;
   border-top: 1px solid var(--border-color);
   color: var(--text-secondary);
+}
+
+.footer-bottom p {
+  margin: 5px 0;
+}
+
+.footer-tagline {
+  font-size: 0.9rem;
+  font-style: italic;
+  opacity: 0.8;
 }
 
 @keyframes fadeInUp {
@@ -1715,10 +1785,29 @@ footer {
   .footer-content {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 40px;
+  }
+
+  .footer-brand {
+    margin-bottom: 20px;
+  }
+
+  .footer-stats {
+    justify-content: center;
+  }
+
+  .footer-stat {
+    align-items: center;
   }
 
   .footer-links {
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .link-group {
+    min-width: 150px;
   }
 }
 
