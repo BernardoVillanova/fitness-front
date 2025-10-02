@@ -824,6 +824,13 @@ export default {
   color: var(--text-color);
   min-height: 100vh;
   box-sizing: border-box;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Detecta quando o navbar está colapsado */
+body:has(.navbar-collapsed) .dashboard-main,
+.dashboard-container:has(.navbar-collapsed) .dashboard-main {
+  margin-left: 0 !important;
 }
 
 .dashboard-light {

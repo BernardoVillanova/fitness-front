@@ -1,10 +1,25 @@
 <template>
-  <nav :class="['navbar', { 'navbar-dark': isDarkMode, 'navbar-light': !isDarkMode, 'navbar-mobile': isMobile }]">
+  <!-- Botão Flutuante para Expandir Menu -->
+  <button 
+    v-if="isCollapsed && !isMobile" 
+    @click="toggleCollapsed" 
+    class="expand-menu-btn"
+    title="Expandir menu"
+  >
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <nav :class="['navbar', { 'navbar-dark': isDarkMode, 'navbar-light': !isDarkMode, 'navbar-mobile': isMobile, 'navbar-collapsed': isCollapsed }]">
     <!-- Logo -->
     <div class="logo-section" v-if="!isMobile">
-      <router-link to="/" class="logo-link">
-        <h1 class="logo-text">Winx Fitness</h1>
-      </router-link>
+      <div class="logo-header">
+        <router-link to="/dashboard" class="logo-link">
+          <h1 class="logo-text">Winx Fitness</h1>
+        </router-link>
+        <button @click="toggleCollapsed" class="collapse-btn" title="Recolher menu">
+          <i class="fas fa-angle-left"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Mobile hamburger button -->
@@ -75,14 +90,6 @@
           </li>
         </ul>
       </li>
-      <li>
-        <router-link to="/settings" class="nav-item" active-class="active">
-          <div class="nav-icon">
-            <i class="fas fa-cog"></i>
-          </div>
-          <span v-if="!isMobile">Configurações</span>
-        </router-link>
-      </li>
     </ul>
 
     <!-- Divider -->
@@ -91,19 +98,11 @@
     <!-- Bottom section -->
     <ul class="bottom-links" v-if="!isMobile">
       <li>
-        <router-link to="/security" class="nav-item">
+        <router-link to="/instructor-profile" class="nav-item">
           <div class="nav-icon">
-            <i class="fas fa-shield-alt"></i>
+            <i class="fas fa-user-circle"></i>
           </div>
-          <span>Segurança</span>
-        </router-link>
-      </li>
-      <li>
-        <router-link to="/help" class="nav-item">
-          <div class="nav-icon">
-            <i class="fas fa-question-circle"></i>
-          </div>
-          <span>Ajuda</span>
+          <span>Meu Perfil</span>
         </router-link>
       </li>
       <li>
@@ -118,6 +117,14 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
+        </div>
+      </li>
+      <li>
+        <div class="nav-item logout-btn" @click="logout">
+          <div class="nav-icon">
+            <i class="fas fa-sign-out-alt"></i>
+          </div>
+          <span>Sair</span>
         </div>
       </li>
     </ul>
@@ -152,6 +159,7 @@ export default {
     const isMobile = ref(window.innerWidth <= 768);
     const menuOpen = ref(false);
     const workoutSubmenuOpen = ref(false);
+    const isCollapsed = ref(false);
 
     const checkScreenSize = () => {
       isMobile.value = window.innerWidth <= 768;
@@ -165,7 +173,14 @@ export default {
       workoutSubmenuOpen.value = !workoutSubmenuOpen.value;
     };
 
+    const toggleCollapsed = () => {
+      isCollapsed.value = !isCollapsed.value;
+      localStorage.setItem('dashboardSidebarCollapsed', isCollapsed.value.toString());
+    };
+
     const logout = () => {
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
       console.log('Usuário deslogado');
       router.push('/login');
     };
@@ -174,6 +189,12 @@ export default {
 
     onMounted(() => {
       window.addEventListener('resize', checkScreenSize);
+      
+      // Restaurar estado do localStorage
+      const saved = localStorage.getItem('dashboardSidebarCollapsed');
+      if (saved !== null) {
+        isCollapsed.value = saved === 'true';
+      }
     });
 
     onUnmounted(() => {
@@ -189,6 +210,8 @@ export default {
       toggleMenu,
       workoutSubmenuOpen,
       toggleWorkoutSubmenu,
+      isCollapsed,
+      toggleCollapsed,
       iconLogout
     };
   }
@@ -214,6 +237,12 @@ export default {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.navbar.navbar-collapsed {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Cores tema light - AZUIS */
 .navbar-light {
   background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
@@ -224,6 +253,35 @@ export default {
 .navbar-dark {
   background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
   border-right: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* Expand Menu Button (Floating) */
+.expand-menu-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  z-index: 999;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.expand-menu-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.expand-menu-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
 /* Logo section */
@@ -237,14 +295,56 @@ export default {
   border-bottom-color: rgba(139, 92, 246, 0.2);
 }
 
+.logo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .logo-link {
   text-decoration: none;
+  flex: 1;
   display: block;
   transition: all 0.3s ease;
 }
 
 .logo-link:hover {
   transform: translateX(2px);
+}
+
+.collapse-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.navbar-light .collapse-btn {
+  background: rgba(37, 99, 235, 0.1);
+  color: #3b82f6;
+}
+
+.navbar-light .collapse-btn:hover {
+  background: rgba(37, 99, 235, 0.2);
+  transform: scale(1.05);
+}
+
+.navbar-dark .collapse-btn {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a855f7;
+}
+
+.navbar-dark .collapse-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  transform: scale(1.05);
 }
 
 .logo-text {
@@ -461,6 +561,26 @@ export default {
   justify-content: space-between;
   padding-right: 32px !important;
   cursor: pointer;
+}
+
+/* Logout button */
+.logout-btn {
+  cursor: pointer;
+  color: #ef4444 !important;
+}
+
+.navbar-dark .logout-btn {
+  color: #f87171 !important;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #dc2626 !important;
+}
+
+.navbar-dark .logout-btn:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: #fca5a5 !important;
 }
 
 /* Cores hover tema light */

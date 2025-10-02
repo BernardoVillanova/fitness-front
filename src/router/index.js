@@ -9,6 +9,7 @@ import DashboardTech from '../views/dashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
 import StudentProfile from '../views/studentprofile.vue'
+import InstructorProfile from '../views/InstructorProfile.vue';
 // import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/InstructorRegisterNew.vue';
 import gymHome from '../views/gymHome.vue';
@@ -55,6 +56,11 @@ const routes = [
     component: () => import('@/views/StudentRegisterNew.vue')
   },
   { path: '/instructor-register', component: InstructorRegister },
+  { 
+    path: '/instructor-profile', 
+    component: InstructorProfile,
+    meta: { requiresAuth: true, role: 'personal' }
+  },
   { path: '/exercises', component: () => import('../views/exercises.vue') },
   { path: '/machines', component: () => import('../views/machines.vue') },
   { path: '/workout-plans', component: WorkoutPlans },
