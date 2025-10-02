@@ -134,8 +134,17 @@ export default {
   border-bottom: 1px solid var(--border-color);
   transition: all 0.3s ease;
   font-family: var(--font-family);
-  position: relative;
-  z-index: 100;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.navbar.dark {
+  background-color: rgba(26, 26, 46, 0.95);
 }
 
 .light {

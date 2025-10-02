@@ -1,0 +1,1630 @@
+<template>
+  <div class="register-page" :class="{ 'dark-mode': isDarkMode }">
+    <NavBar />
+    
+    <div class="register-container">
+      <!-- Progress Stepper -->
+      <div class="progress-stepper">
+        <div 
+          v-for="(step, index) in steps" 
+          :key="index"
+          class="step-item"
+          :class="{
+            'active': currentStep === index + 1,
+            'completed': currentStep > index + 1
+          }"
+        >
+          <div class="step-circle">
+            <i v-if="currentStep > index + 1" class="fas fa-check"></i>
+            <span v-else>{{ index + 1 }}</span>
+          </div>
+          <div class="step-label">{{ step.label }}</div>
+          <div v-if="index < steps.length - 1" class="step-line"></div>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div class="form-card">
+        <div class="form-header">
+          <h2 class="form-title">{{ steps[currentStep - 1].title }}</h2>
+          <p class="form-subtitle">{{ steps[currentStep - 1].subtitle }}</p>
+        </div>
+
+        <form @submit.prevent="nextStep" class="register-form">
+          <!-- Resumo dos Dados Básicos -->
+          <div class="info-banner">
+            <div class="info-icon">
+              <font-awesome-icon icon="user-check" />
+            </div>
+            <div class="info-content">
+              <h4>Dados Cadastrados</h4>
+              <p><strong>{{ form.name }}</strong> • {{ form.email }}</p>
+            </div>
+          </div>
+
+          <!-- ETAPA 1: Endereço -->
+          <div v-show="currentStep === 1" class="form-step">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cep">
+                  <font-awesome-icon icon="map-marker-alt" />
+                  CEP *
+                </label>
+                <input
+                  id="cep"
+                  v-model="form.address.cep"
+                  v-mask="'#####-###'"
+                  type="text"
+                  placeholder="00000-000"
+                  required
+                  @blur="fetchAddress"
+                  :class="{ 'loading': loadingCep }"
+                />
+                <span v-if="loadingCep" class="info-message">Buscando endereço...</span>
+              </div>
+
+              <div class="form-group">
+                <label for="city">
+                  <i class="fas fa-city"></i>
+                  Cidade *
+                </label>
+                <input
+                  id="city"
+                  v-model="form.address.city"
+                  type="text"
+                  placeholder="Cidade"
+                  required
+                  readonly
+                  :class="{ 'disabled': true }"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="street">
+                  <i class="fas fa-road"></i>
+                  Rua *
+                </label>
+                <input
+                  id="street"
+                  v-model="form.address.street"
+                  type="text"
+                  placeholder="Nome da rua"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="number">
+                  <i class="fas fa-hashtag"></i>
+                  Número *
+                </label>
+                <input
+                  id="number"
+                  v-model="form.address.number"
+                  type="text"
+                  placeholder="123"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="complement">
+                  <i class="fas fa-plus"></i>
+                  Complemento
+                </label>
+                <input
+                  id="complement"
+                  v-model="form.address.complement"
+                  type="text"
+                  placeholder="Apto, bloco, etc."
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="neighborhood">
+                  <i class="fas fa-map"></i>
+                  Bairro *
+                </label>
+                <input
+                  id="neighborhood"
+                  v-model="form.address.neighborhood"
+                  type="text"
+                  placeholder="Bairro"
+                  required
+                  readonly
+                  :class="{ 'disabled': true }"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- ETAPA 2: Dados Físicos -->
+          <div v-show="currentStep === 2" class="form-step">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="weight">
+                  <i class="fas fa-weight"></i>
+                  Peso Atual (kg) *
+                </label>
+                <input
+                  id="weight"
+                  v-model.number="form.currentWeight"
+                  type="number"
+                  step="0.1"
+                  placeholder="70.5"
+                  required
+                  min="30"
+                  max="300"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="height">
+                  <i class="fas fa-ruler-vertical"></i>
+                  Altura (cm) *
+                </label>
+                <input
+                  id="height"
+                  v-model.number="form.currentHeight"
+                  type="number"
+                  placeholder="170"
+                  required
+                  min="100"
+                  max="250"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <i class="fas fa-calculator"></i>
+                  IMC Calculado
+                </label>
+                <div class="bmi-display">
+                  <span class="bmi-value">{{ calculatedBMI }}</span>
+                  <span class="bmi-label">{{ bmiCategory }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="experience">
+                  <i class="fas fa-dumbbell"></i>
+                  Experiência com Treinos *
+                </label>
+                <div class="radio-group">
+                  <label class="radio-option">
+                    <input type="radio" v-model="form.trainingExperience" value="iniciante" required />
+                    <div class="radio-content">
+                      <i class="fas fa-seedling"></i>
+                      <span>Iniciante</span>
+                      <small>Nunca treinei ou treino há menos de 6 meses</small>
+                    </div>
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" v-model="form.trainingExperience" value="intermediario" />
+                    <div class="radio-content">
+                      <i class="fas fa-chart-line"></i>
+                      <span>Intermediário</span>
+                      <small>Treino entre 6 meses e 2 anos</small>
+                    </div>
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" v-model="form.trainingExperience" value="avancado" />
+                    <div class="radio-content">
+                      <i class="fas fa-fire"></i>
+                      <span>Avançado</span>
+                      <small>Treino há mais de 2 anos</small>
+                    </div>
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" v-model="form.trainingExperience" value="atleta" />
+                    <div class="radio-content">
+                      <i class="fas fa-trophy"></i>
+                      <span>Atleta</span>
+                      <small>Competidor ou atleta profissional</small>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ETAPA 3: Saúde -->
+          <div v-show="currentStep === 3" class="form-step">
+            <div class="health-section">
+              <div class="form-group full-width">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="form.health.hasChronicConditions" />
+                  <span>Possui alguma condição crônica? (diabetes, hipertensão, etc.)</span>
+                </label>
+              </div>
+
+              <div v-if="form.health.hasChronicConditions" class="nested-section">
+                <div 
+                  v-for="(condition, index) in form.health.chronicConditions" 
+                  :key="'condition-' + index"
+                  class="nested-item"
+                >
+                  <div class="form-row">
+                    <div class="form-group">
+                      <input
+                        v-model="condition.name"
+                        type="text"
+                        placeholder="Nome da condição"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <select v-model="condition.severity">
+                        <option value="">Gravidade</option>
+                        <option value="leve">Leve</option>
+                        <option value="moderada">Moderada</option>
+                        <option value="grave">Grave</option>
+                      </select>
+                    </div>
+                    <button type="button" @click="removeItem(form.health.chronicConditions, index)" class="btn-remove">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" @click="addChronicCondition" class="btn-add">
+                  <i class="fas fa-plus"></i> Adicionar Condição
+                </button>
+              </div>
+            </div>
+
+            <div class="health-section">
+              <div class="form-group full-width">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="form.health.hasMedications" />
+                  <span>Usa algum medicamento regularmente?</span>
+                </label>
+              </div>
+
+              <div v-if="form.health.hasMedications" class="nested-section">
+                <div 
+                  v-for="(med, index) in form.health.medications" 
+                  :key="'med-' + index"
+                  class="nested-item"
+                >
+                  <div class="form-row">
+                    <div class="form-group">
+                      <input
+                        v-model="med.name"
+                        type="text"
+                        placeholder="Nome do medicamento"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <input
+                        v-model="med.dosage"
+                        type="text"
+                        placeholder="Dosagem"
+                      />
+                    </div>
+                    <button type="button" @click="removeItem(form.health.medications, index)" class="btn-remove">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" @click="addMedication" class="btn-add">
+                  <i class="fas fa-plus"></i> Adicionar Medicamento
+                </button>
+              </div>
+            </div>
+
+            <div class="health-section">
+              <div class="form-group full-width">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="form.health.hasInjuries" />
+                  <span>Possui lesões ou limitações físicas?</span>
+                </label>
+              </div>
+
+              <div v-if="form.health.hasInjuries" class="nested-section">
+                <div 
+                  v-for="(injury, index) in form.health.injuries" 
+                  :key="'injury-' + index"
+                  class="nested-item"
+                >
+                  <div class="form-row">
+                    <div class="form-group">
+                      <input
+                        v-model="injury.type"
+                        type="text"
+                        placeholder="Tipo (joelho, ombro, etc.)"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <select v-model="injury.status">
+                        <option value="">Status</option>
+                        <option value="recuperada">Recuperada</option>
+                        <option value="em_tratamento">Em Tratamento</option>
+                        <option value="cronica">Crônica</option>
+                      </select>
+                    </div>
+                    <button type="button" @click="removeItem(form.health.injuries, index)" class="btn-remove">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div class="form-group full-width">
+                    <textarea
+                      v-model="injury.limitations"
+                      placeholder="Limitações ou exercícios restritos"
+                      rows="2"
+                    ></textarea>
+                  </div>
+                </div>
+                <button type="button" @click="addInjury" class="btn-add">
+                  <i class="fas fa-plus"></i> Adicionar Lesão
+                </button>
+              </div>
+            </div>
+
+            <div class="health-section">
+              <div class="form-group full-width">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="form.health.medicalAuthorization" />
+                  <span>Possuo autorização médica para praticar atividades físicas</span>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="doctorName">
+                    <i class="fas fa-user-md"></i>
+                    Nome do Médico
+                  </label>
+                  <input
+                    id="doctorName"
+                    v-model="form.health.doctorContact.name"
+                    type="text"
+                    placeholder="Dr. Nome do médico"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="doctorPhone">
+                    <i class="fas fa-phone"></i>
+                    Telefone do Médico
+                  </label>
+                  <input
+                    id="doctorPhone"
+                    v-model="form.health.doctorContact.phone"
+                    v-mask="'(##) #####-####'"
+                    type="text"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="healthNotes">
+                  <i class="fas fa-notes-medical"></i>
+                  Observações Gerais de Saúde
+                </label>
+                <textarea
+                  id="healthNotes"
+                  v-model="form.health.generalNotes"
+                  placeholder="Outras informações relevantes sobre sua saúde..."
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- ETAPA 4: Objetivos -->
+          <div v-show="currentStep === 4" class="form-step">
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="goalType">
+                  <i class="fas fa-bullseye"></i>
+                  Objetivo Principal *
+                </label>
+                <select id="goalType" v-model="form.goals.goalType" required>
+                  <option value="">Selecione seu objetivo principal</option>
+                  <option value="hipertrofia">Ganhar Massa Muscular (Hipertrofia)</option>
+                  <option value="emagrecimento">Perder Peso / Emagrecer</option>
+                  <option value="condicionamento">Melhorar Condicionamento Físico</option>
+                  <option value="forca">Aumentar Força</option>
+                  <option value="saude">Saúde e Bem-Estar</option>
+                  <option value="performance">Performance Esportiva</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="targetWeight">
+                  <i class="fas fa-weight"></i>
+                  Peso Meta (kg)
+                </label>
+                <input
+                  id="targetWeight"
+                  v-model.number="form.goals.targetWeight"
+                  type="number"
+                  step="0.1"
+                  placeholder="65.0"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="targetDate">
+                  <i class="fas fa-calendar-check"></i>
+                  Data Meta
+                </label>
+                <input
+                  id="targetDate"
+                  v-model="form.goals.targetDate"
+                  type="date"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="primaryGoal">
+                  <i class="fas fa-flag"></i>
+                  Descreva seu Objetivo Principal
+                </label>
+                <textarea
+                  id="primaryGoal"
+                  v-model="form.goals.primaryDescription"
+                  placeholder="Ex: Quero perder 10kg e melhorar meu condicionamento para correr 5km"
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="goals-list">
+              <h4><i class="fas fa-list-check"></i> Metas Pessoais</h4>
+              <div 
+                v-for="(goal, index) in form.goals.personalGoals" 
+                :key="'goal-' + index"
+                class="goal-item"
+              >
+                <div class="form-row">
+                  <div class="form-group flex-2">
+                    <input
+                      v-model="goal.description"
+                      type="text"
+                      placeholder="Descrição da meta"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <select v-model="goal.category">
+                      <option value="saude">Saúde</option>
+                      <option value="estetica">Estética</option>
+                      <option value="performance">Performance</option>
+                      <option value="bem_estar">Bem-Estar</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </div>
+                  <button type="button" @click="removeItem(form.goals.personalGoals, index)" class="btn-remove">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <button type="button" @click="addPersonalGoal" class="btn-add">
+                <i class="fas fa-plus"></i> Adicionar Meta
+              </button>
+            </div>
+          </div>
+
+          <!-- ETAPA 5: Preferências -->
+          <div v-show="currentStep === 5" class="form-step">
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label>
+                  <i class="fas fa-calendar-days"></i>
+                  Dias Disponíveis para Treinar *
+                </label>
+                <div class="days-selector">
+                  <label 
+                    v-for="day in daysOfWeek" 
+                    :key="day.value"
+                    class="day-option"
+                    :class="{ 'selected': form.preferences.trainingDays.includes(day.value) }"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="day.value" 
+                      v-model="form.preferences.trainingDays"
+                    />
+                    <span>{{ day.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="timeStart">
+                  <i class="fas fa-clock"></i>
+                  Horário Início Preferido *
+                </label>
+                <input
+                  id="timeStart"
+                  v-model="form.preferences.preferredTimeStart"
+                  type="time"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="timeEnd">
+                  <i class="fas fa-clock"></i>
+                  Horário Fim Preferido *
+                </label>
+                <input
+                  id="timeEnd"
+                  v-model="form.preferences.preferredTimeEnd"
+                  type="time"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="daysPerWeek">
+                  <i class="fas fa-calendar-week"></i>
+                  Frequência Semanal *
+                </label>
+                <select id="daysPerWeek" v-model.number="form.preferences.daysPerWeek" required>
+                  <option value="">Selecione</option>
+                  <option :value="2">2x por semana</option>
+                  <option :value="3">3x por semana</option>
+                  <option :value="4">4x por semana</option>
+                  <option :value="5">5x por semana</option>
+                  <option :value="6">6x por semana</option>
+                  <option :value="7">Todos os dias</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="trainingType">
+                  <i class="fas fa-dumbbell"></i>
+                  Tipo de Treino Preferido *
+                </label>
+                <select id="trainingType" v-model="form.preferences.preferredTrainingType" required>
+                  <option value="">Selecione</option>
+                  <option value="Musculação">Musculação</option>
+                  <option value="Funcional">Treino Funcional</option>
+                  <option value="Aeróbico">Aeróbico / Cardio</option>
+                  <option value="Crossfit">Crossfit</option>
+                  <option value="HIIT">HIIT</option>
+                  <option value="Pilates">Pilates</option>
+                  <option value="Yoga">Yoga</option>
+                  <option value="Misto">Misto</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="form.preferences.flexibleSchedule" />
+                  <span>Tenho horários flexíveis</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="additionalInfo">
+                  <i class="fas fa-comment"></i>
+                  Informações Adicionais
+                </label>
+                <textarea
+                  id="additionalInfo"
+                  v-model="form.additionalInfo"
+                  placeholder="Alguma preferência ou observação adicional..."
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons -->
+          <div class="form-navigation">
+            <button 
+              type="button" 
+              @click="prevStep" 
+              class="btn btn-secondary"
+              :disabled="currentStep === 1"
+              v-if="currentStep > 1"
+            >
+              <i class="fas fa-arrow-left"></i>
+              Voltar
+            </button>
+            
+            <button 
+              type="submit" 
+              class="btn btn-primary"
+              :disabled="isSubmitting"
+            >
+              <span v-if="!isSubmitting">
+                {{ currentStep < totalSteps ? 'Próximo' : 'Finalizar Cadastro' }}
+                <i :class="currentStep < totalSteps ? 'fas fa-arrow-right' : 'fas fa-check'"></i>
+              </span>
+              <span v-else>
+                <i class="fas fa-spinner fa-spin"></i>
+                Processando...
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useThemeStore } from '@/store/theme'
+import NavBar from '@/components/NavBar.vue'
+import axios from 'axios'
+
+// Force FontAwesome icons to load
+onMounted(() => {
+  // Ensure FontAwesome is loaded
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+    document.head.appendChild(link)
+  }
+})
+
+const router = useRouter()
+const themeStore = useThemeStore()
+const { isDarkMode } = storeToRefs(themeStore)
+
+// Get data from query params (from register page)
+const route = router.currentRoute.value
+const userId = route.query.userId
+
+// Steps configuration (agora começa do endereço, pois dados básicos já foram preenchidos)
+const steps = [
+  { label: 'Endereço', title: 'Onde Você Mora', subtitle: 'Informe seu endereço completo' },
+  { label: 'Dados Físicos', title: 'Perfil Físico', subtitle: 'Suas medidas e experiência com treinos' },
+  { label: 'Saúde', title: 'Anamnese de Saúde', subtitle: 'Informações importantes sobre sua saúde' },
+  { label: 'Objetivos', title: 'Seus Objetivos', subtitle: 'O que você quer alcançar?' },
+  { label: 'Preferências', title: 'Preferências de Treino', subtitle: 'Quando e como você prefere treinar' }
+]
+
+const currentStep = ref(1)
+const totalSteps = 5 // Agora são 5 etapas (removemos dados básicos)
+const isSubmitting = ref(false)
+const loadingCep = ref(false)
+
+// Form data (dados básicos vêm da query)
+const form = ref({
+  // Dados básicos já preenchidos (vem da tela anterior)
+  userId: userId || '',
+  name: route.query.name || '',
+  cpf: route.query.cpf || '',
+  birthDate: route.query.birthDate || '',
+  email: route.query.email || '',
+  phone: route.query.phone || '',
+  
+  // Step 2: Endereço
+  address: {
+    cep: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: ''
+  },
+  
+  // Step 3: Dados Físicos
+  currentWeight: null,
+  currentHeight: null,
+  trainingExperience: '',
+  
+  // Step 4: Saúde
+  health: {
+    hasChronicConditions: false,
+    chronicConditions: [],
+    hasMedications: false,
+    medications: [],
+    hasInjuries: false,
+    injuries: [],
+    medicalAuthorization: false,
+    doctorContact: {
+      name: '',
+      phone: '',
+      specialty: ''
+    },
+    generalNotes: ''
+  },
+  
+  // Step 5: Objetivos
+  goals: {
+    goalType: '',
+    targetWeight: null,
+    targetDate: '',
+    primaryDescription: '',
+    personalGoals: []
+  },
+  
+  // Step 6: Preferências
+  preferences: {
+    trainingDays: [],
+    preferredTimeStart: '',
+    preferredTimeEnd: '',
+    daysPerWeek: null,
+    preferredTrainingType: '',
+    flexibleSchedule: false
+  },
+  
+  additionalInfo: ''
+})
+
+// Days of week
+const daysOfWeek = [
+  { label: 'Dom', value: 'Domingo' },
+  { label: 'Seg', value: 'Segunda' },
+  { label: 'Ter', value: 'Terça' },
+  { label: 'Qua', value: 'Quarta' },
+  { label: 'Qui', value: 'Quinta' },
+  { label: 'Sex', value: 'Sexta' },
+  { label: 'Sáb', value: 'Sábado' }
+]
+
+// Computed
+const calculatedBMI = computed(() => {
+  if (!form.value.currentWeight || !form.value.currentHeight) return '-'
+  const heightInMeters = form.value.currentHeight / 100
+  const bmi = form.value.currentWeight / (heightInMeters * heightInMeters)
+  return bmi.toFixed(1)
+})
+
+const bmiCategory = computed(() => {
+  const bmi = parseFloat(calculatedBMI.value)
+  if (isNaN(bmi)) return ''
+  if (bmi < 18.5) return 'Abaixo do peso'
+  if (bmi < 25) return 'Peso normal'
+  if (bmi < 30) return 'Sobrepeso'
+  return 'Obesidade'
+})
+
+// Address methods
+const fetchAddress = async () => {
+  const cep = form.value.address.cep.replace(/\D/g, '')
+  if (cep.length !== 8) {
+    alert('CEP inválido')
+    return
+  }
+  
+  loadingCep.value = true
+  
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+    const data = await response.json()
+    
+    if (data.erro) {
+      alert('CEP não encontrado')
+    } else {
+      form.value.address.street = data.logradouro || ''
+      form.value.address.neighborhood = data.bairro || ''
+      form.value.address.city = data.localidade || ''
+      form.value.address.state = data.uf || ''
+    }
+  } catch (error) {
+    alert('Erro ao buscar CEP')
+  } finally {
+    loadingCep.value = false
+  }
+}
+
+// Dynamic items methods
+const addChronicCondition = () => {
+  form.value.health.chronicConditions.push({
+    name: '',
+    severity: '',
+    notes: ''
+  })
+}
+
+const addMedication = () => {
+  form.value.health.medications.push({
+    name: '',
+    dosage: '',
+    frequency: '',
+    purpose: ''
+  })
+}
+
+const addInjury = () => {
+  form.value.health.injuries.push({
+    type: '',
+    description: '',
+    status: '',
+    limitations: ''
+  })
+}
+
+const addPersonalGoal = () => {
+  form.value.goals.personalGoals.push({
+    description: '',
+    category: 'saude',
+    priority: 'media'
+  })
+}
+
+const removeItem = (array, index) => {
+  array.splice(index, 1)
+}
+
+// Navigation methods
+const nextStep = async () => {
+  // Validate current step
+  if (!validateStep()) return
+  
+  if (currentStep.value < totalSteps) {
+    currentStep.value++
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  } else {
+    await submitForm()
+  }
+}
+
+const prevStep = () => {
+  if (currentStep.value > 1) {
+    currentStep.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const validateStep = () => {
+  // Add step-specific validation here
+  return true
+}
+
+const submitForm = async () => {
+  if (!form.value.userId) {
+    alert('Erro: Dados do usuário não encontrados. Por favor, refaça o cadastro.')
+    router.push('/register')
+    return
+  }
+  
+  isSubmitting.value = true
+  
+  try {
+    // Criar perfil de estudante (usuário já foi criado na tela anterior)
+    const studentPayload = {
+      userId: form.value.userId,
+      name: form.value.name,
+      email: form.value.email,
+      cpf: form.value.cpf.replace(/\D/g, ''),
+      phone: form.value.phone.replace(/\D/g, ''),
+      birthDate: form.value.birthDate,
+      
+      personalInfo: {
+        currentWeight: form.value.currentWeight,
+        currentHeight: form.value.currentHeight,
+        trainingExperience: form.value.trainingExperience,
+        
+        address: {
+          cep: form.value.address.cep.replace(/\D/g, ''),
+          street: form.value.address.street,
+          number: form.value.address.number,
+          complement: form.value.address.complement,
+          neighborhood: form.value.address.neighborhood,
+          city: form.value.address.city,
+          state: form.value.address.state
+        },
+        
+        preferences: {
+          trainingDays: form.value.preferences.trainingDays,
+          preferredTimeStart: form.value.preferences.preferredTimeStart,
+          preferredTimeEnd: form.value.preferences.preferredTimeEnd,
+          preferredTrainingType: form.value.preferences.preferredTrainingType,
+          trainingGoalType: form.value.goals.goalType
+        },
+        
+        availability: {
+          daysPerWeek: form.value.preferences.daysPerWeek,
+          flexibleSchedule: form.value.preferences.flexibleSchedule
+        }
+      },
+      
+      healthRestrictions: {
+        hasChronicConditions: form.value.health.hasChronicConditions,
+        chronicConditions: form.value.health.chronicConditions,
+        hasMedications: form.value.health.hasMedications,
+        medications: form.value.health.medications,
+        hasInjuries: form.value.health.hasInjuries,
+        injuries: form.value.health.injuries,
+        medicalAuthorization: form.value.health.medicalAuthorization,
+        doctorContact: form.value.health.doctorContact,
+        generalNotes: form.value.health.generalNotes
+      },
+      
+      goals: {
+        primary: {
+          type: form.value.goals.goalType,
+          description: form.value.goals.primaryDescription,
+          targetDate: form.value.goals.targetDate
+        },
+        weight: {
+          initial: form.value.currentWeight,
+          target: form.value.goals.targetWeight
+        },
+        personal: form.value.goals.personalGoals
+      }
+    }
+    
+    await axios.post('http://localhost:3000/api/students', studentPayload)
+    
+    // Success
+    alert('Cadastro realizado com sucesso!')
+    router.push('/login')
+    
+  } catch (error) {
+    console.error('Erro ao cadastrar:', error)
+    alert(error.response?.data?.message || 'Erro ao realizar cadastro. Tente novamente.')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
+<style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+* {
+  font-family: "Inter", sans-serif;
+  box-sizing: border-box;
+}
+
+.register-page {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  padding: 6rem 1rem 2rem 1rem; /* Top padding para o navbar */
+}
+
+.register-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 1rem;
+}
+
+/* Progress Stepper */
+.progress-stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+  position: relative;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.step-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.step-item.active .step-circle {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.dark-mode .step-item.active .step-circle {
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+.step-item.completed .step-circle {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  color: white;
+}
+
+.step-label {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-label {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.step-item.completed .step-label {
+  color: var(--success-color);
+}
+
+.step-line {
+  position: absolute;
+  top: 25px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: var(--border-color);
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.step-item.completed .step-line {
+  background: var(--success-color);
+}
+
+/* Form Card */
+.form-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .form-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.form-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.form-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Info Banner */
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  color: white;
+}
+
+.info-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 1.5rem;
+}
+
+.info-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.info-content p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Form Elements */
+.register-form {
+  width: 100%;
+}
+
+.form-step {
+  animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group.flex-2 {
+  flex: 2;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group label i {
+  color: var(--primary-color);
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .form-group input:focus,
+.dark-mode .form-group select:focus,
+.dark-mode .form-group textarea:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: var(--danger-color);
+}
+
+.form-group input.disabled {
+  background: var(--bg-secondary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-group input.loading {
+  background-image: linear-gradient(90deg, var(--bg-secondary) 0%, var(--border-color) 50%, var(--bg-secondary) 100%);
+  background-size: 200% 100%;
+  animation: loading 1.5s ease infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.error-message {
+  font-size: 0.8rem;
+  color: var(--danger-color);
+  margin-top: -0.25rem;
+}
+
+.info-message {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  margin-top: -0.25rem;
+}
+
+/* BMI Display */
+.bmi-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-radius: 12px;
+  height: 100%;
+  min-height: 60px;
+}
+
+.bmi-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+}
+
+.bmi-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 0.25rem;
+}
+
+/* Radio Group */
+.radio-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.radio-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  transition: all 0.3s ease;
+}
+
+.radio-option input[type="radio"]:checked + .radio-content {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .radio-option input[type="radio"]:checked + .radio-content {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.radio-content i {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.radio-content span {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.radio-content small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Checkbox */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.checkbox-label:hover {
+  border-color: var(--primary-color);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.checkbox-label span {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+/* Health Sections */
+.health-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.nested-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+}
+
+.nested-item {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nested-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* Buttons */
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px dashed var(--border-color);
+  background: transparent;
+  color: var(--primary-color);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-add:hover {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.btn-remove {
+  padding: 0.5rem;
+  border: none;
+  background: var(--danger-color);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: fit-content;
+  align-self: center;
+}
+
+.btn-remove:hover {
+  transform: scale(1.1);
+}
+
+/* Goals List */
+.goals-list {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.goals-list h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 1rem 0;
+}
+
+.goals-list h4 i {
+  color: var(--primary-color);
+}
+
+.goal-item {
+  margin-bottom: 1rem;
+}
+
+/* Days Selector */
+.days-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.day-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.day-option input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.day-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.day-option.selected span,
+.day-option input[type="checkbox"]:checked + span {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Navigation */
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--border-color);
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+  flex: 1;
+  justify-content: center;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-page {
+    padding: 1rem 0.5rem;
+  }
+  
+  .progress-stepper {
+    padding: 0;
+  }
+  
+  .step-label {
+    font-size: 0.7rem;
+  }
+  
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+  
+  .form-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .form-title {
+    font-size: 1.5rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .radio-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .days-selector {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .form-navigation {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .step-label {
+    display: none;
+  }
+  
+  .form-card {
+    padding: 1.5rem 1rem;
+  }
+  
+  .days-selector {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+</style>

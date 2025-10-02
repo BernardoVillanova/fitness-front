@@ -9,7 +9,7 @@ import DashboardTech from '../views/dashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
 import StudentProfile from '../views/studentprofile.vue'
-import StudentRegister from '../views/studentregister.vue';
+// import StudentRegister from '../views/studentregister.vue';
 import InstructorRegister from '../views/instructorregister.vue';
 import gymHome from '../views/gymHome.vue';
 import NotFound from '../views/NotFound.vue';
@@ -51,7 +51,9 @@ const routes = [
     // }
   },
   { path: '/about', component: AboutUs },
-  { path: '/student-register', component: StudentRegister },
+  { path: '/student-register', name: 'StudentRegisterNew',
+    component: () => import('@/views/StudentRegisterNew.vue')
+  },
   { path: '/instructor-register', component: InstructorRegister },
   { path: '/exercises', component: () => import('../views/exercises.vue') },
   { path: '/workout-plans', component: WorkoutPlans },

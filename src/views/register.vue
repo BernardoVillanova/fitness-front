@@ -96,17 +96,38 @@
               </div>
             </div>
 
-            <div class="input-container">
-              <div class="input-wrapper">
-                <i class="fas fa-lock input-icon"></i>
-                <input
-                  type="password"
-                  v-model="password"
-                  placeholder="Senha"
-                  required
-                  autocomplete="new-password"
-                  class="styled-input"
-                />
+            <div class="input-row">
+              <div class="input-container half-width">
+                <div class="input-wrapper">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input
+                    type="password"
+                    v-model="password"
+                    placeholder="Senha (mín. 6 caracteres)"
+                    required
+                    autocomplete="new-password"
+                    class="styled-input"
+                    :class="{ 'input-error': errors.password }"
+                    @blur="validatePassword"
+                  />
+                </div>
+                <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+              </div>
+              <div class="input-container half-width">
+                <div class="input-wrapper">
+                  <i class="fas fa-lock input-icon"></i>
+                  <input
+                    type="password"
+                    v-model="confirmPassword"
+                    placeholder="Confirmar senha"
+                    required
+                    autocomplete="new-password"
+                    class="styled-input"
+                    :class="{ 'input-error': errors.confirmPassword }"
+                    @blur="validateConfirmPassword"
+                  />
+                </div>
+                <span v-if="errors.confirmPassword" class="error-text">{{ errors.confirmPassword }}</span>
               </div>
             </div>
 
@@ -118,8 +139,11 @@
                   v-model="birthDate"
                   required
                   class="styled-input date-field"
+                  :class="{ 'input-error': errors.birthDate }"
+                  @blur="validateBirthDate"
                 />
               </div>
+              <span v-if="errors.birthDate" class="error-text">{{ errors.birthDate }}</span>
             </div>
 
             <div class="role-selection">
@@ -176,9 +200,18 @@ export default {
       cpf: "",
       email: "",
       password: "",
+      confirmPassword: "",
       phone: "",
       birthDate: "",
       role: "",
+      errors: {
+        cpf: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phone: "",
+        birthDate: "",
+      },
     };
   },
   computed: {
@@ -193,11 +226,58 @@ export default {
     },
   },
   methods: {
+    validatePassword() {
+      this.errors.password = "";
+      if (this.password.length < 6) {
+        this.errors.password = "A senha deve ter pelo menos 6 caracteres";
+      }
+    },
+    
+    validateConfirmPassword() {
+      this.errors.confirmPassword = "";
+      if (this.password !== this.confirmPassword) {
+        this.errors.confirmPassword = "As senhas não conferem";
+      }
+    },
+    
+    validateBirthDate() {
+      this.errors.birthDate = "";
+      if (!this.birthDate) return;
+      
+      const today = new Date();
+      const birth = new Date(this.birthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      
+      if (age < 14) {
+        this.errors.birthDate = "Idade mínima: 14 anos";
+      } else if (age > 100) {
+        this.errors.birthDate = "Data inválida";
+      }
+    },
+    
     async register() {
+      // Validações
       if (!this.validateCPF(this.cpf)) {
-        alert("CPF inválido");
+        this.errors.cpf = "CPF inválido";
+        alert("Por favor, corrija os erros no formulário");
         return;
       }
+      
+      this.validatePassword();
+      this.validateConfirmPassword();
+      this.validateBirthDate();
+      
+      // Verifica se há erros
+      if (Object.values(this.errors).some(error => error !== "")) {
+        alert("Por favor, corrija os erros no formulário");
+        return;
+      }
+      
       if (!this.role) {
         alert("Selecione o tipo de usuário: Aluno ou Instrutor.");
         return;
@@ -208,10 +288,10 @@ export default {
           "http://localhost:3000/api/auth/register",
           {
             name: this.name,
-            cpf: this.cpf,
+            cpf: this.cpf.replace(/\D/g, ""),
             email: this.email,
             password: this.password,
-            phone: this.phone,
+            phone: this.phone.replace(/\D/g, ""),
             birthDate: this.birthDate,
             role: this.role,
           }
@@ -219,19 +299,30 @@ export default {
 
         const userId = res.data.user._id;
 
-        alert("Cadastro realizado com sucesso!");
-
-        this.$router.push({
-          path:
-            this.role === "aluno"
-              ? "/student-register"
-              : "/instructor-register",
-          query: { userId },
-        });
+        // Se for aluno, passa os dados para o StudentRegisterNew
+        if (this.role === "aluno") {
+          this.$router.push({
+            path: "/student-register",
+            query: { 
+              userId,
+              name: this.name,
+              cpf: this.cpf,
+              email: this.email,
+              phone: this.phone,
+              birthDate: this.birthDate
+            },
+          });
+        } else {
+          // Para instrutor, mantém o fluxo antigo
+          this.$router.push({
+            path: "/instructor-register",
+            query: { userId },
+          });
+        }
       } catch (error) {
-        // TODO - Necessário melhor tratativa de erros
         console.error("Erro ao registrar:", error.response?.data);
-        alert(error.response?.data?.message);
+        const errorMessage = error.response?.data?.message || "Erro ao realizar cadastro";
+        alert(errorMessage);
       }
     },
 
@@ -696,6 +787,19 @@ export default {
 
 .styled-input::placeholder {
   color: var(--text-secondary);
+}
+
+.styled-input.input-error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.error-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
 }
 
 .date-field {

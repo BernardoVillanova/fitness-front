@@ -18,6 +18,15 @@
       </div>
 
       <div v-else class="profile-content">
+      <!-- Info Banner se perfil incompleto -->
+      <div v-if="isProfileIncomplete" class="info-banner">
+        <i class="fas fa-info-circle"></i>
+        <div>
+          <strong>Complete seu perfil!</strong>
+          <p>Preencha suas informações físicas e médicas para uma experiência personalizada.</p>
+        </div>
+      </div>
+
       <div class="profile-card">
         <div class="avatar-section">
           <div class="avatar-container">
@@ -119,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import StudentNavBar from '@/components/StudentNavBar.vue';
@@ -148,6 +157,11 @@ const studentData = reactive({
 
 const originalData = ref({});
 
+// Computed para verificar se perfil está incompleto
+const isProfileIncomplete = computed(() => {
+  return !studentData.height || !studentData.weight;
+});
+
 const fetchProfile = async () => {
   loading.value = true;
   try {
@@ -163,39 +177,109 @@ const fetchProfile = async () => {
     const userData = JSON.parse(storedUser);
     console.log('UserData parseado:', userData);
     
-    const studentIdToFetch = userData.studentId || userData.id;
+    // Buscar dados do User primeiro (tem name, email, phone, birthDate, cpf)
+    const userId = userData.id || userData._id;
     
-    if (!studentIdToFetch) {
+    if (!userId) {
       console.error('Nenhum ID encontrado no userData');
       useFallbackData();
       loading.value = false;
       return;
     }
 
-    console.log('Buscando perfil com ID:', studentIdToFetch);
-    const response = await api.get(`/students/${studentIdToFetch}`);
-    const data = response.data;
-    console.log('Dados recebidos:', data);
+    console.log('Buscando dados do usuário com ID:', userId);
     
-    studentId.value = data._id || studentIdToFetch;
+    // Buscar Student pelo userId usando a rota correta
+    const studentResponse = await api.get(`/students/user/${userId}`);
+    const studentData_API = studentResponse.data;
     
+    console.log('Dados do Student recebidos:', studentData_API);
+    
+    if (!studentData_API) {
+      console.error('Student não encontrado para este userId');
+      useFallbackData();
+      loading.value = false;
+      return;
+    }
+    
+    studentId.value = studentData_API._id;
+    
+    // Buscar também os dados atualizados do User via userId do Student
+    let userName = userData.name || '';
+    let userEmail = userData.email || '';
+    let userPhone = userData.phone || '';
+    let userBirthDate = userData.birthDate || '';
+    
+    // Se o Student tem userId populado com dados do User, usar esses dados
+    if (studentData_API.userId && typeof studentData_API.userId === 'object') {
+      userName = studentData_API.userId.name || userName;
+      userEmail = studentData_API.userId.email || userEmail;
+      userPhone = studentData_API.userId.phone || userPhone;
+      userBirthDate = studentData_API.userId.birthDate || userBirthDate;
+    }
+    
+    // Extrair dados físicos (suporta estrutura antiga e nova)
+    const height = studentData_API.personalInfo?.currentHeight || 
+                   studentData_API.personalInfo?.height || 
+                   '';
+    const weight = studentData_API.personalInfo?.currentWeight || 
+                   studentData_API.personalInfo?.weight || 
+                   '';
+    
+    // Extrair goal (suporta estrutura antiga e nova)
+    const goalType = studentData_API.goals?.primary?.type || 
+                     studentData_API.goals?.[0]?.type || 
+                     studentData_API.goals?.[0]?.description || 
+                     '';
+    
+    // Extrair condições médicas
+    const medicalNotes = studentData_API.healthRestrictions?.generalNotes ||
+                         studentData_API.healthRestrictions?.notes || 
+                         '';
+    const chronicConditions = studentData_API.healthRestrictions?.chronicConditions || [];
+    
+    // Extrair medicamentos
+    const meds = studentData_API.healthRestrictions?.medications || [];
+    
+    // Preencher com dados do User e Student
+    // Suporta estrutura antiga e nova do banco
     Object.assign(studentData, {
-      name: data.name || userData.name || '',
-      email: data.email || userData.email || '',
-      phone: data.phone || '',
-      birthDate: data.birthDate ? new Date(data.birthDate).toISOString().split('T')[0] : '',
-      height: data.personalInfo?.height || data.height || null,
-      weight: data.personalInfo?.weight || data.weight || null,
-      goal: mapGoalFromAPI(data.goals?.[0]?.description) || 'maintain',
-      activityLevel: data.personalInfo?.trainingExperience || 'moderate',
-      medicalConditions: data.healthRestrictions?.notes || '',
-      medications: data.healthRestrictions?.medications?.join(', ') || '',
-      avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'User')}&background=667eea&color=fff&size=120`
+      // Dados do User
+      name: userName,
+      email: userEmail,
+      phone: userPhone,
+      birthDate: userBirthDate ? new Date(userBirthDate).toISOString().split('T')[0] : '',
+      
+      // Dados físicos do Student (personalInfo)
+      height: height || '',
+      weight: weight || '',
+      
+      // Objetivo dos goals do Student
+      goal: mapGoalFromAPI(goalType) || 'maintain',
+      
+      // Nível de atividade do personalInfo (mapear de trainingExperience)
+      activityLevel: mapActivityLevelFromAPI(studentData_API.personalInfo?.trainingExperience),
+      
+      // Restrições de saúde
+      medicalConditions: medicalNotes || 
+                         (chronicConditions.length > 0 
+                           ? chronicConditions.map(c => c.name || c).join(', ') 
+                           : ''),
+      medications: meds.length > 0
+                   ? meds.map(m => {
+                       if (typeof m === 'string') return m;
+                       return m.name || '';
+                     }).filter(m => m).join(', ')
+                   : '',
+      
+      // Avatar
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=667eea&color=fff&size=120`
     });
 
     originalData.value = { ...studentData };
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
+    console.error('Detalhes do erro:', error.response?.data);
     useFallbackData();
   } finally {
     loading.value = false;
@@ -226,10 +310,40 @@ const useFallbackData = () => {
 const mapGoalFromAPI = (goalDescription) => {
   if (!goalDescription) return 'maintain';
   const goal = goalDescription.toLowerCase();
-  if (goal.includes('perder') || goal.includes('peso')) return 'lose-weight';
-  if (goal.includes('ganhar') || goal.includes('massa')) return 'gain-muscle';
-  if (goal.includes('força')) return 'strength';
+  if (goal.includes('perder') || goal.includes('peso') || goal.includes('emagrecimento')) return 'lose-weight';
+  if (goal.includes('ganhar') || goal.includes('massa') || goal.includes('hipertrofia')) return 'gain-muscle';
+  if (goal.includes('força') || goal.includes('forca')) return 'strength';
+  if (goal.includes('condicionamento')) return 'maintain';
   return 'maintain';
+};
+
+const mapActivityLevelFromAPI = (trainingExperience) => {
+  if (!trainingExperience) return 'moderate';
+  const level = trainingExperience.toLowerCase();
+  if (level === 'iniciante') return 'light';
+  if (level === 'intermediario' || level === 'intermediário') return 'moderate';
+  if (level === 'avancado' || level === 'avançado' || level === 'atleta') return 'active';
+  return 'moderate';
+};
+
+const mapGoalToDescription = (goalType) => {
+  const goalMap = {
+    'lose-weight': 'Perder peso / Emagrecer',
+    'gain-muscle': 'Ganhar massa muscular (Hipertrofia)',
+    'maintain': 'Manter forma física / Condicionamento',
+    'strength': 'Aumentar força'
+  };
+  return goalMap[goalType] || 'Manter forma física';
+};
+
+const mapActivityLevelToAPI = (activityLevel) => {
+  const levelMap = {
+    'sedentary': 'iniciante',
+    'light': 'iniciante',
+    'moderate': 'intermediario',
+    'active': 'avancado'
+  };
+  return levelMap[activityLevel] || 'intermediario';
 };
 
 const saveProfile = async () => {
@@ -240,28 +354,65 @@ const saveProfile = async () => {
 
   saving.value = true;
   try {
-    const updateData = {
-      name: studentData.name,
-      email: studentData.email,
-      phone: studentData.phone,
-      birthDate: studentData.birthDate,
+    const storedUser = sessionStorage.getItem('user');
+    const userData = JSON.parse(storedUser);
+    const userId = userData.id || userData._id;
+    
+    // Atualizar dados do User (name, email, phone, birthDate)
+    if (userId) {
+      const userUpdateData = {
+        name: studentData.name,
+        email: studentData.email,
+        phone: studentData.phone,
+        birthDate: studentData.birthDate
+      };
+      
+      console.log('Atualizando User com:', userUpdateData);
+      await api.put(`/auth/user/${userId}`, userUpdateData);
+      
+      // Atualizar sessionStorage com novos dados
+      const updatedUser = { ...userData, ...userUpdateData };
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    
+    // Atualizar dados do Student (personalInfo, healthRestrictions, goals)
+    // Usa a estrutura nova do modelo Student
+    const studentUpdateData = {
       personalInfo: {
-        height: studentData.height,
-        weight: studentData.weight,
-        trainingExperience: studentData.activityLevel
+        currentHeight: studentData.height ? Number(studentData.height) : null,
+        currentWeight: studentData.weight ? Number(studentData.weight) : null,
+        trainingExperience: mapActivityLevelToAPI(studentData.activityLevel)
       },
       healthRestrictions: {
-        notes: studentData.medicalConditions,
-        medications: studentData.medications ? studentData.medications.split(',').map(m => m.trim()) : []
+        generalNotes: studentData.medicalConditions || '',
+        medications: studentData.medications 
+          ? studentData.medications.split(',').map(m => ({ name: m.trim() })).filter(m => m.name) 
+          : []
+      },
+      goals: {
+        primary: {
+          type: studentData.goal,
+          description: mapGoalToDescription(studentData.goal)
+        },
+        weight: {
+          initial: studentData.weight ? Number(studentData.weight) : null,
+          target: studentData.weight ? Number(studentData.weight) : null // Pode ajustar depois
+        }
       }
     };
 
-    await api.put(`/students/${studentId.value}`, updateData);
+    console.log('Atualizando Student com:', studentUpdateData);
+    const response = await api.put(`/students/${studentId.value}`, studentUpdateData);
+    console.log('Student atualizado:', response.data);
+    
+    // Atualizar dados originais
     originalData.value = { ...studentData };
-    alert('Perfil atualizado com sucesso!');
+    
+    alert('✅ Perfil atualizado com sucesso!');
   } catch (error) {
     console.error('Erro ao salvar perfil:', error);
-    alert('Erro ao salvar perfil. Tente novamente.');
+    console.error('Detalhes do erro:', error.response?.data);
+    alert(`❌ Erro ao salvar perfil: ${error.response?.data?.message || 'Tente novamente.'}`);
   } finally {
     saving.value = false;
   }
@@ -299,6 +450,36 @@ body:has(.navbar-collapsed) .student-profile {
   margin: 0 auto;
 }
 
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.info-banner i {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.info-banner strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.info-banner p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.95;
+}
+
 .page-header {
   margin-bottom: 2rem;
 }
@@ -306,7 +487,7 @@ body:has(.navbar-collapsed) .student-profile {
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
   display: flex;
   align-items: center;
@@ -332,8 +513,8 @@ body:has(.navbar-collapsed) .student-profile {
 }
 
 .dark-mode .profile-card {
-  background: #2d2d3d !important;
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--card-bg) !important;
+  border-color: var(--border-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -344,7 +525,9 @@ body:has(.navbar-collapsed) .student-profile {
 .dark-mode .profile-card .form-input,
 .dark-mode .profile-card .form-textarea,
 .dark-mode .profile-card .form-select {
-  background: #1a1a2e !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
 }
 
 .avatar-section {
@@ -408,19 +591,20 @@ body:has(.navbar-collapsed) .student-profile {
 
 .form-section h3 {
   margin: 0 0 1.5rem 0;
-  color: var(--text-primary);
+  color: var(--text-color);
   font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .dark-mode .form-section h3,
 .dark-mode .form-group label,
 .dark-mode .page-title,
 .dark-mode .page-subtitle {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-color);
 }
 
 .dark-mode .page-subtitle {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
 }
 
 .form-row {
@@ -444,7 +628,8 @@ body:has(.navbar-collapsed) .student-profile {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-color);
+  font-size: 0.875rem;
 }
 
 .form-input,
@@ -452,24 +637,25 @@ body:has(.navbar-collapsed) .student-profile {
 .form-select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: white;
-  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-color);
   font-size: 0.9rem;
+  transition: all 0.3s ease;
 }
 
 .dark-mode .form-input,
 .dark-mode .form-textarea,
 .dark-mode .form-select {
-  background: #1a1a2e !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
 }
 
 .dark-mode .form-input::placeholder,
 .dark-mode .form-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: var(--text-muted) !important;
 }
 
 .form-textarea {
@@ -482,7 +668,13 @@ body:has(.navbar-collapsed) .student-profile {
 .form-select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .form-input:focus,
+.dark-mode .form-textarea:focus,
+.dark-mode .form-select:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .form-actions {
@@ -510,32 +702,64 @@ body:has(.navbar-collapsed) .student-profile {
   color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .btn-secondary {
   background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
 }
 
 .btn-secondary:hover {
   background: var(--bg-secondary);
+  transform: translateY(-1px);
 }
 
 .dark-mode .btn-secondary {
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+  border-color: var(--border-color);
 }
 
 .dark-mode .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+
+.loading-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.loading-state p {
+  font-size: 1.1rem;
+  margin: 0;
 }
 
 @media (max-width: 768px) {
   .student-profile {
     padding: 1rem;
+    margin-left: 0;
+  }
+
+  .form-card {
+    padding: 1.5rem;
   }
 
   .form-row {
@@ -545,15 +769,24 @@ body:has(.navbar-collapsed) .student-profile {
   .form-actions {
     flex-direction: column;
   }
+
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .info-banner {
+    padding: 1rem;
+  }
 }
 
-:root {
-  --primary-color: #6366f1;
-  --primary-hover: #5856eb;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
+@media (max-width: 480px) {
+  .avatar-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+  }
 }
 </style>
