@@ -164,7 +164,7 @@
               </div>
             </div>
 
-            <div class="form-row">
+            <div class="form-row time-row">
               <div class="form-group">
                 <label><font-awesome-icon :icon="['fas', 'clock']" /> Horário Início</label>
                 <input 
@@ -183,7 +183,7 @@
               </div>
             </div>
 
-            <div class="form-group full-width">
+            <div class="form-group full-width capacity-group">
               <label><font-awesome-icon :icon="['fas', 'users']" /> Capacidade Máxima de Alunos</label>
               <input 
                 v-model.number="form.maxStudents" 
@@ -816,14 +816,24 @@ export default {
   margin-bottom: 1.25rem;
 }
 
+.form-row.time-row {
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 .form-group.full-width {
   grid-column: 1 / -1;
+}
+
+.form-group.capacity-group {
+  margin-top: 1.5rem;
 }
 
 .form-group label {
@@ -1077,8 +1087,9 @@ export default {
 .days-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 1rem;
   justify-content: flex-start;
+  margin-top: 0.5rem;
 }
 
 .day-option {
@@ -1098,15 +1109,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.875rem 1.25rem;
+  padding: 1rem 1.5rem;
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-color);
   transition: all 0.3s ease;
-  min-width: 75px;
+  min-width: 85px;
   text-align: center;
   user-select: none;
 }
@@ -1166,22 +1177,27 @@ export default {
 .search-results {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-height: 400px;
+  gap: 0.875rem;
+  max-height: 500px;
   overflow-y: auto;
+  margin-top: 1rem;
+  padding-right: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .student-result-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
+  gap: 0.875rem;
+  padding: 0.875rem 1.125rem;
   background: var(--card-bg);
   border: 2px solid var(--border-color);
   border-radius: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow: visible;
+  margin-bottom: 0.875rem;
+  min-height: 135px;
 }
 
 .student-result-card:hover {
@@ -1196,25 +1212,26 @@ export default {
 
 .result-card-content {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.875rem;
   flex: 1;
   min-width: 0;
 }
 
 .student-avatar-search {
-  width: 56px;
-  height: 56px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6 0%, #667eea 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
   transition: all 0.3s ease;
+  margin-top: 0;
 }
 
 .student-result-card:hover .student-avatar-search {
@@ -1233,7 +1250,8 @@ export default {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.5rem;
+  padding-top: 0;
 }
 
 .student-name {
@@ -1244,27 +1262,36 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1.4;
+  margin-bottom: 0;
 }
 
 .student-details {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.3rem;
 }
 
 .detail-item {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.4rem;
   font-size: 0.875rem;
   color: var(--text-muted);
   overflow: hidden;
+  line-height: 1.5;
+  min-height: 20px;
+}
+
+.detail-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detail-icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   color: var(--primary-color);
   opacity: 0.8;
@@ -1279,10 +1306,10 @@ export default {
 }
 
 .btn-add-compact {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--primary-color);
   color: white;
   cursor: pointer;
@@ -1293,6 +1320,8 @@ export default {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
   position: relative;
+  align-self: flex-start;
+  margin-top: 0.2rem;
 }
 
 .btn-add-compact::before {

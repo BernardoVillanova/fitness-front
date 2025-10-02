@@ -65,7 +65,7 @@ const routes = [
   { 
     path: '/instructor-profile', 
     component: InstructorProfile,
-    meta: { requiresAuth: true, role: 'personal' }
+    // meta: { requiresAuth: true, role: 'personal' }
   },
   { path: '/exercises', component: () => import('../views/exercises.vue') },
   { path: '/machines', component: () => import('../views/machines.vue') },

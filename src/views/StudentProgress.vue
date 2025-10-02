@@ -178,109 +178,91 @@
       </div>
     </div>
 
-    <!-- Goals Section -->
-    <div class="goals-section">
+    <!-- Body Measurements -->
+    <div class="measurements-section">
       <div class="section-header">
-        <h3>Metas do Mês</h3>
-        <button class="add-goal-btn" @click="showAddGoal = true">
-          <i class="fas fa-plus"></i>
-          Nova Meta
-        </button>
+        <div>
+          <h3>Medidas Corporais</h3>
+          <p class="section-subtitle">Evolução das suas circunferências e composição corporal</p>
+        </div>
+        <div v-if="hasAnyMeasurements && latestMeasurementDate" class="measurement-date">
+          <i class="fas fa-calendar-check"></i>
+          Última atualização: {{ latestMeasurementDate }}
+        </div>
       </div>
 
-      <div class="goals-grid">
+      <!-- Empty State -->
+      <div v-if="!hasAnyMeasurements" class="empty-measurements-state">
+        <div class="empty-icon">
+          <i class="fas fa-ruler-combined"></i>
+        </div>
+        <h3>Nenhuma medida registrada</h3>
+        <p>As medições corporais aparecerão aqui quando forem registradas pelo seu instrutor.</p>
+      </div>
+
+      <!-- Measurements Grid -->
+      <div v-else class="measurements-grid">
         <div 
-          v-for="goal in monthlyGoals" 
-          :key="goal.id"
-          class="goal-card"
-          :class="{ completed: goal.progress >= 100 }"
+          v-for="measurement in measurementsSummary" 
+          :key="measurement.key"
+          class="measurement-card"
+          :class="{ 'no-data': !measurement.current }"
         >
-          <div class="goal-header">
-            <div class="goal-icon">
-              <i :class="goal.icon"></i>
+          <div class="card-header">
+            <div class="icon-wrapper" :style="{ background: measurement.color }">
+              <i :class="measurement.icon"></i>
             </div>
-            <div class="goal-info">
-              <h4>{{ goal.title }}</h4>
-              <p>{{ goal.description }}</p>
-            </div>
-          </div>
-          
-          <div class="goal-progress">
-            <div class="progress-bar">
-              <div 
-                class="progress-fill" 
-                :style="{ width: Math.min(goal.progress, 100) + '%' }"
-              ></div>
-            </div>
-            <div class="progress-text">
-              <span class="current">{{ goal.current }}</span> / 
-              <span class="target">{{ goal.target }}</span>
-              <span class="unit">{{ goal.unit }}</span>
+            <div class="header-info">
+              <h4>{{ measurement.label }}</h4>
+              <span class="measurement-type">Circunferência</span>
             </div>
           </div>
 
-          <div class="goal-status">
-            <span v-if="goal.progress >= 100" class="status-badge completed">
-              <i class="fas fa-check"></i>
-              Concluído
-            </span>
-            <span v-else class="status-badge in-progress">
-              {{ Math.round(goal.progress) }}% completo
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+          <div class="card-body">
+            <div class="current-value">
+              <span class="value">{{ measurement.current || '-' }}</span>
+              <span v-if="measurement.current" class="unit">cm</span>
+            </div>
 
-    <!-- Add Goal Modal -->
-    <div v-if="showAddGoal" class="modal-overlay" @click="showAddGoal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Nova Meta</h3>
-          <button @click="showAddGoal = false" class="close-btn">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Tipo de Meta:</label>
-            <select v-model="newGoal.type" class="form-select">
-              <option value="workouts">Quantidade de Treinos</option>
-              <option value="calories">Calorias Queimadas</option>
-              <option value="time">Tempo de Exercício</option>
-              <option value="weight">Perda de Peso</option>
-            </select>
+            <div v-if="measurement.current && hasInitialMeasurement" class="progress-info">
+              <div class="progress-bar-container">
+                <div 
+                  class="progress-bar" 
+                  :class="{ 
+                    positive: measurement.changePercent > 0, 
+                    negative: measurement.changePercent < 0,
+                    neutral: measurement.changePercent === 0 
+                  }"
+                  :style="{ width: Math.min(Math.abs(measurement.changePercent || 0), 100) + '%' }"
+                ></div>
+              </div>
+              
+              <div class="change-details">
+                <div class="initial-value">
+                  <span class="label">Inicial:</span>
+                  <span class="value">{{ measurement.initial || '-' }} cm</span>
+                </div>
+                
+                <div 
+                  v-if="measurement.change !== null && measurement.change !== 0"
+                  class="change-indicator"
+                  :class="{ 
+                    positive: measurement.change > 0, 
+                    negative: measurement.change < 0 
+                  }"
+                >
+                  <i :class="measurement.change > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                  <span class="change-value">{{ measurement.change > 0 ? '+' : '' }}{{ measurement.change }} cm</span>
+                  <span class="change-percent">({{ measurement.changePercent > 0 ? '+' : '' }}{{ measurement.changePercent }}%)</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="!hasInitialMeasurement && measurement.current" class="single-measurement-info">
+              <i class="fas fa-info-circle"></i>
+              <span>Primeira medição</span>
+            </div>
           </div>
-          
-          <div class="form-group">
-            <label>Meta:</label>
-            <input 
-              v-model="newGoal.target" 
-              type="number" 
-              class="form-input"
-              placeholder="Ex: 20"
-            >
-          </div>
-          
-          <div class="form-group">
-            <label>Descrição:</label>
-            <input 
-              v-model="newGoal.description" 
-              type="text" 
-              class="form-input"
-              placeholder="Descreva sua meta"
-            >
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button @click="showAddGoal = false" class="btn secondary">
-            Cancelar
-          </button>
-          <button @click="addGoal" class="btn primary">
-            Criar Meta
-          </button>
         </div>
       </div>
     </div>
@@ -300,13 +282,7 @@ const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
 // Reactive data
-const showAddGoal = ref(false)
 const loading = ref(true)
-const newGoal = ref({
-  type: 'workouts',
-  target: '',
-  description: ''
-})
 
 // Data from API
 const progressData = ref({
@@ -317,6 +293,20 @@ const progressData = ref({
   currentStreak: 0,
   totalGoals: 0
 })
+
+// Measurements evolution data
+const measurementsHistory = ref([])
+
+const availableMeasurements = [
+  { key: 'shoulder', label: 'Ombro', icon: 'fas fa-arrows-up-down', color: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
+  { key: 'chest', label: 'Peito', icon: 'fas fa-square', color: 'linear-gradient(135deg, #a855f7, #9333ea)' },
+  { key: 'arm', label: 'Braço', icon: 'fas fa-hand-fist', color: 'linear-gradient(135deg, #06b6d4, #0891b2)' },
+  { key: 'forearm', label: 'Antebraço', icon: 'fas fa-hand', color: 'linear-gradient(135deg, #10b981, #059669)' },
+  { key: 'waist', label: 'Cintura', icon: 'fas fa-circle', color: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+  { key: 'hip', label: 'Quadril', icon: 'fas fa-circle-notch', color: 'linear-gradient(135deg, #ec4899, #db2777)' },
+  { key: 'thigh', label: 'Coxa', icon: 'fas fa-grip-lines', color: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+  { key: 'calf', label: 'Panturrilha', icon: 'fas fa-shoe-prints', color: 'linear-gradient(135deg, #6366f1, #4f46e5)' }
+]
 
 // Comparação com mês anterior
 const lastMonthData = ref({
@@ -343,8 +333,6 @@ const weeklyData = ref([
   { day: 'Sáb', workouts: 0, calories: 0 }
 ])
 
-const monthlyGoals = ref([])
-
 // Computed
 const overallProgress = computed(() => {
   if (progressData.value.totalWorkouts === 0) return 0
@@ -356,6 +344,63 @@ const totalGoals = computed(() => progressData.value.totalGoals)
 const totalCalories = computed(() => progressData.value.totalCalories)
 const totalTime = computed(() => progressData.value.totalTime)
 const currentStreak = computed(() => progressData.value.currentStreak)
+
+// Computed for measurements chart
+const hasAnyMeasurements = computed(() => {
+  const result = measurementsHistory.value.length > 0
+  console.log('🔍 hasAnyMeasurements:', result, '(total:', measurementsHistory.value.length, ')')
+  return result
+})
+
+const hasInitialMeasurement = computed(() => {
+  const result = measurementsHistory.value.some(m => m.isInitial === true)
+  console.log('🔍 hasInitialMeasurement:', result)
+  return result
+})
+
+const latestMeasurementDate = computed(() => {
+  if (measurementsHistory.value.length === 0) return null
+  const latestDate = new Date(measurementsHistory.value[measurementsHistory.value.length - 1].date)
+  return latestDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+})
+
+const measurementsSummary = computed(() => {
+  return availableMeasurements.map(m => {
+    const data = measurementsHistory.value
+    
+    // Pegar a última medição (mais recente)
+    let current = null
+    if (data.length > 0) {
+      const lastMeasurement = data[data.length - 1]
+      current = lastMeasurement[m.key]
+    }
+    
+    // Pegar a medição inicial
+    let initial = null
+    if (hasInitialMeasurement.value) {
+      const initialMeasurement = data.find(d => d.isInitial === true)
+      if (initialMeasurement) {
+        initial = initialMeasurement[m.key]
+      }
+    }
+    
+    // Calcular mudança e percentual apenas se tiver inicial e atual
+    let change = null
+    let changePercent = null
+    if (initial != null && current != null && initial !== 0) {
+      change = Math.round((current - initial) * 10) / 10
+      changePercent = Math.round((change / initial) * 100)
+    }
+    
+    return {
+      ...m,
+      current,
+      initial,
+      change,
+      changePercent
+    }
+  })
+})
 
 // Methods
 const fetchProgressData = async () => {
@@ -417,8 +462,8 @@ const fetchProgressData = async () => {
     // Calcular comparações com mês anterior
     calculateMonthComparisons(completedSessions)
     
-    // Buscar metas
-    await fetchGoals()
+    // Buscar histórico de medidas corporais
+    await fetchMeasurementsHistory()
     
   } catch (error) {
     console.error('Erro ao buscar dados de progresso:', error)
@@ -597,152 +642,135 @@ const processWeeklyData = (sessions) => {
   })
 }
 
-const fetchGoals = async () => {
+const fetchMeasurementsHistory = async () => {
   try {
-    // Buscar dados do estudante para pegar metas personalizadas
+    console.log('🔍 Iniciando busca de histórico de medidas...')
+    
     const userData = JSON.parse(sessionStorage.getItem('user'))
-    const studentId = userData.studentId || userData.id
+    console.log('👤 Dados do usuário:', userData)
     
-    let studentGoals = null
-    try {
-      const studentResponse = await api.get(`/students/${studentId}`)
-      studentGoals = studentResponse.data?.goals
-    } catch (err) {
-      console.log('Não foi possível buscar metas do aluno')
-    }
+    const userId = userData.id
+    console.log('🆔 User ID:', userId)
     
-    const goals = []
+    // Buscar dados do aluno pela rota /user/:userId
+    const studentResponse = await api.get(`/students/user/${userId}`)
+    const studentData = studentResponse.data
     
-    // Meta de treinos mensal
-    const monthlyWorkoutTarget = studentGoals?.monthlyWorkouts || 20
-    const workoutsGoal = {
-      id: 1,
-      title: 'Treinos no Mês',
-      description: `Completar ${monthlyWorkoutTarget} treinos este mês`,
-      icon: 'fas fa-dumbbell',
-      current: progressData.value.completedWorkouts,
-      target: monthlyWorkoutTarget,
-      unit: 'treinos',
-      progress: Math.min(100, Math.round((progressData.value.completedWorkouts / monthlyWorkoutTarget) * 100))
-    }
-    goals.push(workoutsGoal)
+    console.log('✅ Resposta da API recebida com sucesso!')
+    console.log('📦 Student ID:', studentData._id)
+    console.log('📦 Dados completos do estudante:', studentData)
+    console.log('📏 personalInfo:', studentData?.personalInfo)
+    console.log('📏 initialMeasurements:', studentData?.personalInfo?.initialMeasurements)
+    console.log('📊 progressHistory:', studentData?.progressHistory)
+    console.log('📅 createdAt:', studentData?.createdAt)
     
-    // Meta de calorias
-    const caloriesTarget = studentGoals?.monthlyCalories || 5000
-    const caloriesGoal = {
-      id: 2,
-      title: 'Queimar Calorias',
-      description: `Queimar ${caloriesTarget} calorias no mês`,
-      icon: 'fas fa-fire',
-      current: progressData.value.totalCalories,
-      target: caloriesTarget,
-      unit: 'kcal',
-      progress: Math.min(100, Math.round((progressData.value.totalCalories / caloriesTarget) * 100))
-    }
-    goals.push(caloriesGoal)
+    const initialMeasurements = studentData?.personalInfo?.initialMeasurements
+    const progressHistory = studentData?.progressHistory || []
     
-    // Meta de tempo
-    const timeTarget = studentGoals?.monthlyHours || 40
-    const timeGoal = {
-      id: 3,
-      title: 'Tempo de Exercício',
-      description: `Exercitar por ${timeTarget} horas no mês`,
-      icon: 'fas fa-clock',
-      current: progressData.value.totalTime,
-      target: timeTarget,
-      unit: 'horas',
-      progress: Math.min(100, Math.round((progressData.value.totalTime / timeTarget) * 100))
-    }
-    goals.push(timeGoal)
+    const history = []
     
-    // Meta de peso (se o aluno tiver)
-    if (studentGoals?.targetWeight) {
-      try {
-        const progressHistoryResponse = await api.get('/student/progress/history', {
-          params: { limit: 1 }
-        })
-        const latestProgress = progressHistoryResponse.data?.[0]
-        
-        if (latestProgress && latestProgress.weight) {
-          const currentWeight = latestProgress.weight
-          const targetWeight = studentGoals.targetWeight
-          const initialWeight = studentGoals.initialWeight || currentWeight
-          
-          // Calcular progresso de peso
-          const totalWeightGoal = Math.abs(initialWeight - targetWeight)
-          const weightProgress = Math.abs(initialWeight - currentWeight)
-          const progressPercentage = totalWeightGoal > 0 
-            ? Math.min(100, Math.round((weightProgress / totalWeightGoal) * 100))
-            : 0
-          
-          const weightGoal = {
-            id: 4,
-            title: initialWeight > targetWeight ? 'Perder Peso' : 'Ganhar Peso',
-            description: `Atingir ${targetWeight}kg`,
-            icon: 'fas fa-weight',
-            current: currentWeight,
-            target: targetWeight,
-            unit: 'kg',
-            progress: progressPercentage
-          }
-          goals.push(weightGoal)
-        }
-      } catch (err) {
-        console.log('Não foi possível buscar progresso de peso')
+    // Adicionar medida inicial se existir e tiver pelo menos uma medida não-null
+    if (initialMeasurements) {
+      console.log('🔍 Verificando initialMeasurements...')
+      
+      const measurementValues = {
+        shoulder: initialMeasurements.shoulder,
+        chest: initialMeasurements.chest,
+        arm: initialMeasurements.arm,
+        forearm: initialMeasurements.forearm,
+        waist: initialMeasurements.waist,
+        hip: initialMeasurements.hip,
+        thigh: initialMeasurements.thigh,
+        calf: initialMeasurements.calf
       }
+      
+      console.log('📏 Valores das medidas:', measurementValues)
+      
+      const hasAnyInitialMeasurement = Object.values(measurementValues).some(v => {
+        return v !== null && v !== undefined && v !== '' && !isNaN(v)
+      })
+      
+      console.log('✅ Tem alguma medida inicial?', hasAnyInitialMeasurement)
+      
+      if (hasAnyInitialMeasurement && studentData?.createdAt) {
+        const initialEntry = {
+          date: studentData.createdAt,
+          isInitial: true,
+          shoulder: initialMeasurements.shoulder,
+          chest: initialMeasurements.chest,
+          arm: initialMeasurements.arm,
+          forearm: initialMeasurements.forearm,
+          waist: initialMeasurements.waist,
+          hip: initialMeasurements.hip,
+          thigh: initialMeasurements.thigh,
+          calf: initialMeasurements.calf
+        }
+        
+        console.log('➕ Adicionando medida inicial:', initialEntry)
+        history.push(initialEntry)
+      }
+    } else {
+      console.log('⚠️ Nenhuma medida inicial encontrada')
     }
     
-    monthlyGoals.value = goals
-    progressData.value.totalGoals = goals.filter(g => g.progress >= 100).length
+    // Adicionar histórico de progresso
+    console.log(`📊 Processando ${progressHistory.length} entradas de histórico...`)
+    
+    progressHistory.forEach((p, index) => {
+      console.log(`📌 Entrada ${index + 1}:`, p)
+      
+      if (p.measurements) {
+        const progressEntry = {
+          date: p.date,
+          isInitial: false,
+          shoulder: p.measurements.shoulder,
+          chest: p.measurements.chest,
+          arm: p.measurements.arm,
+          forearm: p.measurements.forearm,
+          waist: p.measurements.waist,
+          hip: p.measurements.hip,
+          thigh: p.measurements.thigh,
+          calf: p.measurements.calf,
+          weight: p.weight
+        }
+        
+        console.log('➕ Adicionando entrada de progresso:', progressEntry)
+        history.push(progressEntry)
+      } else {
+        console.log('⚠️ Entrada sem measurements, pulando...')
+      }
+    })
+    
+    // Ordenar por data
+    history.sort((a, b) => new Date(a.date) - new Date(b.date))
+    
+    console.log('✅ Histórico final ordenado:', history)
+    console.log(`📊 Total de ${history.length} medições no histórico`)
+    
+    measurementsHistory.value = history
+    
+    // Log das medidas disponíveis para cada tipo
+    console.log('📋 Resumo por tipo de medida:')
+    availableMeasurements.forEach(m => {
+      const count = history.filter(h => h[m.key] != null && h[m.key] !== '').length
+      console.log(`  ${m.label} (${m.key}): ${count} medições`)
+    })
     
   } catch (error) {
-    console.error('Erro ao buscar metas:', error)
+    console.error('❌ Erro ao buscar histórico de medidas:', error)
+    console.error('Stack:', error.stack)
+    measurementsHistory.value = []
   }
 }
 
-const addGoal = () => {
-  if (!newGoal.value.target || !newGoal.value.description) return
-  
-  const goalIcons = {
-    workouts: 'fas fa-dumbbell',
-    calories: 'fas fa-fire',
-    time: 'fas fa-clock',
-    weight: 'fas fa-weight'
-  }
-  
-  const goalUnits = {
-    workouts: 'treinos',
-    calories: 'kcal',
-    time: 'horas',
-    weight: 'kg'
-  }
-  
-  const newGoalData = {
-    id: monthlyGoals.value.length + 1,
-    title: newGoal.value.description,
-    description: `Meta: ${newGoal.value.target} ${goalUnits[newGoal.value.type]}`,
-    icon: goalIcons[newGoal.value.type],
-    current: 0,
-    target: parseInt(newGoal.value.target),
-    unit: goalUnits[newGoal.value.type],
-    progress: 0
-  }
-  
-  monthlyGoals.value.push(newGoalData)
-  
-  // Reset form
-  newGoal.value = {
-    type: 'workouts',
-    target: '',
-    description: ''
-  }
-  
-  showAddGoal.value = false
-}
+
 
 // Lifecycle
 onMounted(async () => {
+  console.log('🚀 Componente montado, iniciando fetchProgressData...')
   await fetchProgressData()
+  console.log('✅ fetchProgressData concluído')
+  console.log('📊 measurementsHistory final:', measurementsHistory.value)
 })
 </script>
 
@@ -1112,8 +1140,8 @@ body:has(.navbar-collapsed) .main-content {
   font-weight: 500;
 }
 
-/* Goals Section */
-.goals-section {
+/* Measurements Section */
+.measurements-section {
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -1123,317 +1151,294 @@ body:has(.navbar-collapsed) .main-content {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .section-header h3 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.section-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
   margin: 0;
 }
 
-.add-goal-btn {
+.measurement-date {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-color);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 0.5rem 1rem;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
 }
 
-.add-goal-btn:hover {
-  background: var(--bg-secondary);
-  border-color: var(--primary-color);
+.measurement-date i {
   color: var(--primary-color);
 }
 
-.goals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.goal-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
-}
-
-.dark-mode .goal-card {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.goal-card.completed {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: var(--success-color);
-}
-
-.goal-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-}
-
-.dark-mode .goal-card:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-}
-
-.goal-header {
+/* Empty State */
+.empty-measurements-state {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--card-bg);
+  border: 2px dashed var(--border-color);
+  border-radius: 20px;
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 1.5rem;
 }
 
-.goal-icon {
-  width: 50px;
-  height: 50px;
+.empty-icon i {
+  font-size: 2.5rem;
+  color: #667eea;
+}
+
+.dark-mode .empty-icon {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+}
+
+.dark-mode .empty-icon i {
+  color: #8b9aff;
+}
+
+.empty-measurements-state h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-measurements-state p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 500px;
+}
+
+/* Measurements Grid */
+.measurements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.measurement-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.measurement-card:hover:not(.no-data) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.dark-mode .measurement-card:hover:not(.no-data) {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.measurement-card.no-data {
+  opacity: 0.5;
+  background: var(--bg-secondary);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
-  background: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   flex-shrink: 0;
 }
 
-.goal-card.completed .goal-icon {
-  background: var(--success-color);
-}
-
-.goal-info {
+.header-info {
   flex: 1;
 }
 
-.goal-info h4 {
+.header-info h4 {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-color);
   margin: 0 0 0.25rem 0;
 }
 
-.goal-card.completed .goal-info h4 {
-  color: var(--success-color);
-}
-
-.goal-info p {
-  font-size: 0.9rem;
+.measurement-type {
+  font-size: 0.75rem;
   color: var(--text-muted);
-  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-.goal-card.completed .goal-info p {
-  color: var(--text-secondary);
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.goal-progress {
-  margin-bottom: 1rem;
+.current-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.current-value .value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.current-value .unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .progress-bar {
-  height: 8px;
-  background: var(--border-color);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.goal-card.completed .progress-bar {
-  background: rgba(16, 185, 129, 0.2);
-}
-
-.progress-fill {
   height: 100%;
-  background: var(--primary-color);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  border-radius: 3px;
+  transition: width 0.6s ease;
 }
 
-.goal-card.completed .progress-fill {
-  background: var(--success-color);
+.progress-bar.positive {
+  background: linear-gradient(90deg, var(--success-color), #059669);
 }
 
-.progress-text {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+.progress-bar.negative {
+  background: linear-gradient(90deg, var(--danger-color), #dc2626);
 }
 
-.goal-card.completed .progress-text {
-  color: var(--success-color);
+.progress-bar.neutral {
+  background: linear-gradient(90deg, var(--text-muted), #94a3b8);
 }
 
-.current {
-  font-weight: 600;
-}
-
-.goal-status {
-  text-align: center;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.status-badge.completed {
-  background: var(--success-color);
-  color: white;
-}
-
-.status-badge.in-progress {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.modal-header {
+.change-details {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h3 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.close-btn {
-  padding: 0.5rem;
-  border: none;
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: var(--border-color);
-  color: var(--text-color);
-}
-
-.modal-body {
-  padding: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-}
-
-.form-select,
-.form-input {
-  width: 100%;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-color);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.form-select:focus,
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.dark-mode .form-select:focus,
-.dark-mode .form-input:focus {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.modal-footer {
-  display: flex;
   gap: 1rem;
-  padding: 1rem 2rem 2rem;
-  border-top: 1px solid var(--border-color);
 }
 
-.btn {
-  flex: 1;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 12px;
+.initial-value {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.initial-value .label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.btn.secondary {
-  background: var(--bg-secondary);
+.initial-value .value {
+  font-size: 0.9rem;
   color: var(--text-color);
-  border: 1px solid var(--border-color);
+  font-weight: 600;
 }
 
-.btn.secondary:hover {
-  background: var(--border-color);
+.change-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.btn.primary {
-  background: var(--primary-color);
-  color: white;
+.change-indicator.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
 }
 
-.btn.primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  background: var(--primary-hover);
+.change-indicator.negative {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
 }
 
-.dark-mode .btn.primary:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.change-indicator i {
+  font-size: 0.75rem;
+}
+
+.change-value {
+  font-weight: 700;
+}
+
+.change-percent {
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
+
+.single-measurement-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.dark-mode .single-measurement-info {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.single-measurement-info i {
+  color: #667eea;
+  font-size: 0.9rem;
 }
 
 /* Responsive */
@@ -1512,50 +1517,23 @@ body:has(.navbar-collapsed) .main-content {
     gap: 1rem;
   }
   
-  .goals-section {
-    padding: 1.5rem;
-  }
-  
   .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
   
-  .modal-content {
-    margin: 1rem;
-  }
-  
-  .modal-header,
-  .modal-body {
-    padding: 1.5rem;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-    padding: 1rem 1.5rem 1.5rem;
-  }
-  
-  .btn {
+  .measurement-date {
     width: 100%;
   }
   
-  .goals-grid {
+  .measurements-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
-  .modal-content {
-    margin: 0.5rem;
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1rem;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
+  .current-value .value {
+    font-size: 2rem;
   }
 }
 </style>
