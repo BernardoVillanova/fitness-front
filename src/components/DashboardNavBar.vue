@@ -569,7 +569,23 @@ export default {
   color: #ef4444 !important;
 }
 
+.logout-btn .nav-icon {
+  color: #ef4444 !important;
+}
+
+.logout-btn span {
+  color: #ef4444 !important;
+}
+
 .navbar-dark .logout-btn {
+  color: #f87171 !important;
+}
+
+.navbar-dark .logout-btn .nav-icon {
+  color: #f87171 !important;
+}
+
+.navbar-dark .logout-btn span {
   color: #f87171 !important;
 }
 
@@ -578,8 +594,18 @@ export default {
   color: #dc2626 !important;
 }
 
+.logout-btn:hover .nav-icon,
+.logout-btn:hover span {
+  color: #dc2626 !important;
+}
+
 .navbar-dark .logout-btn:hover {
   background: rgba(248, 113, 113, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+.navbar-dark .logout-btn:hover .nav-icon,
+.navbar-dark .logout-btn:hover span {
   color: #fca5a5 !important;
 }
 

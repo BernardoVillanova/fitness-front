@@ -183,6 +183,178 @@
               </div>
             </div>
 
+            <!-- Medidas Corporais Iniciais -->
+            <div class="measurements-section">
+              <div class="section-header">
+                <div class="header-content">
+                  <h3 class="section-title">
+                    <font-awesome-icon icon="ruler" />
+                    Medidas Corporais Iniciais
+                  </h3>
+                  <span class="optional-badge">Opcional</span>
+                </div>
+                <p class="section-description">
+                  <font-awesome-icon icon="info-circle" />
+                  <strong>Pode pular esta etapa!</strong> Essas medidas servirão como parâmetro inicial para acompanhar sua evolução física. 
+                  Seu instrutor irá registrar as próximas medidas durante seu acompanhamento.
+                </p>
+              </div>
+              
+              <div class="measurements-grid">
+                <!-- Upper Body -->
+                <div class="measurement-card">
+                  <div class="card-icon upper-body">
+                    <font-awesome-icon icon="arrows-up-down" />
+                  </div>
+                  <label for="shoulder" class="card-label">Ombro</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="shoulder"
+                      v-model.number="form.initialMeasurements.shoulder"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 115"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <div class="measurement-card">
+                  <div class="card-icon upper-body">
+                    <font-awesome-icon icon="vest" />
+                  </div>
+                  <label for="chest" class="card-label">Peito</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="chest"
+                      v-model.number="form.initialMeasurements.chest"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 105"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <div class="measurement-card">
+                  <div class="card-icon upper-body">
+                    <font-awesome-icon icon="hand-fist" />
+                  </div>
+                  <label for="arm" class="card-label">Braço</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="arm"
+                      v-model.number="form.initialMeasurements.rightArm"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 38"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <div class="measurement-card">
+                  <div class="card-icon upper-body">
+                    <font-awesome-icon icon="hand" />
+                  </div>
+                  <label for="forearm" class="card-label">Antebraço</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="forearm"
+                      v-model.number="form.initialMeasurements.forearm"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 30"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <!-- Core -->
+                <div class="measurement-card">
+                  <div class="card-icon core">
+                    <font-awesome-icon icon="grip-lines" />
+                  </div>
+                  <label for="waist" class="card-label">Cintura</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="waist"
+                      v-model.number="form.initialMeasurements.waist"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 85"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <div class="measurement-card">
+                  <div class="card-icon core">
+                    <font-awesome-icon icon="circle-dot" />
+                  </div>
+                  <label for="hip" class="card-label">Quadril</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="hip"
+                      v-model.number="form.initialMeasurements.hip"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 95"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <!-- Lower Body -->
+                <div class="measurement-card">
+                  <div class="card-icon lower-body">
+                    <font-awesome-icon icon="person-walking" />
+                  </div>
+                  <label for="thigh" class="card-label">Coxa</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="thigh"
+                      v-model.number="form.initialMeasurements.rightThigh"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 58"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <div class="measurement-card">
+                  <div class="card-icon lower-body">
+                    <font-awesome-icon icon="shoe-prints" />
+                  </div>
+                  <label for="calf" class="card-label">Panturrilha</label>
+                  <div class="input-wrapper">
+                    <input
+                      id="calf"
+                      v-model.number="form.initialMeasurements.calf"
+                      type="number"
+                      step="0.1"
+                      placeholder="Ex: 38"
+                      class="measurement-input"
+                    />
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="skip-message">
+                <font-awesome-icon icon="lightbulb" />
+                <p>Você pode preencher essas informações depois ou deixar que seu instrutor as registre no primeiro encontro.</p>
+              </div>
+            </div>
+
             <div class="form-row">
               <div class="form-group full-width">
                 <label for="experience">
@@ -822,6 +994,18 @@ const form = ref({
   currentHeight: null,
   trainingExperience: '',
   
+  // Medidas corporais iniciais (opcional)
+  initialMeasurements: {
+    shoulder: null,
+    chest: null,
+    rightArm: null,
+    forearm: null,
+    waist: null,
+    hip: null,
+    rightThigh: null,
+    calf: null
+  },
+  
   // Step 4: Saúde
   health: {
     hasChronicConditions: false,
@@ -1119,6 +1303,9 @@ const submitForm = async () => {
         currentWeight: form.value.currentWeight,
         currentHeight: form.value.currentHeight,
         trainingExperience: form.value.trainingExperience,
+        
+        // Medidas corporais iniciais (se fornecidas)
+        initialMeasurements: form.value.initialMeasurements,
         
         address: {
           cep: form.value.address.cep.replace(/\D/g, ''),
@@ -1482,6 +1669,230 @@ const submitForm = async () => {
   font-size: 0.8rem;
   color: var(--primary-color);
   margin-top: -0.25rem;
+}
+
+/* Measurements Section */
+.measurements-section {
+  margin: 2rem 0;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.05));
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.measurements-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.section-header {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.section-title i {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+.optional-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.section-description {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--card-bg);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.section-description i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.section-description strong {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.measurements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.measurement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 1rem;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.measurement-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.card-icon.upper-body {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+  color: #3b82f6;
+}
+
+.card-icon.core {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.15));
+  color: #8b5cf6;
+}
+
+.card-icon.lower-body {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+  color: #10b981;
+}
+
+.measurement-card:hover .card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.card-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.measurement-input {
+  width: 100%;
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.measurement-input:focus {
+  border-color: var(--primary-color);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.measurement-input:not(:placeholder-shown) {
+  border-color: #10b981;
+}
+
+.unit {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.skip-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.skip-message i {
+  color: #f59e0b;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.skip-message p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  line-height: 1.5;
 }
 
 /* BMI Display */
@@ -2048,6 +2459,23 @@ const submitForm = async () => {
   .form-navigation {
     flex-direction: column;
   }
+
+  .measurements-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .measurements-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2061,6 +2489,20 @@ const submitForm = async () => {
   
   .days-selector {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .measurements-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .measurement-card {
+    padding: 1rem;
+  }
+
+  .card-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.25rem;
   }
 }
 </style>

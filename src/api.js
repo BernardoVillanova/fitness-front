@@ -53,4 +53,8 @@ export const deleteStudent = (id) => api.delete(`/students/${id}`);
 export const unassignInstructor = (studentId) => api.delete(`/students/${studentId}/instructor`);
 export const addStudentProgress = (studentId, progressData) => api.post(`/students/${studentId}/progress`, progressData);
 
+// API de Planos de Treino
+export const getWorkoutPlans = () => api.get("/workout/workout-plans");
+export const assignPlanToStudent = (studentId, planId) => api.put(`/students/${studentId}`, { workoutPlans: [planId] });
+
 export default api;

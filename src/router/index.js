@@ -51,6 +51,13 @@ const routes = [
     //   }
     // }
   },
+  {
+    path: '/student/:id/profile',
+    name: 'StudentProfileView',
+    component: () => import('../views/StudentProfileView.vue'),
+    meta: { requiresAuth: true, role: 'personal' },
+    props: true
+  },
   { path: '/about', component: AboutUs },
   { path: '/student-register', name: 'StudentRegisterNew',
     component: () => import('@/views/StudentRegisterNew.vue')

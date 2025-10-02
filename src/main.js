@@ -55,16 +55,28 @@ import {
   faSearch,
   faUserSlash,
   faCheckCircle,
-  faEnvelope
+  faEnvelope,
+  faRuler,
+  faInfoCircle,
+  faArrowsUpDown,
+  faVest,
+  faHandFist,
+  faHand,
+  faGripLines,
+  faCircleDot,
+  faPersonWalking,
+  faShoePrints,
+  faLightbulb,
+  faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 
 // Add icons to library
 library.add(
-  faMapMarkerAlt,
-  faCity,
-  faRoad,
-  faHashtag,
-  faPlus,
+  faMapMarkerAlt, 
+  faCity, 
+  faRoad, 
+  faHashtag, 
+  faPlus, 
   faMap,
   faWeight,
   faRulerVertical,
@@ -107,10 +119,20 @@ library.add(
   faSearch,
   faUserSlash,
   faCheckCircle,
-  faEnvelope
-);
-
-const app = createApp(App);
+  faEnvelope,
+  faRuler,
+  faInfoCircle,
+  faArrowsUpDown,
+  faVest,
+  faHandFist,
+  faHand,
+  faGripLines,
+  faCircleDot,
+  faPersonWalking,
+  faShoePrints,
+  faLightbulb,
+  faUserPlus
+);const app = createApp(App);
 const pinia = createPinia();
 
 app.component('font-awesome-icon', FontAwesomeIcon);
