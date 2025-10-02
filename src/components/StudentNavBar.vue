@@ -565,6 +565,69 @@ export default {
   transform: translateX(4px);
 }
 
+/* Logout button - Red theme */
+.logout-item {
+  cursor: pointer;
+  color: #ef4444 !important;
+}
+
+.logout-item .nav-icon {
+  color: #ef4444 !important;
+}
+
+.logout-item span {
+  color: #ef4444 !important;
+}
+
+.navbar-dark .logout-item {
+  color: #f87171 !important;
+}
+
+.navbar-dark .logout-item .nav-icon {
+  color: #f87171 !important;
+}
+
+.navbar-dark .logout-item span {
+  color: #f87171 !important;
+}
+
+.logout-item:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #dc2626 !important;
+}
+
+.logout-item:hover .nav-icon,
+.logout-item:hover span {
+  color: #dc2626 !important;
+}
+
+.navbar-dark .logout-item:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+.navbar-dark .logout-item:hover .nav-icon,
+.navbar-dark .logout-item:hover span {
+  color: #fca5a5 !important;
+}
+
+/* Mobile logout button */
+.mobile-logout {
+  color: #ef4444 !important;
+}
+
+.mobile-logout .nav-icon {
+  color: #ef4444 !important;
+}
+
+.navbar-dark .mobile-logout {
+  color: #f87171 !important;
+}
+
+.navbar-dark .mobile-logout .nav-icon {
+  color: #f87171 !important;
+}
+
 .toggle-switch {
   position: relative;
   width: 50px;

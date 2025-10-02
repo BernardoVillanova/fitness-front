@@ -1,126 +1,265 @@
 <template>
-  <div :class="['student-dashboard', { 'dark-mode': isDarkMode }]">
+  <div :class="['students-page', { 'dark-mode': isDarkMode }]">
     <DashboardNavBar />
 
-    <main class="content">
-      <div class="page-header">
-        <h1 class="page-title">Gerenciamento de Alunos</h1>
-        <button @click="openAddStudentModal" class="btn btn-primary">
-          <i class="fas fa-plus"></i>
-          <span>Novo Aluno</span>
-        </button>
-      </div>
+    <main class="main-content">
+      <!-- Header com título e ações -->
+      <header class="page-header">
+        <div class="header-content">
+          <div class="header-left">
+            <h1 class="page-title">
+              <i class="fas fa-users"></i>
+              Meus Alunos
+            </h1>
+            <p class="page-subtitle">Gerencie e acompanhe o progresso de todos os seus alunos</p>
+          </div>
+          <div class="header-actions">
+            <button @click="openAddStudentModal" class="btn-primary">
+              <i class="fas fa-user-plus"></i>
+              <span>Novo Aluno</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
       <!-- Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-users"></i>
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card stat-total">
+            <div class="stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ totalStudents }}</h3>
+              <p class="stat-label">Total de Alunos</p>
+            </div>
           </div>
-          <div class="stat-info">
-            <h3>{{ totalStudents || 0 }}</h3>
-            <p>Total de Alunos</p>
+
+          <div class="stat-card stat-active">
+            <div class="stat-icon">
+              <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ activeStudents }}</h3>
+              <p class="stat-label">Ativos</p>
+              <div class="stat-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: (activeStudents / (totalStudents || 1) * 100) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card stat-plans">
+            <div class="stat-icon">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ studentsWithPlans }}</h3>
+              <p class="stat-label">Com Plano de Treino</p>
+              <div class="stat-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: (studentsWithPlans / (totalStudents || 1) * 100) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card stat-paused">
+            <div class="stat-icon">
+              <i class="fas fa-pause-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-value">{{ pausedStudents }}</h3>
+              <p class="stat-label">Pausados</p>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon active">
-            <i class="fas fa-user-check"></i>
+      </section>
+
+      <!-- Filters and View Toggle -->
+      <section class="controls-section">
+        <div class="controls-container">
+          <!-- Search -->
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input 
+              v-model="search"
+              type="text" 
+              class="search-input" 
+              placeholder="Buscar aluno por nome, email..."
+            />
           </div>
-          <div class="stat-info">
-            <h3>{{ activeStudents || 0 }}</h3>
-            <p>Alunos Ativos</p>
+
+          <!-- Filters -->
+          <div class="filters-group">
+            <select v-model="statusFilter" class="filter-select">
+              <option value="all">Todos os status</option>
+              <option value="active">Ativos</option>
+              <option value="paused">Pausados</option>
+              <option value="inactive">Inativos</option>
+            </select>
+
+            <select v-model="planFilter" class="filter-select">
+              <option value="all">Todos os planos</option>
+              <option value="with-plan">Com plano</option>
+              <option value="without-plan">Sem plano</option>
+            </select>
+
+            <select v-model="experienceFilter" class="filter-select">
+              <option value="all">Todas experiências</option>
+              <option value="iniciante">Iniciante</option>
+              <option value="intermediario">Intermediário</option>
+              <option value="avancado">Avançado</option>
+              <option value="atleta">Atleta</option>
+            </select>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="view-toggle">
+            <button 
+              @click="viewMode = 'grid'" 
+              :class="['toggle-btn', { active: viewMode === 'grid' }]"
+              title="Visualização em grade"
+            >
+              <i class="fas fa-th"></i>
+            </button>
+            <button 
+              @click="viewMode = 'list'" 
+              :class="['toggle-btn', { active: viewMode === 'list' }]"
+              title="Visualização em lista"
+            >
+              <i class="fas fa-list"></i>
+            </button>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon with-plan">
-            <i class="fas fa-dumbbell"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ studentsWithPlans || 0 }}</h3>
-            <p>Com Plano de Treino</p>
-          </div>
+      </section>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Carregando alunos...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="filteredStudents.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i :class="hasFiltersActive ? 'fas fa-filter' : 'fas fa-users-slash'"></i>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon paused">
-            <i class="fas fa-pause-circle"></i>
+        <h3>{{ getEmptyStateTitle }}</h3>
+        <p>{{ getEmptyStateMessage }}</p>
+        <div class="empty-actions">
+          <button v-if="hasFiltersActive" @click="clearFilters" class="btn-secondary">
+            <i class="fas fa-times"></i>
+            Limpar Filtros
+          </button>
+          <button v-else @click="openAddStudentModal" class="btn-primary">
+            <i class="fas fa-user-plus"></i>
+            Adicionar Primeiro Aluno
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid View -->
+      <div v-else-if="viewMode === 'grid'" class="students-grid">
+        <div 
+          v-for="student in paginatedStudents" 
+          :key="student._id"
+          class="student-card"
+        >
+          <div class="card-header">
+            <div class="student-avatar-wrapper">
+              <img 
+                :src="student.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'Student')}&background=3b82f6&color=fff`" 
+                :alt="student.name"
+                class="student-avatar"
+              />
+              <span :class="['status-indicator', student.status]"></span>
+            </div>
+            <div class="card-actions">
+              <button @click.stop="editStudent(student._id)" class="icon-btn" title="Editar">
+                <i class="fas fa-edit"></i>
+              </button>
+            </div>
           </div>
-          <div class="stat-info">
-            <h3>{{ pausedStudents || 0 }}</h3>
-            <p>Em Pausa</p>
+
+          <div class="card-body">
+            <h3 class="student-name">{{ student.name || 'Sem nome' }}</h3>
+            <p class="student-email">{{ student.email }}</p>
+
+            <div class="student-badges">
+              <span :class="['badge', 'badge-' + student.status]">
+                {{ formatStatus(student.status) }}
+              </span>
+              <span :class="['badge', 'badge-experience', 'badge-' + (student.personalInfo?.trainingExperience || 'iniciante')]">
+                {{ formatExperience(student.personalInfo?.trainingExperience) }}
+              </span>
+            </div>
+
+            <div class="student-stats">
+              <div class="stat-item">
+                <i class="fas fa-dumbbell"></i>
+                <span>{{ student.totalWorkouts || 0 }} treinos</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-fire"></i>
+                <span>{{ student.currentStreak || 0 }} dias</span>
+              </div>
+            </div>
+
+            <div v-if="student.currentWorkoutPlanId" class="plan-info">
+              <i class="fas fa-clipboard-list"></i>
+              <span>Com plano ativo</span>
+            </div>
+            <div v-else class="plan-info no-plan">
+              <i class="fas fa-exclamation-circle"></i>
+              <span>Sem plano de treino</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <button @click.stop="viewStudentProfile(student._id)" class="btn-view">
+              <i class="fas fa-chart-line"></i>
+              Ver Desempenho
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Filters and Search -->
-      <div class="filters-container">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input 
-            type="text" 
-            v-model="search" 
-            placeholder="Buscar por nome ou email..."
-            class="search-input"
-          />
-        </div>
-        
-        <div class="filter-group">
-          <select v-model="statusFilter" class="filter-select">
-            <option value="all">Todos os Status</option>
-            <option value="active">Ativos</option>
-            <option value="paused">Em Pausa</option>
-            <option value="inactive">Inativos</option>
-          </select>
-
-          <select v-model="assignmentFilter" class="filter-select">
-            <option value="all">Todos os Alunos</option>
-            <option value="assigned">Com Instrutor</option>
-            <option value="unassigned">Sem Instrutor</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Students Table -->
-      <div class="table-card">
-        <div class="table-wrapper">
+      <!-- List View -->
+      <div v-else class="students-list-view">
+        <div class="table-container">
           <table class="students-table">
             <thead>
               <tr>
                 <th>Aluno</th>
                 <th>Status</th>
                 <th>Experiência</th>
-                <th>Localização</th>
                 <th>Plano Atual</th>
-                <th>Última Atualização</th>
+                <th>Treinos</th>
+                <th>Sequência</th>
                 <th class="actions-header">Ações</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="loading" class="loading-row">
-                <td colspan="7" class="loading-cell">
-                  <div class="loading-spinner">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Carregando alunos...</span>
-                  </div>
-                </td>
-              </tr>
-              <tr v-else-if="filteredStudents.length === 0" class="empty-row">
-                <td colspan="7" class="empty-cell">
-                  <div class="empty-state">
-                    <i class="fas fa-users"></i>
-                    <h3>Nenhum aluno encontrado</h3>
-                    <p>Tente ajustar os filtros ou adicione um novo aluno</p>
-                  </div>
-                </td>
-              </tr>
-              <tr v-else v-for="student in filteredStudents" :key="student._id" class="student-row">
+              <tr 
+                v-for="student in paginatedStudents" 
+                :key="student._id"
+                class="student-row"
+              >
                 <td class="student-cell">
                   <div class="student-info">
                     <div class="avatar-container">
-                      <img :src="student.user?.avatar || '/default-avatar.png'" class="avatar" />
+                      <img 
+                        :src="student.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'Student')}&background=3b82f6&color=fff`" 
+                        :alt="student.name"
+                        class="avatar"
+                      />
+                      <span :class="['status-dot', student.status]"></span>
                     </div>
                     <div class="student-details">
-                      <div class="student-name">{{ student.user?.name || 'Nome não informado' }}</div>
-                      <div class="student-email">{{ student.user?.email || 'Email não informado' }}</div>
+                      <p class="student-name">{{ student.name || 'Sem nome' }}</p>
+                      <p class="student-email">{{ student.email }}</p>
                     </div>
                   </div>
                 </td>
@@ -134,44 +273,40 @@
                     {{ formatExperience(student.personalInfo?.trainingExperience) }}
                   </span>
                 </td>
-                <td class="location-cell">
-                  <div v-if="student.personalInfo?.location?.city">
-                    <div class="city">{{ student.personalInfo.location.city }}</div>
-                    <div class="neighborhood">{{ student.personalInfo.location.neighborhood || '' }}</div>
-                  </div>
-                  <span v-else class="no-data">Não informado</span>
-                </td>
                 <td>
                   <div v-if="student.currentWorkoutPlanId" class="plan-status active">
-                    <i class="fas fa-dumbbell"></i>
-                    <span>Plano Ativo</span>
+                    <i class="fas fa-check-circle"></i>
+                    <span>Ativo</span>
                   </div>
-                  <span v-else class="plan-status inactive">
+                  <div v-else class="plan-status inactive">
                     <i class="fas fa-times-circle"></i>
-                    <span>Sem Plano</span>
-                  </span>
+                    <span>Sem plano</span>
+                  </div>
                 </td>
-                <td class="date-cell">
-                  {{ formatDate(student.updatedAt) }}
+                <td class="stat-cell">
+                  <strong>{{ student.totalWorkouts || 0 }}</strong>
                 </td>
-                <td class="actions-cell">
+                <td class="stat-cell">
+                  <div class="streak-info">
+                    <i class="fas fa-fire"></i>
+                    <strong>{{ student.currentStreak || 0 }}</strong>
+                  </div>
+                </td>
+                <td class="actions-cell" @click.stop>
                   <div class="action-buttons">
-                    <button @click="viewProfile(student._id)" class="action-btn view" title="Ver Perfil">
+                    <button @click="viewStudentProfile(student._id)" class="action-btn view" title="Ver perfil">
                       <i class="fas fa-eye"></i>
                     </button>
                     <button @click="editStudent(student._id)" class="action-btn edit" title="Editar">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button @click="openViewPlan(student)" class="action-btn plan" title="Ver Plano">
-                      <i class="fas fa-dumbbell"></i>
-                    </button>
                     <button 
-                      v-if="student.instructorId"
-                      @click="unassignStudent(student._id)"
-                      class="action-btn unassign"
-                      title="Remover Instrutor"
+                      v-if="student.currentWorkoutPlanId"
+                      @click="openViewPlan(student)" 
+                      class="action-btn plan" 
+                      title="Ver plano"
                     >
-                      <i class="fas fa-user-slash"></i>
+                      <i class="fas fa-clipboard-list"></i>
                     </button>
                     <button @click="confirmDeleteStudent(student)" class="action-btn delete" title="Excluir">
                       <i class="fas fa-trash"></i>
@@ -182,44 +317,42 @@
             </tbody>
           </table>
         </div>
+      </div>
 
-        <!-- Pagination -->
-        <div class="pagination" v-if="totalPages > 1">
-          <button 
-            :disabled="currentPage === 1" 
-            @click="changePage(currentPage - 1)" 
-            class="pagination-btn"
-          >
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          
-          <div class="page-numbers">
-            <button 
-              v-for="pageNum in visiblePages" 
-              :key="pageNum"
-              @click="changePage(pageNum)"
-              :class="['page-btn', { active: pageNum === currentPage }]"
-            >
-              {{ pageNum }}
-            </button>
-          </div>
-          
-          <button 
-            :disabled="currentPage === totalPages" 
-            @click="changePage(currentPage + 1)" 
-            class="pagination-btn"
-          >
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="pagination">
+        <button 
+          @click="changePage(currentPage - 1)" 
+          :disabled="currentPage === 1"
+          class="pagination-btn"
+        >
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <button 
+          v-for="page in visiblePages" 
+          :key="page"
+          @click="changePage(page)"
+          :class="['page-btn', { active: page === currentPage }]"
+        >
+          {{ page }}
+        </button>
+
+        <button 
+          @click="changePage(currentPage + 1)" 
+          :disabled="currentPage === totalPages"
+          class="pagination-btn"
+        >
+          <i class="fas fa-chevron-right"></i>
+        </button>
       </div>
     </main>
 
-    <StudentForm 
+    <!-- Modals -->
+    <LinkStudentModal 
       v-if="showAddStudentModal"
-      :student="selectedStudent"
       @close="closeStudentForm"
-      @save="handleStudentSaved"
+      @linked="handleStudentLinked"
     />
 
     <ViewPlanModal 
@@ -236,9 +369,9 @@ import { useThemeStore } from '@/store/theme'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import DashboardNavBar from '@/components/DashboardNavBar.vue'
-import StudentForm from '@/components/StudentForm.vue'
+import LinkStudentModal from '@/components/LinkStudentModal.vue'
 import ViewPlanModal from '@/components/ViewPlanModal.vue'
-import { getStudents, deleteStudent, unassignInstructor } from '@/api'
+import api from '@/api'
 
 const router = useRouter()
 const themeStore = useThemeStore()
@@ -249,9 +382,11 @@ const students = ref([])
 const search = ref('')
 const currentPage = ref(1)
 const totalPages = ref(1)
-const limit = 10
+const limit = 12
 const statusFilter = ref('all')
-const assignmentFilter = ref('all')
+const planFilter = ref('all')
+const experienceFilter = ref('all')
+const viewMode = ref('grid')
 const showAddStudentModal = ref(false)
 const showViewPlan = ref(false)
 const loading = ref(false)
@@ -270,8 +405,8 @@ const filteredStudents = computed(() => {
   if (search.value) {
     const searchLower = search.value.toLowerCase()
     filtered = filtered.filter(s => {
-      const userName = s.user?.name?.toLowerCase() || ''
-      const userEmail = s.user?.email?.toLowerCase() || ''
+      const userName = (s.name || '').toLowerCase()
+      const userEmail = (s.email || '').toLowerCase()
       return userName.includes(searchLower) || userEmail.includes(searchLower)
     })
   }
@@ -281,14 +416,44 @@ const filteredStudents = computed(() => {
     filtered = filtered.filter(s => s.status === statusFilter.value)
   }
 
-  // Filtro de atribuição
-  if (assignmentFilter.value === 'assigned') {
-    filtered = filtered.filter(s => s.instructorId)
-  } else if (assignmentFilter.value === 'unassigned') {
-    filtered = filtered.filter(s => !s.instructorId)
+  // Filtro de plano
+  if (planFilter.value === 'with-plan') {
+    filtered = filtered.filter(s => s.currentWorkoutPlanId)
+  } else if (planFilter.value === 'without-plan') {
+    filtered = filtered.filter(s => !s.currentWorkoutPlanId)
+  }
+
+  // Filtro de experiência
+  if (experienceFilter.value !== 'all') {
+    filtered = filtered.filter(s => s.personalInfo?.trainingExperience === experienceFilter.value)
   }
 
   return filtered
+})
+
+const hasFiltersActive = computed(() => {
+  return search.value !== '' || 
+         statusFilter.value !== 'all' || 
+         planFilter.value !== 'all' || 
+         experienceFilter.value !== 'all'
+})
+
+const getEmptyStateTitle = computed(() => {
+  if (search.value) return 'Nenhum aluno encontrado'
+  if (hasFiltersActive.value) return 'Nenhum resultado para os filtros selecionados'
+  return 'Nenhum aluno cadastrado'
+})
+
+const getEmptyStateMessage = computed(() => {
+  if (search.value) return `Nenhum aluno corresponde à busca por "${search.value}"`
+  if (hasFiltersActive.value) return 'Tente ajustar os filtros para encontrar alunos'
+  return 'Comece adicionando seu primeiro aluno para começar a gerenciar treinos'
+})
+
+const paginatedStudents = computed(() => {
+  const start = (currentPage.value - 1) * limit
+  const end = start + limit
+  return filteredStudents.value.slice(start, end)
 })
 
 const visiblePages = computed(() => {
@@ -327,42 +492,51 @@ const formatStatus = (status) => {
   return map[status] || status
 }
 
-const formatDate = (date) => {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
 // Ações
-const fetchStudents = async (page = 1, searchQuery = '') => {
+const fetchStudents = async () => {
   try {
     loading.value = true
-    const params = {
-      page,
-      limit,
-      ...(searchQuery && { search: searchQuery }),
-      ...(statusFilter.value !== 'all' && { status: statusFilter.value }),
-      ...(assignmentFilter.value !== 'all' && { hasInstructor: assignmentFilter.value === 'assigned' })
-    }
-
-    const response = await getStudents(params)
     
-    if (response.data && response.data.students) {
-      students.value = response.data.students
-      totalPages.value = Math.ceil(response.data.total / limit)
+    // Pegar dados do usuário logado
+    const userData = JSON.parse(sessionStorage.getItem('user'))
+    const userId = userData.id
+    
+    console.log('User ID:', userId)
+    
+    // Buscar o instrutor pelo userId usando a lista de instrutores
+    const instructorsResponse = await api.get('/instructors')
+    const allInstructors = instructorsResponse.data
+    
+    // Encontrar o instrutor que corresponde ao userId
+    const currentInstructor = allInstructors.find(inst => inst.userId === userId || inst.userId?._id === userId)
+    
+    if (!currentInstructor) {
+      console.error('Instrutor não encontrado para o userId:', userId)
+      students.value = []
+      loading.value = false
+      return
+    }
+    
+    const instructorId = currentInstructor._id
+    console.log('Instructor ID encontrado:', instructorId)
+    console.log('Buscando alunos do instrutor...')
+    
+    // Buscar apenas alunos deste instrutor usando a rota específica
+    const response = await api.get(`/students/instructor/${instructorId}`)
+    
+    console.log('Resposta da API:', response.data)
+    
+    if (response.data) {
+      // A resposta pode vir diretamente como array ou dentro de um objeto
+      students.value = Array.isArray(response.data) ? response.data : (response.data.students || [])
+      totalPages.value = Math.ceil(filteredStudents.value.length / limit)
+      console.log('Alunos carregados:', students.value.length)
     } else {
-      students.value = response.data || []
-      totalPages.value = 1
+      students.value = []
     }
-    
-    currentPage.value = page
   } catch (error) {
     console.error('Erro ao carregar alunos:', error)
+    console.error('Detalhes do erro:', error.response?.data)
     students.value = []
   } finally {
     loading.value = false
@@ -371,11 +545,12 @@ const fetchStudents = async (page = 1, searchQuery = '') => {
 
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
-    fetchStudents(page, search.value)
+    currentPage.value = page
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 }
 
-const viewProfile = (id) => {
+const viewStudentProfile = (id) => {
   router.push(`/student/${id}/profile`)
 }
 
@@ -394,8 +569,8 @@ const closeStudentForm = () => {
   showAddStudentModal.value = false
 }
 
-const handleStudentSaved = async () => {
-  await fetchStudents(currentPage.value, search.value)
+const handleStudentLinked = async () => {
+  await fetchStudents()
   closeStudentForm()
 }
 
@@ -404,40 +579,41 @@ const openViewPlan = (student) => {
   showViewPlan.value = true
 }
 
-const unassignStudent = async (studentId) => {
-  if (!confirm('Tem certeza que deseja remover o instrutor deste aluno?')) return
-  
-  try {
-    await unassignInstructor(studentId)
-    console.log('Instrutor removido com sucesso')
-    await fetchStudents(currentPage.value, search.value)
-  } catch (error) {
-    console.error('Erro ao remover instrutor:', error)
-  }
+const clearFilters = () => {
+  search.value = ''
+  statusFilter.value = 'all'
+  planFilter.value = 'all'
+  experienceFilter.value = 'all'
+  currentPage.value = 1
 }
 
 const confirmDeleteStudent = async (student) => {
-  const studentName = student.user?.name || 'este aluno'
+  const studentName = student.name || 'este aluno'
   if (!confirm(`Tem certeza que deseja excluir ${studentName}? Esta ação não pode ser desfeita.`)) return
   
   try {
-    await deleteStudent(student._id)
+    await api.delete(`/students/${student._id}`)
     console.log('Aluno excluído com sucesso')
-    await fetchStudents(currentPage.value, search.value)
+    await fetchStudents()
   } catch (error) {
     console.error('Erro ao excluir aluno:', error)
+    alert('Erro ao excluir aluno')
   }
 }
 
 // Watchers
-watch([statusFilter, assignmentFilter], () => {
+watch([statusFilter, planFilter, experienceFilter], () => {
   currentPage.value = 1
-  fetchStudents(1, search.value)
+  totalPages.value = Math.ceil(filteredStudents.value.length / limit)
 })
 
 watch(search, () => {
   currentPage.value = 1
-  fetchStudents(1, search.value)
+  totalPages.value = Math.ceil(filteredStudents.value.length / limit)
+})
+
+watch(filteredStudents, () => {
+  totalPages.value = Math.ceil(filteredStudents.value.length / limit)
 })
 
 onMounted(() => {
@@ -446,134 +622,224 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.student-dashboard {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ========== VARIABLES ========== */
+.students-page {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  
+  /* Light Mode */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
-  background: var(--bg-color, #ffffff);
-  color: var(--text-color, #333);
+  background: var(--bg-secondary);
   transition: all 0.3s ease;
 }
 
-.content {
-  padding: 2rem;
+.students-page.dark-mode {
+  --primary-color: #667eea;
+  --primary-hover: #5a67d8;
+  
+  --bg-primary: #171723;
+  --bg-secondary: #16213e;
+  --card-bg: #1e1e2d;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-secondary: #6b7280;
+  --border-color: #2d2d3f;
+}
+
+/* ========== LAYOUT ========== */
+.main-content {
   margin-left: 280px;
-  max-width: calc(100% - 280px);
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 2rem;
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Detecta quando o navbar está colapsado */
-body:has(.navbar-collapsed) .content,
-.student-dashboard:has(.navbar-collapsed) .content {
+body:has(.navbar-collapsed) .main-content,
+.students-page:has(.navbar-collapsed) .main-content {
   margin-left: 0 !important;
-  max-width: 100% !important;
 }
 
-@media (max-width: 768px) {
-  .content {
-    margin-left: 0;
-    max-width: 100%;
-    padding: 1rem;
-  }
-}
-
+/* ========== HEADER ========== */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 2rem;
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.header-left {
+  flex: 1;
+}
+
 .page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   font-size: 2rem;
-  font-weight: 600;
-  color: var(--highlight-color, #007bff);
+  font-weight: 800;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.page-title i {
+  color: var(--primary-color);
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
   margin: 0;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  text-decoration: none;
+.header-actions {
+  display: flex;
+  gap: 1rem;
 }
 
 .btn-primary {
-  background: var(--button-color, #007bff);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: var(--primary-color);
   color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  background: var(--button-hover-color, #0056b3);
+  background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Stats Grid */
+/* ========== STATS SECTION ========== */
+.stats-section {
+  margin-bottom: 2rem;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .stat-card {
-  background: var(--bg-color, #ffffff);
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  background: var(--highlight-color, #007bff);
   color: white;
+  flex-shrink: 0;
 }
 
-.stat-icon.active { background: #10b981; }
-.stat-icon.with-plan { background: #f59e0b; }
-.stat-icon.paused { background: #ef4444; }
+.stat-total .stat-icon { background: var(--primary-color); }
+.stat-active .stat-icon { background: var(--success-color); }
+.stat-plans .stat-icon { background: var(--warning-color); }
+.stat-paused .stat-icon { background: var(--danger-color); }
 
-.stat-info h3 {
-  font-size: 1.75rem;
-  font-weight: 700;
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: var(--text-color);
   margin: 0 0 0.25rem 0;
-  color: var(--text-color, #333);
+  line-height: 1;
 }
 
-.stat-info p {
+.stat-label {
   font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem 0;
 }
 
-/* Filters */
-.filters-container {
-  background: var(--bg-color, #ffffff);
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stat-trend.positive {
+  color: var(--success-color);
+}
+
+.stat-trend.negative {
+  color: var(--danger-color);
+}
+
+.stat-progress {
+  margin-top: 0.5rem;
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-color);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ========== CONTROLS SECTION ========== */
+.controls-section {
   margin-bottom: 2rem;
+}
+
+.controls-container {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
   display: flex;
   gap: 1rem;
   align-items: center;
@@ -583,7 +849,7 @@ body:has(.navbar-collapsed) .content,
 .search-box {
   position: relative;
   flex: 1;
-  min-width: 300px;
+  min-width: 250px;
 }
 
 .search-box i {
@@ -591,58 +857,354 @@ body:has(.navbar-collapsed) .content,
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #6b7280;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: var(--bg-color, #ffffff);
-  color: var(--text-color, #333);
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
   font-size: 0.875rem;
   transition: all 0.2s;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--highlight-color, #007bff);
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.filter-group {
+.filters-group {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .filter-select {
-  padding: 0.75rem 2rem 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: var(--bg-color, #ffffff);
-  color: var(--text-color, #333);
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1em;
+  transition: all 0.2s;
 }
 
-/* Table */
-.table-card {
-  background: var(--bg-color, #ffffff);
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-secondary);
+  padding: 0.25rem;
+  border-radius: 10px;
+}
+
+.toggle-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  color: var(--text-color);
+}
+
+.toggle-btn.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* ========== LOADING & EMPTY STATES ========== */
+.loading-container,
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-icon i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+  color: var(--primary-color);
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+  margin: 0 0 2rem 0;
+  color: var(--text-muted);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-actions .btn-primary,
+.empty-actions .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+/* ========== GRID VIEW ========== */
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.student-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.student-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-color: var(--primary-color);
+}
+
+.card-header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.student-avatar-wrapper {
+  position: relative;
+}
+
+.student-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border-color);
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--card-bg);
+}
+
+.status-indicator.active { background: var(--success-color); }
+.status-indicator.paused { background: var(--warning-color); }
+.status-indicator.inactive { background: var(--danger-color); }
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.1);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.student-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.student-email {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem 0;
+}
+
+.student-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-active { background: #dcfce7; color: #166534; }
+.badge-paused { background: #fef3c7; color: #92400e; }
+.badge-inactive { background: #fee2e2; color: #991b1b; }
+
+.badge-experience {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+.badge-iniciante { background: #dbeafe; color: #1e40af; }
+.badge-intermediario { background: #fef3c7; color: #92400e; }
+.badge-avancado { background: #fce7f3; color: #be185d; }
+.badge-atleta { background: #f3e8ff; color: #7c3aed; }
+
+.student-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.stat-item i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.plan-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.plan-info.no-plan {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-view {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+/* ========== LIST VIEW ========== */
+.students-list-view {
+  margin-bottom: 2rem;
+}
+
+.table-container {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .students-table {
@@ -650,25 +1212,34 @@ body:has(.navbar-collapsed) .content,
   border-collapse: collapse;
 }
 
+.students-table thead {
+  background: var(--bg-secondary);
+}
+
 .students-table th {
-  background: #f8fafc;
-  color: #374151;
-  font-weight: 600;
-  padding: 1rem;
+  padding: 1rem 1.5rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 0.875rem;
-  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .students-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
 }
 
+.student-row {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
 .student-row:hover {
-  background: #f8fafc;
+  background: var(--bg-secondary);
 }
 
 .student-cell {
@@ -678,7 +1249,7 @@ body:has(.navbar-collapsed) .content,
 .student-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .avatar-container {
@@ -686,93 +1257,101 @@ body:has(.navbar-collapsed) .content,
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--border-color);
 }
+
+.status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--card-bg);
+}
+
+.status-dot.active { background: var(--success-color); }
+.status-dot.paused { background: var(--warning-color); }
+.status-dot.inactive { background: var(--danger-color); }
 
 .student-details {
   flex: 1;
 }
 
-.student-name {
+.student-details .student-name {
   font-weight: 600;
-  color: var(--text-color, #333);
-  font-size: 0.875rem;
+  color: var(--text-color);
+  font-size: 0.9375rem;
+  margin: 0 0 0.25rem 0;
 }
 
-.student-email {
-  color: #6b7280;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
+.student-details .student-email {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin: 0;
 }
 
-/* Badges */
-.status-badge, .experience-badge {
+.status-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
+  padding: 0.375rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: capitalize;
 }
 
-.status-badge.active { background: #dcfce7; color: #166534; }
-.status-badge.paused { background: #fef3c7; color: #92400e; }
-.status-badge.inactive { background: #fee2e2; color: #991b1b; }
-
-.experience-badge.iniciante { background: #dbeafe; color: #1e40af; }
-.experience-badge.intermediario { background: #fef3c7; color: #92400e; }
-.experience-badge.avancado { background: #fce7f3; color: #be185d; }
-.experience-badge.atleta { background: #f3e8ff; color: #7c3aed; }
-
-.location-cell .city {
-  font-weight: 500;
-  color: var(--text-color, #333);
-  font-size: 0.875rem;
-}
-
-.location-cell .neighborhood {
-  color: #6b7280;
+.experience-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
   font-size: 0.75rem;
-}
-
-.no-data {
-  color: #9ca3af;
-  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .plan-status {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .plan-status.active {
-  color: #059669;
+  color: var(--success-color);
 }
 
 .plan-status.inactive {
-  color: #6b7280;
+  color: var(--text-muted);
+}
+
+.stat-cell {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.streak-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.streak-info i {
+  color: var(--warning-color);
 }
 
 .date-cell {
-  color: #6b7280;
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-/* Actions */
-.actions-header {
-  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .actions-cell {
-  text-align: center;
+  width: 200px;
 }
 
 .action-buttons {
@@ -782,9 +1361,9 @@ body:has(.navbar-collapsed) .content,
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   border: none;
   display: flex;
   align-items: center;
@@ -797,7 +1376,6 @@ body:has(.navbar-collapsed) .content,
 .action-btn.view { background: #eff6ff; color: #2563eb; }
 .action-btn.edit { background: #f0fdf4; color: #16a34a; }
 .action-btn.plan { background: #fefbef; color: #d97706; }
-.action-btn.unassign { background: #fef2f2; color: #dc2626; }
 .action-btn.delete { background: #fef2f2; color: #dc2626; }
 
 .action-btn:hover {
@@ -805,64 +1383,30 @@ body:has(.navbar-collapsed) .content,
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Loading and Empty States */
-.loading-cell, .empty-cell {
-  text-align: center;
-  padding: 3rem;
-}
-
-.loading-spinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  color: #6b7280;
-}
-
-.empty-state {
-  color: #6b7280;
-}
-
-.empty-state i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.125rem;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-/* Pagination */
+/* ========== PAGINATION ========== */
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
+  padding: 2rem 0;
 }
 
-.pagination-btn, .page-btn {
+.pagination-btn,
+.page-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: var(--bg-color, #ffffff);
-  color: var(--text-color, #333);
+  min-width: 40px;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-color);
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 0.875rem;
 }
 
 .pagination-btn:disabled {
@@ -872,53 +1416,86 @@ body:has(.navbar-collapsed) .content,
 
 .pagination-btn:not(:disabled):hover,
 .page-btn:hover {
-  border-color: var(--highlight-color, #007bff);
-  color: var(--highlight-color, #007bff);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
 .page-btn.active {
-  background: var(--highlight-color, #007bff);
-  border-color: var(--highlight-color, #007bff);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: white;
 }
 
-/* Dark Mode */
-.dark-mode {
-  background: var(--bg-color, #1a1a1a);
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1.5rem 1rem;
+  }
+  
+  .students-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }
 
-.dark-mode .stat-card,
-.dark-mode .filters-container,
-.dark-mode .table-card {
-  background: var(--bg-color, #1a1a1a);
-  border-color: #374151;
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+  }
+  
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .controls-container {
+    flex-direction: column;
+  }
+  
+  .search-box,
+  .filters-group {
+    width: 100%;
+  }
+  
+  .filters-group {
+    flex-direction: column;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .students-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .students-table {
+    min-width: 800px;
+  }
 }
 
-.dark-mode .students-table th {
-  background: #111827;
-  color: #f9fafb;
-  border-color: #374151;
-}
-
-.dark-mode .students-table td {
-  border-color: #374151;
-}
-
-.dark-mode .student-row:hover {
-  background: #111827;
-}
-
-.dark-mode .search-input,
-.dark-mode .filter-select,
-.dark-mode .pagination-btn,
-.dark-mode .page-btn {
-  background: var(--bg-color, #1a1a1a);
-  border-color: #374151;
-  color: var(--text-color, #f4f4f4);
-}
-
-.dark-mode .pagination {
-  background: #111827;
-  border-color: #374151;
+@media (max-width: 480px) {
+  .main-content {
+    padding: 1rem 0.75rem;
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 </style>

@@ -85,13 +85,18 @@ export default {
 
         sessionStorage.setItem("token", token);
 
-        // Buscar dados completos do usuário
+        // Usar dados retornados pela API (mais confiável que apenas o token)
         let userData = {
-          id: decodedToken.userId || decodedToken.id || decodedToken.sub,
-          email: this.email,
-          role: decodedToken.role,
-          name: decodedToken.name || 'Usuário'
+          id: response.data.user?.id || decodedToken.id,
+          email: response.data.user?.email || this.email,
+          role: response.data.user?.role || decodedToken.role,
+          name: response.data.user?.name || decodedToken.name || 'Usuário',
+          cpf: response.data.user?.cpf,
+          phone: response.data.user?.phone,
+          avatar: response.data.user?.avatar
         };
+
+        console.log('📋 Dados do usuário após login:', userData);
 
         // Se for student, buscar dados completos
         if (decodedToken.role === 'student') {
@@ -149,12 +154,23 @@ export default {
         }
 
         // Salvar no sessionStorage
+        console.log('💾 Salvando no sessionStorage:', userData);
         sessionStorage.setItem("user", JSON.stringify(userData));
+        
+        // Verificar se foi salvo corretamente
+        const savedUser = JSON.parse(sessionStorage.getItem("user"));
+        console.log('✅ Usuário salvo no sessionStorage:', savedUser);
 
-        if (decodedToken.role === "personal") {
+        if (userData.role === "personal") {
+          console.log('🏃 Redirecionando para dashboard de personal');
           this.$router.push("/dashboard");
-        } else {
+        } else if (userData.role === "aluno") {
+          console.log('🏃 Redirecionando para dashboard de aluno');
           this.$router.push("/student-dashboard");
+        } else {
+          console.error('❌ Role desconhecida:', userData.role);
+          alert('Erro: Tipo de usuário desconhecido');
+          return;
         }
 
         alert("Login bem-sucedido!");

@@ -204,16 +204,18 @@ const fetchProfile = async () => {
     
     instructorId.value = instructor._id;
     
-    // Populate form
-    instructorData.name = instructor.user?.name || userData.name || '';
-    instructorData.email = instructor.user?.email || userData.email || '';
-    instructorData.phone = instructor.user?.phone || '';
-    instructorData.birthDate = instructor.user?.birthDate?.split('T')[0] || '';
-    instructorData.avatar = instructor.user?.avatar || userData.avatar || instructorData.avatar;
+    // Populate form - instructor.userId is populated with user data
+    instructorData.name = instructor.userId?.name || instructor.name || userData.name || '';
+    instructorData.email = instructor.userId?.email || instructor.email || userData.email || '';
+    instructorData.phone = instructor.userId?.phone || instructor.phone || '';
+    instructorData.birthDate = instructor.userId?.birthDate?.split('T')[0] || '';
+    instructorData.avatar = instructor.userId?.avatar || userData.avatar || instructorData.avatar;
     instructorData.cref = instructor.cref || '';
-    instructorData.specialization = instructor.specialization || '';
+    instructorData.specialization = (instructor.specialties && instructor.specialties.length > 0) 
+      ? instructor.specialties.join(', ') 
+      : '';
     instructorData.yearsOfExperience = instructor.yearsOfExperience || 0;
-    instructorData.currentGym = instructor.gym?.name || 'Nenhuma academia vinculada';
+    instructorData.currentGym = instructor.gymId?.name || 'Nenhuma academia vinculada';
     instructorData.bio = instructor.bio || '';
     
   } catch (error) {
