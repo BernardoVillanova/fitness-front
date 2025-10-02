@@ -11,9 +11,10 @@
           <div class="card-body">
             <h5 class="card-title">{{ gym.name }}</h5>
             <div class="card-text">
-              <p><strong>Location:</strong></p>
-              <p>{{ gym.location.address }}</p>
-              <p>{{ gym.location.city }}, {{ gym.location.state }} {{ gym.location.zipCode }}</p>
+              <p v-if="gym.location"><strong>Location:</strong></p>
+              <p v-if="gym.location">{{ gym.location.address }}</p>
+              <p v-if="gym.location">{{ gym.location.city }}, {{ gym.location.state }} {{ gym.location.zipCode }}</p>
+              <p v-else class="text-muted"><em>Localização não cadastrada</em></p>
               <p>
                 <strong>Equipment Count:</strong> {{ gym.equipments ? gym.equipments.length : 0 }}
               </p>

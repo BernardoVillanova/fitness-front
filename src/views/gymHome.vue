@@ -159,30 +159,25 @@ export default {
     },
     async handleSubmit(formPayload) {
       try {
-        console.log('Dados do formulário recebidos:', formPayload);
-        
         // Verifica se os dados estão na estrutura correta
-        const formData = formPayload.data;
-        if (!formData) {
+        const formData = formPayload?.data || formPayload;
+        if (!formData || !formData.name) {
           throw new Error('Dados da academia não encontrados no payload');
         }
-
-        console.log('Dados processados para envio:', formData);
         
         if (this.selectedGym) {
-          const response = await updateGym(this.selectedGym._id, formData);
-          console.log('Resposta da atualização:', response);
+          await updateGym(this.selectedGym._id, formData);
+          alert('✅ Academia atualizada com sucesso!');
         } else {
-          const response = await createGym(formData);
-          console.log('Resposta da criação:', response);
+          await createGym(formData);
+          alert('✅ Academia cadastrada com sucesso!');
         }
         
         await this.fetchGyms();
         this.handleCancel();
       } catch (error) {
         console.error('Error saving gym:', error);
-        console.error('Error details:', error.response?.data);
-        alert(error.message || error.response?.data?.message || 'Erro ao salvar academia');
+        alert(`❌ Erro: ${error.response?.data?.message || error.message || 'Erro ao salvar academia'}`);
       }
     },
     handleEdit(gym) {
