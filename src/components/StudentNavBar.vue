@@ -69,14 +69,6 @@
           <span v-if="!isMobile">Meu Instrutor</span>
         </router-link>
       </li>
-      <li>
-        <router-link to="/student/goals" class="nav-item" active-class="active">
-          <div class="nav-icon">
-            <i class="fas fa-bullseye"></i>
-          </div>
-          <span v-if="!isMobile">Metas</span>
-        </router-link>
-      </li>
     </ul>
 
     <!-- Divider -->

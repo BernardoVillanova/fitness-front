@@ -100,11 +100,6 @@ const routes = [
     // meta: { requiresAuth: true, role: 'student' },
   },
   {
-    path: '/student/goals',
-    component: () => import('../views/StudentGoals.vue'),
-    // meta: { requiresAuth: true, role: 'student' },
-  },
-  {
     path: '/student/profile',
     component: () => import('../views/studentprofile.vue'),
     // meta: { requiresAuth: true, role: 'student' },
