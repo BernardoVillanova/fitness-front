@@ -26,7 +26,7 @@
         </p>
       </div>
       
-      <form @submit.prevent="handleSubmit" class="modal-form">
+      <form @submit.prevent class="modal-form">
         <!-- Image Upload Section -->
         <div class="image-upload-section">
           <div class="section-header">
@@ -271,7 +271,7 @@
             </svg>
             <span>Cancelar</span>
           </button>
-          <button type="submit" class="btn btn-primary">
+          <button @click="handleSubmit" type="button" class="btn btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
@@ -358,9 +358,7 @@ export default {
     // Garantir que o CSS seja aplicado antes de mostrar o conteúdo
     this.$nextTick(() => {
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          this.isMounted = true;
-        }, 50);
+        this.isMounted = true;
       });
     });
   },
@@ -382,44 +380,32 @@ export default {
   methods: {
     async handleSubmit() {
       try {
-        console.log('=== Início do handleSubmit ===');
-        
         // Validações básicas
         if (!this.formData.name || !this.formData.phone || 
             !this.formData.location.address || !this.formData.location.city || 
             !this.formData.location.state || !this.formData.location.zipCode) {
-          throw new Error('Por favor, preencha todos os campos obrigatórios.');
+          alert('⚠️ Por favor, preencha todos os campos obrigatórios.');
+          return;
         }
         
         // Criamos o objeto de dados com validações extras
         const gymData = {
-          name: this.formData.name.trim() || null,
+          name: this.formData.name.trim(),
           description: (this.formData.description || '').trim(),
-          phone: this.formData.phone.trim() || null,
+          phone: this.formData.phone.trim(),
           email: (this.formData.email || '').trim(),
           location: {
-            address: this.formData.location.address.trim() || null,
-            city: this.formData.location.city.trim() || null,
-            state: this.formData.location.state.trim().toUpperCase() || null,
-            zipCode: this.formData.location.zipCode.trim() || null
+            address: this.formData.location.address.trim(),
+            city: this.formData.location.city.trim(),
+            state: this.formData.location.state.trim().toUpperCase(),
+            zipCode: this.formData.location.zipCode.trim()
           }
         };
         
-        // Validação final antes de enviar
-        const requiredFields = ['name', 'phone'];
-        const requiredLocationFields = ['address', 'city', 'state', 'zipCode'];
-        
-        const missingFields = requiredFields.filter(field => !gymData[field]);
-        const missingLocationFields = requiredLocationFields.filter(field => !gymData.location[field]);
-        
-        if (missingFields.length > 0 || missingLocationFields.length > 0) {
-          throw new Error(`Campos obrigatórios faltando: ${[...missingFields, ...missingLocationFields.map(f => 'location.' + f)].join(', ')}`);
-        }
-        
-        console.log('Enviando dados validados:', gymData);
         this.$emit('submit', { data: gymData });
       } catch (error) {
         console.error('Erro ao preparar dados do formulário:', error);
+        alert(`❌ Erro: ${error.message}`);
       }
     },
     resetForm() {

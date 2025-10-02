@@ -45,7 +45,17 @@ import {
   faWineGlass,
   faBed,
   faBrain,
-  faTriangleExclamation
+  faTriangleExclamation,
+  faIdCard,
+  faCalendarAlt,
+  faUser,
+  faCertificate,
+  faStar,
+  faUsers,
+  faSearch,
+  faUserSlash,
+  faCheckCircle,
+  faEnvelope
 } from '@fortawesome/free-solid-svg-icons';
 
 // Add icons to library
@@ -87,7 +97,17 @@ library.add(
   faWineGlass,
   faBed,
   faBrain,
-  faTriangleExclamation
+  faTriangleExclamation,
+  faIdCard,
+  faCalendarAlt,
+  faUser,
+  faCertificate,
+  faStar,
+  faUsers,
+  faSearch,
+  faUserSlash,
+  faCheckCircle,
+  faEnvelope
 );
 
 const app = createApp(App);

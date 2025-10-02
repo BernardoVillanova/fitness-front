@@ -36,6 +36,7 @@ export const useAuthStore = defineStore('auth', {
     token: sessionStorage.getItem('token') || null,
     user: JSON.parse(sessionStorage.getItem('user') || 'null'),
     useMockData: true, // Flag para usar dados fictícios
+    instructorData: null, // Cache dos dados do instrutor
   }),
   getters: {
     isAuthenticated: (state) => !!state.token,
@@ -72,11 +73,13 @@ export const useAuthStore = defineStore('auth', {
     clearToken() {
       this.token = null;
       this.user = null;
+      this.instructorData = null;
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
     },
     logout() {
       this.clearToken();
+      this.clearInstructorData();
     },
     toggleMockData() {
       this.useMockData = !this.useMockData;
@@ -86,6 +89,12 @@ export const useAuthStore = defineStore('auth', {
         this.user = { ...this.user, ...data };
         sessionStorage.setItem('user', JSON.stringify(this.user));
       }
+    },
+    setInstructorData(instructorData) {
+      this.instructorData = instructorData;
+    },
+    clearInstructorData() {
+      this.instructorData = null;
     }
   },
 });

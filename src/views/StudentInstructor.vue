@@ -3,16 +3,18 @@
     <StudentNavBar />
     <main class="main-content">
       <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-            })
-          }
-        } catch (err) {
-          // Nenhuma sessão agendada
-          upcomingSessions.value = []
-        }tie"></i>
-        Meu Instrutor
-      </h1>
-      <p class="page-subtitle">Informações sobre seu personal trainer</p>
+        <h1 class="page-title">
+          <i class="fas fa-user-tie"></i>
+          Meu Instrutor
+        </h1>
+        <p class="page-subtitle">Informações sobre seu personal trainer</p>
+      </div>
+
+    <!-- Mensagem quando não há instrutor -->
+    <div v-if="!instructor && !loading" class="empty-instructor">
+      <i class="fas fa-user-slash"></i>
+      <h3>Nenhum instrutor atribuído</h3>
+      <p>Você ainda não possui um instrutor vinculado. Entre em contato com a recepção da academia para solicitar um acompanhamento personalizado.</p>
     </div>
 
     <!-- Instructor Profile -->
@@ -24,8 +26,16 @@
           </div>
           <div class="instructor-info">
             <h2>{{ instructor.name }}</h2>
-            <p class="instructor-title">{{ instructor.speciality }}</p>
-            <div class="instructor-rating">
+            <p v-if="instructor.speciality" class="instructor-title">{{ instructor.speciality }}</p>
+            <p v-if="instructor.yearsOfExperience" class="instructor-experience">
+              <i class="fas fa-medal"></i>
+              {{ instructor.yearsOfExperience }} anos de experiência
+            </p>
+            <p v-if="instructor.cref" class="instructor-cref">
+              <i class="fas fa-id-card"></i>
+              CREF: {{ instructor.cref }}
+            </p>
+            <div v-if="instructor.rating && instructor.reviews" class="instructor-rating">
               <div class="rating-stars">
                 <i v-for="n in 5" :key="n" :class="n <= instructor.rating ? 'fas fa-star' : 'far fa-star'"></i>
               </div>
@@ -45,12 +55,12 @@
         </div>
 
         <div class="profile-details">
-          <div class="detail-section">
+          <div v-if="instructor.bio" class="detail-section">
             <h3>Sobre</h3>
             <p>{{ instructor.bio }}</p>
           </div>
           
-          <div class="detail-section">
+          <div v-if="instructor.specialties && instructor.specialties.length > 0" class="detail-section">
             <h3>Especialidades</h3>
             <div class="specialties">
               <span v-for="specialty in instructor.specialties" :key="specialty" class="specialty-tag">
@@ -59,7 +69,7 @@
             </div>
           </div>
           
-          <div class="detail-section">
+          <div v-if="instructor.certifications && instructor.certifications.length > 0" class="detail-section">
             <h3>Certificações</h3>
             <ul class="certifications">
               <li v-for="cert in instructor.certifications" :key="cert">{{ cert }}</li>
@@ -70,7 +80,7 @@
     </div>
 
     <!-- Contact Information -->
-    <div class="contact-section">
+    <div v-if="instructor" class="contact-section">
       <h2 class="section-title">
         <i class="fas fa-address-book"></i>
         Informações de Contato
@@ -78,37 +88,37 @@
       
       <div class="contact-card">
         <div class="contact-options">
-          <div class="contact-item">
+          <div v-if="instructor?.phone" class="contact-item">
             <div class="contact-icon">
               <i class="fas fa-phone"></i>
             </div>
             <div>
               <strong>Telefone</strong>
-              <p>{{ instructor?.phone || 'Não informado' }}</p>
-              <a v-if="instructor?.phone" :href="`tel:${instructor.phone}`" class="contact-link">
+              <p>{{ instructor.phone }}</p>
+              <a :href="`tel:${instructor.phone}`" class="contact-link">
                 <i class="fas fa-phone-alt"></i> Ligar agora
               </a>
             </div>
           </div>
-          <div class="contact-item">
+          <div v-if="instructor?.email" class="contact-item">
             <div class="contact-icon">
               <i class="fas fa-envelope"></i>
             </div>
             <div>
               <strong>Email</strong>
-              <p>{{ instructor?.email || 'Não informado' }}</p>
-              <a v-if="instructor?.email" :href="`mailto:${instructor.email}`" class="contact-link">
+              <p>{{ instructor.email }}</p>
+              <a :href="`mailto:${instructor.email}`" class="contact-link">
                 <i class="fas fa-paper-plane"></i> Enviar email
               </a>
             </div>
           </div>
-          <div class="contact-item">
+          <div v-if="instructor?.availableHours" class="contact-item">
             <div class="contact-icon">
               <i class="fas fa-clock"></i>
             </div>
             <div>
               <strong>Horário de Atendimento</strong>
-              <p>{{ instructor?.availableHours || 'Consulte com a academia' }}</p>
+              <p>{{ instructor.availableHours }}</p>
             </div>
           </div>
           <div v-if="instructor?.location" class="contact-item">
@@ -125,7 +135,7 @@
     </div>
 
     <!-- Schedule -->
-    <div class="schedule-section">
+    <div v-if="instructor" class="schedule-section">
       <h2 class="section-title">
         <i class="fas fa-calendar-alt"></i>
         Próximas Sessões
@@ -178,14 +188,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
+import { useAuthStore } from '@/store/auth'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import api from '@/api'
 
-// Theme
+// Stores
 const themeStore = useThemeStore()
+const authStore = useAuthStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
 // Reactive data
@@ -193,8 +205,18 @@ const loading = ref(true)
 const instructor = ref(null)
 const upcomingSessions = ref([])
 
+// Cache do instructor no store para evitar re-fetch
+const cachedInstructor = computed(() => authStore.instructorData)
+
 // Fetch instructor data
 const fetchInstructorData = async () => {
+  // Verificar se já temos dados em cache
+  if (cachedInstructor.value) {
+    instructor.value = cachedInstructor.value
+    loading.value = false
+    return
+  }
+
   loading.value = true
   try {
     // Buscar dados do estudante do sessionStorage
@@ -206,62 +228,80 @@ const fetchInstructorData = async () => {
     }
 
     const userData = JSON.parse(storedUser)
-    const studentId = userData.studentId || userData.id
+    const userId = userData.id || userData._id
     
-    if (!studentId) {
+    if (!userId) {
       useFallbackData()
       loading.value = false
       return
     }
 
-    // Buscar dados completos do estudante
-    const studentResponse = await api.get(`/students/${studentId}`)
-    let instructorId = studentResponse.data?.instructorId
+    // Buscar dados completos do estudante por userId (já traz instructor populado)
+    const studentResponse = await api.get(`/students/user/${userId}`)
+    const studentData = studentResponse.data
     
-    // Extrair ID se for objeto MongoDB
-    if (instructorId && typeof instructorId === 'object') {
-      instructorId = instructorId.$oid || instructorId._id || instructorId.toString()
-    }
-    
-    if (instructorId) {
-      // Buscar dados completos do instrutor
-      const instructorResponse = await api.get(`/instructors/${instructorId}`)
+    // Verificar se o aluno tem instrutor atribuído
+    if (studentData.instructorId) {
+      const instructorData = studentData.instructorId
       
-      if (instructorResponse.data) {
-        const data = instructorResponse.data
-        const instructorName = data.name || data.user?.name || 'Instrutor'
-        
-        instructor.value = {
-          id: data._id || data.id,
-          name: instructorName,
-          speciality: data.speciality || data.specialty || 'Personal Trainer',
-          avatar: data.avatar || data.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&background=667eea&color=fff&size=120`,
-          rating: data.rating || 5.0,
-          reviews: data.reviews || data.reviewCount || 0,
-          bio: data.bio || data.description || data.about || `${instructorName} é um profissional dedicado ao seu desenvolvimento físico e bem-estar.`,
-          specialties: data.specialties || data.specializations || data.expertise || ['Musculação', 'Treinamento Funcional'],
-          certifications: data.certifications || data.certificates || data.qualifications || ['Certificado CREF'],
-          phone: data.phone || data.contact?.phone || data.user?.phone || null,
-          email: data.email || data.user?.email || data.contact?.email || null,
-          availableHours: data.availableHours || data.schedule || data.workingHours || 'Segunda a Sexta: 6h - 22h | Sábado: 8h - 14h',
-          location: data.location || data.gym?.name || studentResponse.data.gym?.name || 'Academia'
-        }
-        
-        // Buscar sessões agendadas (se houver endpoint)
+      // Se só tiver _id e name, o populate não funcionou - buscar diretamente
+      const fieldsCount = Object.keys(instructorData).length
+      if (fieldsCount <= 3) {  // _id, name, __v ou similar
         try {
-          const sessionsResponse = await api.get('/student/sessions/upcoming')
-          if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
-            upcomingSessions.value = sessionsResponse.data.map(s => ({
-              id: s._id || s.id,
-              type: s.type || s.title || 'Sessão de Treino',
-              date: s.date || s.scheduledDate,
-              time: s.time || new Date(s.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-              location: s.location || instructor.value.location || 'Academia'
-            }))
-          }
+          const instructorResponse = await api.get(`/instructors/${instructorData._id}`)
+          Object.assign(instructorData, instructorResponse.data)
         } catch (err) {
-          console.log('Nenhuma sessão agendada encontrada')
+          console.error('Erro ao buscar dados completos do instrutor:', err)
         }
+      }
+      
+      // Formatar horário de trabalho (SOMENTE se existir no banco)
+      let availableHours = null
+      if (instructorData.availability && instructorData.availability.workingDays && instructorData.availability.workingDays.length > 0) {
+        const days = instructorData.availability.workingDays.join(', ')
+        const start = instructorData.availability.startTime
+        const end = instructorData.availability.endTime
+        availableHours = `${days}: ${start} - ${end}`
+      }
+      
+      // Usar APENAS dados reais do banco, sem fallbacks ou mocks
+      instructor.value = {
+        id: instructorData._id,
+        name: instructorData.name,
+        speciality: instructorData.specialties && instructorData.specialties.length > 0 
+          ? instructorData.specialties.join(', ') 
+          : null,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorData.name)}&background=667eea&color=fff&size=120`,
+        rating: instructorData.rating || null,  // Null se não existir
+        reviews: instructorData.reviews || null,  // Null se não existir
+        bio: instructorData.bio,  // APENAS do banco
+        specialties: instructorData.specialties,  // APENAS do banco
+        certifications: instructorData.certifications,  // APENAS do banco
+        phone: instructorData.phone,  // APENAS do banco (pode ser null)
+        email: instructorData.email,  // APENAS do banco
+        availableHours: availableHours,  // APENAS do banco (pode ser null)
+        location: studentData.gymId?.name || null,
+        yearsOfExperience: instructorData.yearsOfExperience,  // APENAS do banco
+        cref: instructorData.cref  // ADICIONAR CREF do banco
+      }
+      
+      // Salvar no store para cache
+      authStore.setInstructorData(instructor.value)
+      
+      // Buscar sessões agendadas (se houver endpoint)
+      try {
+        const sessionsResponse = await api.get('/student/sessions/upcoming')
+        if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
+          upcomingSessions.value = sessionsResponse.data.map(s => ({
+            id: s._id || s.id,
+            type: s.type || s.title || 'Sessão de Treino',
+            date: s.date || s.scheduledDate,
+            time: s.time || new Date(s.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            location: s.location || instructor.value.location || 'Academia'
+          }))
+        }
+      } catch (err) {
+        // Nenhuma sessão agendada
       }
     } else {
       // Se não tem instrutor, usar fallback
@@ -275,39 +315,22 @@ const fetchInstructorData = async () => {
   }
 }
 
-// Fallback data quando não há instrutor ou erro na API
+// Fallback quando não há instrutor atribuído
 const useFallbackData = () => {
-  instructor.value = {
-    id: null,
-    name: 'Instrutor não atribuído',
-    speciality: 'Entre em contato com a academia',
-    avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=94a3b8&color=fff&size=120',
-    rating: 0,
-    reviews: 0,
-    bio: 'Você ainda não possui um instrutor atribuído. Entre em contato com a recepção da academia para solicitar um acompanhamento personalizado.',
-    specialties: [],
-    certifications: [],
-    phone: null,
-    email: null,
-    availableHours: 'Consulte a academia',
-    location: null
-  }
+  instructor.value = null  // Apenas null, sem dados mockados
 }
 
 // Schedule session
 const scheduleSession = () => {
-  console.log('Opening session scheduling...')
   // TODO: Implementar modal de agendamento
 }
 
-const rescheduleSession = (session) => {
-  console.log('Rescheduling session:', session)
+const rescheduleSession = () => {
   // TODO: Implementar reagendamento
 }
 
 const cancelSession = (session) => {
   if (confirm('Deseja realmente cancelar esta sessão?')) {
-    console.log('Canceling session:', session)
     // TODO: Chamar API para cancelar
     upcomingSessions.value = upcomingSessions.value.filter(s => s.id !== session.id)
   }
@@ -372,6 +395,37 @@ body:has(.navbar-collapsed) .main-content {
   margin: 0;
 }
 
+/* Empty Instructor State */
+.empty-instructor {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--card-bg);
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  margin-bottom: 2rem;
+}
+
+.empty-instructor i {
+  font-size: 4rem;
+  color: var(--text-muted);
+  opacity: 0.3;
+  margin-bottom: 1rem;
+}
+
+.empty-instructor h3 {
+  font-size: 1.5rem;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.empty-instructor p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
 /* Instructor Profile */
 .instructor-profile {
   margin-bottom: 3rem;
@@ -423,13 +477,30 @@ body:has(.navbar-collapsed) .main-content {
   font-size: 1.1rem;
   color: var(--primary-color);
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
+}
+
+.instructor-experience,
+.instructor-cref {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.instructor-experience i,
+.instructor-cref i {
+  color: var(--primary-color);
+  font-size: 0.9rem;
 }
 
 .instructor-rating {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .rating-stars {
