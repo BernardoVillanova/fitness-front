@@ -618,9 +618,9 @@ const submitForm = async () => {
 
     console.log('📋 Payload do instrutor:', instructorPayload)
 
-    const response = await axios.post('http://localhost:3000/api/instructors', instructorPayload)
+    const { data } = await axios.post('http://localhost:3000/api/instructors', instructorPayload)
     
-    console.log('✅ Instrutor criado:', response.data)
+    console.log('✅ Instrutor criado:', data)
     
     showNotification('success', 'Cadastro Realizado!', 'Você será redirecionado para o login.')
     
