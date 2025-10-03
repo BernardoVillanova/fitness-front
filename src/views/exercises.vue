@@ -205,7 +205,7 @@
                     </div>
                     <img 
                       v-else
-                      :src="exercise.image" 
+                      :src="getImageUrl(exercise.image)" 
                       :alt="exercise.name"
                       @error="handleImageError(exercise.id)"
                       @load="handleImageLoad(exercise.id)"
@@ -243,9 +243,7 @@
                     class="menu-trigger" 
                     @click="toggleExerciseMenu(exercise.id)"
                   >
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                    </svg>
+                    <i class="fas fa-cog"></i>
                   </button>
                   
                   <div v-if="exercise.showMenu" class="dropdown-menu">
@@ -254,12 +252,6 @@
                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
                       </svg>
                       Editar
-                    </button>
-                    <button class="dropdown-option" @click="duplicateExercise(exercise)">
-                      <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M7 7a1 1 0 000 2h6a1 1 0 100-2H7zM7 11a1 1 0 100 2h6a1 1 0 100-2H7zM7 15a1 1 0 100 2h6a1 1 0 100-2H7z"></path>
-                      </svg>
-                      Duplicar
                     </button>
                     <div class="dropdown-separator"></div>
                     <button class="dropdown-option danger" @click="deleteExercise(exercise)">
@@ -275,9 +267,6 @@
               <!-- Exercise Info -->
               <div class="exercise-info">
                 <div class="exercise-meta">
-                  <div class="category-badge">
-                    {{ exercise.category }}
-                  </div>
                   <div class="difficulty-indicator" :class="exercise.difficulty.toLowerCase()">
                     <div class="difficulty-dot"></div>
                     {{ exercise.difficulty }}
@@ -285,60 +274,29 @@
                 </div>
                 
                 <h3 class="exercise-name">{{ exercise.name }}</h3>
-                <p class="exercise-description">{{ exercise.description }}</p>
+                <p class="exercise-description" v-if="exercise.description">{{ truncate(exercise.description, 200) }}</p>
               </div>
 
-              <!-- Exercise Stats -->
-              <div class="exercise-stats">
-                <div class="stats-row">
-                  <div class="stat-item">
-                    <div class="stat-icon-wrapper">
-                      <svg class="stat-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                      </svg>
-                    </div>
-                    <div class="stat-content">
-                      <span class="stat-label">Duração</span>
-                      <span class="stat-value">{{ exercise.duration || 'Variável' }}</span>
-                    </div>
-                  </div>
-                  
-                  <div class="stat-item">
-                    <div class="stat-icon-wrapper">
-                      <svg class="stat-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
-                      </svg>
-                    </div>
-                    <div class="stat-content">
-                      <span class="stat-label">Uso</span>
-                      <span class="stat-value">{{ exercise.usageCount || 0 }} planos</span>
-                    </div>
-                  </div>
+              <!-- Muscle Groups - Simplified -->
+              <div class="exercise-stats" v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0">
+                <div class="muscle-groups-tags">
+                  <span v-for="muscle in exercise.muscleGroups" :key="muscle" class="muscle-tag">
+                    {{ muscle }}
+                  </span>
                 </div>
               </div>
 
               <!-- Exercise Actions -->
               <div class="exercise-actions">
-                <button class="action-button secondary-action" @click="viewExerciseDetails(exercise)">
+                <button class="action-button primary-action" @click="viewExerciseDetails(exercise)">
                   <div class="button-shine"></div>
+                  <div class="button-particles"></div>
                   <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                     <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="button-text">Ver Detalhes</span>
-                </button>
-                <button class="action-button primary-action" @click="addToWorkout(exercise)">
-                  <div class="button-shine"></div>
-                  <div class="button-particles"></div>
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  <span class="button-text">Adicionar ao Treino</span>
-                  <div class="button-arrow">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
-                  </div>
+                  <div class="button-arrow">→</div>
                 </button>
               </div>
             </div>
@@ -360,6 +318,107 @@
         </section>
       </div>
     </main>
+
+    <!-- Modal de Visualização de Detalhes -->
+    <div v-if="showDetailModal && selectedExercise" class="modal-overlay" @click.self="closeDetailModal">
+      <div class="modal-container-large">
+        <div class="modal-header">
+          <div class="modal-header-content">
+            <div class="modal-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="header-text-section">
+              <h2 class="modal-title">Detalhes do Exercício</h2>
+              <p class="modal-subtitle">Visualize todas as informações do exercício</p>
+            </div>
+          </div>
+          <button class="modal-close" @click="closeDetailModal">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Imagem -->
+          <div v-if="selectedExercise.image" class="detail-image-container">
+            <img :src="getImageUrl(selectedExercise.image)" :alt="selectedExercise.name" class="detail-image">
+          </div>
+
+          <!-- Informações Principais -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+              Informações Básicas
+            </h3>
+            <div class="detail-info-grid">
+              <div class="detail-info-item">
+                <span class="detail-label">Nome:</span>
+                <span class="detail-value">{{ selectedExercise.name }}</span>
+              </div>
+              <div class="detail-info-item">
+                <span class="detail-label">Categoria:</span>
+                <span class="detail-value">{{ selectedExercise.category }}</span>
+              </div>
+              <div class="detail-info-item">
+                <span class="detail-label">Dificuldade:</span>
+                <span class="detail-value">
+                  <span :class="['difficulty-indicator', selectedExercise.difficulty.toLowerCase()]">
+                    <span class="difficulty-dot"></span>
+                    {{ selectedExercise.difficulty }}
+                  </span>
+                </span>
+              </div>
+              <div class="detail-info-item" v-if="selectedExercise.duration">
+                <span class="detail-label">Duração:</span>
+                <span class="detail-value">{{ selectedExercise.duration }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descrição -->
+          <div class="detail-section" v-if="selectedExercise.description">
+            <h3 class="detail-section-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
+              </svg>
+              Descrição
+            </h3>
+            <p class="detail-text">{{ selectedExercise.description }}</p>
+          </div>
+
+          <!-- Grupos Musculares -->
+          <div class="detail-section" v-if="selectedExercise.muscleGroups && selectedExercise.muscleGroups.length > 0">
+            <h3 class="detail-section-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+              </svg>
+              Grupos Musculares Trabalhados
+            </h3>
+            <div class="muscle-groups-tags">
+              <span v-for="muscle in selectedExercise.muscleGroups" :key="muscle" class="muscle-tag-large">
+                {{ muscle }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="closeDetailModal">Fechar</button>
+          <button class="btn-save" @click="editExercise(selectedExercise); closeDetailModal()">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+            </svg>
+            Editar Exercício
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal de Edição de Exercício -->
     <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
@@ -898,6 +957,8 @@ export default {
       imageError: {},
       showEditModal: false,
       showCreateModal: false,
+      showDetailModal: false,
+      selectedExercise: null,
       editingExercise: {
         id: null,
         name: '',
@@ -952,6 +1013,7 @@ export default {
           difficulty: 'Intermediário',
           duration: '45-60 seg',
           usageCount: 23,
+          muscleGroups: ['Peito', 'Tríceps', 'Ombros'],
           image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=240&fit=crop&q=80',
           showMenu: false
         },
@@ -963,6 +1025,7 @@ export default {
           difficulty: 'Intermediário',
           duration: '60-90 seg',
           usageCount: 31,
+          muscleGroups: ['Quadríceps', 'Glúteos', 'Panturrilha'],
           image: 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?w=400&h=240&fit=crop&q=80',
           showMenu: false
         },
@@ -974,6 +1037,7 @@ export default {
           difficulty: 'Iniciante',
           duration: '45 seg',
           usageCount: 18,
+          muscleGroups: ['Costas', 'Bíceps'],
           image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400&h=240&fit=crop&q=80',
           showMenu: false
         },
@@ -1014,10 +1078,26 @@ export default {
       filteredExercises: []
     }
   },
+  computed: {
+    getImageUrl() {
+      return (imagePath) => {
+        if (!imagePath) return null;
+        // Se já for URL completa, retorna como está
+        if (imagePath.startsWith('http')) return imagePath;
+        // Constrói URL completa do backend
+        return `http://localhost:3000${imagePath}`;
+      };
+    }
+  },
   mounted() {
     this.filteredExercises = [...this.exercises];
   },
   methods: {
+    truncate(text, maxLength) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    },
     handleImageError(exerciseId) {
       this.imageError[exerciseId] = true;
     },
@@ -1101,6 +1181,14 @@ export default {
       
       // Abre o modal
       this.showEditModal = true;
+    },
+    viewExerciseDetails(exercise) {
+      this.selectedExercise = exercise;
+      this.showDetailModal = true;
+    },
+    closeDetailModal() {
+      this.showDetailModal = false;
+      this.selectedExercise = null;
     },
     closeEditModal() {
       this.showEditModal = false;
@@ -1198,9 +1286,6 @@ export default {
     deleteExercise(exercise) {
       console.log('Excluir exercício:', exercise);
       exercise.showMenu = false;
-    },
-    viewExerciseDetails(exercise) {
-      console.log('Ver detalhes do exercício:', exercise);
     },
     addToWorkout(exercise) {
       console.log('Adicionar ao treino:', exercise);
@@ -2309,15 +2394,16 @@ body:has(.navbar-collapsed) .floating-header,
   position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 3;
+  z-index: 1000;
 }
 
 .menu-trigger {
-  width: 40px;
-  height: 40px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.15);
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
+  font-size: 18px;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
@@ -2325,12 +2411,22 @@ body:has(.navbar-collapsed) .floating-header,
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  color: #2563eb;
+  transform: scale(1.15);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.4);
+}
+
+.dashboard-dark .menu-trigger:hover {
+  background: rgba(139, 92, 246, 0.95);
+  color: white;
+  border-color: rgba(139, 92, 246, 0.8);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.6);
 }
 
 .dropdown-menu {
@@ -2345,7 +2441,7 @@ body:has(.navbar-collapsed) .floating-header,
     0 20px 40px rgba(0, 0, 0, 0.15),
     0 10px 20px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  z-index: 1000;
+  z-index: 1001;
   min-width: 180px;
   padding: 12px;
   animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2490,9 +2586,38 @@ body:has(.navbar-collapsed) .floating-header,
 .exercise-stats {
   position: relative;
   z-index: 1;
-  padding: 20px 28px;
+  padding: 16px 28px;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-primary);
+}
+
+.muscle-groups-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.muscle-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.dashboard-dark .muscle-tag {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+}
+
+.muscle-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .stats-row {
@@ -3802,6 +3927,118 @@ body:has(.navbar-collapsed) .floating-header,
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* Estilos para o Modal de Visualização */
+.detail-image-container {
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  margin-bottom: 32px;
+}
+
+.detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-section {
+  margin-bottom: 32px;
+}
+
+.detail-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-section-title i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.detail-info-item {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.detail-info-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.detail-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail-text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.muscle-tag-large {
+  display: inline-block;
+  padding: 10px 16px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 4px;
+  transition: all 0.2s ease;
+}
+
+.muscle-tag-large:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+}
+
+@media (max-width: 768px) {
+  .detail-info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .detail-image-container {
+    max-height: 300px;
   }
 }
 

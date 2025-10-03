@@ -148,9 +148,7 @@
               
               <div class="gym-menu-wrapper">
                 <button class="menu-trigger" @click="toggleGymMenu(gym._id)">
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                  </svg>
+                  <i class="fas fa-cog"></i>
                 </button>
                 
                 <div v-if="gym.showMenu" class="dropdown-menu">
@@ -1190,29 +1188,44 @@ body:has(.navbar-collapsed) .dashboard-container,
   position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 10;
+  z-index: 1000;
 }
 
 .menu-trigger {
-  width: 36px;
-  height: 36px;
-  border: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(0, 0, 0, 0.15);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-color);
+  color: #1e293b;
+  font-size: 18px;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .menu-trigger {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
 }
 
 .menu-trigger:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+}
+
+.dark .menu-trigger:hover {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
 }
 
 .dropdown-menu {
@@ -1227,7 +1240,7 @@ body:has(.navbar-collapsed) .dashboard-container,
   min-width: 160px;
   box-shadow: var(--shadow-lg);
   animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100;
+  z-index: 1001;
 }
 
 @keyframes dropdownSlide {
