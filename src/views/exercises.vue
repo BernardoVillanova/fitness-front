@@ -205,7 +205,7 @@
                     </div>
                     <img 
                       v-else
-                      :src="exercise.image" 
+                      :src="getImageUrl(exercise.image)" 
                       :alt="exercise.name"
                       @error="handleImageError(exercise.id)"
                       @load="handleImageLoad(exercise.id)"
@@ -243,9 +243,7 @@
                     class="menu-trigger" 
                     @click="toggleExerciseMenu(exercise.id)"
                   >
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                    </svg>
+                    <i class="fas fa-cog"></i>
                   </button>
                   
                   <div v-if="exercise.showMenu" class="dropdown-menu">
@@ -254,12 +252,6 @@
                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
                       </svg>
                       Editar
-                    </button>
-                    <button class="dropdown-option" @click="duplicateExercise(exercise)">
-                      <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M7 7a1 1 0 000 2h6a1 1 0 100-2H7zM7 11a1 1 0 100 2h6a1 1 0 100-2H7zM7 15a1 1 0 100 2h6a1 1 0 100-2H7z"></path>
-                      </svg>
-                      Duplicar
                     </button>
                     <div class="dropdown-separator"></div>
                     <button class="dropdown-option danger" @click="deleteExercise(exercise)">
@@ -285,60 +277,28 @@
                 </div>
                 
                 <h3 class="exercise-name">{{ exercise.name }}</h3>
-                <p class="exercise-description">{{ exercise.description }}</p>
               </div>
 
-              <!-- Exercise Stats -->
-              <div class="exercise-stats">
-                <div class="stats-row">
-                  <div class="stat-item">
-                    <div class="stat-icon-wrapper">
-                      <svg class="stat-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                      </svg>
-                    </div>
-                    <div class="stat-content">
-                      <span class="stat-label">Duração</span>
-                      <span class="stat-value">{{ exercise.duration || 'Variável' }}</span>
-                    </div>
-                  </div>
-                  
-                  <div class="stat-item">
-                    <div class="stat-icon-wrapper">
-                      <svg class="stat-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
-                      </svg>
-                    </div>
-                    <div class="stat-content">
-                      <span class="stat-label">Uso</span>
-                      <span class="stat-value">{{ exercise.usageCount || 0 }} planos</span>
-                    </div>
-                  </div>
+              <!-- Muscle Groups - Simplified -->
+              <div class="exercise-stats" v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0">
+                <div class="muscle-groups-tags">
+                  <span v-for="muscle in exercise.muscleGroups" :key="muscle" class="muscle-tag">
+                    {{ muscle }}
+                  </span>
                 </div>
               </div>
 
               <!-- Exercise Actions -->
               <div class="exercise-actions">
-                <button class="action-button secondary-action" @click="viewExerciseDetails(exercise)">
+                <button class="action-button primary-action" @click="viewExerciseDetails(exercise)">
                   <div class="button-shine"></div>
+                  <div class="button-particles"></div>
                   <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                     <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
                   </svg>
                   <span class="button-text">Ver Detalhes</span>
-                </button>
-                <button class="action-button primary-action" @click="addToWorkout(exercise)">
-                  <div class="button-shine"></div>
-                  <div class="button-particles"></div>
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  <span class="button-text">Adicionar ao Treino</span>
-                  <div class="button-arrow">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
-                  </div>
+                  <div class="button-arrow">→</div>
                 </button>
               </div>
             </div>
@@ -952,6 +912,7 @@ export default {
           difficulty: 'Intermediário',
           duration: '45-60 seg',
           usageCount: 23,
+          muscleGroups: ['Peito', 'Tríceps', 'Ombros'],
           image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=240&fit=crop&q=80',
           showMenu: false
         },
@@ -963,6 +924,7 @@ export default {
           difficulty: 'Intermediário',
           duration: '60-90 seg',
           usageCount: 31,
+          muscleGroups: ['Quadríceps', 'Glúteos', 'Panturrilha'],
           image: 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?w=400&h=240&fit=crop&q=80',
           showMenu: false
         },
@@ -974,6 +936,7 @@ export default {
           difficulty: 'Iniciante',
           duration: '45 seg',
           usageCount: 18,
+          muscleGroups: ['Costas', 'Bíceps'],
           image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400&h=240&fit=crop&q=80',
           showMenu: false
         },
@@ -1012,6 +975,17 @@ export default {
         }
       ],
       filteredExercises: []
+    }
+  },
+  computed: {
+    getImageUrl() {
+      return (imagePath) => {
+        if (!imagePath) return null;
+        // Se já for URL completa, retorna como está
+        if (imagePath.startsWith('http')) return imagePath;
+        // Constrói URL completa do backend
+        return `http://localhost:3000${imagePath}`;
+      };
     }
   },
   mounted() {
@@ -2309,15 +2283,16 @@ body:has(.navbar-collapsed) .floating-header,
   position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 3;
+  z-index: 1000;
 }
 
 .menu-trigger {
-  width: 40px;
-  height: 40px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.15);
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
+  font-size: 18px;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
@@ -2325,12 +2300,22 @@ body:has(.navbar-collapsed) .floating-header,
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  color: #2563eb;
+  transform: scale(1.15);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.4);
+}
+
+.dashboard-dark .menu-trigger:hover {
+  background: rgba(139, 92, 246, 0.95);
+  color: white;
+  border-color: rgba(139, 92, 246, 0.8);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.6);
 }
 
 .dropdown-menu {
@@ -2345,7 +2330,7 @@ body:has(.navbar-collapsed) .floating-header,
     0 20px 40px rgba(0, 0, 0, 0.15),
     0 10px 20px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  z-index: 1000;
+  z-index: 1001;
   min-width: 180px;
   padding: 12px;
   animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2490,9 +2475,38 @@ body:has(.navbar-collapsed) .floating-header,
 .exercise-stats {
   position: relative;
   z-index: 1;
-  padding: 20px 28px;
+  padding: 16px 28px;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-primary);
+}
+
+.muscle-groups-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.muscle-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.dashboard-dark .muscle-tag {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+}
+
+.muscle-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .stats-row {

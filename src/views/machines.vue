@@ -155,7 +155,7 @@
               <div class="exercise-header">
                 <div class="exercise-image">
                   <div class="image-container" v-if="machine.image">
-                    <img :src="machine.image" :alt="machine.name">
+                    <img :src="getImageUrl(machine.image)" :alt="machine.name">
                     <div class="image-gradient"></div>
                   </div>
                   <div class="image-placeholder" v-else>
@@ -200,38 +200,37 @@
                     <i :class="getCategoryIcon(machine.category)"></i>
                     {{ getCategoryName(machine.category) }}
                   </span>
-                  <span :class="['difficulty-indicator', machine.condition]">
+                  <span :class="['difficulty-indicator', machine.difficulty]">
                     <span class="difficulty-dot"></span>
-                    {{ machine.isAvailable ? getConditionLabel(machine.condition) : 'Indisponível' }}
+                    {{ getDifficultyLabel(machine.difficulty) }}
                   </span>
                 </div>
 
                 <h3 class="exercise-name">{{ machine.name }}</h3>
-                <p class="exercise-description">{{ machine.observations || 'Sem descrição disponível' }}</p>
+                <p class="exercise-description">{{ machine.description || 'Sem descrição disponível' }}</p>
 
-                <!-- Machine Stats -->
-                <div class="exercise-stats">
+                <!-- Machine Details -->
+                <div class="exercise-stats" v-if="machine.muscleGroups && machine.muscleGroups.length > 0">
                   <div class="stats-row">
-                    <div class="stat-item">
+                    <div class="stat-item full-width">
                       <div class="stat-icon-wrapper">
-                        <i class="fas fa-calendar"></i>
+                        <i class="fas fa-bullseye"></i>
                       </div>
                       <div class="stat-content">
-                        <span class="stat-label">Aquisição</span>
-                        <span class="stat-value">{{ machine.acquisitionDate ? new Date(machine.acquisitionDate).getFullYear() : 'N/A' }}</span>
-                      </div>
-                    </div>
-
-                    <div class="stat-item">
-                      <div class="stat-icon-wrapper">
-                        <i class="fas fa-map-marker-alt"></i>
-                      </div>
-                      <div class="stat-content">
-                        <span class="stat-label">Local</span>
-                        <span class="stat-value">{{ machine.location || 'N/A' }}</span>
+                        <span class="stat-label">Grupos Musculares</span>
+                        <span class="stat-value">{{ machine.muscleGroups.join(', ') }}</span>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <!-- How To Use -->
+                <div class="how-to-use" v-if="machine.howToUse">
+                  <h4 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Como Usar
+                  </h4>
+                  <p class="section-text">{{ machine.howToUse }}</p>
                 </div>
 
                 <!-- Actions -->
@@ -280,15 +279,14 @@
     </main>
 
     <!-- Equipment Modal -->
-    <div v-if="showEquipmentModal" class="modal-overlay-equipment" @click.self="closeEquipmentModal">
-      <EquipmentModal 
-        :instructor-id="instructorId"
-        :equipment-list="machines"
-        @close="closeEquipmentModal" 
-        @equipment-added="handleEquipmentAdded"
-        @equipment-removed="handleEquipmentAdded"
-      />
-    </div>
+    <EquipmentModal 
+      v-if="showEquipmentModal"
+      :instructor-id="instructorId"
+      :equipment-list="machines"
+      @close="closeEquipmentModal" 
+      @equipment-added="handleEquipmentAdded"
+      @equipment-removed="handleEquipmentAdded"
+    />
   </div>
 </template>
 
@@ -340,12 +338,45 @@ export default {
     };
   },
   async created() {
+    console.log('🔵 [machines.vue] created() iniciado');
+    console.log('🔵 [machines.vue] user do store:', this.user);
+    console.log('🔵 [machines.vue] sessionStorage user:', sessionStorage.getItem('user'));
+    console.log('🔵 [machines.vue] sessionStorage token:', sessionStorage.getItem('token'));
+    
+    // Aguardar um tick para garantir que o store está atualizado
+    await this.$nextTick();
+    
     await this.fetchInstructorId();
+    console.log('🔵 [machines.vue] instructorId após fetch:', this.instructorId);
     if (this.instructorId) {
       await this.fetchEquipments();
+    } else {
+      console.error('❌ [machines.vue] instructorId está null após fetchInstructorId');
+      console.error('❌ [machines.vue] Tentando novamente em 1 segundo...');
+      
+      // Tentar novamente após 1 segundo (pode ser que o store ainda esteja inicializando)
+      setTimeout(async () => {
+        console.log('🔄 [machines.vue] Tentativa 2 de fetchInstructorId');
+        await this.fetchInstructorId();
+        if (this.instructorId) {
+          console.log('✅ [machines.vue] instructorId carregado na segunda tentativa:', this.instructorId);
+          await this.fetchEquipments();
+        } else {
+          console.error('❌ [machines.vue] instructorId continua null após segunda tentativa');
+        }
+      }, 1000);
     }
   },
   computed: {
+    getImageUrl() {
+      return (imagePath) => {
+        if (!imagePath) return null;
+        // Se já for URL completa, retorna como está
+        if (imagePath.startsWith('http')) return imagePath;
+        // Constrói URL completa do backend
+        return `http://localhost:3000${imagePath}`;
+      };
+    },
     filteredMachines() {
       if (!this.selectedCategory || this.selectedCategory === 'todos') {
         return this.machines;
@@ -358,15 +389,51 @@ export default {
       return this.filteredMachines;
     },
   },
+  watch: {
+    // Observar mudanças no user e buscar instructorId se ainda não tiver
+    user: {
+      handler(newUser) {
+        console.log('👁️ [watch user] User mudou:', newUser);
+        const userId = newUser?.userId || newUser?.id;
+        if (newUser && userId && !this.instructorId) {
+          console.log('👁️ [watch user] User disponível e instructorId null, buscando...');
+          this.fetchInstructorId();
+        }
+      },
+      deep: true,
+      immediate: false
+    }
+  },
   methods: {
     async fetchInstructorId() {
+      console.log('🟢 [fetchInstructorId] Iniciando busca do instructorId');
+      console.log('🟢 [fetchInstructorId] this.user:', this.user);
+      
       try {
-        if (this.user && this.user.userId) {
-          const response = await api.get(`/instructors/user/${this.user.userId}`);
+        // Se já tiver instructorId no user (vem do login), usar direto
+        if (this.user && this.user.instructorId) {
+          console.log('✅ [fetchInstructorId] instructorId já existe no user:', this.user.instructorId);
+          this.instructorId = this.user.instructorId;
+          return;
+        }
+        
+        // Caso contrário, buscar usando userId ou id
+        const userId = this.user?.userId || this.user?.id;
+        console.log('🟢 [fetchInstructorId] userId extraído:', userId);
+        
+        if (this.user && userId) {
+          console.log('🟢 [fetchInstructorId] Fazendo GET /instructors/user/' + userId);
+          const response = await api.get(`/instructors/user/${userId}`);
+          console.log('🟢 [fetchInstructorId] Resposta da API:', response.data);
           this.instructorId = response.data._id;
+          console.log('✅ [fetchInstructorId] instructorId definido:', this.instructorId);
+        } else {
+          console.error('❌ [fetchInstructorId] user ou userId não existe');
+          console.error('❌ [fetchInstructorId] this.user:', this.user);
         }
       } catch (error) {
-        console.error('Erro ao buscar instrutor:', error);
+        console.error('❌ [fetchInstructorId] Erro ao buscar instrutor:', error);
+        console.error('❌ [fetchInstructorId] Error response:', error.response?.data);
       }
     },
     async fetchEquipments() {
@@ -417,17 +484,36 @@ export default {
       };
       return categoryMap[categoryName] || 'fas fa-cogs';
     },
-    getConditionLabel(condition) {
+    getDifficultyLabel(difficulty) {
       const labels = {
-        novo: 'Novo',
-        otimo: 'Ótimo',
-        bom: 'Bom',
-        regular: 'Regular',
-        manutencao: 'Manutenção'
+        iniciante: 'Iniciante',
+        intermediario: 'Intermediário',
+        avancado: 'Avançado'
       };
-      return labels[condition] || condition;
+      return labels[difficulty] || difficulty;
     },
-    openCreateMachineModal() {
+    async openCreateMachineModal() {
+      console.log('🟣 [openCreateMachineModal] Abrindo modal');
+      console.log('🟣 [openCreateMachineModal] instructorId atual:', this.instructorId);
+      console.log('🟣 [openCreateMachineModal] user atual:', this.user);
+      
+      // Se instructorId não existe, tentar buscar novamente
+      if (!this.instructorId) {
+        console.warn('⚠️ [openCreateMachineModal] instructorId está null, tentando buscar novamente...');
+        await this.fetchInstructorId();
+        
+        if (!this.instructorId) {
+          console.error('❌ [openCreateMachineModal] CRÍTICO: instructorId continua null após segunda tentativa!');
+          console.error('❌ [openCreateMachineModal] user:', this.user);
+          console.error('❌ [openCreateMachineModal] sessionStorage user:', sessionStorage.getItem('user'));
+          console.error('❌ [openCreateMachineModal] sessionStorage token:', sessionStorage.getItem('token'));
+          alert('❌ ERRO: Não foi possível carregar o ID do instrutor.\n\nDados de debug (verifique o console):\n- User: ' + JSON.stringify(this.user) + '\n\nPor favor, faça logout e login novamente.');
+          return;
+        } else {
+          console.log('✅ [openCreateMachineModal] instructorId carregado com sucesso na segunda tentativa:', this.instructorId);
+        }
+      }
+      
       this.showEquipmentModal = true;
     },
     closeEquipmentModal() {
@@ -435,7 +521,6 @@ export default {
     },
     async handleEquipmentAdded() {
       await this.fetchEquipments();
-      this.closeEquipmentModal();
     },
     editMachine(machine) {
       console.log('Editar aparelho:', machine);
@@ -1724,30 +1809,44 @@ body:has(.navbar-collapsed) .dashboard-main,
   }
 }
 
-/* Modal Overlay */
-.modal-overlay-equipment {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-  animation: fadeInModal 0.3s ease;
-  overflow-y: auto;
+/* How To Use Section */
+.how-to-use {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border-left: 3px solid var(--primary-color);
 }
 
-@keyframes fadeInModal {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.section-title i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.section-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.stat-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.stat-value {
+  text-transform: capitalize;
 }
 </style>

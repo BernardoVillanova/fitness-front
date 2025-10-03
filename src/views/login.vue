@@ -86,8 +86,11 @@ export default {
         sessionStorage.setItem("token", token);
 
         // Usar dados retornados pela API (mais confiável que apenas o token)
+        const userId = response.data.user?.id || decodedToken.id;
+        
         let userData = {
-          id: response.data.user?.id || decodedToken.id,
+          id: userId,
+          userId: userId, // Adicionar userId explicitamente
           email: response.data.user?.email || this.email,
           role: response.data.user?.role || decodedToken.role,
           name: response.data.user?.name || decodedToken.name || 'Usuário',
@@ -98,6 +101,24 @@ export default {
 
         console.log('📋 Dados do usuário após login:', userData);
 
+        // Se for personal, buscar instructorId
+        if (decodedToken.role === 'personal') {
+          try {
+            console.log('🔍 Buscando instructorId para userId:', userId);
+            const instructorResponse = await api.get(`/instructors/user/${userId}`);
+            
+            userData = {
+              ...userData,
+              instructorId: instructorResponse.data._id,
+              name: instructorResponse.data.name || userData.name
+            };
+            
+            console.log('✅ InstructorId encontrado:', userData.instructorId);
+          } catch (err) {
+            console.error('❌ Erro ao buscar dados do instructor:', err);
+          }
+        }
+        
         // Se for student, buscar dados completos
         if (decodedToken.role === 'student') {
           try {
