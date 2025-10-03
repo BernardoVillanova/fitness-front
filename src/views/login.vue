@@ -179,8 +179,7 @@ export default {
         sessionStorage.setItem("user", JSON.stringify(userData));
         
         // Verificar se foi salvo corretamente
-        const savedUser = JSON.parse(sessionStorage.getItem("user"));
-        console.log('✅ Usuário salvo no sessionStorage:', savedUser);
+        console.log('✅ Usuário salvo no sessionStorage:', JSON.parse(sessionStorage.getItem("user")));
 
         if (userData.role === "personal") {
           console.log('🏃 Redirecionando para dashboard de personal');

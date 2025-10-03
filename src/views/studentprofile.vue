@@ -544,8 +544,8 @@ const saveProfile = async () => {
     };
 
     console.log('Atualizando Student com:', studentUpdateData);
-    const response = await api.put(`/students/${studentId.value}`, studentUpdateData);
-    console.log('Student atualizado:', response.data);
+    const { data } = await api.put(`/students/${studentId.value}`, studentUpdateData);
+    console.log('Student atualizado:', data);
     
     // Atualizar dados originais
     originalData.value = { ...studentData };
