@@ -28,16 +28,20 @@
         </div>
         <div class="stats-container">
           <div class="stat-item">
-            <span class="stat-number">10k+</span>
-            <span class="stat-label">Usuários ativos</span>
+            <span class="stat-number">1.2K+</span>
+            <span class="stat-label">Alunos Ativos</span>
           </div>
           <div class="stat-item">
-            <span class="stat-number">50k+</span>
-            <span class="stat-label">Treinos realizados</span>
+            <span class="stat-number">45+</span>
+            <span class="stat-label">Instrutores Parceiros</span>
           </div>
           <div class="stat-item">
-            <span class="stat-number">98%</span>
-            <span class="stat-label">Satisfação</span>
+            <span class="stat-number">94%</span>
+            <span class="stat-label">Taxa de Satisfação</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">15+</span>
+            <span class="stat-label">Academias Parceiras</span>
           </div>
         </div>
       </div>

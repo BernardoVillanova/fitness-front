@@ -146,7 +146,7 @@
           <div class="exercises-grid" v-if="displayedMachines.length > 0">
             <div 
               v-for="machine in displayedMachines" 
-              :key="machine.id"
+              :key="machine._id"
               class="exercise-card"
             >
               <div class="card-glow"></div>
@@ -198,37 +198,37 @@
                 <div class="exercise-meta">
                   <span class="category-badge">
                     <i :class="getCategoryIcon(machine.category)"></i>
-                    {{ machine.category }}
+                    {{ getCategoryName(machine.category) }}
                   </span>
-                  <span :class="['difficulty-indicator', machine.status?.toLowerCase()]">
+                  <span :class="['difficulty-indicator', machine.condition]">
                     <span class="difficulty-dot"></span>
-                    {{ machine.status || 'Disponível' }}
+                    {{ machine.isAvailable ? getConditionLabel(machine.condition) : 'Indisponível' }}
                   </span>
                 </div>
 
                 <h3 class="exercise-name">{{ machine.name }}</h3>
-                <p class="exercise-description">{{ machine.description || 'Aparelho de musculação para treinos específicos' }}</p>
+                <p class="exercise-description">{{ machine.observations || 'Sem descrição disponível' }}</p>
 
                 <!-- Machine Stats -->
                 <div class="exercise-stats">
                   <div class="stats-row">
                     <div class="stat-item">
                       <div class="stat-icon-wrapper">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-calendar"></i>
                       </div>
                       <div class="stat-content">
-                        <span class="stat-label">Usuários</span>
-                        <span class="stat-value">{{ machine.users || 0 }}</span>
+                        <span class="stat-label">Aquisição</span>
+                        <span class="stat-value">{{ machine.acquisitionDate ? new Date(machine.acquisitionDate).getFullYear() : 'N/A' }}</span>
                       </div>
                     </div>
 
                     <div class="stat-item">
                       <div class="stat-icon-wrapper">
-                        <i class="fas fa-clipboard-list"></i>
+                        <i class="fas fa-map-marker-alt"></i>
                       </div>
                       <div class="stat-content">
-                        <span class="stat-label">Treinos</span>
-                        <span class="stat-value">{{ machine.workouts || 0 }}</span>
+                        <span class="stat-label">Local</span>
+                        <span class="stat-value">{{ machine.location || 'N/A' }}</span>
                       </div>
                     </div>
                   </div>
@@ -281,7 +281,13 @@
 
     <!-- Equipment Modal -->
     <div v-if="showEquipmentModal" class="modal-overlay-equipment" @click.self="closeEquipmentModal">
-      <EquipmentModal @close="closeEquipmentModal" @equipment-added="handleEquipmentAdded" />
+      <EquipmentModal 
+        :instructor-id="instructorId"
+        :equipment-list="machines"
+        @close="closeEquipmentModal" 
+        @equipment-added="handleEquipmentAdded"
+        @equipment-removed="handleEquipmentAdded"
+      />
     </div>
   </div>
 </template>
@@ -290,7 +296,9 @@
 import DashboardNavBar from "@/components/DashboardNavBar.vue";
 import EquipmentModal from "@/components/EquipmentModal.vue";
 import { useThemeStore } from "@/store/theme";
+import { useAuthStore } from "@/store/auth";
 import { storeToRefs } from "pinia";
+import api from "@/api";
 
 export default {
   name: "MachinesView",
@@ -300,152 +308,42 @@ export default {
   },
   setup() {
     const themeStore = useThemeStore();
+    const authStore = useAuthStore();
     const { isDarkMode } = storeToRefs(themeStore);
+    const { user } = storeToRefs(authStore);
     
     return {
       isDarkMode,
+      user,
     };
   },
   data() {
     return {
       selectedCategory: null,
       showEquipmentModal: false,
+      isLoading: false,
       machinesStats: {
-        total: 12,
-        categories: 6,
-        available: 11,
+        total: 0,
+        categories: 0,
+        available: 0,
       },
       categories: [
-        { id: 'todos', name: 'Todos', icon: 'fas fa-th-large', count: 12 },
-        { id: 'cardiovascular', name: 'Cardiovascular', icon: 'fas fa-heartbeat', count: 3 },
-        { id: 'forca', name: 'Força', icon: 'fas fa-dumbbell', count: 6 },
-        { id: 'livre', name: 'Peso Livre', icon: 'fas fa-weight-hanging', count: 2 },
-        { id: 'funcional', name: 'Funcional', icon: 'fas fa-running', count: 1 },
-        { id: 'acessorios', name: 'Acessórios', icon: 'fas fa-tools', count: 0 },
+        { id: 'todos', name: 'Todos', icon: 'fas fa-th-large', count: 0 },
+        { id: 'cardio', name: 'Cardio', icon: 'fas fa-heartbeat', count: 0 },
+        { id: 'musculacao', name: 'Musculação', icon: 'fas fa-dumbbell', count: 0 },
+        { id: 'funcional', name: 'Funcional', icon: 'fas fa-running', count: 0 },
+        { id: 'crossfit', name: 'CrossFit', icon: 'fas fa-fire', count: 0 },
+        { id: 'outros', name: 'Outros', icon: 'fas fa-tools', count: 0 },
       ],
-      machines: [
-        {
-          id: 1,
-          name: 'Esteira Ergométrica',
-          category: 'Cardiovascular',
-          description: 'Esteira profissional com programas de treino variados',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=500&h=300&fit=crop',
-          users: 45,
-          workouts: 120,
-        },
-        {
-          id: 2,
-          name: 'Leg Press 45°',
-          category: 'Força',
-          description: 'Aparelho para treino de pernas e glúteos',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1584735175315-9d5df23860bc?w=500&h=300&fit=crop',
-          users: 32,
-          workouts: 89,
-        },
-        {
-          id: 3,
-          name: 'Supino Reto',
-          category: 'Força',
-          description: 'Banco de supino para treino de peito',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500&h=300&fit=crop',
-          users: 38,
-          workouts: 95,
-        },
-        {
-          id: 4,
-          name: 'Bicicleta Ergométrica',
-          category: 'Cardiovascular',
-          description: 'Bike estacionária com monitor de frequência cardíaca',
-          status: 'Manutenção',
-          image: 'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=500&h=300&fit=crop',
-          users: 28,
-          workouts: 76,
-        },
-        {
-          id: 5,
-          name: 'Crossover',
-          category: 'Força',
-          description: 'Aparelho multifuncional para diversos exercícios',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&h=300&fit=crop',
-          users: 41,
-          workouts: 102,
-        },
-        {
-          id: 6,
-          name: 'Elíptico',
-          category: 'Cardiovascular',
-          description: 'Elíptico com baixo impacto nas articulações',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=500&h=300&fit=crop',
-          users: 25,
-          workouts: 68,
-        },
-        {
-          id: 7,
-          name: 'Remada Baixa',
-          category: 'Força',
-          description: 'Aparelho para treino de costas e dorsais',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&h=300&fit=crop',
-          users: 29,
-          workouts: 82,
-        },
-        {
-          id: 8,
-          name: 'Cadeira Extensora',
-          category: 'Força',
-          description: 'Treino isolado de quadríceps',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1590487988256-9ed24133863e?w=500&h=300&fit=crop',
-          users: 24,
-          workouts: 67,
-        },
-        {
-          id: 9,
-          name: 'Barra Fixa',
-          category: 'Peso Livre',
-          description: 'Barra fixa para exercícios de tração',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500&h=300&fit=crop',
-          users: 52,
-          workouts: 145,
-        },
-        {
-          id: 10,
-          name: 'Smith Machine',
-          category: 'Força',
-          description: 'Barra guiada para exercícios seguros e controlados',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1584466977773-e625c37cdd50?w=500&h=300&fit=crop',
-          users: 36,
-          workouts: 93,
-        },
-        {
-          id: 11,
-          name: 'TRX',
-          category: 'Funcional',
-          description: 'Treinamento suspenso para todo o corpo',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&h=300&fit=crop',
-          users: 18,
-          workouts: 54,
-        },
-        {
-          id: 12,
-          name: 'Kettlebells',
-          category: 'Peso Livre',
-          description: 'Conjunto de kettlebells de 4kg a 32kg',
-          status: 'Disponível',
-          image: 'https://images.unsplash.com/photo-1580086319619-3ed498161c77?w=500&h=300&fit=crop',
-          users: 33,
-          workouts: 88,
-        },
-      ],
+      machines: [],
+      instructorId: null,
     };
+  },
+  async created() {
+    await this.fetchInstructorId();
+    if (this.instructorId) {
+      await this.fetchEquipments();
+    }
   },
   computed: {
     filteredMachines() {
@@ -453,7 +351,7 @@ export default {
         return this.machines;
       }
       return this.machines.filter(machine => 
-        machine.category.toLowerCase() === this.getCategoryName(this.selectedCategory).toLowerCase()
+        machine.category === this.selectedCategory
       );
     },
     displayedMachines() {
@@ -461,6 +359,44 @@ export default {
     },
   },
   methods: {
+    async fetchInstructorId() {
+      try {
+        if (this.user && this.user.userId) {
+          const response = await api.get(`/instructors/user/${this.user.userId}`);
+          this.instructorId = response.data._id;
+        }
+      } catch (error) {
+        console.error('Erro ao buscar instrutor:', error);
+      }
+    },
+    async fetchEquipments() {
+      this.isLoading = true;
+      try {
+        const response = await api.get(`/equipments/instructor/${this.instructorId}`);
+        this.machines = response.data.equipments;
+        this.updateStats();
+        this.updateCategories();
+      } catch (error) {
+        console.error('Erro ao buscar equipamentos:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    updateStats() {
+      this.machinesStats.total = this.machines.length;
+      this.machinesStats.available = this.machines.filter(m => m.isAvailable).length;
+      const uniqueCategories = [...new Set(this.machines.map(m => m.category))];
+      this.machinesStats.categories = uniqueCategories.length;
+    },
+    updateCategories() {
+      this.categories.forEach(cat => {
+        if (cat.id === 'todos') {
+          cat.count = this.machines.length;
+        } else {
+          cat.count = this.machines.filter(m => m.category === cat.id).length;
+        }
+      });
+    },
     filterByCategory(categoryId) {
       this.selectedCategory = categoryId;
     },
@@ -469,17 +405,27 @@ export default {
     },
     getCategoryName(categoryId) {
       const category = this.categories.find(cat => cat.id === categoryId);
-      return category ? category.name : '';
+      return category ? category.name : categoryId;
     },
     getCategoryIcon(categoryName) {
       const categoryMap = {
-        'Cardiovascular': 'fas fa-heartbeat',
-        'Força': 'fas fa-dumbbell',
-        'Peso Livre': 'fas fa-weight-hanging',
-        'Funcional': 'fas fa-running',
-        'Acessórios': 'fas fa-tools',
+        'cardio': 'fas fa-heartbeat',
+        'musculacao': 'fas fa-dumbbell',
+        'funcional': 'fas fa-running',
+        'crossfit': 'fas fa-fire',
+        'outros': 'fas fa-tools',
       };
       return categoryMap[categoryName] || 'fas fa-cogs';
+    },
+    getConditionLabel(condition) {
+      const labels = {
+        novo: 'Novo',
+        otimo: 'Ótimo',
+        bom: 'Bom',
+        regular: 'Regular',
+        manutencao: 'Manutenção'
+      };
+      return labels[condition] || condition;
     },
     openCreateMachineModal() {
       this.showEquipmentModal = true;
@@ -487,9 +433,9 @@ export default {
     closeEquipmentModal() {
       this.showEquipmentModal = false;
     },
-    handleEquipmentAdded(equipment) {
-      console.log('Novo equipamento adicionado:', equipment);
-      // Aqui você pode adicionar o equipamento à lista local ou fazer uma requisição para a API
+    async handleEquipmentAdded() {
+      await this.fetchEquipments();
+      this.closeEquipmentModal();
     },
     editMachine(machine) {
       console.log('Editar aparelho:', machine);
