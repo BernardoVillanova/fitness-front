@@ -1,6 +1,12 @@
 <template>
   <div class="register-page" :class="{ 'dark-mode': isDarkMode }">
     <NavBar />
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
     <div class="register-container">
       <!-- Progress Stepper -->
       <div class="progress-stepper">
@@ -331,6 +337,7 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import NavBar from '@/components/NavBar.vue'
+import NotificationModal from '@/components/NotificationModal.vue'
 import axios from 'axios'
 
 const router = useRouter()
@@ -340,6 +347,23 @@ const { isDarkMode } = storeToRefs(themeStore)
 // Get userId from query params
 const route = router.currentRoute.value
 const userId = route.query.userId
+
+// Notification state
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
 
 // Steps configuration
 const steps = [
@@ -509,39 +533,39 @@ const validateStep = () => {
   switch (currentStep.value) {
     case 1:
       if (!form.value.yearsOfExperience || form.value.yearsOfExperience < 0) {
-        alert('⚠️ Informe os anos de experiência')
+        showNotification('warning', 'Atenção', 'Informe os anos de experiência')
         return false
       }
       if (!form.value.bio || form.value.bio.length < 50) {
-        alert('⚠️ A biografia deve ter pelo menos 50 caracteres')
+        showNotification('warning', 'Biografia Incompleta', 'A biografia deve ter pelo menos 50 caracteres')
         return false
       }
       break
     case 2:
       if (form.value.certifications.length === 0) {
-        alert('⚠️ Adicione pelo menos uma certificação')
+        showNotification('warning', 'Certificações Necessárias', 'Adicione pelo menos uma certificação')
         return false
       }
       if (form.value.specialties.length === 0) {
-        alert('⚠️ Selecione pelo menos uma especialização')
+        showNotification('warning', 'Especializações Necessárias', 'Selecione pelo menos uma especialização')
         return false
       }
       break
     case 3:
       if (form.value.availability.workingDays.length === 0) {
-        alert('⚠️ Selecione pelo menos um dia de trabalho')
+        showNotification('warning', 'Dias de Trabalho', 'Selecione pelo menos um dia de trabalho')
         return false
       }
       if (!form.value.availability.startTime || !form.value.availability.endTime) {
-        alert('⚠️ Defina o horário de trabalho')
+        showNotification('warning', 'Horário Incompleto', 'Defina o horário de trabalho')
         return false
       }
       if (form.value.availability.startTime >= form.value.availability.endTime) {
-        alert('⚠️ O horário de início deve ser antes do horário de fim')
+        showNotification('warning', 'Horário Inválido', 'O horário de início deve ser antes do horário de fim')
         return false
       }
       if (!form.value.maxStudents || form.value.maxStudents < 1) {
-        alert('⚠️ Defina a capacidade máxima de alunos')
+        showNotification('warning', 'Capacidade Necessária', 'Defina a capacidade máxima de alunos')
         return false
       }
       break
@@ -569,7 +593,7 @@ const prevStep = () => {
 
 const submitForm = async () => {
   if (!form.value.userId) {
-    alert('❌ ID do usuário não encontrado. Volte ao início.')
+    showNotification('error', 'Erro no Cadastro', 'ID do usuário não encontrado. Volte ao início.')
     return
   }
 
@@ -598,12 +622,14 @@ const submitForm = async () => {
     
     console.log('✅ Instrutor criado:', response.data)
     
-    alert('🎉 Cadastro realizado com sucesso! Você será redirecionado para o login.')
+    showNotification('success', 'Cadastro Realizado!', 'Você será redirecionado para o login.')
     
-    router.push('/login')
+    setTimeout(() => {
+      router.push('/login')
+    }, 2000)
   } catch (error) {
     console.error('❌ Erro ao cadastrar:', error)
-    alert(`❌ Erro: ${error.response?.data?.message || error.message || 'Erro ao cadastrar instrutor'}`)
+    showNotification('error', 'Erro no Cadastro', error.response?.data?.message || error.message || 'Erro ao cadastrar instrutor')
   } finally {
     isSubmitting.value = false
   }
