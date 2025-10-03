@@ -555,6 +555,324 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Criação de Exercício -->
+    <div v-if="showCreateModal" class="modal-overlay" @click.self="closeCreateModal">
+      <div class="modal-container-large">
+        <div class="modal-header">
+          <div class="modal-header-content">
+            <div class="modal-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="modal-title">Novo Exercício</h2>
+              <p class="modal-subtitle">Adicione um novo exercício ao seu catálogo</p>
+            </div>
+          </div>
+          <button class="modal-close" @click="closeCreateModal">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <form @submit.prevent="saveNewExercise">
+            <div class="form-grid">
+              <!-- Coluna Esquerda -->
+              <div class="form-column">
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Nome do Exercício
+                  </label>
+                  <input 
+                    v-model="newExercise.name" 
+                    type="text" 
+                    class="form-input"
+                    placeholder="Digite o nome do exercício"
+                    required
+                  />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                      </svg>
+                      Categoria
+                    </label>
+                    <select v-model="newExercise.category" class="form-input" required>
+                      <option value="">Selecione</option>
+                      <option value="Peito">Peito</option>
+                      <option value="Costas">Costas</option>
+                      <option value="Pernas">Pernas</option>
+                      <option value="Braços">Braços</option>
+                      <option value="Ombros">Ombros</option>
+                      <option value="Core">Core</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      Duração
+                    </label>
+                    <input 
+                      v-model="newExercise.duration" 
+                      type="text" 
+                      class="form-input"
+                      placeholder="Ex: 45-60 seg"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    Dificuldade
+                  </label>
+                  <select v-model="newExercise.difficulty" class="form-input" required>
+                    <option value="">Selecione</option>
+                    <option value="Iniciante">🟢 Iniciante</option>
+                    <option value="Intermediário">🟡 Intermediário</option>
+                    <option value="Avançado">🔴 Avançado</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Descrição
+                  </label>
+                  <textarea 
+                    v-model="newExercise.description" 
+                    class="form-textarea"
+                    placeholder="Descreva o exercício, seus benefícios e técnica de execução..."
+                    rows="4"
+                    required
+                  ></textarea>
+                </div>
+
+                <!-- Equipamento -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    Equipamento/Aparelho
+                  </label>
+                  <select v-model="newExercise.equipment" class="form-input">
+                    <option value="">Selecione o equipamento</option>
+                    <option value="Peso Corporal">🧘 Peso Corporal</option>
+                    <option value="Barra">🏋️ Barra</option>
+                    <option value="Halteres">💪 Halteres</option>
+                    <option value="Máquina">🎰 Máquina</option>
+                    <option value="Cabo">🔗 Cabo/Polia</option>
+                    <option value="Kettlebell">⚫ Kettlebell</option>
+                    <option value="Elástico">🔴 Elástico/Faixa</option>
+                    <option value="Medicine Ball">⚽ Medicine Ball</option>
+                    <option value="TRX">🎯 TRX/Suspensão</option>
+                    <option value="Outros">🔧 Outros</option>
+                  </select>
+                </div>
+
+                <!-- Tipo de Movimento e Músculos -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                      </svg>
+                      Tipo de Movimento
+                    </label>
+                    <select v-model="newExercise.movementType" class="form-input">
+                      <option value="">Selecione</option>
+                      <option value="Empurrar">➡️ Empurrar</option>
+                      <option value="Puxar">⬅️ Puxar</option>
+                      <option value="Pernas">🦵 Pernas</option>
+                      <option value="Core">🎯 Core</option>
+                      <option value="Isolado">🔍 Isolado</option>
+                      <option value="Composto">🔄 Composto</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                      </svg>
+                      Músculo Primário
+                    </label>
+                    <input 
+                      v-model="newExercise.primaryMuscle" 
+                      type="text" 
+                      class="form-input"
+                      placeholder="Ex: Peitoral Maior"
+                    />
+                  </div>
+                </div>
+
+                <!-- Músculos Secundários -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Músculos Secundários
+                  </label>
+                  <input 
+                    v-model="newExercise.secondaryMuscles" 
+                    type="text" 
+                    class="form-input"
+                    placeholder="Ex: Tríceps, Deltoides Anterior"
+                  />
+                </div>
+
+                <!-- Dicas de Execução -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Dicas de Execução
+                  </label>
+                  <textarea 
+                    v-model="newExercise.executionTips" 
+                    class="form-textarea"
+                    placeholder="Dicas importantes sobre postura, respiração e técnica..."
+                    rows="3"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Coluna Direita - Upload de Imagem -->
+              <div class="form-column">
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Imagem do Exercício
+                  </label>
+                  
+                  <!-- Preview da Imagem -->
+                  <div v-if="createImagePreview" class="image-preview-container">
+                    <img :src="createImagePreview" alt="Preview" class="image-preview" />
+                    <button type="button" class="remove-image-btn" @click="removeCreateImage">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M1 1L11 11M11 1L1 11" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Área de Upload Moderna com Borda Tracejada -->
+                  <div 
+                    v-else
+                    class="upload-area-modern upload-dashed"
+                    :class="{ 'drag-over': isCreateDragging }"
+                    @dragover.prevent="isCreateDragging = true"
+                    @dragleave.prevent="isCreateDragging = false"
+                    @drop.prevent="handleCreateDrop"
+                    @click="triggerCreateFileInput"
+                  >
+                    <div class="upload-gradient-bg"></div>
+                    <div class="upload-grid-pattern"></div>
+                    
+                    <input 
+                      ref="createFileInput"
+                      type="file" 
+                      accept="image/*"
+                      class="file-input"
+                      @change="handleCreateFileSelect"
+                    />
+                    
+                    <div class="upload-content-modern">
+                      <!-- Icon Container with Animations -->
+                      <div class="upload-icon-container">
+                        <div class="icon-circle-outer">
+                          <div class="icon-circle-inner">
+                            <svg class="upload-icon-svg" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                          </div>
+                        </div>
+                        <!-- Floating Particles -->
+                        <div class="particle particle-1"></div>
+                        <div class="particle particle-2"></div>
+                        <div class="particle particle-3"></div>
+                      </div>
+
+                      <!-- Text Content -->
+                      <div class="upload-text-modern">
+                        <h3 class="upload-title-modern">
+                          <span class="title-gradient-text">Adicionar Imagem</span>
+                        </h3>
+                        <p class="upload-subtitle-modern">Arraste e solte aqui ou clique para selecionar</p>
+                      </div>
+
+                      <!-- Modern Upload Button -->
+                      <button type="button" class="upload-button-modern" @click.stop="triggerCreateFileInput">
+                        <div class="button-bg-gradient"></div>
+                        <div class="button-shine-effect"></div>
+                        <div class="button-content-wrapper">
+                          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                          </svg>
+                          <span>Selecionar Arquivo</span>
+                        </div>
+                      </button>
+
+                      <!-- Format Badges -->
+                      <div class="upload-formats-modern">
+                        <span class="format-badge">PNG</span>
+                        <span class="format-badge">JPG</span>
+                        <span class="format-badge">GIF</span>
+                        <span class="format-badge">WEBP</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Informação Adicional -->
+                  <div class="upload-info">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>PNG, JPG, GIF ou WEBP • Máximo 10MB • Recomendado: 800×600px</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" @click="closeCreateModal">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancelar
+          </button>
+          <button type="button" class="btn-save" @click="saveNewExercise">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Criar Exercício
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -579,6 +897,7 @@ export default {
       activeCategory: 'all',
       imageError: {},
       showEditModal: false,
+      showCreateModal: false,
       editingExercise: {
         id: null,
         name: '',
@@ -589,9 +908,27 @@ export default {
         image: '',
         usageCount: 0
       },
+      newExercise: {
+        name: '',
+        category: '',
+        description: '',
+        difficulty: '',
+        duration: '',
+        image: '',
+        usageCount: 0,
+        // Campos adicionais
+        equipment: '',
+        movementType: '',
+        primaryMuscle: '',
+        secondaryMuscles: '',
+        executionTips: ''
+      },
       imagePreview: null,
+      createImagePreview: null,
       isDragging: false,
+      isCreateDragging: false,
       selectedFile: null,
+      createSelectedFile: null,
       exercisesStats: {
         total: 45,
         categories: 8,
@@ -688,7 +1025,7 @@ export default {
       this.imageError[exerciseId] = false;
     },
     openCreateExerciseModal() {
-      console.log('Abrir modal de criação de exercício');
+      this.showCreateModal = true;
     },
     filterExercises() {
       this.applyFilters();
@@ -871,6 +1208,103 @@ export default {
     getCategoryName(categoryId) {
       const category = this.categories.find(cat => cat.id === categoryId);
       return category ? category.name : '';
+    },
+    closeCreateModal() {
+      this.showCreateModal = false;
+      // Limpa os dados do formulário
+      this.newExercise = {
+        name: '',
+        category: '',
+        description: '',
+        difficulty: '',
+        duration: '',
+        image: '',
+        usageCount: 0
+      };
+      // Limpa preview e arquivo da imagem
+      this.createImagePreview = null;
+      this.createSelectedFile = null;
+      this.isCreateDragging = false;
+    },
+    saveNewExercise() {
+      // Gera um novo ID
+      const newId = Math.max(...this.exercises.map(ex => ex.id), 0) + 1;
+      
+      // Cria o novo exercício
+      const exercise = {
+        id: newId,
+        name: this.newExercise.name,
+        category: this.newExercise.category,
+        description: this.newExercise.description,
+        difficulty: this.newExercise.difficulty,
+        duration: this.newExercise.duration,
+        image: this.createImagePreview || null,
+        usageCount: 0,
+        showMenu: false
+      };
+      
+      // Adiciona o exercício à lista
+      this.exercises.push(exercise);
+      
+      // Atualiza as estatísticas
+      this.exercisesStats.total = this.exercises.length;
+      
+      // Aqui você pode adicionar uma chamada de API para salvar no backend
+      console.log('Novo exercício criado:', exercise);
+      
+      // Fecha o modal
+      this.closeCreateModal();
+      
+      // Reaplica os filtros para atualizar a lista
+      this.applyFilters();
+      
+      // Opcional: Mostrar mensagem de sucesso
+      // this.$toast.success('Exercício criado com sucesso!');
+    },
+    triggerCreateFileInput() {
+      this.$refs.createFileInput.click();
+    },
+    handleCreateFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.processCreateFile(file);
+      }
+    },
+    handleCreateDrop(event) {
+      this.isCreateDragging = false;
+      const file = event.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        this.processCreateFile(file);
+      }
+    },
+    processCreateFile(file) {
+      // Valida o tamanho do arquivo (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('A imagem deve ter no máximo 10MB');
+        return;
+      }
+
+      // Valida o tipo do arquivo
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione apenas arquivos de imagem');
+        return;
+      }
+
+      this.createSelectedFile = file;
+
+      // Cria preview da imagem
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.createImagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    },
+    removeCreateImage() {
+      this.createImagePreview = null;
+      this.createSelectedFile = null;
+      if (this.$refs.createFileInput) {
+        this.$refs.createFileInput.value = '';
+      }
     }
   }
 }
@@ -1763,6 +2197,7 @@ body:has(.navbar-collapsed) .floating-header,
   background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -2520,14 +2955,35 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .modal-container-large {
-  background: var(--card-background);
+  background: var(--bg-tertiary);
   border-radius: 28px;
   width: 100%;
   max-width: 1200px;
   max-height: 92vh;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   animation: slideUp 0.3s ease;
+  border: 1px solid var(--border-primary);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
+.modal-container-large::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-container-large::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-container-large::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 4px;
+}
+
+.modal-container-large::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
 }
 
 @keyframes slideUp {
@@ -2623,8 +3079,26 @@ body:has(.navbar-collapsed) .floating-header,
 
 .modal-body {
   padding: 48px;
+  max-height: calc(92vh - 250px);
   overflow-y: auto;
-  max-height: calc(92vh - 220px);
+  overflow-x: hidden;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 .form-grid {
@@ -2690,9 +3164,9 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 /* ========== ÁREA DE UPLOAD MELHORADA ========== */
-.upload-area {
+.upload-area-modern {
   position: relative;
-  border: 2px dashed transparent;
+  border: 3px dashed transparent;
   border-radius: 24px;
   padding: 60px 40px;
   text-align: center;
@@ -2700,6 +3174,25 @@ body:has(.navbar-collapsed) .floating-header,
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
   overflow: hidden;
   cursor: pointer;
+  will-change: box-shadow;
+}
+
+/* Variante com borda tracejada visível */
+.upload-area-modern.upload-dashed {
+  border-color: var(--border-color);
+}
+
+.upload-area-modern.upload-dashed:hover {
+  border-color: #6366f1;
+}
+
+.upload-area-modern.upload-dashed.drag-over {
+  border-color: #6366f1;
+}
+
+/* Desabilita o ::before (borda gradiente) quando usar borda tracejada */
+.upload-area-modern.upload-dashed::before {
+  display: none;
 }
 
 .upload-gradient-bg {
@@ -2713,6 +3206,7 @@ body:has(.navbar-collapsed) .floating-header,
   opacity: 0;
   transition: opacity 0.4s ease;
   z-index: 1;
+  pointer-events: none;
 }
 
 .upload-grid-pattern {
@@ -2725,6 +3219,7 @@ body:has(.navbar-collapsed) .floating-header,
   opacity: 0;
   transition: opacity 0.4s ease;
   z-index: 1;
+  pointer-events: none;
 }
 
 .upload-area-modern::before {
@@ -2744,6 +3239,7 @@ body:has(.navbar-collapsed) .floating-header,
   mask-composite: exclude;
   transition: all 0.4s ease;
   z-index: 2;
+  pointer-events: none;
 }
 
 .upload-area-modern:hover::before {
@@ -2756,10 +3252,9 @@ body:has(.navbar-collapsed) .floating-header,
 
 .upload-area-modern:hover {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-  transform: translateY(-4px);
   box-shadow: 
-    0 20px 40px rgba(99, 102, 241, 0.15),
-    0 10px 20px rgba(139, 92, 246, 0.1);
+    0 10px 30px rgba(99, 102, 241, 0.12),
+    0 5px 15px rgba(139, 92, 246, 0.08);
 }
 
 .upload-area-modern:hover .upload-gradient-bg,
@@ -2769,10 +3264,10 @@ body:has(.navbar-collapsed) .floating-header,
 
 .upload-area-modern.drag-over {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-  transform: scale(1.02);
+  transform: scale(1.01);
   box-shadow: 
-    0 25px 50px rgba(99, 102, 241, 0.2),
-    0 15px 30px rgba(139, 92, 246, 0.15);
+    0 15px 35px rgba(99, 102, 241, 0.18),
+    0 8px 20px rgba(139, 92, 246, 0.12);
 }
 
 .upload-area-modern.drag-over::before {
@@ -2789,10 +3284,10 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .upload-area-modern.drag-over .icon-circle-outer {
-  transform: scale(1.1);
+  transform: scale(1.05);
   box-shadow: 
-    0 20px 40px rgba(99, 102, 241, 0.3),
-    0 0 0 20px rgba(99, 102, 241, 0.1);
+    0 15px 35px rgba(99, 102, 241, 0.25),
+    0 0 0 15px rgba(99, 102, 241, 0.08);
 }
 
 .upload-content-modern {
@@ -2827,7 +3322,6 @@ body:has(.navbar-collapsed) .floating-header,
   box-shadow: 
     0 10px 30px rgba(99, 102, 241, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  animation: floatUpDown 3s ease-in-out infinite;
 }
 
 .icon-circle-inner {
@@ -2845,9 +3339,9 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .upload-area-modern:hover .icon-circle-inner {
-  transform: rotate(5deg) scale(1.05);
+  transform: rotate(3deg) scale(1.03);
   box-shadow: 
-    0 12px 32px rgba(99, 102, 241, 0.5),
+    0 10px 28px rgba(99, 102, 241, 0.45),
     inset 0 2px 4px rgba(255, 255, 255, 0.3);
 }
 
@@ -2858,7 +3352,7 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .upload-area-modern:hover .upload-icon-svg {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 /* Floating Particles */
@@ -2870,23 +3364,21 @@ body:has(.navbar-collapsed) .floating-header,
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .upload-area-modern:hover .particle {
-  opacity: 0.6;
-  animation: particleFloat 3s ease-in-out infinite;
+  opacity: 0.4;
 }
 
 .particle-1 {
   top: 20%;
   right: 20%;
-  animation-delay: 0s;
 }
 
 .particle-2 {
   bottom: 25%;
   left: 15%;
-  animation-delay: 1s;
   width: 6px;
   height: 6px;
 }
@@ -2894,7 +3386,6 @@ body:has(.navbar-collapsed) .floating-header,
 .particle-3 {
   top: 60%;
   right: 15%;
-  animation-delay: 2s;
   width: 10px;
   height: 10px;
 }
@@ -2940,16 +3431,6 @@ body:has(.navbar-collapsed) .floating-header,
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShift 3s ease infinite;
-}
-
-@keyframes gradientShift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
 }
 
 .upload-subtitle-modern {
@@ -3020,14 +3501,14 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .upload-button-modern:hover {
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
   box-shadow: 
-    0 12px 32px rgba(99, 102, 241, 0.4),
-    0 6px 16px rgba(139, 92, 246, 0.3);
+    0 8px 24px rgba(99, 102, 241, 0.3),
+    0 4px 12px rgba(139, 92, 246, 0.2);
 }
 
 .upload-button-modern:active {
-  transform: translateY(-1px) scale(1.02);
+  transform: translateY(0);
 }
 
 /* Format Badges */
@@ -3328,16 +3809,19 @@ body:has(.navbar-collapsed) .floating-header,
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 24px;
+  padding: 24px 48px;
   border-top: 1px solid var(--border-color);
-  margin-top: 24px;
+  background: var(--bg-tertiary);
+  backdrop-filter: blur(20px);
+  border-radius: 0 0 24px 24px;
+  flex-shrink: 0;
 }
 
 .btn-cancel,
 .btn-save {
   flex: 1;
-  max-width: 48%;
-  min-height: 48px;
+  max-width: 280px;
+  min-height: 56px;
   padding: 14px 24px;
   border-radius: 12px;
   font-size: 1rem;

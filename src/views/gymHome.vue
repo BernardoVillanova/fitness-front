@@ -5,39 +5,61 @@
       <div class="content-wrapper">
         <!-- Stats Section -->
         <section class="stats-section" v-if="!showForm">
-          <div class="stats-container">
-            <div class="stat-item">
-              <div class="stat-card">
-                <div class="card-icon">🏢</div>
-                <div class="card-content">
-                  <span class="stat-number">{{ gyms.length }}</span>
-                  <span class="stat-label">Academias</span>
+          <div class="stats-grid">
+            <div class="stat-card stat-total">
+              <div class="stat-icon">
+                <i class="fas fa-building"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">{{ gyms.length }}</h3>
+                <p class="stat-label">Total de Academias</p>
+              </div>
+            </div>
+
+            <div class="stat-card stat-students">
+              <div class="stat-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">{{ totalStudents }}</h3>
+                <p class="stat-label">Alunos Cadastrados</p>
+                <div class="stat-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" :style="{ width: '75%' }"></div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="stat-item">
-              <div class="stat-card">
-                <div class="card-icon">👥</div>
-                <div class="card-content">
-                  <span class="stat-number">{{ totalStudents }}</span>
-                  <span class="stat-label">Alunos</span>
+
+            <div class="stat-card stat-equipments">
+              <div class="stat-icon">
+                <i class="fas fa-dumbbell"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">{{ totalEquipments }}</h3>
+                <p class="stat-label">Equipamentos</p>
+                <div class="stat-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" :style="{ width: '60%' }"></div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="stat-item">
-              <div class="stat-card">
-                <div class="card-icon">💪</div>
-                <div class="card-content">
-                  <span class="stat-number">{{ totalEquipments }}</span>
-                  <span class="stat-label">Equipamentos</span>
-                </div>
+
+            <div class="stat-card stat-active">
+              <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-value">{{ gyms.length }}</h3>
+                <p class="stat-label">Academias Ativas</p>
               </div>
             </div>
           </div>
         </section>
 
         <!-- Actions Section -->
-        <section class="actions-section">
+        <section class="actions-section" v-if="!showForm">
           <div class="search-container">
             <div class="search-wrapper">
               <input 
@@ -58,23 +80,183 @@
         </section>
 
         <!-- Form Section -->
-        <section v-if="showForm" class="form-section">
-          <GymForm
-            :gym="selectedGym"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-          />
-        </section>
+        <GymForm
+          v-if="showForm"
+          :gym="selectedGym"
+          :show="showForm"
+          @submit="handleSubmit"
+          @cancel="handleCancel"
+        />
 
-        <!-- List Section -->
-        <section v-else class="list-section">
-          <div class="grid-container">
-            <GymList
-              :gyms="filteredGyms"
-              :loading="loading"
-              @edit-gym="handleEdit"
-              @delete-gym="confirmDelete"
-            />
+        <!-- Gyms Grid Section -->
+        <section v-if="!showForm" class="gyms-section">
+          <!-- Loading State -->
+          <div v-if="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Carregando academias...</p>
+          </div>
+
+          <!-- Gyms Grid -->
+          <div v-else-if="filteredGyms.length > 0" class="gyms-grid">
+            <div 
+              v-for="gym in filteredGyms" 
+              :key="gym._id" 
+              class="gym-card"
+            >
+              <div class="card-glow"></div>
+              
+              <!-- Gym Header -->
+              <div class="gym-header">
+                <div class="gym-image">
+                  <div v-if="!gym.image" class="image-placeholder">
+                    <div class="placeholder-icon">
+                      <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <div v-else class="image-container">
+                    <img :src="gym.image" :alt="gym.name" />
+                  </div>
+                  <div class="image-gradient"></div>
+                </div>
+                
+                <div class="image-overlay">
+                  <div class="overlay-actions">
+                    <button class="modern-overlay-btn preview-btn" @click="handleEdit(gym)" title="Visualizar">
+                      <div class="btn-glow-effect"></div>
+                      <div class="btn-icon-wrapper">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                        </svg>
+                      </div>
+                      <span class="btn-tooltip">Visualizar</span>
+                    </button>
+                    <button class="modern-overlay-btn edit-btn" @click="handleEdit(gym)" title="Editar">
+                      <div class="btn-glow-effect"></div>
+                      <div class="btn-icon-wrapper">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                        </svg>
+                      </div>
+                      <span class="btn-tooltip">Editar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="gym-menu-wrapper">
+                <button class="menu-trigger" @click="toggleGymMenu(gym._id)">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                  </svg>
+                </button>
+                
+                <div v-if="gym.showMenu" class="dropdown-menu">
+                  <button class="dropdown-option" @click="handleEdit(gym)">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                    </svg>
+                    Editar
+                  </button>
+                  <div class="dropdown-separator"></div>
+                  <button class="dropdown-option danger" @click="confirmDelete(gym._id)">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    Excluir
+                  </button>
+                </div>
+              </div>
+
+              <!-- Gym Info -->
+              <div class="gym-info">
+                <div class="gym-meta">
+                  <div class="location-badge" v-if="gym.location">
+                    <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                    </svg>
+                    {{ gym.location.city }}, {{ gym.location.state }}
+                  </div>
+                  <div class="status-indicator active">
+                    <div class="status-dot"></div>
+                    Ativa
+                  </div>
+                </div>
+                
+                <h3 class="gym-name">{{ gym.name }}</h3>
+                <p class="gym-address" v-if="gym.location">{{ gym.location.address }}</p>
+              </div>
+
+              <!-- Gym Stats -->
+              <div class="gym-stats">
+                <div class="stats-row">
+                  <div class="stat-item">
+                    <div class="stat-icon-wrapper">
+                      <svg class="stat-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                      </svg>
+                    </div>
+                    <div class="stat-content">
+                      <span class="stat-label">Alunos</span>
+                      <span class="stat-value">{{ gym.students?.length || 0 }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="stat-item">
+                    <div class="stat-icon-wrapper">
+                      <svg class="stat-icon" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 1a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm4-4a1 1 0 100 2h.01a1 1 0 100-2H13zM9 9a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM7 8a1 1 0 000 2h.01a1 1 0 000-2H7z" clip-rule="evenodd"/>
+                      </svg>
+                    </div>
+                    <div class="stat-content">
+                      <span class="stat-label">Equipamentos</span>
+                      <span class="stat-value">{{ gym.equipments?.length || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gym Actions -->
+              <div class="gym-actions">
+                <button class="action-button secondary-action" @click="handleEdit(gym)">
+                  <div class="button-shine"></div>
+                  <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span class="button-text">Ver Detalhes</span>
+                </button>
+                <button class="action-button primary-action" @click="handleEdit(gym)">
+                  <div class="button-shine"></div>
+                  <div class="button-particles"></div>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  <span class="button-text">Gerenciar</span>
+                  <div class="button-arrow">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else class="empty-state">
+            <div class="empty-icon">
+              <svg width="64" height="64" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="empty-title">Nenhuma academia encontrada</h3>
+            <p class="empty-description">Não encontramos academias com os filtros aplicados.</p>
+            <button class="create-first-button" @click="showForm = true">
+              Cadastrar Primeira Academia
+            </button>
           </div>
         </section>
       </div>
@@ -88,13 +270,11 @@ import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import { getAllGyms, createGym, updateGym, deleteGym } from '@/api';
 import DashboardNavBar from "@/components/DashboardNavBar.vue";
-import GymList from '@/components/GymList.vue';
 import GymForm from '@/components/GymForm.vue';
 
 export default {
   name: 'GymHome',
   components: {
-    GymList,
     GymForm,
     DashboardNavBar,
   },
@@ -102,7 +282,94 @@ export default {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
     
-    const gyms = ref([]);
+    // Dados mockados de academias para teste
+    const gyms = ref([
+      {
+        _id: '1',
+        name: 'Smart Fit Paulista',
+        location: {
+          address: 'Av. Paulista, 1000',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01310-100'
+        },
+        image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop',
+        students: [1, 2, 3, 4, 5],
+        equipments: [1, 2, 3, 4, 5, 6, 7, 8],
+        showMenu: false
+      },
+      {
+        _id: '2',
+        name: 'Bio Ritmo Moema',
+        location: {
+          address: 'Rua dos Açores, 234',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '04032-060'
+        },
+        image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&h=600&fit=crop',
+        students: [1, 2, 3, 4, 5, 6, 7],
+        equipments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        showMenu: false
+      },
+      {
+        _id: '3',
+        name: 'Bodytech Itaim',
+        location: {
+          address: 'Av. Brigadeiro Faria Lima, 1500',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01452-001'
+        },
+        image: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&h=600&fit=crop',
+        students: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        equipments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        showMenu: false
+      },
+      {
+        _id: '4',
+        name: 'Competition Centro',
+        location: {
+          address: 'Rua da Consolação, 456',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01302-000'
+        },
+        image: 'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=800&h=600&fit=crop',
+        students: [1, 2, 3, 4],
+        equipments: [1, 2, 3, 4, 5, 6],
+        showMenu: false
+      },
+      {
+        _id: '5',
+        name: 'Formula Academia',
+        location: {
+          address: 'Av. Ibirapuera, 890',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '04029-200'
+        },
+        image: 'https://images.unsplash.com/photo-1558611848-73f7eb4001a1?w=800&h=600&fit=crop',
+        students: [1, 2, 3, 4, 5, 6],
+        equipments: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        showMenu: false
+      },
+      {
+        _id: '6',
+        name: 'Runner Vila Mariana',
+        location: {
+          address: 'Rua Domingos de Morais, 1200',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '04010-100'
+        },
+        image: 'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=800&h=600&fit=crop',
+        students: [1, 2, 3, 4, 5, 6, 7, 8],
+        equipments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        showMenu: false
+      }
+    ]);
+    
     const loading = ref(false);
     const selectedGym = ref(null);
     const showForm = ref(false);
@@ -121,8 +388,8 @@ export default {
       const query = searchQuery.value.toLowerCase();
       return gyms.value.filter(gym => 
         gym.name.toLowerCase().includes(query) ||
-        gym.location.city.toLowerCase().includes(query) ||
-        gym.location.state.toLowerCase().includes(query)
+        (gym.location?.city && gym.location.city.toLowerCase().includes(query)) ||
+        (gym.location?.state && gym.location.state.toLowerCase().includes(query))
       );
     });
 
@@ -139,23 +406,40 @@ export default {
     };
   },
   methods: {
-    toggleForm() {
-      this.showForm = !this.showForm;
-      if (!this.showForm) {
-        this.selectedGym = null;
-      }
+    openCreateModal() {
+      this.selectedGym = null;
+      this.showForm = true;
     },
     async fetchGyms() {
       this.loading = true;
       try {
         const response = await getAllGyms();
-        this.gyms = response.data;
+        console.log('Gyms fetched:', response.data);
+        
+        // Se houver academias da API, usa elas, senão mantém os mockados
+        if (response.data && response.data.length > 0) {
+          this.gyms = response.data.map(gym => ({
+            ...gym,
+            showMenu: false
+          }));
+        }
+        // Se não houver academias da API, mantém os dados mockados do setup
+        
+        console.log('Gyms after mapping:', this.gyms);
+        console.log('Filtered gyms:', this.filteredGyms);
       } catch (error) {
         console.error('Error fetching gyms:', error);
-        // TODO: Implementar notificação de erro
+        // Em caso de erro, mantém os dados mockados
+        console.log('Usando dados mockados devido ao erro');
       } finally {
         this.loading = false;
       }
+    },
+    toggleGymMenu(gymId) {
+      this.gyms = this.gyms.map(gym => ({
+        ...gym,
+        showMenu: gym._id === gymId ? !gym.showMenu : false
+      }));
     },
     async handleSubmit(formPayload) {
       try {
@@ -185,17 +469,18 @@ export default {
       this.showForm = true;
     },
     confirmDelete(gymId) {
-      if (confirm('Tem certeza que deseja excluir esta academia?')) {
+      if (confirm('⚠️ Tem certeza que deseja excluir esta academia? Esta ação não pode ser desfeita.')) {
         this.handleDelete(gymId);
       }
     },
     async handleDelete(gymId) {
       try {
         await deleteGym(gymId);
+        alert('✅ Academia excluída com sucesso!');
         await this.fetchGyms();
       } catch (error) {
         console.error('Error deleting gym:', error);
-        // TODO: Implementar notificação de erro
+        alert('❌ Erro ao excluir academia. Tente novamente.');
       }
     },
     handleCancel() {
@@ -358,63 +643,128 @@ body:has(.navbar-collapsed) .dashboard-container,
   margin: 0 auto;
 }
 
-/* Stats Section */
+/* Stats Section - Cards superiores */
 .stats-section {
   margin-bottom: 3rem;
 }
 
-.stats-container {
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  padding: 1rem;
+  gap: 1.5rem;
 }
 
-.stat-card {
+.stats-grid .stat-card {
   background: var(--card-background);
-  backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
   transition: all 0.3s ease;
-  animation: fadeInUp 0.8s ease-out;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-hover);
+.stats-grid .stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-.card-icon {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
+.dark .stats-grid .stat-card:hover {
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+.stats-grid .stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: var(--primary-gradient);
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
 }
 
-.card-content {
+.stats-grid .stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
 }
 
-.stat-number {
-  font-size: 2rem;
-  font-weight: 700;
+.stats-grid .stat-total .stat-icon { 
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.stats-grid .stat-students .stat-icon { 
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stats-grid .stat-equipments .stat-icon { 
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stats-grid .stat-active .stat-icon { 
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.dark .stats-grid .stat-total .stat-icon { 
+  background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+}
+
+.dark .stats-grid .stat-students .stat-icon { 
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.dark .stats-grid .stat-equipments .stat-icon { 
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.dark .stats-grid .stat-active .stat-icon { 
+  background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+}
+
+.stats-grid .stat-content {
+  flex: 1;
+}
+
+.stats-grid .stat-value {
+  font-size: 1.875rem;
+  font-weight: 800;
   color: var(--text-color);
+  margin: 0 0 0.25rem 0;
   line-height: 1;
 }
 
-.stat-label {
-  font-size: 0.9rem;
+.stats-grid .stat-label {
+  font-size: 0.875rem;
   color: var(--text-secondary);
+  margin: 0 0 0.5rem 0;
   font-weight: 500;
+}
+
+.stats-grid .stat-progress {
+  margin-top: 0.5rem;
+}
+
+.stats-grid .progress-bar {
+  height: 6px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stats-grid .progress-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 3px;
+  transition: width 0.5s ease;
 }
 
 /* Actions Section */
@@ -506,6 +856,760 @@ body:has(.navbar-collapsed) .dashboard-container,
 .grid-container {
   display: grid;
   gap: 2rem;
+}
+
+/* ====== GYMS GRID ====== */
+.gyms-section {
+  margin-bottom: 2rem;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.gyms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 2rem;
+  padding: 0.5rem;
+}
+
+.gym-card {
+  position: relative;
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.6s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.gym-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary-color);
+}
+
+.dark .gym-card:hover {
+  background: rgba(42, 42, 42, 0.9);
+  box-shadow: 0 35px 60px -12px rgba(139, 92, 246, 0.3);
+}
+
+.card-glow {
+  position: absolute;
+  inset: -2px;
+  background: var(--primary-gradient);
+  border-radius: 24px;
+  opacity: 0;
+  z-index: -1;
+  filter: blur(20px);
+  transition: opacity 0.4s ease;
+}
+
+.gym-card:hover .card-glow {
+  opacity: 0.5;
+}
+
+@keyframes rotate {
+  to { transform: rotate(360deg); }
+}
+
+.gym-header {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.gym-image {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.image-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gym-card:hover .image-container img {
+  transform: scale(1.1);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.image-placeholder::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
+  animation: shimmer 3s infinite;
+}
+
+.placeholder-icon {
+  position: relative;
+  z-index: 1;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.gym-card:hover .placeholder-icon {
+  opacity: 0.7;
+  transform: scale(1.1);
+}
+
+.image-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 70%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.dark .image-gradient {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.5) 70%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+}
+
+.gym-card:hover .image-gradient {
+  opacity: 1;
+}
+
+.image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gym-card:hover .image-overlay {
+  opacity: 1;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 12px;
+  transform: translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+}
+
+.gym-card:hover .overlay-actions {
+  transform: translateY(0);
+}
+
+.modern-overlay-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+}
+
+.modern-overlay-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modern-overlay-btn:hover::before {
+  opacity: 1;
+}
+
+.btn-glow-effect {
+  position: absolute;
+  inset: -2px;
+  background: var(--primary-gradient);
+  border-radius: 12px;
+  opacity: 0;
+  filter: blur(8px);
+  transition: opacity 0.3s ease;
+}
+
+.modern-overlay-btn:hover .btn-glow-effect {
+  opacity: 0.6;
+}
+
+.btn-icon-wrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-overlay-btn:hover .btn-icon-wrapper {
+  transform: scale(1.1);
+}
+
+.modern-overlay-btn:active .btn-icon-wrapper {
+  transform: scale(0.95);
+}
+
+.btn-tooltip {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.btn-tooltip::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.9);
+}
+
+.modern-overlay-btn:hover .btn-tooltip {
+  opacity: 1;
+  bottom: -36px;
+  transition: all 0.3s ease 0.5s;
+}
+
+.modern-overlay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modern-overlay-btn:active {
+  transform: translateY(0);
+}
+
+.preview-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.preview-btn:hover .btn-glow-effect {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+}
+
+.edit-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.edit-btn:hover .btn-glow-effect {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.gym-menu-wrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.menu-trigger {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.menu-trigger:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 160px;
+  box-shadow: var(--shadow-lg);
+  animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-option {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.dropdown-option:hover {
+  background: var(--surface-color);
+  transform: translateX(4px);
+}
+
+.dropdown-option.danger {
+  color: #ef4444;
+}
+
+.dropdown-option.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.dropdown-separator {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
+.gym-info {
+  padding: 1.5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gym-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-color);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.dark .location-badge {
+  background: rgba(139, 92, 246, 0.1);
+  color: #c084fc;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #22c55e;
+}
+
+.status-indicator.active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.gym-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.gym-address {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gym-stats {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-color);
+}
+
+.stats-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--card-background);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: var(--background-color);
+  transform: translateY(-2px);
+}
+
+.stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.stat-icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.gym-actions {
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.action-button {
+  position: relative;
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-button svg {
+  flex-shrink: 0;
+}
+
+.button-text {
+  white-space: nowrap;
+}
+
+.button-shine {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.action-button:hover .button-shine {
+  transform: translateX(100%);
+}
+
+/* Primary Action - Gradient with Glow */
+.primary-action {
+  background: var(--primary-gradient);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  border: 1px solid transparent;
+}
+
+.dark .primary-action {
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.button-particles {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+.primary-action:hover .button-particles {
+  opacity: 0.5;
+  animation: particleFloat 2s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.button-arrow {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.primary-action:hover .button-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.primary-action:hover .button-text {
+  transform: translateX(-4px);
+}
+
+.primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+
+.dark .primary-action:hover {
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.5);
+}
+
+.primary-action:active {
+  transform: translateY(0);
+}
+
+/* Secondary Action - Glass Morphism */
+.secondary-action {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  backdrop-filter: blur(10px);
+}
+
+.secondary-action:hover {
+  background: var(--surface-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .secondary-action:hover {
+  background: rgba(42, 42, 42, 0.9);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+.secondary-action:hover svg {
+  color: var(--primary-color);
+}
+
+.secondary-action:active {
+  transform: translateY(0);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-bottom: 1.5rem;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.empty-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.create-first-button {
+  padding: 12px 24px;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.create-first-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+@keyframes shimmer {
+  to { transform: translate(50%, 50%); }
 }
 
 /* Animations */
