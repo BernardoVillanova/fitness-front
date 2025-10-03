@@ -89,57 +89,14 @@
         </section>
 
         <!-- Filter Section -->
-        <section class="clean-filter-section">
-          <div class="clean-filter-container">
-            <!-- Categories Grid -->
-            <div class="clean-categories-grid">
-              <div 
-                v-for="category in categories" 
-                :key="category.id"
-                :class="['clean-category-card', { 'card-selected': selectedCategory === category.id }]"
-                @click="filterByCategory(category.id)"
-              >
-                <div class="category-icon-clean">
-                  <i :class="category.icon"></i>
-                </div>
-                <div class="category-content-clean">
-                  <h3 class="category-title-clean">{{ category.name }}</h3>
-                  <span class="category-count-clean">{{ category.count }} aparelhos</span>
-                </div>
-                <div class="category-arrow-clean" v-if="selectedCategory === category.id">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- Results Section -->
-            <div class="results-section-clean" v-if="selectedCategory">
-              <div class="results-info-wrapper">
-                <div class="results-badge-clean">
-                  <div class="results-icon-clean">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                    </svg>
-                  </div>
-                  <span class="results-text-clean">
-                    {{ filteredMachines.length }} aparelhos encontrados
-                  </span>
-                  <span class="active-filter-chip">{{ getCategoryName(selectedCategory) }}</span>
-                </div>
-              </div>
-              <div class="results-actions-clean">
-                <button class="clear-filters-btn" @click="clearFilters">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                  Limpar Filtros
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
+        <CategoryFilter
+          :categories="categories"
+          :selected-category="selectedCategory"
+          :filtered-count="filteredMachines.length"
+          item-label="aparelhos"
+          @category-selected="filterByCategory"
+          @clear-filters="clearFilters"
+        />
 
         <!-- Machines Grid -->
         <section class="exercises-section">
@@ -522,6 +479,7 @@
 <script>
 import DashboardNavBar from "@/components/DashboardNavBar.vue";
 import EquipmentModal from "@/components/EquipmentModal.vue";
+import CategoryFilter from "@/components/CategoryFilter.vue";
 import { useThemeStore } from "@/store/theme";
 import { useAuthStore } from "@/store/auth";
 import { storeToRefs } from "pinia";
@@ -532,6 +490,7 @@ export default {
   components: {
     DashboardNavBar,
     EquipmentModal,
+    CategoryFilter,
   },
   setup() {
     const themeStore = useThemeStore();
