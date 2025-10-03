@@ -267,9 +267,6 @@
               <!-- Exercise Info -->
               <div class="exercise-info">
                 <div class="exercise-meta">
-                  <div class="category-badge">
-                    {{ exercise.category }}
-                  </div>
                   <div class="difficulty-indicator" :class="exercise.difficulty.toLowerCase()">
                     <div class="difficulty-dot"></div>
                     {{ exercise.difficulty }}
@@ -277,6 +274,7 @@
                 </div>
                 
                 <h3 class="exercise-name">{{ exercise.name }}</h3>
+                <p class="exercise-description" v-if="exercise.description">{{ truncate(exercise.description, 200) }}</p>
               </div>
 
               <!-- Muscle Groups - Simplified -->
@@ -320,6 +318,107 @@
         </section>
       </div>
     </main>
+
+    <!-- Modal de Visualização de Detalhes -->
+    <div v-if="showDetailModal && selectedExercise" class="modal-overlay" @click.self="closeDetailModal">
+      <div class="modal-container-large">
+        <div class="modal-header">
+          <div class="modal-header-content">
+            <div class="modal-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <div class="header-text-section">
+              <h2 class="modal-title">Detalhes do Exercício</h2>
+              <p class="modal-subtitle">Visualize todas as informações do exercício</p>
+            </div>
+          </div>
+          <button class="modal-close" @click="closeDetailModal">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Imagem -->
+          <div v-if="selectedExercise.image" class="detail-image-container">
+            <img :src="getImageUrl(selectedExercise.image)" :alt="selectedExercise.name" class="detail-image">
+          </div>
+
+          <!-- Informações Principais -->
+          <div class="detail-section">
+            <h3 class="detail-section-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+              Informações Básicas
+            </h3>
+            <div class="detail-info-grid">
+              <div class="detail-info-item">
+                <span class="detail-label">Nome:</span>
+                <span class="detail-value">{{ selectedExercise.name }}</span>
+              </div>
+              <div class="detail-info-item">
+                <span class="detail-label">Categoria:</span>
+                <span class="detail-value">{{ selectedExercise.category }}</span>
+              </div>
+              <div class="detail-info-item">
+                <span class="detail-label">Dificuldade:</span>
+                <span class="detail-value">
+                  <span :class="['difficulty-indicator', selectedExercise.difficulty.toLowerCase()]">
+                    <span class="difficulty-dot"></span>
+                    {{ selectedExercise.difficulty }}
+                  </span>
+                </span>
+              </div>
+              <div class="detail-info-item" v-if="selectedExercise.duration">
+                <span class="detail-label">Duração:</span>
+                <span class="detail-value">{{ selectedExercise.duration }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descrição -->
+          <div class="detail-section" v-if="selectedExercise.description">
+            <h3 class="detail-section-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
+              </svg>
+              Descrição
+            </h3>
+            <p class="detail-text">{{ selectedExercise.description }}</p>
+          </div>
+
+          <!-- Grupos Musculares -->
+          <div class="detail-section" v-if="selectedExercise.muscleGroups && selectedExercise.muscleGroups.length > 0">
+            <h3 class="detail-section-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+              </svg>
+              Grupos Musculares Trabalhados
+            </h3>
+            <div class="muscle-groups-tags">
+              <span v-for="muscle in selectedExercise.muscleGroups" :key="muscle" class="muscle-tag-large">
+                {{ muscle }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="closeDetailModal">Fechar</button>
+          <button class="btn-save" @click="editExercise(selectedExercise); closeDetailModal()">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+            </svg>
+            Editar Exercício
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal de Edição de Exercício -->
     <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
@@ -858,6 +957,8 @@ export default {
       imageError: {},
       showEditModal: false,
       showCreateModal: false,
+      showDetailModal: false,
+      selectedExercise: null,
       editingExercise: {
         id: null,
         name: '',
@@ -992,6 +1093,11 @@ export default {
     this.filteredExercises = [...this.exercises];
   },
   methods: {
+    truncate(text, maxLength) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    },
     handleImageError(exerciseId) {
       this.imageError[exerciseId] = true;
     },
@@ -1075,6 +1181,14 @@ export default {
       
       // Abre o modal
       this.showEditModal = true;
+    },
+    viewExerciseDetails(exercise) {
+      this.selectedExercise = exercise;
+      this.showDetailModal = true;
+    },
+    closeDetailModal() {
+      this.showDetailModal = false;
+      this.selectedExercise = null;
     },
     closeEditModal() {
       this.showEditModal = false;
@@ -1172,9 +1286,6 @@ export default {
     deleteExercise(exercise) {
       console.log('Excluir exercício:', exercise);
       exercise.showMenu = false;
-    },
-    viewExerciseDetails(exercise) {
-      console.log('Ver detalhes do exercício:', exercise);
     },
     addToWorkout(exercise) {
       console.log('Adicionar ao treino:', exercise);
@@ -3816,6 +3927,118 @@ body:has(.navbar-collapsed) .floating-header,
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* Estilos para o Modal de Visualização */
+.detail-image-container {
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  margin-bottom: 32px;
+}
+
+.detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-section {
+  margin-bottom: 32px;
+}
+
+.detail-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-section-title i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.detail-info-item {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.detail-info-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.detail-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail-text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.muscle-tag-large {
+  display: inline-block;
+  padding: 10px 16px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 4px;
+  transition: all 0.2s ease;
+}
+
+.muscle-tag-large:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+}
+
+@media (max-width: 768px) {
+  .detail-info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .detail-image-container {
+    max-height: 300px;
   }
 }
 

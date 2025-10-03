@@ -261,16 +261,14 @@
               <p class="pre-wrap">{{ selectedEquipment.howToUse }}</p>
             </div>
 
-            <div v-if="selectedEquipment.safetyTips && selectedEquipment.safetyTips.length > 0" class="detail-section">
+            <div class="detail-section">
               <h4 class="detail-section-title">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                 </svg>
                 Dicas de Segurança
               </h4>
-              <ul class="safety-tips-list">
-                <li v-for="(tip, index) in selectedEquipment.safetyTips" :key="index">{{ tip }}</li>
-              </ul>
+              <p class="pre-wrap">{{ selectedEquipment.safetyTips || 'Não informado' }}</p>
             </div>
 
             <div v-if="selectedEquipment.muscleGroups && selectedEquipment.muscleGroups.length > 0" class="detail-section">
@@ -458,12 +456,11 @@ export default {
       try {
         const equipmentData = {
           ...this.formData,
-          safetyTips: this.safetyTipsInput
-            ? this.safetyTipsInput.split(';').map(tip => tip.trim()).filter(tip => tip)
-            : []
+          safetyTips: this.safetyTipsInput || ''
         };
 
         console.log('Enviando dados para:', `/equipments/instructor/${this.instructorId}`);
+        console.log('Dados do equipamento:', equipmentData);
         console.log('Tamanho da imagem:', equipmentData.imageBase64 ? equipmentData.imageBase64.length : 0);
 
         await api.post(`/equipments/instructor/${this.instructorId}`, equipmentData);
