@@ -18,9 +18,7 @@
         </div>
 
         <button class="modal-close" @click="closeModal">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+          <i class="fas fa-times"></i>
         </button>
       </div>
 
@@ -185,7 +183,16 @@
                     </button>
                   </div>
 
-                  <div v-else class="upload-area" @click="triggerFileInput">
+                  <div 
+                    v-else 
+                    class="upload-area" 
+                    :class="{ 'drag-over': isDragging }"
+                    @click="triggerFileInput"
+                    @dragenter.prevent="isDragging = true"
+                    @dragover.prevent="isDragging = true"
+                    @dragleave.prevent="isDragging = false"
+                    @drop.prevent="handleDrop"
+                  >
                     <input 
                       ref="fileInput"
                       type="file" 
@@ -196,7 +203,7 @@
                     />
                     <div class="upload-placeholder">
                       <i class="fas fa-cloud-upload-alt"></i>
-                      <p>Clique para selecionar imagem</p>
+                      <p>Clique ou arraste uma imagem</p>
                       <span class="upload-hint">PNG, JPG ou GIF • Máximo 10MB</span>
                     </div>
                   </div>
@@ -410,7 +417,9 @@ export default {
       errorMessage: '',
       equipmentSearch: '',
       currentPage: 1,
-      itemsPerPage: 3
+      itemsPerPage: 3,
+      isDragging: false,
+      shouldRemoveImage: false
     };
   },
   computed: {
@@ -468,6 +477,8 @@ export default {
       }
     },
     processImage(file) {
+      this.shouldRemoveImage = false;
+      
       // Para GIFs, manter o formato original sem processamento
       if (file.type === 'image/gif') {
         const reader = new FileReader();
@@ -517,8 +528,20 @@ export default {
     removeImage() {
       this.imagePreview = null;
       this.formData.imageBase64 = null;
+      this.shouldRemoveImage = true;
       if (this.$refs.fileInput) {
         this.$refs.fileInput.value = '';
+      }
+    },
+    handleDrop(event) {
+      this.isDragging = false;
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+          this.processImage(file);
+          this.shouldRemoveImage = false;
+        }
       }
     },
     triggerFileInput() {
@@ -564,7 +587,8 @@ export default {
         // Preparar dados para envio
         const updateData = {
           ...this.formData,
-          _id: this.exercise._id
+          _id: this.exercise._id,
+          removeImage: this.shouldRemoveImage
         };
 
         this.$emit('save', updateData);
@@ -723,9 +747,18 @@ i[class*=" fa-"] {
   flex-shrink: 0;
 }
 
+.modal-close i {
+  font-size: 18px;
+  color: var(--text-color);
+}
+
 .modal-close:hover {
-  background: var(--border-color);
-  transform: rotate(90deg);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.modal-close:hover i {
+  color: rgb(239, 68, 68);
 }
 
 /* BODY */
@@ -961,9 +994,14 @@ select.form-input {
   background: var(--bg-secondary);
 }
 
-.upload-area:hover {
+.upload-area:hover,
+.upload-area.drag-over {
   border-color: var(--primary-color);
   background: var(--bg-primary);
+}
+
+.upload-area.drag-over {
+  background: rgba(var(--primary-color-rgb), 0.05);
 }
 
 .upload-placeholder {

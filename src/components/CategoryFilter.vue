@@ -127,9 +127,10 @@ export default {
 }
 
 .card-selected {
-  background: var(--primary-gradient);
-  border-color: transparent;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .category-icon-clean {
@@ -146,7 +147,7 @@ export default {
 }
 
 .card-selected .category-icon-clean {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   color: white;
 }
 
