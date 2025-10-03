@@ -69,12 +69,12 @@
                     </svg>
                   </div>
                   <div class="stat-trend">
-                    <span class="trend-value">+8%</span>
+                    <span class="trend-value">{{ students.length > 0 ? Math.round((totalStudentsWithPlans / students.length) * 100) : 0 }}%</span>
                   </div>
                 </div>
                 <div class="stat-body">
-                  <div class="stat-number">{{ totalStudents }}</div>
-                  <div class="stat-label">Alunos Ativos</div>
+                  <div class="stat-number">{{ totalStudentsWithPlans }}</div>
+                  <div class="stat-label">Alunos com Planos</div>
                 </div>
               </div>
             </div>
@@ -85,19 +85,18 @@
                 <div class="stat-header">
                   <div class="stat-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="16" y1="2" x2="16" y2="6"/>
-                      <line x1="8" y1="2" x2="8" y2="6"/>
-                      <line x1="3" y1="10" x2="21" y2="10"/>
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/>
+                      <path d="M2 12l10 5 10-5"/>
                     </svg>
                   </div>
                   <div class="stat-trend">
-                    <span class="trend-value">+24%</span>
+                    <span class="trend-value">{{ workoutPlans.length > 0 ? Math.round(totalExercisesCount / workoutPlans.length) : 0 }}/plano</span>
                   </div>
                 </div>
                 <div class="stat-body">
-                  <div class="stat-number">{{ newPlansThisMonth }}</div>
-                  <div class="stat-label">Planos este Mês</div>
+                  <div class="stat-number">{{ totalExercisesCount }}</div>
+                  <div class="stat-label">Total Exercícios</div>
                 </div>
               </div>
             </div>
@@ -170,12 +169,22 @@
                   </button>
                   
                   <div v-if="openMenuId === plan._id" class="dropdown-menu" @click.stop>
+                    <button @click="manageStudents(plan)" class="dropdown-option">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                      Gerenciar Alunos
+                      <span v-if="plan.studentsCount > 0" class="menu-badge">{{ plan.studentsCount }}</span>
+                    </button>
                     <button @click="assignPlan(plan)" class="dropdown-option">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                       </svg>
-                      Atribuir
+                      Atribuir Rápido
                     </button>
                     <button @click="duplicatePlan(plan)" class="dropdown-option">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -199,6 +208,21 @@
               <!-- Estatísticas principais reorganizadas -->
               <div class="plan-stats-main">
                 <div class="stat-item-main">
+                  <div class="stat-icon-main students-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                    </svg>
+                  </div>
+                  <div class="stat-details">
+                    <div class="stat-number-main">{{ plan.studentsCount || plan.assignedStudents?.length || 0 }}</div>
+                    <div class="stat-label-main">Alunos</div>
+                  </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="stat-item-main">
                   <div class="stat-icon-main divisions-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="3" width="7" height="7"/>
@@ -208,7 +232,7 @@
                     </svg>
                   </div>
                   <div class="stat-details">
-                    <div class="stat-number-main">{{ plan.divisions.length }}</div>
+                    <div class="stat-number-main">{{ plan.divisions?.length || 0 }}</div>
                     <div class="stat-label-main">Divisões</div>
                   </div>
                 </div>
@@ -231,18 +255,18 @@
               </div>
 
               <!-- Divisões com layout melhorado -->
-              <div class="divisions-section">
+              <div class="divisions-section" v-if="plan.divisions && plan.divisions.length > 0">
                 <h4 class="divisions-title">Divisões do Treino</h4>
                 <div class="divisions-container">
                   <div 
                     v-for="(division, idx) in plan.divisions.slice(0, 3)" 
-                    :key="division._id"
+                    :key="division._id || idx"
                     class="division-item"
                     :style="{ animationDelay: `${idx * 50}ms` }"
                   >
                     <div class="division-info">
                       <span class="division-name">{{ division.name }}</span>
-                      <span class="exercise-count-badge">{{ division.exercises.length }} exercícios</span>
+                      <span class="exercise-count-badge">{{ division.exercises?.length || 0 }} exercícios</span>
                     </div>
                   </div>
                   
@@ -330,7 +354,8 @@
     </main>
 
     <!-- Modals -->
-    <WorkoutPlanModal
+    <WorkoutPlanModalWizard
+      ref="workoutPlanModal"
       v-if="showModal"
       :show="showModal"
       :isEditing="isEditing"
@@ -352,15 +377,25 @@
       :show="showViewModal"
       :plan="selectedPlan"
       @close="closeViewModal"
+      @edit="onEditFromView"
+    />
+
+    <ManageStudentsModal
+      v-if="showManageStudentsModal"
+      :show="showManageStudentsModal"
+      :plan="selectedPlan"
+      @close="closeManageStudentsModal"
+      @updated="onStudentsUpdated"
     />
   </div>
 </template>
 
 <script>
 import DashboardNavBar from "@/components/DashboardNavBar.vue";
-import WorkoutPlanModal from "@/components/WorkoutPlanModal.vue";
+import WorkoutPlanModalWizard from "@/components/WorkoutPlanModalWizard.vue";
 import AssignPlanModal from "@/components/AssignPlanModal.vue";
 import ViewPlanModal from "@/components/ViewPlanModal.vue";
+import ManageStudentsModal from "@/components/ManageStudentsModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 
@@ -368,9 +403,10 @@ export default {
   name: "WorkoutPlans",
   components: { 
     DashboardNavBar, 
-    WorkoutPlanModal,
+    WorkoutPlanModalWizard,
     AssignPlanModal,
-    ViewPlanModal
+    ViewPlanModal,
+    ManageStudentsModal
   },
   setup() {
     const themeStore = useThemeStore();
@@ -386,9 +422,12 @@ export default {
       showModal: false,
       showAssignModal: false,
       showViewModal: false,
+      showManageStudentsModal: false,
       isEditing: false,
       selectedPlan: null,
       workoutPlans: [],
+      students: [],
+      totalExercises: 0,
       loading: false,
       error: null,
       openMenuId: null,
@@ -408,6 +447,10 @@ export default {
           const oneWeekAgo = new Date();
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           return matchesSearch && new Date(plan.createdAt) > oneWeekAgo;
+        }
+        
+        if (this.filterBy === 'assigned') {
+          return matchesSearch && plan.studentsCount > 0;
         }
         
         return matchesSearch;
@@ -450,16 +493,13 @@ export default {
       }
       return pages;
     },
-    totalStudents() {
-      return 125;
+    totalStudentsWithPlans() {
+      return this.students.filter(s => s.workoutPlanId).length;
     },
-    newPlansThisMonth() {
-      const thisMonth = new Date().getMonth();
-      const thisYear = new Date().getFullYear();
-      return this.workoutPlans.filter(plan => {
-        const planDate = new Date(plan.createdAt);
-        return planDate.getMonth() === thisMonth && planDate.getFullYear() === thisYear;
-      }).length;
+    totalExercisesCount() {
+      return this.workoutPlans.reduce((total, plan) => {
+        return total + this.getTotalExercises(plan);
+      }, 0);
     }
   },
   watch: {
@@ -472,98 +512,29 @@ export default {
   },
   async mounted() {
     await this.fetchWorkoutPlans();
+    await this.fetchStudents();
   },
   methods: {
     async fetchWorkoutPlans() {
       this.loading = true;
+      this.error = null;
       try {
-        const response = await fetch('/api/workout/workout-plans');
-        if (response.ok) {
-          this.workoutPlans = await response.json();
-        } else {
-          throw new Error('Erro ao carregar planos');
+        const token = sessionStorage.getItem('token');
+        const response = await fetch('http://localhost:3000/api/workout/workout-plans-detailed', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar planos: ${response.status}`);
         }
+        this.workoutPlans = await response.json();
+        console.log('✅ Planos de treino carregados:', this.workoutPlans.length);
       } catch (error) {
         console.error('Erro ao carregar planos:', error);
         this.error = error.message;
-        // Dados de exemplo para desenvolvimento
-        this.workoutPlans = [
-          {
-            _id: '1',
-            name: 'Treino Funcional Básico',
-            divisions: [
-              {
-                _id: 'd1',
-                name: 'Treino A - Upper',
-                exercises: [
-                  { name: 'Agachamento', sets: 3, reps: 12, idealWeight: 20 },
-                  { name: 'Flexão', sets: 3, reps: 10, idealWeight: 0 }
-                ]
-              },
-              {
-                _id: 'd2',
-                name: 'Treino B - Lower',
-                exercises: [
-                  { name: 'Leg Press', sets: 4, reps: 15, idealWeight: 80 }
-                ]
-              }
-            ],
-            createdAt: new Date().toISOString()
-          },
-          {
-            _id: '2',
-            name: 'Hipertrofia Avançada',
-            divisions: [
-              {
-                _id: 'd3',
-                name: 'Treino A - Peito/Tríceps',
-                exercises: [
-                  { name: 'Supino Reto', sets: 4, reps: 8, idealWeight: 60 },
-                  { name: 'Inclinado Halteres', sets: 3, reps: 10, idealWeight: 30 }
-                ]
-              },
-              {
-                _id: 'd4',
-                name: 'Treino B - Costas/Bíceps',
-                exercises: [
-                  { name: 'Puxada Frontal', sets: 4, reps: 8, idealWeight: 50 },
-                  { name: 'Remada Curvada', sets: 3, reps: 10, idealWeight: 40 }
-                ]
-              },
-              {
-                _id: 'd5',
-                name: 'Treino C - Pernas',
-                exercises: [
-                  { name: 'Agachamento Livre', sets: 5, reps: 6, idealWeight: 100 },
-                  { name: 'Leg Press', sets: 4, reps: 12, idealWeight: 120 }
-                ]
-              },
-              {
-                _id: 'd6',
-                name: 'Treino D - Ombros',
-                exercises: [
-                  { name: 'Desenvolvimento', sets: 4, reps: 8, idealWeight: 40 }
-                ]
-              }
-            ],
-            createdAt: new Date(Date.now() - 86400000).toISOString()
-          },
-          {
-            _id: '3',
-            name: 'Condicionamento Físico',
-            divisions: [
-              {
-                _id: 'd7',
-                name: 'HIIT Cardio',
-                exercises: [
-                  { name: 'Burpees', sets: 5, reps: 15, idealWeight: 0 },
-                  { name: 'Mountain Climbers', sets: 4, reps: 20, idealWeight: 0 }
-                ]
-              }
-            ],
-            createdAt: new Date(Date.now() - 172800000).toISOString()
-          }
-        ];
+        this.workoutPlans = [];
       } finally {
         this.loading = false;
       }
@@ -571,22 +542,28 @@ export default {
 
     async savePlan(planData) {
       try {
+        const token = sessionStorage.getItem('token');
         const url = this.isEditing 
-          ? `/api/workout/workout-plans/${planData._id}`
-          : '/api/workout/workout-plans';
+          ? `http://localhost:3000/api/workout/workout-plans/${planData._id}`
+          : 'http://localhost:3000/api/workout/workout-plans';
         
         const method = this.isEditing ? 'PUT' : 'POST';
+        console.log('💾 Salvando plano:', { method, url, planData });
         
         const response = await fetch(url, {
           method,
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(planData)
         });
 
+        console.log('📡 Status da resposta:', response.status);
+
         if (response.ok) {
           const savedPlan = await response.json();
+          console.log('✅ Plano salvo com sucesso:', savedPlan);
           
           if (this.isEditing) {
             const index = this.workoutPlans.findIndex(p => p._id === savedPlan._id);
@@ -597,13 +574,28 @@ export default {
             this.workoutPlans.push(savedPlan);
           }
           
+          alert('Plano de treino salvo com sucesso!');
           this.closeModal();
+          // Resetar estado de salvamento no modal filho
+          if (this.$refs.workoutPlanModal) {
+            this.$refs.workoutPlanModal.isSaving = false;
+          }
         } else {
-          throw new Error('Erro ao salvar plano');
+          const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+          console.error('❌ Erro do servidor:', errorData);
+          // Resetar estado de salvamento em caso de erro
+          if (this.$refs.workoutPlanModal) {
+            this.$refs.workoutPlanModal.isSaving = false;
+          }
+          throw new Error(errorData.message || 'Erro ao salvar plano');
         }
       } catch (error) {
-        console.error('Erro ao salvar plano:', error);
+        console.error('❌ Erro ao salvar plano:', error);
         alert('Erro ao salvar plano: ' + error.message);
+        // Resetar estado de salvamento em caso de erro
+        if (this.$refs.workoutPlanModal) {
+          this.$refs.workoutPlanModal.isSaving = false;
+        }
       }
     },
 
@@ -630,29 +622,49 @@ export default {
     },
 
     async deletePlan(plan) {
-      if (confirm(`Tem certeza que deseja excluir o plano "${plan.name}"?`)) {
+      const studentsCount = plan.assignedStudents?.length || plan.studentsCount || 0;
+      const warningMsg = studentsCount > 0 
+        ? `Tem certeza que deseja excluir o plano "${plan.name}"?\n\nEste plano está atribuído a ${studentsCount} aluno(s) e será removido de todos eles.`
+        : `Tem certeza que deseja excluir o plano "${plan.name}"?`;
+      
+      if (confirm(warningMsg)) {
         try {
-          const response = await fetch(`/api/workout/workout-plans/${plan._id}`, {
-            method: 'DELETE'
+          const token = sessionStorage.getItem('token');
+          console.log('🗑️ Deletando plano:', plan._id);
+          
+          const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           });
 
           if (response.ok) {
+            console.log('✅ Plano deletado com sucesso');
             const index = this.workoutPlans.findIndex(p => p._id === plan._id);
             if (index > -1) {
               this.workoutPlans.splice(index, 1);
             }
+            this.openMenuId = null;
+            alert('Plano de treino excluído com sucesso!');
           } else {
-            throw new Error('Erro ao excluir plano');
+            const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+            throw new Error(errorData.message || 'Erro ao excluir plano');
           }
         } catch (error) {
-          console.error('Erro ao excluir plano:', error);
+          console.error('❌ Erro ao excluir plano:', error);
           alert('Erro ao excluir plano: ' + error.message);
         }
       }
+      this.openMenuId = null;
     },
 
     getTotalExercises(plan) {
-      return plan.divisions.reduce((total, division) => total + division.exercises.length, 0);
+      if (!plan || !plan.divisions) return 0;
+      return plan.divisions.reduce((total, division) => {
+        return total + (division.exercises?.length || 0);
+      }, 0);
     },
 
     formatDate(dateString) {
@@ -669,20 +681,46 @@ export default {
       this.showModal = true;
     },
 
-    editPlan(plan) {
-      this.isEditing = true;
-      this.selectedPlan = { ...plan };
-      this.showModal = true;
+    async editPlan(plan) {
+      try {
+        const token = sessionStorage.getItem('token');
+        console.log('✏️ Carregando plano para edição:', plan._id);
+        
+        // Buscar dados completos do plano
+        const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const fullPlan = await response.json();
+          console.log('✅ Plano carregado:', fullPlan);
+          
+          this.isEditing = true;
+          this.selectedPlan = fullPlan;
+          this.showModal = true;
+          this.openMenuId = null;
+        } else {
+          throw new Error('Erro ao carregar plano para edição');
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar plano:', error);
+        alert('Erro ao carregar plano: ' + error.message);
+      }
     },
 
     viewPlan(plan) {
       this.selectedPlan = plan;
       this.showViewModal = true;
+      this.openMenuId = null;
     },
 
     assignPlan(plan) {
       this.selectedPlan = plan;
       this.showAssignModal = true;
+      this.openMenuId = null;
     },
 
     duplicatePlan(plan) {
@@ -695,6 +733,7 @@ export default {
       this.selectedPlan = newPlan;
       this.isEditing = false;
       this.showModal = true;
+      this.openMenuId = null;
     },
 
     closeModal() {
@@ -710,6 +749,38 @@ export default {
     closeViewModal() {
       this.showViewModal = false;
       this.selectedPlan = null;
+    },
+
+    onEditFromView(plan) {
+      this.closeViewModal();
+      this.editPlan(plan);
+    },
+
+    async fetchStudents() {
+      try {
+        const response = await fetch('/api/students');
+        if (response.ok) {
+          this.students = await response.json();
+        }
+      } catch (error) {
+        console.error('Erro ao buscar alunos:', error);
+      }
+    },
+
+    manageStudents(plan) {
+      this.selectedPlan = plan;
+      this.showManageStudentsModal = true;
+      this.openMenuId = null;
+    },
+
+    closeManageStudentsModal() {
+      this.showManageStudentsModal = false;
+      this.selectedPlan = null;
+    },
+
+    async onStudentsUpdated() {
+      await this.fetchWorkoutPlans();
+      await this.fetchStudents();
     }
   }
 }
@@ -1407,6 +1478,16 @@ body:has(.navbar-collapsed) .floating-header,
   background: rgba(239, 68, 68, 0.1);
 }
 
+.menu-badge {
+  margin-left: auto;
+  background: var(--gradient-primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .dropdown-separator {
   height: 1px;
   background: var(--border-primary);
@@ -1446,6 +1527,10 @@ body:has(.navbar-collapsed) .floating-header,
 
 .plan-card:hover .stat-icon-main {
   transform: scale(1.1) rotate(5deg);
+}
+
+.students-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .divisions-icon {
