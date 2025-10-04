@@ -37,20 +37,14 @@
       </div>
 
       <!-- Filter Section -->
-      <div class="filter-section">
-        <div class="filter-tabs">
-          <button 
-            v-for="filter in filters" 
-            :key="filter.value"
-            :class="['filter-tab', { active: activeFilter === filter.value }]"
-            @click="setFilter(filter.value)"
-          >
-            <i :class="filter.icon"></i>
-            <span class="tab-text">{{ filter.label }}</span>
-            <span v-if="filter.count !== undefined" class="tab-count">{{ filter.count }}</span>
-          </button>
-        </div>
-      </div>
+      <CategoryFilter 
+        :categories="filters"
+        :selected-category="activeFilter"
+        :filtered-count="filteredWorkouts.length"
+        item-label="treinos"
+        @category-selected="setFilter"
+        @clear-filters="clearAllFilters"
+      />
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
@@ -117,7 +111,7 @@
                   <i class="fas fa-clock"></i>
                 </div>
                 <div class="stat-details">
-                  <div class="stat-number">{{ plan.estimatedTime || 45 }}min</div>
+                  <div class="stat-number">{{ calculateWorkoutTime(plan) }}min</div>
                   <div class="stat-label">Duração</div>
                 </div>
               </div>
@@ -127,7 +121,7 @@
                   <i class="fas fa-fire"></i>
                 </div>
                 <div class="stat-details">
-                  <div class="stat-number">{{ plan.estimatedCalories || 0 }}</div>
+                  <div class="stat-number">{{ calculateCalories(plan) }}</div>
                   <div class="stat-label">Calorias</div>
                 </div>
               </div>
@@ -229,6 +223,7 @@ import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import WorkoutModal from '@/components/WorkoutModal.vue'
+import CategoryFilter from '@/components/CategoryFilter.vue'
 import api from '@/api'
 
 // Stores
@@ -248,10 +243,10 @@ const workoutStartTime = ref(null)
 
 // Computed
 const filters = computed(() => [
-  { value: 'all', label: 'Todos', icon: 'fas fa-list', count: workouts.value.length },
-  { value: 'Força', label: 'Força', icon: 'fas fa-dumbbell', count: workouts.value.filter(w => w.type === 'Força').length },
-  { value: 'Cardio', label: 'Cardio', icon: 'fas fa-heartbeat', count: workouts.value.filter(w => w.type === 'Cardio').length },
-  { value: 'recent', label: 'Recentes', icon: 'fas fa-clock', count: workouts.value.filter(w => isRecent(w.createdAt)).length }
+  { id: 'all', name: 'Todos', icon: 'fas fa-list', count: workouts.value.length },
+  { id: 'Força', name: 'Força', icon: 'fas fa-dumbbell', count: workouts.value.filter(w => w.type === 'Força').length },
+  { id: 'Cardio', name: 'Cardio', icon: 'fas fa-heartbeat', count: workouts.value.filter(w => w.type === 'Cardio').length },
+  { id: 'recent', name: 'Recentes', icon: 'fas fa-clock', count: workouts.value.filter(w => isRecent(w.createdAt)).length }
 ])
 
 const filteredWorkouts = computed(() => {
@@ -302,6 +297,48 @@ const calculateProgress = (plan) => {
 const calculateDivisionTime = (division) => {
   if (!division.exercises) return 30
   return Math.round(division.exercises.length * 5)
+}
+
+const calculateWorkoutTime = (plan) => {
+  if (!plan.divisions || plan.divisions.length === 0) return 30
+  
+  let totalTime = 0
+  plan.divisions.forEach(division => {
+    if (division.exercises && division.exercises.length > 0) {
+      // Cada exercício leva em média 3-5 minutos (considerando séries e descanso)
+      totalTime += division.exercises.length * 4
+      // Tempo extra para aquecimento e alongamento por divisão
+      totalTime += 5
+    }
+  })
+  
+  return Math.max(totalTime, 30) // Mínimo de 30 minutos
+}
+
+const calculateCalories = (plan) => {
+  if (!plan.divisions || plan.divisions.length === 0) return 150
+  
+  let totalCalories = 0
+  const workoutTime = calculateWorkoutTime(plan)
+  
+  // Cálculo baseado no tipo de treino e intensidade
+  const baseCaloriesPerMinute = plan.type === 'Cardio' ? 8 : 6 // Cardio queima mais
+  
+  // Ajuste pela dificuldade
+  const difficultyMultiplier = (() => {
+    const level = (plan.difficulty || 'Médio').toLowerCase()
+    if (level.includes('fácil') || level.includes('iniciante')) return 0.8
+    if (level.includes('difícil') || level.includes('avançado')) return 1.3
+    return 1.0 // médio
+  })()
+  
+  totalCalories = Math.round(workoutTime * baseCaloriesPerMinute * difficultyMultiplier)
+  
+  return Math.max(totalCalories, 150) // Mínimo de 150 calorias
+}
+
+const clearAllFilters = () => {
+  activeFilter.value = 'all'
 }
 
 const fetchWorkouts = async () => {
@@ -573,56 +610,6 @@ body:has(.navbar-collapsed) .main-content {
 .btn-cancel:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: white;
-}
-
-/* Filter Section */
-.filter-section {
-  margin-bottom: 2rem;
-}
-
-.filter-tabs {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.filter-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: 2px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-muted);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.filter-tab:hover {
-  border-color: var(--primary-color);
-  color: var(--text-color);
-  transform: translateY(-2px);
-}
-
-.filter-tab.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.dark-mode .filter-tab.active {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.tab-count {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
 }
 
 /* Loading */
