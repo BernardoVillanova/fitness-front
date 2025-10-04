@@ -1001,46 +1001,13 @@ const fetchExerciseDetails = async (exerciseName) => {
               
               // Buscar equipamento se existir
               if (exercise.equipmentId) {
-                try {
-                  console.log('🔧 Buscando equipamento:', exercise.equipmentId);
-                  const equipResponse = await api.get(`/equipments/${exercise.equipmentId}`)
-                  console.log('✅ Resposta do equipamento:', equipResponse.data);
-                  
-                  if (equipResponse.data) {
-                    // Verificar diferentes estruturas de resposta da API
-                    let equipment = equipResponse.data;
-                    
-                    // Se a resposta tem uma propriedade equipment, usar ela
-                    if (equipResponse.data.equipment) {
-                      equipment = equipResponse.data.equipment;
-                    }
-                    
-                    if (equipment && (equipment._id || equipment.id)) {
-                      equipmentDetails.value[exercise.equipmentId] = equipment;
-                      console.log('💾 [fetchExerciseDetails] Equipamento salvo com ID:', exercise.equipmentId);
-                      console.log('💾 [fetchExerciseDetails] Equipamento nome:', equipment.name || 'Nome não disponível');
-                      console.log('💾 [fetchExerciseDetails] Equipamento completo:', equipment);
-                    }
-                  }
-                } catch (equipError) {
-                  console.error('� Erro ao buscar equipamento:', equipError);
-                  // Tentar buscar todos os equipamentos como fallback
-                  try {
-                    const allEquipResponse = await api.get('/equipments');
-                    if (allEquipResponse.data && allEquipResponse.data.equipments) {
-                      const equipment = allEquipResponse.data.equipments.find(eq => eq._id === exercise.equipmentId);
-                      if (equipment) {
-                        equipmentDetails.value[exercise.equipmentId] = equipment;
-                        console.log('💾 [fetchExerciseDetails] FALLBACK - Equipamento salvo com ID:', exercise.equipmentId);
-                        console.log('💾 [fetchExerciseDetails] FALLBACK - Equipamento nome:', equipment.name);
-                        console.log('💾 [fetchExerciseDetails] FALLBACK - Equipamento completo:', equipment);
-                      }
-                    }
-                  } catch (fallbackError) {
-                    console.error('💥 [fetchExerciseDetails] Erro no fallback de equipamentos:', fallbackError);
-                    console.log('🚫 [fetchExerciseDetails] Fallback falhou para equipmentId:', exercise.equipmentId);
-                  }
-                }
+                console.log('🔧 [fetchExerciseDetails] Carregando equipamento:', exercise.equipmentId);
+                // Extrair o ID como string se for um objeto
+                const equipmentIdStr = typeof exercise.equipmentId === 'object' 
+                  ? exercise.equipmentId._id || exercise.equipmentId.toString()
+                  : exercise.equipmentId;
+                console.log('🔧 [fetchExerciseDetails] Equipment ID string:', equipmentIdStr);
+                await loadEquipmentDetails(equipmentIdStr);
               } else {
                 console.log('ℹ️ Exercício não possui equipamento');
               }
@@ -1093,6 +1060,66 @@ const formatRestTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+const loadEquipmentDetails = async (equipmentId) => {
+  try {
+    console.log('🔧 [loadEquipmentDetails] Carregando equipamento:', equipmentId);
+    
+    // Verificar se já foi carregado
+    if (equipmentDetails.value[equipmentId]) {
+      console.log('✅ [loadEquipmentDetails] Equipamento já carregado:', equipmentDetails.value[equipmentId].name);
+      return equipmentDetails.value[equipmentId];
+    }
+
+    // Tentar buscar por ID específico
+    try {
+      const response = await api.get(`/equipments/${equipmentId}`);
+      console.log('✅ [loadEquipmentDetails] Resposta da API:', response.data);
+      
+      if (response.data) {
+        let equipment = response.data;
+        
+        // Normalizar resposta da API (pode vir como {equipment} ou diretamente)
+        if (response.data.equipment) {
+          equipment = response.data.equipment;
+        }
+        
+        if (equipment && (equipment._id || equipment.id)) {
+          equipmentDetails.value[equipmentId] = equipment;
+          console.log('💾 [loadEquipmentDetails] Equipamento salvo:', equipment.name);
+          return equipment;
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ [loadEquipmentDetails] Erro na busca por ID, tentando fallback:', error.message);
+    }
+
+    // Fallback: buscar na lista de todos os equipamentos
+    try {
+      console.log('🔄 [loadEquipmentDetails] Usando fallback - buscar todos equipamentos');
+      const allResponse = await api.get('/equipments');
+      
+      if (allResponse.data && allResponse.data.equipments) {
+        const equipment = allResponse.data.equipments.find(eq => eq._id === equipmentId);
+        if (equipment) {
+          equipmentDetails.value[equipmentId] = equipment;
+          console.log('💾 [loadEquipmentDetails] FALLBACK - Equipamento salvo:', equipment.name);
+          return equipment;
+        } else {
+          console.log('❌ [loadEquipmentDetails] FALLBACK - Equipamento não encontrado na lista');
+        }
+      }
+    } catch (fallbackError) {
+      console.error('💥 [loadEquipmentDetails] Erro no fallback:', fallbackError);
+    }
+
+    console.log('🚫 [loadEquipmentDetails] Equipamento não encontrado:', equipmentId);
+    return null;
+  } catch (error) {
+    console.error('💥 [loadEquipmentDetails] Erro geral:', error);
+    return null;
+  }
 }
 
 const getExerciseCompletedSets = (exercise) => {
