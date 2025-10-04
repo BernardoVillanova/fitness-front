@@ -7,6 +7,11 @@
         <!-- Header Compacto -->
         <div class="workout-header-compact" v-if="currentExercise">
           <div class="header-left">
+            <!-- Botão para mostrar sidebar quando escondida -->
+            <button v-if="!showSidebar" @click="showSidebar = true" class="btn-show-sidebar-header">
+              <i class="fas fa-list"></i>
+            </button>
+            
             <div class="header-info">
               <h2>{{ workoutSession.workoutName }}</h2>
               <p>{{ workoutSession.divisionName }}</p>
@@ -73,9 +78,9 @@
           <!-- Lista de Exercícios (Sidebar) -->
           <div v-if="showSidebar" class="exercises-sidebar">
             <div class="sidebar-header">
-              <h3>Exercícios</h3>
-              <button @click="showSidebar = false" class="btn-hide-sidebar">
-                <i class="fas fa-chevron-left"></i>
+              <h3><i class="fas fa-list"></i> Exercícios</h3>
+              <button @click="showSidebar = false" class="btn-hide-sidebar" title="Esconder lista de exercícios">
+                <i class="fas fa-times"></i>
               </button>
             </div>
             <div class="exercises-list">
@@ -100,11 +105,6 @@
 
           <!-- Exercício Atual (Main Content) -->
           <div class="exercise-main-content">
-            <!-- Botão para mostrar sidebar quando escondida -->
-            <button v-if="!showSidebar" @click="showSidebar = true" class="btn-show-sidebar-floating">
-              <i class="fas fa-chevron-right"></i>
-              <span>Exercícios</span>
-            </button>
             
             <div v-if="workoutSession.exercises && workoutSession.exercises[currentExerciseIndex]" class="current-exercise">
               
@@ -198,7 +198,7 @@
                       <input 
                         type="number" 
                         v-model.number="currentSet.reps"
-                        :disabled="currentSet.completed"
+                        :disabled="currentSet.completed && !isEditingCompletedSet"
                         placeholder="Ex: 12"
                         min="1"
                         class="reps-input"
@@ -219,7 +219,7 @@
                           type="number" 
                           v-model.number="currentSet.weight"
                           step="0.5"
-                          :disabled="currentSet.completed"
+                          :disabled="currentSet.completed && !isEditingCompletedSet"
                           placeholder="Ex: 25.0"
                           min="0"
                           class="weight-input"
@@ -238,26 +238,48 @@
                     </div>
                   </div>
 
-                  <div v-if="!currentSet.completed" class="set-actions">
-                    <button @click="completeCurrentSet" class="btn-complete-set">
+                  <div v-if="!currentSet.completed || isEditingCompletedSet" class="set-actions">
+                    <button v-if="!currentSet.completed" @click="completeCurrentSet" class="btn-complete-set">
                       <i class="fas fa-check"></i>
                       Concluir Série
                     </button>
+                    <div v-else-if="isEditingCompletedSet" class="edit-actions">
+                      <button @click="saveEditedSet" class="btn-save-edit">
+                        <i class="fas fa-check"></i>
+                        Salvar Alterações
+                      </button>
+                      <button @click="cancelEditSet" class="btn-cancel-edit">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
                   
                   <div v-else class="set-completed-info">
-                    <div class="completion-time">
-                      <i class="fas fa-clock"></i>
-                      Concluída às {{ new Date(currentSet.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }}
+                    <div class="completion-header">
+                      <div class="completion-time">
+                        <i class="fas fa-clock"></i>
+                        Concluída às {{ new Date(currentSet.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }}
+                      </div>
+                      <button @click="editCompletedSet" class="btn-edit-completed">
+                        <i class="fas fa-edit"></i>
+                        Editar
+                      </button>
                     </div>
                     <div v-if="currentSet.difficulty" class="difficulty-feedback">
                       <span class="difficulty-label">Dificuldade:</span>
-                      <div class="difficulty-stars">
-                        <i 
-                          v-for="star in 5" 
-                          :key="star"
-                          :class="['fas fa-star', { active: star <= getDifficultyLevel(currentSet.difficulty) }]"
-                        ></i>
+                      <span class="difficulty-text" :class="`difficulty-${currentSet.difficulty}`">
+                        {{ getDifficultyText(currentSet.difficulty) }}
+                      </span>
+                    </div>
+                    <div class="completed-summary">
+                      <div class="summary-item">
+                        <span class="summary-label">Repetições:</span>
+                        <span class="summary-value">{{ currentSet.actualReps || currentSet.reps }}</span>
+                      </div>
+                      <div class="summary-item">
+                        <span class="summary-label">Peso:</span>
+                        <span class="summary-value">{{ currentSet.weight }}kg</span>
                       </div>
                     </div>
                   </div>
@@ -314,9 +336,19 @@
                   Exercício Anterior
                 </button>
                 
+                <!-- Botão de Pular Exercício -->
+                <button 
+                  v-if="!currentExercise.completed && !currentExercise.skipped"
+                  @click="showSkipModal = true"
+                  class="btn-skip-exercise"
+                >
+                  <i class="fas fa-forward"></i>
+                  Pular Exercício
+                </button>
+                
                 <!-- Só mostrar botão de concluir exercício na última série -->
                 <button 
-                  v-if="currentSetIndex === totalSetsInExercise - 1 && !currentExercise.completed"
+                  v-if="currentSetIndex === totalSetsInExercise - 1 && !currentExercise.completed && !currentExercise.skipped"
                   @click="markExerciseComplete(currentExerciseIndex)"
                   class="btn-complete-current"
                 >
@@ -326,6 +358,10 @@
                 <div v-else-if="currentExercise.completed" class="completed-indicator">
                   <i class="fas fa-check-circle"></i>
                   Exercício Concluído
+                </div>
+                <div v-else-if="currentExercise.skipped" class="skipped-indicator">
+                  <i class="fas fa-forward"></i>
+                  Exercício Pulado: {{ currentExercise.skipReason }}
                 </div>
 
                 <button 
@@ -582,7 +618,7 @@
         <div class="difficulty-modal-body">
           <div class="difficulty-options">
             <button 
-              @click="submitDifficultyFeedback('iniciante')"
+              @click="submitDifficultyFeedback('easy')"
               class="difficulty-option easy"
             >
               <div class="difficulty-icon">
@@ -595,7 +631,7 @@
             </button>
             
             <button 
-              @click="submitDifficultyFeedback('intermediário')"
+              @click="submitDifficultyFeedback('medium')"
               class="difficulty-option medium"
             >
               <div class="difficulty-icon">
@@ -608,7 +644,7 @@
             </button>
             
             <button 
-              @click="submitDifficultyFeedback('avançado')"
+              @click="submitDifficultyFeedback('hard')"
               class="difficulty-option hard"
             >
               <div class="difficulty-icon">
@@ -679,6 +715,49 @@
       </div>
     </div>
   </Transition>
+
+  <!-- Modal de Pular Exercício -->
+  <Transition name="modal">
+    <div v-if="showSkipModal" class="modal-overlay skip-modal-overlay">
+      <div class="modal-content skip-modal" @click.stop>
+        <div class="skip-modal-header">
+          <h3>Pular Exercício</h3>
+          <button @click="showSkipModal = false" class="btn-close-modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="skip-modal-body">
+          <p>Tem certeza que deseja pular o exercício <strong>{{ currentExercise.exerciseName }}</strong>?</p>
+          <div class="skip-reason-container">
+            <label for="skipReason">Motivo (opcional):</label>
+            <select v-model="skipReason" id="skipReason" class="skip-reason-select">
+              <option value="">Selecione um motivo...</option>
+              <option value="Lesão/Dor">Lesão ou dor</option>
+              <option value="Equipamento indisponível">Equipamento indisponível</option>
+              <option value="Muito difícil">Muito difícil para mim</option>
+              <option value="Falta de tempo">Falta de tempo</option>
+              <option value="Outro">Outro motivo</option>
+            </select>
+            <textarea 
+              v-if="skipReason === 'Outro'"
+              v-model="customSkipReason"
+              placeholder="Descreva o motivo..."
+              class="custom-reason-textarea"
+            ></textarea>
+          </div>
+        </div>
+        <div class="skip-modal-actions">
+          <button @click="showSkipModal = false" class="btn-cancel">
+            Cancelar
+          </button>
+          <button @click="confirmSkipExercise" class="btn-skip-confirm">
+            <i class="fas fa-forward"></i>
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
@@ -729,6 +808,10 @@ const showWeightInput = ref(false)
 const showDifficultyFeedback = ref(false)
 const currentSetDifficulty = ref(null)
 const showSidebar = ref(true)
+const showSkipModal = ref(false)
+const skipReason = ref('')
+const customSkipReason = ref('')
+const isEditingCompletedSet = ref(false)
 
 // Computed
 const allExercisesCompleted = computed(() => {
@@ -876,6 +959,9 @@ watch(() => currentExerciseIndex.value, () => {
     currentSetIndex.value = firstIncompleteSet !== -1 ? firstIncompleteSet : 0
     checkBodyWeightRequirement()
     
+    // Aplicar peso corporal a todas as séries se necessário
+    applyBodyWeightToAllSets()
+    
     // Carregar detalhes do exercício atual se ainda não foram carregados
     if (!exerciseDetails.value[exercise.exerciseName]) {
       console.log('🔄 [watcher] Carregando detalhes do exercício:', exercise.exerciseName)
@@ -886,6 +972,14 @@ watch(() => currentExerciseIndex.value, () => {
     }
   }
 })
+
+// Watcher para aplicar peso corporal automaticamente
+watch(() => [userWeight.value, currentSet.value, isBodyWeightExercise.value], ([newUserWeight, newCurrentSet, isBodyWeight]) => {
+  if (isBodyWeight && newUserWeight && newCurrentSet && !newCurrentSet.completed && !newCurrentSet.weight) {
+    newCurrentSet.weight = newUserWeight
+    console.log('🏋️ Peso corporal aplicado automaticamente via watcher:', newUserWeight)
+  }
+}, { immediate: true })
 
 // Lifecycle hooks
 onMounted(() => {
@@ -946,6 +1040,27 @@ const setUserWeight = (weight) => {
   showWeightInput.value = false
   // Salvar no localStorage para próximas sessões
   localStorage.setItem('userWeight', weight.toString())
+  
+  // Aplicar peso corporal ao set atual se for exercício de peso corporal
+  if (isBodyWeightExercise.value && currentSet.value && !currentSet.value.completed) {
+    currentSet.value.weight = weight
+    console.log('🏋️ Peso corporal aplicado automaticamente ao set:', weight)
+  }
+}
+
+// Função auxiliar para aplicar peso corporal a todas as séries não concluídas
+const applyBodyWeightToAllSets = () => {
+  if (!isBodyWeightExercise.value || !userWeight.value) return
+  
+  const exercise = currentExercise.value
+  if (exercise) {
+    exercise.sets.forEach(set => {
+      if (!set.completed && !set.weight) {
+        set.weight = userWeight.value
+        console.log('🏋️ Peso corporal aplicado à série:', set)
+      }
+    })
+  }
 }
 
 const fetchExerciseDetails = async (exerciseName) => {
@@ -1131,6 +1246,12 @@ const getExerciseCompletedSets = (exercise) => {
 const completeCurrentSet = () => {
   if (!currentSet.value || currentSet.value.completed) return
   
+  // Garantir que peso corporal seja aplicado antes de completar
+  if (isBodyWeightExercise.value && userWeight.value && !currentSet.value.weight) {
+    currentSet.value.weight = userWeight.value
+    console.log('🏋️ Peso corporal aplicado antes de completar:', userWeight.value)
+  }
+  
   // Mostrar feedback de dificuldade
   showDifficultyFeedback.value = true
 }
@@ -1299,6 +1420,80 @@ const closeVideoModal = () => {
   currentVideoUrl.value = ''
 }
 
+const confirmSkipExercise = async () => {
+  try {
+    loading.value = true
+    
+    const reason = skipReason.value === 'Outro' ? customSkipReason.value : skipReason.value
+    
+    await api.post(`/student/sessions/${props.workoutSession._id}/skip-exercise`, {
+      exerciseIndex: currentExerciseIndex.value,
+      reason: reason || 'Não informado'
+    })
+    
+    // Emitir evento para o componente pai atualizar os dados
+    emit('session-updated')
+    
+    // Fechar modal e limpar
+    showSkipModal.value = false
+    skipReason.value = ''
+    customSkipReason.value = ''
+    
+    // Ir para o próximo exercício se disponível
+    if (currentExerciseIndex.value < props.workoutSession.exercises.length - 1) {
+      currentExerciseIndex.value++
+      currentSetIndex.value = 0
+    }
+    
+    alert('Exercício pulado com sucesso!')
+    
+  } catch (error) {
+    console.error('Erro ao pular exercício:', error)
+    alert('Erro ao pular exercício')
+  } finally {
+    loading.value = false
+  }
+}
+
+// Funções de edição pós-conclusão
+const editCompletedSet = () => {
+  console.log('🔧 Iniciando edição da série concluída')
+  isEditingCompletedSet.value = true
+}
+
+const saveEditedSet = async () => {
+  try {
+    loading.value = true
+    console.log('💾 Salvando alterações da série')
+    
+    // Para exercícios de peso corporal, garantir que o peso seja o peso do usuário
+    if (isBodyWeightExercise.value && userWeight.value) {
+      currentSet.value.weight = userWeight.value
+      console.log('🏋️ Peso corporal aplicado:', userWeight.value)
+    }
+    
+    // Salvar no backend
+    await saveProgress()
+    
+    // Sempre mostrar feedback de dificuldade após edição
+    isEditingCompletedSet.value = false
+    showDifficultyFeedback.value = true
+    currentSetDifficulty.value = currentSet.value
+    
+  } catch (error) {
+    console.error('Erro ao salvar edição:', error)
+    alert('Erro ao salvar alterações')
+  } finally {
+    loading.value = false
+  }
+}
+
+const cancelEditSet = () => {
+  console.log('❌ Cancelando edição da série')
+  isEditingCompletedSet.value = false
+  // Aqui poderíamos restaurar valores originais se necessário
+}
+
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return ''
   
@@ -1373,20 +1568,125 @@ const getDifficultyColor = (difficulty) => {
   return colors[difficulty?.toLowerCase()] || '#6b7280' // gray default
 }
 
-const getDifficultyLevel = (difficulty) => {
-  const levels = {
-    'iniciante': 1,
-    'intermediário': 2,
-    'intermediario': 2,
-    'avançado': 3,
-    'avancado': 3
+const getDifficultyText = (difficulty) => {
+  const texts = {
+    'easy': 'Fácil',
+    'facil': 'Fácil', 
+    'medium': 'Médio',
+    'medio': 'Médio',
+    'hard': 'Difícil',
+    'dificil': 'Difícil'
   }
-  return levels[difficulty?.toLowerCase()] || 1
+  return texts[difficulty?.toLowerCase()] || 'Médio'
 }
 </script>
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+/* Estilos para modo de edição pós-conclusão */
+.progress-header-edit {
+  background: linear-gradient(135deg, #f8d7da 0%, #ffe6e6 100%);
+  border: 2px dashed #dc3545;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.1);
+  animation: editPulse 2s infinite;
+}
+
+@keyframes editPulse {
+  0%, 100% { 
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.1);
+  }
+  50% { 
+    box-shadow: 0 6px 12px rgba(220, 53, 69, 0.2);
+  }
+}
+
+.edit-mode-container {
+  background: #fff5f5;
+  border: 2px solid #ff6b6b;
+  border-radius: 10px;
+  position: relative;
+  padding: 15px;
+}
+
+.edit-mode-container::before {
+  content: '✏️ MODO EDIÇÃO';
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  background: #ff6b6b;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.edit-actions button {
+  min-width: 120px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-save-edit {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  color: white;
+}
+
+.btn-save-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-cancel-edit {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  border: none;
+  color: white;
+}
+
+.btn-cancel-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-edit-completed {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-edit-completed:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+}
+
+.btn-edit-completed i {
+  font-size: 0.75rem;
+}
 
 /* Modal Overlay */
 .modal-overlay {
@@ -1448,23 +1748,32 @@ const getDifficultyLevel = (difficulty) => {
 }
 
 .btn-show-sidebar-header {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-right: 12px;
+  border: 2px solid var(--border-color);
 }
 
 .btn-show-sidebar-header:hover {
-  background: var(--primary-hover);
+  background: var(--primary-color);
+  color: white;
   transform: scale(1.05);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-show-sidebar-header i {
+  font-size: 1.1rem;
 }
 
 .header-left {
@@ -1706,22 +2015,23 @@ const getDifficultyLevel = (difficulty) => {
 }
 
 .btn-hide-sidebar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-muted);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .btn-hide-sidebar:hover {
-  background: var(--border-color);
-  color: var(--text-color);
+  background: var(--danger-color);
+  color: white;
+  transform: scale(1.1);
 }
 
 .exercises-list {
@@ -1814,40 +2124,6 @@ const getDifficultyLevel = (difficulty) => {
   position: relative;
 }
 
-.btn-show-sidebar-floating {
-  position: fixed;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 100;
-  padding: 1rem 0.5rem;
-  background: var(--primary-color);
-  border: none;
-  border-radius: 0 12px 12px 0;
-  color: white;
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
-.btn-show-sidebar-floating:hover {
-  background: var(--primary-hover);
-  transform: translateY(-50%) translateX(4px);
-}
-
-.btn-show-sidebar-floating span {
-  font-size: 0.75rem;
-  letter-spacing: 1px;
-}
-
 .current-exercise {
   max-width: 800px;
   margin: 0 auto;
@@ -1884,6 +2160,7 @@ const getDifficultyLevel = (difficulty) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  width: 163px;
 }
 
 .btn-info:hover {
@@ -2251,18 +2528,31 @@ const getDifficultyLevel = (difficulty) => {
   color: var(--text-secondary);
 }
 
-.difficulty-stars {
-  display: flex;
-  gap: 0.25rem;
+.difficulty-text {
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.difficulty-stars i {
-  color: var(--border-color);
-  font-size: 1rem;
+.difficulty-text.difficulty-easy,
+.difficulty-text.difficulty-facil {
+  color: #007bff;
+  background: rgba(0, 123, 255, 0.1);
 }
 
-.difficulty-stars i.active {
-  color: #fbbf24;
+.difficulty-text.difficulty-medium,
+.difficulty-text.difficulty-medio {
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.difficulty-text.difficulty-hard,
+.difficulty-text.difficulty-dificil {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
 }
 
 .set-navigation {
@@ -2306,6 +2596,8 @@ const getDifficultyLevel = (difficulty) => {
   border-radius: 16px;
   font-weight: 600;
   font-size: 0.85rem;
+  width: 62px;
+  margin: 5px;
 }
 
 /* Observações */
@@ -3268,26 +3560,6 @@ const getDifficultyLevel = (difficulty) => {
   .weight-modal-actions {
     flex-direction: column;
   }
-  /* Botão de mostrar sidebar responsivo */
-  .btn-show-sidebar-floating {
-    position: relative;
-    left: 0;
-    top: 0;
-    transform: none;
-    width: 100%;
-    margin-bottom: 1rem;
-    flex-direction: row;
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    writing-mode: initial;
-    text-orientation: initial;
-    justify-content: center;
-  }
-  
-  .btn-show-sidebar-floating span {
-    letter-spacing: normal;
-  }
-  
   /* Novo Modal Responsivo */
   .workout-body-new {
     flex-direction: column;
@@ -3368,6 +3640,156 @@ const getDifficultyLevel = (difficulty) => {
 
   .video-thumbnail {
     height: 150px;
+  }
+}
+
+/* Modal de Pular Exercício */
+.skip-modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1300;
+}
+
+.skip-modal {
+  max-width: 450px;
+  background: var(--card-bg);
+  border: 2px solid #ff6b35;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.skip-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.skip-modal-header h3 {
+  margin: 0;
+  color: #ff6b35;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.skip-modal-body {
+  padding: 1.5rem;
+}
+
+.skip-modal-body p {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.skip-reason-container {
+  margin-top: 1rem;
+}
+
+.skip-reason-container label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.skip-reason-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--input-bg);
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+.custom-reason-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--input-bg);
+  font-size: 1rem;
+  color: var(--text-color);
+  min-height: 80px;
+  resize: vertical;
+}
+
+.skip-modal-actions {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-skip-confirm {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-skip-confirm:hover {
+  background: #e55a2b;
+  transform: translateY(-2px);
+}
+
+/* Botão de Pular Exercício */
+.btn-skip-exercise {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.btn-skip-exercise:hover {
+  background: linear-gradient(135deg, #e55a2b, #d17b1a);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+/* Indicador de exercício pulado */
+.skipped-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 107, 53, 0.1);
+  border: 2px solid rgba(255, 107, 53, 0.3);
+  border-radius: 12px;
+  color: #ff6b35;
+  font-weight: 600;
+}
+
+.skipped-indicator i {
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .skip-modal {
+    max-width: 95vw;
+    margin: 1rem;
+  }
+  
+  .skip-modal-actions {
+    flex-direction: column;
   }
 }
 </style>

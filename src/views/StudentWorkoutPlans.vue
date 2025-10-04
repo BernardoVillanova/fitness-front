@@ -116,15 +116,6 @@
                 </div>
               </div>
               
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <i class="fas fa-fire"></i>
-                </div>
-                <div class="stat-details">
-                  <div class="stat-number">{{ calculateCalories(plan) }}</div>
-                  <div class="stat-label">Calorias</div>
-                </div>
-              </div>
             </div>
 
             <!-- Progress Section -->
@@ -206,6 +197,7 @@
 
     <!-- Workout Modal Component -->
     <WorkoutModal
+      v-if="showWorkoutModal && workoutSession"
       :show="showWorkoutModal"
       :workout-session="workoutSession"
       :workout-start-time="workoutStartTime"
@@ -218,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
@@ -315,28 +307,6 @@ const calculateWorkoutTime = (plan) => {
   return Math.max(totalTime, 30) // Mínimo de 30 minutos
 }
 
-const calculateCalories = (plan) => {
-  if (!plan.divisions || plan.divisions.length === 0) return 150
-  
-  let totalCalories = 0
-  const workoutTime = calculateWorkoutTime(plan)
-  
-  // Cálculo baseado no tipo de treino e intensidade
-  const baseCaloriesPerMinute = plan.type === 'Cardio' ? 8 : 6 // Cardio queima mais
-  
-  // Ajuste pela dificuldade
-  const difficultyMultiplier = (() => {
-    const level = (plan.difficulty || 'Médio').toLowerCase()
-    if (level.includes('fácil') || level.includes('iniciante')) return 0.8
-    if (level.includes('difícil') || level.includes('avançado')) return 1.3
-    return 1.0 // médio
-  })()
-  
-  totalCalories = Math.round(workoutTime * baseCaloriesPerMinute * difficultyMultiplier)
-  
-  return Math.max(totalCalories, 150) // Mínimo de 150 calorias
-}
-
 const clearAllFilters = () => {
   activeFilter.value = 'all'
 }
@@ -411,9 +381,12 @@ const cancelWorkout = async () => {
     loading.value = true
     await api.post(`/student/sessions/${activeSession.value._id}/cancel`)
     
-    activeSession.value = null
-    workoutSession.value = null
-    showWorkoutModal.value = false
+    // Usar nextTick para evitar problemas de reatividade
+    await nextTick(() => {
+      activeSession.value = null
+      workoutSession.value = null
+      showWorkoutModal.value = false
+    })
     
     await checkActiveSession()
   } catch (error) {
@@ -434,14 +407,17 @@ const openWorkoutModal = (workout) => {
 
 // Handlers para o WorkoutModal
 const handleWorkoutModalClose = () => {
+  // Apenas fecha o modal, mantém a sessão ativa para poder continuar depois
   showWorkoutModal.value = false
 }
 
 const handleWorkoutFinished = async () => {
-  // Limpar estados
-  workoutSession.value = null
-  activeSession.value = null
-  showWorkoutModal.value = false
+  // Usar nextTick para evitar problemas de reatividade
+  await nextTick(() => {
+    showWorkoutModal.value = false
+    workoutSession.value = null
+    activeSession.value = null
+  })
   
   // Recarregar treinos
   await fetchWorkouts()
@@ -454,6 +430,9 @@ const handleProgressSaved = () => {
 }
 
 const handleSessionUpdated = (updatedSession) => {
+  // Validar se a sessão ainda existe antes de atualizar
+  if (!updatedSession) return
+  
   // Atualizar a sessão quando houver mudanças
   workoutSession.value = updatedSession
   if (activeSession.value && activeSession.value._id === updatedSession._id) {
@@ -758,7 +737,7 @@ body:has(.navbar-collapsed) .main-content {
 
 .plan-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 1.25rem;
   padding: 1rem;
