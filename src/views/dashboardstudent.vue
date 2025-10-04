@@ -90,12 +90,15 @@
           </div>
 
           <div v-else-if="nextWorkout" class="workout-preview">
-            <h3 class="workout-name">{{ nextWorkout.name }}</h3>
+            <h3 class="workout-name">
+              {{ nextWorkout.name }}
+              <span v-if="nextWorkout.divisionName"> - {{ nextWorkout.divisionName }}</span>
+            </h3>
             
             <div class="workout-info">
               <div class="info-item">
-                <i class="fas fa-layer-group"></i>
-                <span>{{ nextWorkout.divisions?.length || 0 }} divisões</span>
+                <i class="fas fa-list"></i>
+                <span>{{ getTotalExercises(nextWorkout) }} exercícios</span>
               </div>
               <div class="info-item">
                 <i class="fas fa-clock"></i>
@@ -214,7 +217,11 @@
               </div>
               <div class="activity-content">
                 <p class="activity-title">{{ activity.title }}</p>
-                <p class="activity-time">{{ formatDate(activity.date) }}</p>
+                <p class="activity-time">
+                  {{ formatDate(activity.date) }}
+                  <span v-if="activity.duration" class="activity-detail"> • {{ activity.duration }}min</span>
+                  <span v-if="activity.exercises" class="activity-detail"> • {{ activity.exercises }} exercícios</span>
+                </p>
               </div>
             </div>
           </div>
@@ -225,43 +232,6 @@
           </div>
         </div>
 
-        <!-- Metas -->
-        <div class="content-card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <i class="fas fa-bullseye"></i>
-              Minhas Metas
-            </h2>
-            <router-link to="/student/goals" class="link-view-all">Ver Tudo</router-link>
-          </div>
-
-          <div v-if="goals.length > 0" class="goals-list">
-            <div 
-              v-for="goal in goals.slice(0, 3)" 
-              :key="goal.id"
-              class="goal-item"
-            >
-              <div class="goal-header">
-                <p class="goal-text">{{ goal.title }}</p>
-                <span class="goal-percentage">{{ goal.progress }}%</span>
-              </div>
-              <div class="goal-progress-bar">
-                <div 
-                  class="goal-progress-fill" 
-                  :style="{ width: goal.progress + '%' }"
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="empty-state-small">
-            <i class="fas fa-target"></i>
-            <p>Nenhuma meta definida</p>
-            <button @click="goToGoals" class="btn-secondary">
-              Criar Meta
-            </button>
-          </div>
-        </div>
       </div>
     </main>
   </div>
@@ -356,59 +326,192 @@ const fetchDashboardData = async () => {
   try {
     // Buscar dados do estudante do sessionStorage
     const userData = JSON.parse(sessionStorage.getItem('user'))
-    const studentId = userData.studentId || userData.id
+    const userIdFromSession = userData.id || userData.userId
+    const token = sessionStorage.getItem('token')
+    
+    console.log('👤 Dados do usuário:', userData)
+    console.log('🆔 UserId do sessionStorage:', userIdFromSession)
+    console.log('🔑 Token no sessionStorage:', token ? 'Presente' : 'Ausente')
+    
+    if (!token) {
+      console.error('❌ Token não encontrado no sessionStorage!')
+      throw new Error('Token de autenticação não encontrado')
+    }
     
     // Definir nome do usuário
     userName.value = userData.name ? userData.name.split(' ')[0] : 'Atleta'
     
-    // Buscar dados completos do estudante
-    const studentResponse = await api.get(`/students/${studentId}`)
-    const studentData = studentResponse.data
+    // IMPORTANTE: Buscar o studentId real do banco de dados
+    console.log('🔍 Buscando studentId real no banco...')
+    let realStudentId = null
+    let currentStudent = null
     
-    // Atualizar nome com dados mais completos se disponível
-    if (studentData.name) {
-      userName.value = studentData.name.split(' ')[0]
+    try {
+      // Como o aluno não pode acessar /students (só instrutores), 
+      // vamos usar a API específica /students/user/{userId}
+      console.log('📞 Chamando API /students/user/' + userIdFromSession)
+      const studentResponse = await api.get(`/students/user/${userIdFromSession}`)
+      currentStudent = studentResponse.data
+      
+      console.log('📊 Estudante encontrado:', currentStudent)
+      
+      if (currentStudent) {
+        realStudentId = currentStudent._id
+        console.log('✅ StudentId real encontrado:', realStudentId)
+        
+        // Atualizar nome se disponível
+        if (currentStudent.name) {
+          userName.value = currentStudent.name.split(' ')[0]
+        }
+      } else {
+        console.error('❌ Estudante não encontrado para userId:', userIdFromSession)
+        throw new Error('Estudante não encontrado')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar estudante:', error)
+      throw error
     }
     
-    // 1. Buscar histórico de sessões para calcular stats
-    const historyResponse = await api.get('/student/sessions/history', {
-      params: { limit: 100 }
-    })
-    const allSessions = historyResponse.data?.sessions || []
-    const completedSessions = allSessions.filter(s => s.status === 'completed')
+    // 1. Buscar TODAS as sessões de treino usando o studentId real
+    console.log('🔍 Buscando sessões para studentId:', realStudentId)
     
-    // Calcular stats a partir das sessões
+    let allSessions = []
+    
+    try {
+      // Primeira tentativa: API de histórico existente
+      const historyResponse = await api.get('/student/sessions/history', {
+        params: { limit: 1000 }
+      })
+      
+      console.log('📊 Resposta da API de histórico:', historyResponse.data)
+      allSessions = historyResponse.data?.sessions || []
+      
+      // Filtrar sessões pelo studentId correto
+      allSessions = allSessions.filter(session => {
+        const sessionStudentId = session.studentId?._id || session.studentId
+        const match = sessionStudentId === realStudentId
+        if (match) {
+          console.log('✅ Sessão encontrada para o estudante:', {
+            sessionId: session._id,
+            workoutName: session.workoutName,
+            studentId: sessionStudentId
+          })
+        }
+        return match
+      })
+      
+      if (allSessions.length === 0) {
+        console.log('⚠️ Nenhuma sessão encontrada na API de histórico, tentando API alternativa...')
+        
+        // Segunda tentativa: Nova API que busca todas as sessões
+        try {
+          const allSessionsResponse = await api.get('/student/sessions/all')
+          console.log('📊 Resposta da API alternativa:', allSessionsResponse.data)
+          const alternativeSessions = allSessionsResponse.data?.sessions || []
+          
+          // Filtrar pelo studentId correto
+          allSessions = alternativeSessions.filter(session => {
+            const sessionStudentId = session.studentId?._id || session.studentId
+            return sessionStudentId === realStudentId
+          })
+        } catch (altError) {
+          console.error('❌ API alternativa também falhou:', altError)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar histórico:', error)
+      allSessions = []
+    }
+    
+    console.log('📈 Total de sessões encontradas para o estudante:', allSessions.length)
+    
+    // Filtrar apenas sessões completadas e adicionar logs detalhados
+    const completedSessions = allSessions.filter(s => {
+      const isCompleted = s.status === 'completed'
+      if (isCompleted) {
+        console.log(`✅ Sessão completada encontrada:`, {
+          id: s._id,
+          name: s.workoutName,
+          division: s.divisionName,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          duration: s.duration,
+          studentId: s.studentId
+        })
+      }
+      return isCompleted
+    })
+    
+    console.log('🏆 Total de sessões completadas:', completedSessions.length)
+    
+    if (completedSessions.length === 0) {
+      console.warn('⚠️ Nenhuma sessão completada encontrada!')
+      console.log('🔍 Verificando se o realStudentId está correto...')
+      console.log('🔍 RealStudentId encontrado:', realStudentId)
+      console.log('🔍 Sessions raw:', allSessions.map(s => ({ 
+        id: s._id, 
+        studentId: s.studentId, 
+        status: s.status 
+      })))
+    }
+    
+    // Calcular estatísticas baseadas em dados reais
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const sessionsThisWeek = completedSessions.filter(s => new Date(s.startTime) >= weekAgo)
     
-    // Calcular total de horas
+    // Filtrar sessões da semana usando startTime ou endTime
+    const sessionsThisWeek = completedSessions.filter(s => {
+      const sessionDate = new Date(s.endTime || s.startTime)
+      const isThisWeek = sessionDate >= weekAgo
+      if (isThisWeek) {
+        console.log(`📅 Sessão desta semana: ${s.workoutName} em ${sessionDate.toLocaleDateString()}`)
+      }
+      return isThisWeek
+    })
+    
+    console.log('📊 Sessões desta semana:', sessionsThisWeek.length)
+    
+    // Calcular total de horas (duration está em minutos)
     const totalMinutes = completedSessions.reduce((sum, s) => {
-      return sum + (s.duration || 0)
+      const minutes = s.duration || 0
+      console.log(`⏱️ Sessão ${s.workoutName}: ${minutes} minutos`)
+      return sum + minutes
     }, 0)
+    const totalHours = Math.round(totalMinutes / 60 * 10) / 10 // Arredondar para 1 casa decimal
+    
+    console.log('📊 Cálculos de tempo:', {
+      totalMinutes,
+      totalHours,
+      totalSessions: completedSessions.length
+    })
     
     // Calcular streak
     const streak = calculateStreak(completedSessions)
     
     // Meta semanal do aluno (padrão 4 ou do perfil)
-    const weeklyGoal = studentData.weeklyGoal || studentData.goals?.weeklyWorkouts || 4
+    const weeklyGoal = (currentStudent?.weeklyGoal || currentStudent?.goals?.weeklyWorkouts) || 4
     
     dashboardData.value = {
       totalWorkouts: completedSessions.length,
       currentStreak: streak,
       weeklyGoal: weeklyGoal,
       completedThisWeek: sessionsThisWeek.length,
-      totalHours: Math.round(totalMinutes / 60)
+      totalHours: totalHours
     }
+    
+    console.log('📈 Dashboard stats calculadas:', dashboardData.value)
     
     // 2. Buscar próximo treino (plano de treino ativo)
     try {
       const workoutsResponse = await api.get('/student/workouts')
       const workouts = workoutsResponse.data || []
       
+      console.log('🏋️ Planos de treino encontrados:', workouts.length)
+      
       if (workouts.length > 0) {
-        // Pegar o primeiro plano ativo
+        // Pegar o primeiro plano ativo ou o primeiro disponível
         const activePlan = workouts.find(w => w.isActive !== false) || workouts[0]
+        console.log('🎯 Plano ativo selecionado:', activePlan.name)
         
         // Calcular qual divisão fazer baseado no histórico
         const planSessions = completedSessions.filter(s => 
@@ -416,155 +519,173 @@ const fetchDashboardData = async () => {
           s.workoutPlanId === activePlan._id
         )
         
+        console.log('📈 Sessões do plano encontradas:', planSessions.length)
+        
+        // Determinar próxima divisão baseada no número de treinos completados
         const nextDivisionIndex = planSessions.length % (activePlan.divisions?.length || 1)
         const nextDivision = activePlan.divisions?.[nextDivisionIndex]
         
         if (nextDivision) {
           nextWorkout.value = {
             _id: activePlan._id,
-            name: `${activePlan.name} - ${nextDivision.name}`,
+            name: activePlan.name,
+            divisionName: nextDivision.name,
+            description: nextDivision.description || activePlan.description,
             divisionIndex: nextDivisionIndex,
             estimatedTime: calculateEstimatedTime(nextDivision),
             estimatedCalories: calculateEstimatedCalories(nextDivision),
-            divisions: [nextDivision]
+            divisions: [nextDivision] // Para compatibilidade com o template
           }
+          
+          console.log('✅ Próximo treino definido:', {
+            planName: nextWorkout.value.name,
+            divisionName: nextWorkout.value.divisionName,
+            exercises: nextDivision.exercises?.length || 0
+          })
+        } else {
+          console.log('❌ Nenhuma divisão encontrada no plano')
+          nextWorkout.value = null
         }
+      } else {
+        console.log('❌ Nenhum plano de treino encontrado')
+        nextWorkout.value = null
       }
     } catch (err) {
+      console.error('Erro ao buscar treinos:', err)
       nextWorkout.value = null
     }
     
     // 3. Processar atividades recentes (apenas sessões realmente completadas)
     recentActivities.value = []
     
-    // Adicionar últimas sessões completadas (com status 'completed')
+    console.log('📝 Processando atividades recentes...')
+    console.log('📊 Total de sessões completadas:', completedSessions.length)
+    
+    // Adicionar últimas sessões completadas (ordenar por data mais recente)
     const recentCompletedSessions = completedSessions
-      .filter(s => s.status === 'completed' && s.endTime) // Apenas com endTime
-      .slice(0, 3)
+      .filter(s => s.status === 'completed')
+      .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))
+      .slice(0, 5)
+    
+    console.log('🏋️ Sessões recentes encontradas:', recentCompletedSessions.length)
     
     recentCompletedSessions.forEach((session, index) => {
-      recentActivities.value.push({
-        id: `workout-${index}`,
-        type: 'workout',
-        title: `${session.workoutName} - ${session.divisionName} concluído`,
-        date: new Date(session.endTime)
-      })
-    })
-    
-    // Buscar progresso recente
-    try {
-      const progressResponse = await api.get('/student/progress/history', {
-        params: { limit: 3 }
-      })
-      const progressLogs = progressResponse.data || []
-      
-      progressLogs.forEach((log, index) => {
-        if (log.weight) {
-          recentActivities.value.push({
-            id: `progress-${index}`,
-            type: 'progress',
-            title: `Peso atualizado para ${log.weight}kg`,
-            date: new Date(log.date)
-          })
-        }
-      })
-    } catch (err) {
-      // Sem histórico de progresso disponível
-    }
-    
-    // Ordenar por data mais recente
-    recentActivities.value.sort((a, b) => b.date - a.date)
-    recentActivities.value = recentActivities.value.slice(0, 5)
-    
-    // 4. Gerar metas baseadas nos dados reais do aluno
-    goals.value = []
-    
-    if (studentData.goals) {
-      // Meta de peso
-      if (studentData.goals.targetWeight && studentData.currentWeight) {
-        const weightDiff = Math.abs(studentData.currentWeight - studentData.goals.targetWeight)
-        const targetDiff = Math.abs(studentData.initialWeight || studentData.currentWeight - studentData.goals.targetWeight)
-        const progress = targetDiff > 0 ? Math.round(((targetDiff - weightDiff) / targetDiff) * 100) : 0
+      const sessionDate = new Date(session.endTime || session.startTime)
+      const title = session.divisionName 
+        ? `${session.workoutName} - ${session.divisionName} concluído`
+        : `${session.workoutName} concluído`
         
-        goals.value.push({
-          id: 'weight',
-          title: `Atingir ${studentData.goals.targetWeight}kg`,
-          progress: Math.min(Math.max(progress, 0), 100)
-        })
-      }
-      
-      // Meta de treinos semanais
-      const weeklyProgress = weeklyGoal > 0 ? Math.round((sessionsThisWeek.length / weeklyGoal) * 100) : 0
-      goals.value.push({
-        id: 'weekly',
-        title: `Treinar ${weeklyGoal}x por semana`,
-        progress: Math.min(weeklyProgress, 100)
+      recentActivities.value.push({
+        id: `workout-${session._id}-${index}`,
+        type: 'workout',
+        title: title,
+        date: sessionDate,
+        duration: session.duration || 0,
+        exercises: session.totalExercises || 0
       })
       
-      // Meta de streak
-      if (streak > 0) {
-        const streakGoal = 7
-        const streakProgress = Math.round((streak / streakGoal) * 100)
-        goals.value.push({
-          id: 'streak',
-          title: `Manter sequência de ${streakGoal} dias`,
-          progress: Math.min(streakProgress, 100)
-        })
-      }
-    } else {
-      // Metas padrão se não tiver dados
-      const weeklyProgress = weeklyGoal > 0 ? Math.round((sessionsThisWeek.length / weeklyGoal) * 100) : 0
-      goals.value.push({
-        id: 'weekly',
-        title: `Treinar ${weeklyGoal}x por semana`,
-        progress: Math.min(weeklyProgress, 100)
-      })
-    }
+      console.log(`  ✅ Atividade ${index + 1}: ${title} - ${sessionDate.toLocaleDateString()}`)
+    })
+    console.log('✅ Atividades recentes processadas:', recentActivities.value.length)
+    
+    // 4. Remover metas conforme solicitado pelo usuário
+    goals.value = []
+    console.log('🎯 Metas removidas conforme solicitado')
     
     // 5. Configurar calendário semanal (apenas sessões completadas)
     const weekCompletions = Array(7).fill(0)
+    
+    console.log('📅 Configurando calendário semanal...')
+    console.log('📊 Sessões desta semana:', sessionsThisWeek.length)
+    
     sessionsThisWeek
-      .filter(s => s.status === 'completed' && s.endTime) // Apenas completadas
+      .filter(s => s.status === 'completed')
       .forEach(session => {
-        const sessionDate = new Date(session.endTime) // Usar endTime
+        // Usar endTime se disponível, senão startTime
+        const sessionDate = new Date(session.endTime || session.startTime)
         const sessionDay = sessionDate.getDay()
         weekCompletions[sessionDay] = 1
+        
+        console.log(`  📅 Treino em ${sessionDate.toLocaleDateString()} (${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][sessionDay]})`)
       })
+    
+    console.log('📅 Dias com treino:', weekCompletions.map((day, i) => day ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i] : null).filter(Boolean))
     generateWeekCalendar(weekCompletions)
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error)
-    // Usar dados mock para desenvolvimento
-    loadMockData()
+    // Em caso de erro, usar estrutura vazia ao invés de dados mock
+    dashboardData.value = {
+      totalWorkouts: 0,
+      currentStreak: 0,
+      weeklyGoal: 4,
+      completedThisWeek: 0,
+      totalHours: 0
+    }
+    nextWorkout.value = null
+    recentActivities.value = []
+    goals.value = []
+    generateWeekCalendar([0, 0, 0, 0, 0, 0, 0])
   } finally {
     loading.value = false
   }
 }
 
 const calculateStreak = (sessions) => {
-  if (!sessions || sessions.length === 0) return 0
+  if (!sessions || sessions.length === 0) {
+    console.log('🔥 Nenhuma sessão para calcular streak')
+    return 0
+  }
   
-  const sortedSessions = [...sessions].sort((a, b) => 
-    new Date(b.startTime) - new Date(a.startTime)
-  )
+  console.log('🔥 Calculando streak com', sessions.length, 'sessões')
+  
+  // Ordenar por data mais recente (usar endTime se disponível, senão startTime)
+  const sortedSessions = [...sessions].sort((a, b) => {
+    const dateA = new Date(a.endTime || a.startTime)
+    const dateB = new Date(b.endTime || b.startTime)
+    return dateB - dateA
+  })
+  
+  console.log('📅 Primeira sessão:', new Date(sortedSessions[0].endTime || sortedSessions[0].startTime).toLocaleDateString())
+  console.log('📅 Última sessão:', new Date(sortedSessions[sortedSessions.length - 1].endTime || sortedSessions[sortedSessions.length - 1].startTime).toLocaleDateString())
   
   let streak = 0
   let currentDate = new Date()
   currentDate.setHours(0, 0, 0, 0)
   
+  // Agrupar sessões por dia para evitar múltiplas contagens no mesmo dia
+  const sessionsByDay = new Set()
+  
   for (const session of sortedSessions) {
-    const sessionDate = new Date(session.startTime)
+    const sessionDate = new Date(session.endTime || session.startTime)
     sessionDate.setHours(0, 0, 0, 0)
+    const dayKey = sessionDate.getTime()
+    
+    if (sessionsByDay.has(dayKey)) {
+      continue // Pular se já contamos este dia
+    }
+    sessionsByDay.add(dayKey)
     
     const daysDiff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24))
+    
+    console.log(`📅 Verificando dia: ${sessionDate.toLocaleDateString()}, diferença: ${daysDiff} dias`)
     
     if (daysDiff === streak) {
       streak++
       currentDate = sessionDate
-    } else if (daysDiff > streak) {
+      console.log(`🔥 Streak aumentou para: ${streak}`)
+    } else if (daysDiff === streak + 1) {
+      // Dia consecutivo
+      streak++
+      currentDate = sessionDate
+      console.log(`🔥 Dia consecutivo, streak: ${streak}`)
+    } else if (daysDiff > streak + 1) {
+      // Gap maior que 1 dia, quebra a sequência
+      console.log('💔 Sequência quebrada por gap de', daysDiff, 'dias')
       break
     }
   }
   
+  console.log('🔥 Streak final calculado:', streak)
   return streak
 }
 
@@ -580,48 +701,6 @@ const calculateEstimatedCalories = (division) => {
   // ~10 calorias por exercício * número de séries
   const totalSets = division.exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0)
   return Math.round(totalSets * 10)
-}
-
-const loadMockData = () => {
-  dashboardData.value = {
-    totalWorkouts: 24,
-    currentStreak: 5,
-    weeklyGoal: 4,
-    completedThisWeek: 2,
-    totalHours: 32
-  }
-  
-  nextWorkout.value = {
-    _id: '1',
-    name: 'Treino A - Peito e Tríceps',
-    estimatedTime: 45,
-    estimatedCalories: 280,
-    divisions: [
-      {
-        name: 'Divisão A1',
-        exercises: [
-          { id: 1, name: 'Supino Reto', sets: 4, reps: 12 },
-          { id: 2, name: 'Supino Inclinado', sets: 3, reps: 10 },
-          { id: 3, name: 'Fly Máquina', sets: 3, reps: 15 },
-          { id: 4, name: 'Tríceps Pulley', sets: 4, reps: 12 }
-        ]
-      }
-    ]
-  }
-  
-  recentActivities.value = [
-    { id: 1, type: 'workout', title: 'Treino A - Peito e Tríceps concluído', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-    { id: 2, type: 'progress', title: 'Peso atualizado para 78.5kg', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-    { id: 3, type: 'goal', title: 'Meta semanal de 3 treinos atingida', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) }
-  ]
-  
-  goals.value = [
-    { id: 1, title: 'Perder 5kg', progress: 60 },
-    { id: 2, title: 'Treinar 4x por semana', progress: 75 },
-    { id: 3, title: 'Aumentar carga em 10kg', progress: 40 }
-  ]
-  
-  generateWeekCalendar([1, 1, 0, 0, 1, 0, 0]) // DOM, SEG, TER, QUA, QUI, SEX, SAB
 }
 
 const generateWeekCalendar = (completions = []) => {
@@ -649,10 +728,6 @@ const viewProgress = () => {
 
 const viewWorkouts = () => {
   router.push('/student/workouts')
-}
-
-const goToGoals = () => {
-  router.push('/student/goals')
 }
 
 // Lifecycle
@@ -1268,6 +1343,11 @@ body:has(.navbar-collapsed) .dashboard-main,
   color: var(--text-muted);
   font-size: 0.8rem;
   margin: 0;
+}
+
+.activity-detail {
+  color: var(--primary-color);
+  font-weight: 500;
 }
 
 /* Goals */

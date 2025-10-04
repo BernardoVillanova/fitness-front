@@ -272,16 +272,6 @@
                         {{ getDifficultyText(currentSet.difficulty) }}
                       </span>
                     </div>
-                    <div class="completed-summary">
-                      <div class="summary-item">
-                        <span class="summary-label">Repetições:</span>
-                        <span class="summary-value">{{ currentSet.actualReps || currentSet.reps }}</span>
-                      </div>
-                      <div class="summary-item">
-                        <span class="summary-label">Peso:</span>
-                        <span class="summary-value">{{ currentSet.weight }}kg</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 

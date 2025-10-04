@@ -753,11 +753,19 @@ export default {
 
         if (response.ok) {
           const fullPlan = await response.json();
-          console.log('✅ Plano carregado:', fullPlan);
+          console.log('✅ Plano carregado para edição:', fullPlan);
+          console.log('📋 Detalhes do plano:');
+          console.log('  - Nome:', fullPlan.name);
+          console.log('  - Descrição:', fullPlan.description);
+          console.log('  - Objetivo:', fullPlan.goal);
+          console.log('  - Divisões:', fullPlan.divisions?.length || 0);
+          console.log('  - Alunos:', fullPlan.assignedStudents?.length || 0);
           
           this.isEditing = true;
           this.selectedPlan = fullPlan;
           this.showModal = true;
+          
+          console.log('🎭 Modal será aberto com:', { isEditing: this.isEditing, selectedPlan: !!this.selectedPlan });
         } else {
           throw new Error('Erro ao carregar plano para edição');
         }
