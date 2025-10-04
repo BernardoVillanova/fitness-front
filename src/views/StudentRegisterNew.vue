@@ -1,6 +1,12 @@
 <template>
   <div class="register-page" :class="{ 'dark-mode': isDarkMode }">
     <NavBar />
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
     
     <div class="register-container">
       <!-- Progress Stepper -->
@@ -944,6 +950,7 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import NavBar from '@/components/NavBar.vue'
+import NotificationModal from '@/components/NotificationModal.vue'
 import axios from 'axios'
 
 const router = useRouter()
@@ -953,6 +960,23 @@ const { isDarkMode } = storeToRefs(themeStore)
 // Get data from query params (from register page)
 const route = router.currentRoute.value
 const userId = route.query.userId
+
+// Notification state
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
 
 // Steps configuration (agora começa do endereço, pois dados básicos já foram preenchidos)
 const steps = [
@@ -1082,7 +1106,7 @@ const bmiCategory = computed(() => {
 const fetchAddress = async () => {
   const cep = form.value.address.cep.replace(/\D/g, '')
   if (cep.length !== 8) {
-    alert('CEP inválido')
+    showNotification('warning', 'CEP Inválido', 'O CEP deve conter 8 dígitos')
     return
   }
   
@@ -1093,7 +1117,7 @@ const fetchAddress = async () => {
     const data = await response.json()
     
     if (data.erro) {
-      alert('CEP não encontrado')
+      showNotification('error', 'CEP Não Encontrado', 'O CEP informado não foi encontrado na base de dados')
     } else {
       form.value.address.street = data.logradouro || ''
       form.value.address.neighborhood = data.bairro || ''
@@ -1101,7 +1125,7 @@ const fetchAddress = async () => {
       form.value.address.state = data.uf || ''
     }
   } catch (error) {
-    alert('Erro ao buscar CEP')
+    showNotification('error', 'Erro ao Buscar CEP', 'Não foi possível consultar o CEP. Verifique sua conexão')
   } finally {
     loadingCep.value = false
   }
@@ -1223,7 +1247,7 @@ const nextStep = async (event) => {
   
   // Validate current step
   if (!validateStep()) {
-    alert('Por favor, preencha todos os campos obrigatórios.')
+    showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios')
     return
   }
   
@@ -1280,8 +1304,10 @@ const validateStep = () => {
 
 const submitForm = async () => {
   if (!form.value.userId) {
-    alert('Erro: Dados do usuário não encontrados. Por favor, refaça o cadastro.')
-    router.push('/register')
+    showNotification('error', 'Erro no Cadastro', 'Dados do usuário não encontrados. Por favor, refaça o cadastro')
+    setTimeout(() => {
+      router.push('/register')
+    }, 2000)
     return
   }
   
@@ -1370,12 +1396,15 @@ const submitForm = async () => {
     console.log('✅ Student created successfully:', response.data)
     
     // Success
-    alert('Cadastro realizado com sucesso!')
-    router.push('/login')
+    showNotification('success', 'Cadastro Realizado!', 'Você será redirecionado para o login')
+    
+    setTimeout(() => {
+      router.push('/login')
+    }, 2000)
     
   } catch (error) {
     console.error('Erro ao cadastrar:', error)
-    alert(error.response?.data?.message || 'Erro ao realizar cadastro. Tente novamente.')
+    showNotification('error', 'Erro no Cadastro', error.response?.data?.message || 'Erro ao realizar cadastro. Tente novamente')
   } finally {
     isSubmitting.value = false
   }
@@ -1920,22 +1949,25 @@ const submitForm = async () => {
   margin-top: 0.25rem;
 }
 
-/* Radio Group */
+/* Radio Group - Modern & Elegant Design */
 .radio-group {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.25rem;
+  margin-top: 0.75rem;
 }
 
 .radio-option {
   position: relative;
   cursor: pointer;
+  perspective: 1000px;
 }
 
 .radio-option input[type="radio"] {
   position: absolute;
   opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .radio-content {
@@ -1943,40 +1975,149 @@ const submitForm = async () => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1.25rem 0.875rem;
+  padding: 1.75rem 1.25rem;
   border: 2px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--bg-secondary);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   height: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.radio-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radio-content::after {
+  content: '✓';
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0) rotate(-180deg);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radio-option:hover .radio-content {
+  transform: translateY(-4px);
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+}
+
+.dark-mode .radio-option:hover .radio-content {
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
 }
 
 .radio-option input[type="radio"]:checked + .radio-content {
   border-color: var(--primary-color);
-  background: rgba(59, 130, 246, 0.1);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.08));
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
 }
 
 .dark-mode .radio-option input[type="radio"]:checked + .radio-content {
-  background: rgba(102, 126, 234, 0.1);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(124, 58, 237, 0.1));
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25);
+}
+
+.radio-option input[type="radio"]:checked + .radio-content::before {
+  transform: translateX(0);
+}
+
+.radio-option input[type="radio"]:checked + .radio-content::after {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
 }
 
 .radio-content i {
-  font-size: 1.75rem;
+  font-size: 2rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radio-option:hover .radio-content i {
   color: var(--primary-color);
-  margin-bottom: 0.5rem;
+  transform: scale(1.1);
+}
+
+.radio-option input[type="radio"]:checked + .radio-content i {
+  color: var(--primary-color);
+  transform: scale(1.15);
+  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
 }
 
 .radio-content span {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-color);
-  margin-bottom: 0.25rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.radio-option input[type="radio"]:checked + .radio-content span {
+  color: var(--primary-color);
 }
 
 .radio-content small {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  line-height: 1.3;
+  line-height: 1.4;
+  transition: all 0.3s ease;
+  opacity: 0.85;
+}
+
+.radio-option:hover .radio-content small {
+  opacity: 1;
+}
+
+.radio-option input[type="radio"]:checked + .radio-content small {
+  color: var(--text-color);
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .radio-group {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+  
+  .radio-content {
+    padding: 1.5rem 1rem;
+  }
+  
+  .radio-content i {
+    font-size: 1.75rem;
+  }
+  
+  .radio-content span {
+    font-size: 0.9rem;
+  }
+  
+  .radio-content small {
+    font-size: 0.7rem;
+  }
 }
 
 /* Checkbox */
@@ -2371,20 +2512,21 @@ const submitForm = async () => {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.875rem 1.75rem;
-  border: none;
+  border: 2px solid transparent;
   border-radius: 12px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-secondary {
   background: var(--bg-secondary);
   color: var(--text-color);
-  border: 2px solid var(--border-color);
-  min-width: 120px;
+  border-color: var(--border-color);
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -2395,9 +2537,8 @@ const submitForm = async () => {
 .btn-primary {
   background: var(--primary-color);
   color: white;
-  flex: 1;
+  border-color: var(--primary-color);
   justify-content: center;
-  max-width: 100%;
 }
 
 .btn-primary:hover:not(:disabled) {

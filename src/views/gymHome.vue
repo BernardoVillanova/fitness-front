@@ -146,26 +146,60 @@
                 </div>
               </div>
               
-              <div class="gym-menu-wrapper">
-                <button class="menu-trigger" @click="toggleGymMenu(gym._id)">
-                  <i class="fas fa-cog"></i>
+              <div class="gym-menu-wrapper" :ref="`dropdownRef-${gym._id}`">
+                <button 
+                  class="settings-button" 
+                  @click="toggleGymMenu(gym._id)"
+                  aria-label="Settings"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="26" 
+                    height="26" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    stroke-width="2" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
                 </button>
                 
-                <div v-if="gym.showMenu" class="dropdown-menu">
-                  <button class="dropdown-option" @click="handleEdit(gym)">
-                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                    </svg>
-                    Editar
-                  </button>
-                  <div class="dropdown-separator"></div>
-                  <button class="dropdown-option danger" @click="confirmDelete(gym._id)">
-                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                    </svg>
-                    Excluir
-                  </button>
-                </div>
+                <transition name="dropdown">
+                  <div v-if="gym.showMenu" class="dropdown-menu">
+                    <a href="#" class="dropdown-item" @click.prevent="handleEdit(gym)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Ver detalhes
+                    </a>
+                    
+                    <a href="#" class="dropdown-item" @click.prevent="handleEdit(gym)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                      </svg>
+                      Editar
+                    </a>
+                    
+                    <div class="divider"></div>
+                    
+                    <a href="#" class="dropdown-item logout" @click.prevent="confirmDelete(gym._id)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        <line x1="10" x2="10" y1="11" y2="17"/>
+                        <line x1="14" x2="14" y1="11" y2="17"/>
+                      </svg>
+                      Excluir
+                    </a>
+                  </div>
+                </transition>
               </div>
 
               <!-- Gym Info -->
@@ -439,6 +473,22 @@ export default {
         showMenu: gym._id === gymId ? !gym.showMenu : false
       }));
     },
+    handleClickOutside(event) {
+      const isClickInsideAnyDropdown = this.gyms.some(gym => {
+        const dropdownRef = this.$refs[`dropdownRef-${gym._id}`];
+        if (!dropdownRef) return false;
+        
+        const element = Array.isArray(dropdownRef) ? dropdownRef[0] : dropdownRef;
+        return element && element.contains && element.contains(event.target);
+      });
+      
+      if (!isClickInsideAnyDropdown) {
+        this.gyms = this.gyms.map(gym => ({
+          ...gym,
+          showMenu: false
+        }));
+      }
+    },
     async handleSubmit(formPayload) {
       try {
         // Verifica se os dados estão na estrutura correta
@@ -463,10 +513,22 @@ export default {
       }
     },
     handleEdit(gym) {
+      // Fecha todos os dropdowns
+      this.gyms = this.gyms.map(g => ({
+        ...g,
+        showMenu: false
+      }));
+      
       this.selectedGym = gym;
       this.showForm = true;
     },
     confirmDelete(gymId) {
+      // Fecha todos os dropdowns
+      this.gyms = this.gyms.map(gym => ({
+        ...gym,
+        showMenu: false
+      }));
+      
       if (confirm('⚠️ Tem certeza que deseja excluir esta academia? Esta ação não pode ser desfeita.')) {
         this.handleDelete(gymId);
       }
@@ -488,6 +550,10 @@ export default {
   },
   mounted() {
     this.fetchGyms();
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
   },
 };
 </script>
@@ -1191,103 +1257,144 @@ body:has(.navbar-collapsed) .dashboard-container,
   z-index: 1000;
 }
 
-.menu-trigger {
-  width: 40px;
-  height: 40px;
-  border: 2px solid rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+.settings-button {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1e293b;
-  font-size: 18px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  color: #4a5568 !important;
+  padding: 6px;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: color 0.2s ease;
 }
 
-.dark .menu-trigger {
-  background: rgba(30, 41, 59, 0.95);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #f8fafc;
+.settings-button:hover {
+  color: #2563eb !important;
 }
 
-.menu-trigger:hover {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
-  transform: scale(1.1);
-  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+.settings-button:focus,
+.settings-button:active {
+  background: transparent !important;
+  color: #4a5568 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-.dark .menu-trigger:hover {
-  background: #8b5cf6;
-  border-color: #8b5cf6;
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+.settings-button svg {
+  transition: none !important;
+  transform: none !important;
+}
+
+.dark .settings-button {
+  color: #64748b !important;
+  background: transparent !important;
+}
+
+.dark .settings-button:hover {
+  color: #8b5cf6 !important;
+}
+
+.dark .settings-button:focus,
+.dark .settings-button:active {
+  color: #64748b !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .dropdown-menu {
   position: absolute;
-  top: 44px;
+  top: 48px;
   right: 0;
-  background: var(--card-background);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 8px;
-  min-width: 160px;
-  box-shadow: var(--shadow-lg);
-  animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 14rem;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0;
   z-index: 1001;
 }
 
-@keyframes dropdownSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.dark .dropdown-menu {
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(20px);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
 }
 
-.dropdown-option {
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  color: var(--text-color);
-  font-size: 0.9rem;
-  text-align: left;
-  border-radius: 8px;
-  cursor: pointer;
+.dropdown-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.2s ease;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: #374151;
+  text-decoration: none;
+  transition: background-color 0.15s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
 }
 
-.dropdown-option:hover {
-  background: var(--surface-color);
-  transform: translateX(4px);
+.dark .dropdown-item {
+  color: #f8fafc;
 }
 
-.dropdown-option.danger {
-  color: #ef4444;
+.dropdown-item:hover {
+  background-color: #f9fafb;
 }
 
-.dropdown-option.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
+.dark .dropdown-item:hover {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.dropdown-item.logout {
   color: #dc2626;
 }
 
-.dropdown-separator {
-  height: 1px;
-  background: var(--border-color);
-  margin: 8px 0;
+.dropdown-item.logout:hover {
+  background-color: #fef2f2;
+}
+
+.dark .dropdown-item.logout:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.divider {
+  border-top: 1px solid #e5e7eb;
+  margin: 0.25rem 0;
+}
+
+.dark .divider {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Animações Vue Transition */
+.dropdown-enter-active {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.dropdown-leave-active {
+  transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.dropdown-enter-to,
+.dropdown-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .gym-info {
