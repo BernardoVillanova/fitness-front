@@ -352,6 +352,7 @@ const startWorkoutWithDivision = async (divisionIndex) => {
     
     closeDivisionModal()
     showWorkoutModal.value = true
+    
   } catch (error) {
     console.error('Erro ao iniciar treino:', error)
     alert(error.response?.data?.message || 'Erro ao iniciar treino')

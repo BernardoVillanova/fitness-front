@@ -609,7 +609,7 @@ textarea {
   color: var(--text-color);
   background: var(--bg-secondary);
   transition: all 0.3s ease;
-  font-family: inherit;
+  font-family: inherit, sans-serif;
   box-sizing: border-box;
 }
 
