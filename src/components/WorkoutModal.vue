@@ -433,18 +433,6 @@
           <div class="info-section">
             <h3><i class="fas fa-cogs"></i> Equipamento</h3>
             
-            <!-- Debug Info (temporário para debug) -->
-            <div style="background: #f8f9fa; padding: 8px; margin: 8px 0; border-radius: 4px; font-size: 12px; border: 1px solid #dee2e6;">
-              <strong>🐛 DEBUG EQUIPAMENTO:</strong><br>
-              • Exercício atual: {{ currentExercise?.exerciseName || 'Nenhum' }}<br>
-              • Detalhes carregados: {{ !!exerciseDetails[currentExercise?.exerciseName] }}<br>
-              • Equipment ID: {{ exerciseDetails[currentExercise?.exerciseName]?.equipmentId || 'Nenhum' }}<br>
-              • Equipment carregado: {{ !!currentEquipment }}<br>
-              • Equipment nome: {{ currentEquipment?.name || 'Nenhum' }}<br>
-              • Todos exerciseDetails: {{ Object.keys(exerciseDetails) }}<br>
-              • Todos equipmentDetails: {{ Object.keys(equipmentDetails) }}
-            </div>
-            
             <div v-if="currentEquipment" class="equipment-info-grid">
               <div class="equipment-image-section">
                 <img 
@@ -807,13 +795,19 @@ const currentEquipment = computed(() => {
     console.log('ℹ️ [currentEquipment] Exercício não possui equipamento:', exerciseName)
     return null
   }
+
+  // Extrair o ID como string se for um objeto
+  const equipmentIdStr = typeof exercise.equipmentId === 'object' 
+    ? exercise.equipmentId._id || exercise.equipmentId.toString()
+    : exercise.equipmentId;
   
+  console.log('🔍 [currentEquipment] Equipment ID string:', equipmentIdStr)
   console.log('🔍 [currentEquipment] equipmentDetails:', Object.keys(equipmentDetails.value))
-  const equipment = equipmentDetails.value[exercise.equipmentId]
+  const equipment = equipmentDetails.value[equipmentIdStr]
   console.log('🔍 [currentEquipment] Equipment data:', equipment)
   
   if (!equipment) {
-    console.log('🚫 [currentEquipment] Equipamento não carregado para ID:', exercise.equipmentId)
+    console.log('🚫 [currentEquipment] Equipamento não carregado para ID:', equipmentIdStr)
     console.log('🔍 [currentEquipment] Available equipment IDs:', Object.keys(equipmentDetails.value))
     return null
   }
@@ -1065,16 +1059,24 @@ const formatRestTime = (seconds) => {
 const loadEquipmentDetails = async (equipmentId) => {
   try {
     console.log('🔧 [loadEquipmentDetails] Carregando equipamento:', equipmentId);
+    console.log('🔧 [loadEquipmentDetails] Tipo do equipmentId:', typeof equipmentId);
+    
+    // Normalizar equipmentId para string
+    let equipmentIdStr = equipmentId;
+    if (typeof equipmentId === 'object' && equipmentId !== null) {
+      equipmentIdStr = equipmentId._id || equipmentId.toString();
+      console.log('🔧 [loadEquipmentDetails] ID normalizado de objeto para string:', equipmentIdStr);
+    }
     
     // Verificar se já foi carregado
-    if (equipmentDetails.value[equipmentId]) {
-      console.log('✅ [loadEquipmentDetails] Equipamento já carregado:', equipmentDetails.value[equipmentId].name);
-      return equipmentDetails.value[equipmentId];
+    if (equipmentDetails.value[equipmentIdStr]) {
+      console.log('✅ [loadEquipmentDetails] Equipamento já carregado:', equipmentDetails.value[equipmentIdStr].name);
+      return equipmentDetails.value[equipmentIdStr];
     }
 
     // Tentar buscar por ID específico
     try {
-      const response = await api.get(`/equipments/${equipmentId}`);
+      const response = await api.get(`/equipments/${equipmentIdStr}`);
       console.log('✅ [loadEquipmentDetails] Resposta da API:', response.data);
       
       if (response.data) {
@@ -1086,7 +1088,7 @@ const loadEquipmentDetails = async (equipmentId) => {
         }
         
         if (equipment && (equipment._id || equipment.id)) {
-          equipmentDetails.value[equipmentId] = equipment;
+          equipmentDetails.value[equipmentIdStr] = equipment;
           console.log('💾 [loadEquipmentDetails] Equipamento salvo:', equipment.name);
           return equipment;
         }
@@ -1101,9 +1103,9 @@ const loadEquipmentDetails = async (equipmentId) => {
       const allResponse = await api.get('/equipments');
       
       if (allResponse.data && allResponse.data.equipments) {
-        const equipment = allResponse.data.equipments.find(eq => eq._id === equipmentId);
+        const equipment = allResponse.data.equipments.find(eq => eq._id === equipmentIdStr);
         if (equipment) {
-          equipmentDetails.value[equipmentId] = equipment;
+          equipmentDetails.value[equipmentIdStr] = equipment;
           console.log('💾 [loadEquipmentDetails] FALLBACK - Equipamento salvo:', equipment.name);
           return equipment;
         } else {
@@ -1114,7 +1116,7 @@ const loadEquipmentDetails = async (equipmentId) => {
       console.error('💥 [loadEquipmentDetails] Erro no fallback:', fallbackError);
     }
 
-    console.log('🚫 [loadEquipmentDetails] Equipamento não encontrado:', equipmentId);
+    console.log('🚫 [loadEquipmentDetails] Equipamento não encontrado:', equipmentIdStr);
     return null;
   } catch (error) {
     console.error('💥 [loadEquipmentDetails] Erro geral:', error);
