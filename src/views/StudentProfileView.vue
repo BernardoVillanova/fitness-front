@@ -1517,9 +1517,12 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 /* Base Styles */
 .student-profile-view {
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background: #f8fafc;
   transition: background 0.3s ease;
 }

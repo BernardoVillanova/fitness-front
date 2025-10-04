@@ -367,8 +367,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 .student-history {
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background-color: var(--bg-secondary);
   display: flex;
 }

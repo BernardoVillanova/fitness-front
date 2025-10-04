@@ -775,9 +775,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 .student-progress {
   display: flex;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background-color: var(--bg-secondary);
 }
 

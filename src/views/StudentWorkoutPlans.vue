@@ -210,257 +210,16 @@
       </div>
     </Transition>
 
-    <!-- Modal de Execução do Treino - Redesenhado -->
-    <Transition name="modal">
-      <div v-if="showWorkoutModal && workoutSession" class="modal-overlay workout-modal-overlay" @click="closeWorkoutModal">
-        <div class="modal-content workout-modal-new" @click.stop>
-          
-          <!-- Header Compacto -->
-          <div class="workout-header-compact">
-            <div class="header-left">
-              <h2>{{ workoutSession.workoutName }}</h2>
-              <p>{{ workoutSession.divisionName }}</p>
-            </div>
-            <div class="header-right">
-              <div class="timer-badge">
-                <i class="fas fa-clock"></i>
-                {{ formatWorkoutTime() }}
-              </div>
-              <div class="progress-badge">
-                {{ workoutSession.completedExercises }}/{{ workoutSession.totalExercises }}
-              </div>
-              <button @click="confirmCloseWorkout" class="btn-close-new">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="workout-progress-bar">
-            <div 
-              class="workout-progress-fill" 
-              :style="{ width: `${(workoutSession.completedExercises / workoutSession.totalExercises) * 100}%` }"
-            ></div>
-          </div>
-
-          <!-- Body - Exercício Atual em Destaque -->
-          <div class="workout-body-new">
-            
-            <!-- Lista de Exercícios (Sidebar) -->
-            <div class="exercises-sidebar">
-              <h3>Exercícios</h3>
-              <div class="exercises-list">
-                <div 
-                  v-for="(exercise, index) in workoutSession.exercises"
-                  :key="index"
-                  :class="['exercise-item-mini', { 
-                    active: currentExerciseIndex === index,
-                    completed: exercise.completed 
-                  }]"
-                  @click="currentExerciseIndex = index"
-                >
-                  <div class="mini-number">{{ index + 1 }}</div>
-                  <div class="mini-info">
-                    <div class="mini-name">{{ exercise.exerciseName }}</div>
-                    <div class="mini-sets">{{ getExerciseCompletedSets(exercise) }}/{{ exercise.sets.length }}</div>
-                  </div>
-                  <i v-if="exercise.completed" class="fas fa-check-circle mini-check"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Exercício Atual (Main Content) -->
-            <div class="exercise-main-content">
-              <div v-if="workoutSession.exercises[currentExerciseIndex]" class="current-exercise">
-                
-                <!-- Header do Exercício -->
-                <div class="current-exercise-header">
-                  <div class="exercise-header-top">
-                    <h2>{{ workoutSession.exercises[currentExerciseIndex].exerciseName }}</h2>
-                    <button 
-                      @click="showExerciseDetails(workoutSession.exercises[currentExerciseIndex])"
-                      class="btn-info"
-                    >
-                      <i class="fas fa-info-circle"></i>
-                      Como fazer
-                    </button>
-                  </div>
-                  <div class="exercise-meta">
-                    <span class="meta-item">
-                      <i class="fas fa-list"></i>
-                      {{ workoutSession.exercises[currentExerciseIndex].sets.length }} séries
-                    </span>
-                    <span class="meta-item">
-                      <i class="fas fa-check-circle"></i>
-                      {{ getExerciseCompletedSets(workoutSession.exercises[currentExerciseIndex]) }} concluídas
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Imagem Placeholder do Exercício -->
-                <div class="exercise-image-container">
-                  <img 
-                    :src="`https://via.placeholder.com/400x300/3b82f6/ffffff?text=${encodeURIComponent(workoutSession.exercises[currentExerciseIndex].exerciseName)}`" 
-                    :alt="workoutSession.exercises[currentExerciseIndex].exerciseName"
-                    class="exercise-image"
-                  />
-                  <div class="image-overlay">
-                    <i class="fas fa-play-circle"></i>
-                    Ver demonstração
-                  </div>
-                </div>
-
-                <!-- Séries do Exercício -->
-                <div class="sets-container">
-                  <h3>Registrar Séries</h3>
-                  <div class="sets-grid-new">
-                    <div 
-                      v-for="(set, setIndex) in workoutSession.exercises[currentExerciseIndex].sets"
-                      :key="setIndex"
-                      :class="['set-card', { completed: set.completed }]"
-                    >
-                      <div class="set-card-header">
-                        <span class="set-label">Série {{ set.setNumber }}</span>
-                        <button 
-                          @click="toggleSetComplete(currentExerciseIndex, setIndex)"
-                          :class="['btn-check-new', { checked: set.completed }]"
-                        >
-                          <i :class="set.completed ? 'fas fa-check-circle' : 'far fa-circle'"></i>
-                        </button>
-                      </div>
-                      <div class="set-card-body">
-                        <div class="input-field-new">
-                          <label>Repetições</label>
-                          <input 
-                            type="number" 
-                            v-model.number="set.reps"
-                            :disabled="set.completed"
-                            placeholder="10"
-                          />
-                        </div>
-                        <div class="input-field-new">
-                          <label>Peso (kg)</label>
-                          <input 
-                            type="number" 
-                            v-model.number="set.weight"
-                            step="0.5"
-                            :disabled="set.completed"
-                            placeholder="20.0"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Observações -->
-                <div class="exercise-notes-new">
-                  <label>
-                    <i class="fas fa-sticky-note"></i>
-                    Observações
-                  </label>
-                  <textarea 
-                    v-model="workoutSession.exercises[currentExerciseIndex].notes"
-                    placeholder="Como foi este exercício? Alguma dificuldade?"
-                    rows="3"
-                  ></textarea>
-                </div>
-
-                <!-- Navegação entre Exercícios -->
-                <div class="exercise-navigation">
-                  <button 
-                    @click="previousExercise"
-                    :disabled="currentExerciseIndex === 0"
-                    class="btn-nav"
-                  >
-                    <i class="fas fa-chevron-left"></i>
-                    Anterior
-                  </button>
-                  
-                  <button 
-                    v-if="!workoutSession.exercises[currentExerciseIndex].completed"
-                    @click="markExerciseComplete(currentExerciseIndex)"
-                    class="btn-complete-current"
-                  >
-                    <i class="fas fa-check"></i>
-                    Concluir Exercício
-                  </button>
-                  <div v-else class="completed-indicator">
-                    <i class="fas fa-check-circle"></i>
-                    Exercício Concluído
-                  </div>
-
-                  <button 
-                    @click="nextExercise"
-                    :disabled="currentExerciseIndex === workoutSession.exercises.length - 1"
-                    class="btn-nav"
-                  >
-                    Próximo
-                    <i class="fas fa-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Footer com Ações -->
-          <div class="workout-footer-new">
-            <button @click="saveProgress" class="btn-save-new">
-              <i class="fas fa-save"></i>
-              Salvar Progresso
-            </button>
-            <button 
-              @click="finishWorkout"
-              :disabled="!allExercisesCompleted"
-              class="btn-finish-new"
-            >
-              <i class="fas fa-flag-checkered"></i>
-              Finalizar Treino
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- Modal de Informações do Exercício -->
-    <Transition name="modal">
-      <div v-if="showExerciseInfo" class="modal-overlay" @click="closeExerciseInfo">
-        <div class="modal-content info-modal" @click.stop>
-          <div class="info-modal-header">
-            <h2>{{ selectedExerciseInfo?.exerciseName || 'Exercício' }}</h2>
-            <button @click="closeExerciseInfo" class="close-btn">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="info-modal-body">
-            <div class="info-section">
-              <h3><i class="fas fa-video"></i> Demonstração</h3>
-              <div class="video-placeholder">
-                <i class="fas fa-play-circle"></i>
-                <p>Vídeo demonstrativo do exercício</p>
-              </div>
-            </div>
-            <div class="info-section">
-              <h3><i class="fas fa-list-ul"></i> Instruções</h3>
-              <ol>
-                <li>Posicione-se corretamente no equipamento</li>
-                <li>Mantenha a postura adequada</li>
-                <li>Execute o movimento de forma controlada</li>
-                <li>Respire adequadamente durante o exercício</li>
-              </ol>
-            </div>
-            <div class="info-section">
-              <h3><i class="fas fa-exclamation-triangle"></i> Dicas Importantes</h3>
-              <ul>
-                <li>Não tranque os cotovelos</li>
-                <li>Mantenha o core ativado</li>
-                <li>Evite movimentos bruscos</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <!-- Workout Modal Component -->
+    <WorkoutModal
+      :show="showWorkoutModal"
+      :workout-session="workoutSession"
+      :workout-start-time="workoutStartTime"
+      @close="handleWorkoutModalClose"
+      @workout-finished="handleWorkoutFinished"
+      @progress-saved="handleProgressSaved"
+      @session-updated="handleSessionUpdated"
+    />
   </div>
 </template>
 
@@ -469,6 +228,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
+import WorkoutModal from '@/components/WorkoutModal.vue'
 import api from '@/api'
 
 // Stores
@@ -484,10 +244,7 @@ const workouts = ref([])
 const loading = ref(false)
 const showDivisionModal = ref(false)
 const showWorkoutModal = ref(false)
-const currentExerciseIndex = ref(0)
 const workoutStartTime = ref(null)
-const showExerciseInfo = ref(false)
-const selectedExerciseInfo = ref(null)
 
 // Computed
 const filters = computed(() => [
@@ -503,11 +260,6 @@ const filteredWorkouts = computed(() => {
     return workouts.value.filter(workout => isRecent(workout.createdAt))
   }
   return workouts.value.filter(workout => workout.type === activeFilter.value)
-})
-
-const allExercisesCompleted = computed(() => {
-  if (!workoutSession.value) return false
-  return workoutSession.value.exercises.every(ex => ex.completed)
 })
 
 // Methods
@@ -550,19 +302,6 @@ const calculateProgress = (plan) => {
 const calculateDivisionTime = (division) => {
   if (!division.exercises) return 30
   return Math.round(division.exercises.length * 5)
-}
-
-const formatWorkoutTime = () => {
-  if (!workoutStartTime.value) return '00:00'
-  const now = Date.now()
-  const diff = now - workoutStartTime.value
-  const minutes = Math.floor(diff / 60000)
-  const seconds = Math.floor((diff % 60000) / 1000)
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
-const getExerciseCompletedSets = (exercise) => {
-  return exercise.sets.filter(set => set.completed).length
 }
 
 const fetchWorkouts = async () => {
@@ -610,10 +349,10 @@ const startWorkoutWithDivision = async (divisionIndex) => {
     workoutSession.value = response.data.session
     activeSession.value = response.data.session
     workoutStartTime.value = Date.now()
-    currentExerciseIndex.value = 0 // Começar no primeiro exercício
     
     closeDivisionModal()
     showWorkoutModal.value = true
+    
   } catch (error) {
     console.error('Erro ao iniciar treino:', error)
     alert(error.response?.data?.message || 'Erro ao iniciar treino')
@@ -626,81 +365,6 @@ const continueWorkout = () => {
   workoutSession.value = activeSession.value
   workoutStartTime.value = new Date(activeSession.value.startTime).getTime()
   showWorkoutModal.value = true
-}
-
-const toggleSetComplete = (exIndex, setIndex) => {
-  const set = workoutSession.value.exercises[exIndex].sets[setIndex]
-  set.completed = !set.completed
-  if (set.completed) {
-    set.completedAt = new Date()
-  } else {
-    set.completedAt = null
-  }
-}
-
-const markExerciseComplete = (exIndex) => {
-  const exercise = workoutSession.value.exercises[exIndex]
-  exercise.completed = true
-  exercise.sets.forEach(set => {
-    set.completed = true
-    if (!set.completedAt) {
-      set.completedAt = new Date()
-    }
-  })
-  
-  // Atualizar contador
-  workoutSession.value.completedExercises = workoutSession.value.exercises.filter(ex => ex.completed).length
-  
-  // Mover para próximo exercício
-  if (exIndex < workoutSession.value.exercises.length - 1) {
-    currentExerciseIndex.value = exIndex + 1
-  }
-}
-
-const saveProgress = async () => {
-  try {
-    await api.put(`/student/sessions/${workoutSession.value._id}`, {
-      exercises: workoutSession.value.exercises,
-      notes: workoutSession.value.notes
-    })
-    alert('Progresso salvo com sucesso!')
-  } catch (error) {
-    console.error('Erro ao salvar progresso:', error)
-    alert('Erro ao salvar progresso')
-  }
-}
-
-const finishWorkout = async () => {
-  if (!allExercisesCompleted.value) {
-    alert('Complete todos os exercícios antes de finalizar')
-    return
-  }
-  
-  if (!confirm('Deseja finalizar este treino?')) return
-  
-  try {
-    loading.value = true
-    await api.post(`/student/sessions/${workoutSession.value._id}/complete`, {
-      exercises: workoutSession.value.exercises,
-      notes: workoutSession.value.notes
-    })
-    
-    alert('Treino finalizado com sucesso! 🎉')
-    
-    // Limpar estados
-    workoutSession.value = null
-    activeSession.value = null
-    showWorkoutModal.value = false
-    
-    // Recarregar treinos
-    await fetchWorkouts()
-    await checkActiveSession()
-  } catch (error) {
-    console.error('Erro ao finalizar treino:', error)
-    alert('Erro ao finalizar treino')
-  } finally {
-    loading.value = false
-  }
 }
 
 const cancelWorkout = async () => {
@@ -723,16 +387,6 @@ const cancelWorkout = async () => {
   }
 }
 
-const closeWorkoutModal = () => {
-  // Não fechar clicando fora durante treino
-}
-
-const confirmCloseWorkout = () => {
-  if (confirm('Deseja sair? O progresso não salvo será perdido.')) {
-    showWorkoutModal.value = false
-  }
-}
-
 const openWorkoutModal = (workout) => {
   if (activeSession.value && activeSession.value.workoutPlanId === workout._id) {
     continueWorkout()
@@ -741,25 +395,32 @@ const openWorkoutModal = (workout) => {
   }
 }
 
-const showExerciseDetails = (exercise) => {
-  selectedExerciseInfo.value = exercise
-  showExerciseInfo.value = true
+// Handlers para o WorkoutModal
+const handleWorkoutModalClose = () => {
+  showWorkoutModal.value = false
 }
 
-const closeExerciseInfo = () => {
-  showExerciseInfo.value = false
-  selectedExerciseInfo.value = null
+const handleWorkoutFinished = async () => {
+  // Limpar estados
+  workoutSession.value = null
+  activeSession.value = null
+  showWorkoutModal.value = false
+  
+  // Recarregar treinos
+  await fetchWorkouts()
+  await checkActiveSession()
 }
 
-const nextExercise = () => {
-  if (currentExerciseIndex.value < workoutSession.value.exercises.length - 1) {
-    currentExerciseIndex.value++
-  }
+const handleProgressSaved = () => {
+  // Callback quando progresso for salvo
+  console.log('Progresso salvo')
 }
 
-const previousExercise = () => {
-  if (currentExerciseIndex.value > 0) {
-    currentExerciseIndex.value--
+const handleSessionUpdated = (updatedSession) => {
+  // Atualizar a sessão quando houver mudanças
+  workoutSession.value = updatedSession
+  if (activeSession.value && activeSession.value._id === updatedSession._id) {
+    activeSession.value = updatedSession
   }
 }
 
@@ -784,9 +445,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 .student-workout-plans {
   display: flex;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background-color: var(--bg-secondary);
 }
 
@@ -1595,7 +1259,7 @@ body:has(.navbar-collapsed) .main-content {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-color);
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   resize: vertical;
 }
 
@@ -2215,7 +1879,7 @@ body:has(.navbar-collapsed) .main-content {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   color: var(--text-color);
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   font-size: 0.95rem;
   resize: vertical;
   transition: all 0.2s ease;

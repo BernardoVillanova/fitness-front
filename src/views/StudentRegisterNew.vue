@@ -2296,7 +2296,7 @@ const submitForm = async () => {
   transition: all 0.3s ease;
   outline: none;
   resize: vertical;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   min-height: 60px;
   margin-top: 0.5rem;
 }

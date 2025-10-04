@@ -893,7 +893,7 @@ export default {
 }
 
 .form-group input[type="time"] {
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
 }
 

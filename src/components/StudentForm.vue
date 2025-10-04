@@ -551,12 +551,13 @@ onMounted(() => {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Inter", sans-serif;
 }
 
 .modal-overlay {
@@ -570,7 +571,7 @@ onMounted(() => {
   z-index: 9999;
   padding: 1.5rem;
   animation: overlayFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 @keyframes overlayFadeIn {
@@ -1024,7 +1025,7 @@ onMounted(() => {
   background: #fafbff;
   color: #0f172a;
   font-size: 1.063rem;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -1493,7 +1494,7 @@ onMounted(() => {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   white-space: nowrap;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   position: relative;
   overflow: hidden;
   letter-spacing: 0.3px;

@@ -645,10 +645,13 @@ const fetchGoals = async () => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 /* === LAYOUT PRINCIPAL === */
 .student-profile {
   margin-left: 280px;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background: var(--bg-secondary);
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -985,7 +988,7 @@ body:has(.navbar-collapsed) .student-profile {
   color: var(--text-color);
   font-size: 0.95rem;
   resize: vertical;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1285,7 +1288,7 @@ body:has(.navbar-collapsed) .student-profile {
   background: var(--card-bg);
   color: var(--text-color);
   font-size: 0.95rem;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   resize: vertical;
   transition: all 0.3s ease;
 }

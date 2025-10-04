@@ -237,8 +237,7 @@ export default {
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  --font-family: "Inter", sans-serif;
 }
 
 .dark {
@@ -280,7 +279,7 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  font-family: var(--font-family);
+  font-family: "Inter", sans-serif;
   transition: background-color 0.3s ease;
 }
 

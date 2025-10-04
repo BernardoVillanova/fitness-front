@@ -390,14 +390,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 * {
   box-sizing: border-box;
 }
+
 
 /* === LAYOUT PRINCIPAL === */
 .instructor-profile {
   margin-left: 280px;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
@@ -757,10 +761,10 @@ input[type="number"] {
   border-radius: 10px;
   font-size: 15px;
   color: var(--text-color);
-  background-color: var(--bg-primary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: inherit;
-  font-weight: 500;
+  background: var(--bg-secondary);
+  transition: all 0.3s ease;
+  font-family: "Inter", sans-serif;
+  box-sizing: border-box;
 }
 
 input[readonly] {
