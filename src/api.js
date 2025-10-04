@@ -57,4 +57,12 @@ export const addStudentProgress = (studentId, progressData) => api.post(`/studen
 export const getWorkoutPlans = () => api.get("/workout/workout-plans");
 export const assignPlanToStudent = (studentId, planId) => api.put(`/students/${studentId}`, { workoutPlans: [planId] });
 
+// API de Instrutores
+export const getStudentsByInstructor = (instructorId) => api.get(`/students/instructor/${instructorId}`);
+
+// API de Sessões de Treino
+export const getWorkoutSessions = () => api.get("/workout-sessions/sessions/all");
+export const getSessionHistory = () => api.get("/workout-sessions/sessions/history");
+export const getInstructorSessions = (instructorId) => api.get(`/workout-sessions/sessions/instructor/${instructorId}`);
+
 export default api;
