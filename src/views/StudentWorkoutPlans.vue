@@ -37,20 +37,14 @@
       </div>
 
       <!-- Filter Section -->
-      <div class="filter-section">
-        <div class="filter-tabs">
-          <button 
-            v-for="filter in filters" 
-            :key="filter.value"
-            :class="['filter-tab', { active: activeFilter === filter.value }]"
-            @click="setFilter(filter.value)"
-          >
-            <i :class="filter.icon"></i>
-            <span class="tab-text">{{ filter.label }}</span>
-            <span v-if="filter.count !== undefined" class="tab-count">{{ filter.count }}</span>
-          </button>
-        </div>
-      </div>
+      <CategoryFilter 
+        :categories="filters"
+        :selected-category="activeFilter"
+        :filtered-count="filteredWorkouts.length"
+        item-label="treinos"
+        @category-selected="setFilter"
+        @clear-filters="clearAllFilters"
+      />
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
@@ -117,20 +111,11 @@
                   <i class="fas fa-clock"></i>
                 </div>
                 <div class="stat-details">
-                  <div class="stat-number">{{ plan.estimatedTime || 45 }}min</div>
+                  <div class="stat-number">{{ calculateWorkoutTime(plan) }}min</div>
                   <div class="stat-label">Duração</div>
                 </div>
               </div>
               
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <i class="fas fa-fire"></i>
-                </div>
-                <div class="stat-details">
-                  <div class="stat-number">{{ plan.estimatedCalories || 0 }}</div>
-                  <div class="stat-label">Calorias</div>
-                </div>
-              </div>
             </div>
 
             <!-- Progress Section -->
@@ -212,6 +197,7 @@
 
     <!-- Workout Modal Component -->
     <WorkoutModal
+      v-if="showWorkoutModal && workoutSession"
       :show="showWorkoutModal"
       :workout-session="workoutSession"
       :workout-start-time="workoutStartTime"
@@ -224,11 +210,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import WorkoutModal from '@/components/WorkoutModal.vue'
+import CategoryFilter from '@/components/CategoryFilter.vue'
 import api from '@/api'
 
 // Stores
@@ -248,10 +235,10 @@ const workoutStartTime = ref(null)
 
 // Computed
 const filters = computed(() => [
-  { value: 'all', label: 'Todos', icon: 'fas fa-list', count: workouts.value.length },
-  { value: 'Força', label: 'Força', icon: 'fas fa-dumbbell', count: workouts.value.filter(w => w.type === 'Força').length },
-  { value: 'Cardio', label: 'Cardio', icon: 'fas fa-heartbeat', count: workouts.value.filter(w => w.type === 'Cardio').length },
-  { value: 'recent', label: 'Recentes', icon: 'fas fa-clock', count: workouts.value.filter(w => isRecent(w.createdAt)).length }
+  { id: 'all', name: 'Todos', icon: 'fas fa-list', count: workouts.value.length },
+  { id: 'Força', name: 'Força', icon: 'fas fa-dumbbell', count: workouts.value.filter(w => w.type === 'Força').length },
+  { id: 'Cardio', name: 'Cardio', icon: 'fas fa-heartbeat', count: workouts.value.filter(w => w.type === 'Cardio').length },
+  { id: 'recent', name: 'Recentes', icon: 'fas fa-clock', count: workouts.value.filter(w => isRecent(w.createdAt)).length }
 ])
 
 const filteredWorkouts = computed(() => {
@@ -302,6 +289,26 @@ const calculateProgress = (plan) => {
 const calculateDivisionTime = (division) => {
   if (!division.exercises) return 30
   return Math.round(division.exercises.length * 5)
+}
+
+const calculateWorkoutTime = (plan) => {
+  if (!plan.divisions || plan.divisions.length === 0) return 30
+  
+  let totalTime = 0
+  plan.divisions.forEach(division => {
+    if (division.exercises && division.exercises.length > 0) {
+      // Cada exercício leva em média 3-5 minutos (considerando séries e descanso)
+      totalTime += division.exercises.length * 4
+      // Tempo extra para aquecimento e alongamento por divisão
+      totalTime += 5
+    }
+  })
+  
+  return Math.max(totalTime, 30) // Mínimo de 30 minutos
+}
+
+const clearAllFilters = () => {
+  activeFilter.value = 'all'
 }
 
 const fetchWorkouts = async () => {
@@ -374,9 +381,12 @@ const cancelWorkout = async () => {
     loading.value = true
     await api.post(`/student/sessions/${activeSession.value._id}/cancel`)
     
-    activeSession.value = null
-    workoutSession.value = null
-    showWorkoutModal.value = false
+    // Usar nextTick para evitar problemas de reatividade
+    await nextTick(() => {
+      activeSession.value = null
+      workoutSession.value = null
+      showWorkoutModal.value = false
+    })
     
     await checkActiveSession()
   } catch (error) {
@@ -397,14 +407,17 @@ const openWorkoutModal = (workout) => {
 
 // Handlers para o WorkoutModal
 const handleWorkoutModalClose = () => {
+  // Apenas fecha o modal, mantém a sessão ativa para poder continuar depois
   showWorkoutModal.value = false
 }
 
 const handleWorkoutFinished = async () => {
-  // Limpar estados
-  workoutSession.value = null
-  activeSession.value = null
-  showWorkoutModal.value = false
+  // Usar nextTick para evitar problemas de reatividade
+  await nextTick(() => {
+    showWorkoutModal.value = false
+    workoutSession.value = null
+    activeSession.value = null
+  })
   
   // Recarregar treinos
   await fetchWorkouts()
@@ -417,6 +430,9 @@ const handleProgressSaved = () => {
 }
 
 const handleSessionUpdated = (updatedSession) => {
+  // Validar se a sessão ainda existe antes de atualizar
+  if (!updatedSession) return
+  
   // Atualizar a sessão quando houver mudanças
   workoutSession.value = updatedSession
   if (activeSession.value && activeSession.value._id === updatedSession._id) {
@@ -575,56 +591,6 @@ body:has(.navbar-collapsed) .main-content {
   border-color: white;
 }
 
-/* Filter Section */
-.filter-section {
-  margin-bottom: 2rem;
-}
-
-.filter-tabs {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.filter-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: 2px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-muted);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.filter-tab:hover {
-  border-color: var(--primary-color);
-  color: var(--text-color);
-  transform: translateY(-2px);
-}
-
-.filter-tab.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.dark-mode .filter-tab.active {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.tab-count {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 /* Loading */
 .loading-state {
   display: flex;
@@ -771,7 +737,7 @@ body:has(.navbar-collapsed) .main-content {
 
 .plan-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 1.25rem;
   padding: 1rem;

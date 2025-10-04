@@ -92,8 +92,11 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 .clean-filter-section {
   margin-bottom: 32px;
+  font-family: "Inter", sans-serif;
 }
 
 .clean-filter-container {
