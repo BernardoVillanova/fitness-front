@@ -825,9 +825,43 @@ export default {
   watch: {
     show(newVal) {
       if (newVal) {
-        this.initializeForm();
+        console.log('🎭 Modal aberto!', { isEditing: this.isEditing, planData: this.planData });
+        
+        // Só inicializa se NÃO estiver em modo de edição
+        // Em modo de edição, deixa os watchers de isEditing/planData cuidarem
+        if (!this.isEditing) {
+          this.initializeForm();
+        }
+        
         if (this.currentStep === 4) {
           this.fetchStudents();
+        }
+      }
+    },
+    
+    isEditing: {
+      immediate: true,
+      handler(newVal, oldVal) {
+        console.log('🔄 Watch isEditing:', { newVal, oldVal, planData: this.planData });
+        
+        // Se entrou em modo de edição e tem dados do plano
+        if (newVal && this.planData && this.planData._id) {
+          console.log('📝 Inicializando formulário para edição...');
+          this.initializeForm();
+        }
+      }
+    },
+    
+    planData: {
+      immediate: true,
+      deep: true,
+      handler(newPlanData) {
+        console.log('🔄 Watch planData:', newPlanData);
+        
+        // Se está em modo de edição e recebeu dados do plano
+        if (this.isEditing && newPlanData && newPlanData._id) {
+          console.log('📝 Inicializando formulário com dados do plano...');
+          this.initializeForm();
         }
       }
     },
@@ -1167,12 +1201,20 @@ export default {
       if (!this.isFormValid || this.isSaving) return;
 
       this.isSaving = true;
-      console.log('💾 Salvando plano...');
+      console.log('💾 Salvando plano...', { isEditing: this.isEditing, planData: this.planData });
 
       const planToSave = {
         ...this.formData,
         assignedStudents: this.selectedStudents
       };
+      
+      // Se está editando, incluir o _id
+      if (this.isEditing && this.planData && this.planData._id) {
+        planToSave._id = this.planData._id;
+        console.log('📝 Incluindo ID para edição:', planToSave._id);
+      }
+      
+      console.log('📦 Dados que serão salvos:', planToSave);
 
       this.$emit('save', planToSave);
     },

@@ -159,49 +159,26 @@
                   </div>
                 </div>
                 
-                <div class="plan-menu-wrapper" @click.stop>
-                  <button class="menu-trigger" @click="togglePlanMenu(plan._id)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
+                <div class="plan-actions-header">
+                  <button @click="manageStudents(plan)" class="action-btn manage-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
+                    <span v-if="plan.studentsCount > 0">{{ plan.studentsCount }} Alunos</span>
+                    <span v-else>Vincular Alunos</span>
                   </button>
                   
-                  <div v-if="openMenuId === plan._id" class="dropdown-menu" @click.stop>
-                    <button @click="manageStudents(plan)" class="dropdown-option">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                      Gerenciar Alunos
-                      <span v-if="plan.studentsCount > 0" class="menu-badge">{{ plan.studentsCount }}</span>
-                    </button>
-                    <button @click="assignPlan(plan)" class="dropdown-option">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                      </svg>
-                      Atribuir Rápido
-                    </button>
-                    <button @click="duplicatePlan(plan)" class="dropdown-option">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                      </svg>
-                      Duplicar
-                    </button>
-                    <div class="dropdown-separator"></div>
-                    <button @click="deletePlan(plan)" class="dropdown-option danger">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3,6 5,6 21,6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-                      </svg>
-                      Excluir
-                    </button>
-                  </div>
+                  <button @click="confirmDeletePlan(plan)" class="action-btn delete-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3,6 5,6 21,6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Excluir
+                  </button>
                 </div>
               </div>
 
@@ -279,7 +256,7 @@
                 </div>
               </div>
 
-              <!-- Ações com melhor alinhamento -->
+              <!-- Ações principais simplificadas -->
               <div class="plan-actions">
                 <button @click="viewPlan(plan)" class="action-button primary-action">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -387,6 +364,20 @@
       @close="closeManageStudentsModal"
       @updated="onStudentsUpdated"
     />
+    
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :show="showConfirmation"
+      :title="confirmationConfig.title"
+      :message="confirmationConfig.message"
+      :icon-type="confirmationConfig.iconType"
+      :require-text-confirmation="confirmationConfig.requireTextConfirmation"
+      :confirmation-text="confirmationConfig.confirmationText"
+      :details="confirmationConfig.details"
+      button-class="btn-danger"
+      @close="closeConfirmation"
+      @confirm="handleConfirmAction"
+    />
   </div>
 </template>
 
@@ -396,6 +387,7 @@ import WorkoutPlanModalWizard from "@/components/WorkoutPlanModalWizard.vue";
 import AssignPlanModal from "@/components/AssignPlanModal.vue";
 import ViewPlanModal from "@/components/ViewPlanModal.vue";
 import ManageStudentsModal from "@/components/ManageStudentsModal.vue";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 
@@ -406,7 +398,8 @@ export default {
     WorkoutPlanModalWizard,
     AssignPlanModal,
     ViewPlanModal,
-    ManageStudentsModal
+    ManageStudentsModal,
+    ConfirmationModal
   },
   setup() {
     const themeStore = useThemeStore();
@@ -430,7 +423,17 @@ export default {
       totalExercises: 0,
       loading: false,
       error: null,
-      openMenuId: null,
+      // Confirmation modal
+      showConfirmation: false,
+      confirmationConfig: {
+        title: '',
+        message: '',
+        iconType: 'warning',
+        requireTextConfirmation: false,
+        confirmationText: 'EXCLUIR',
+        details: [],
+        onConfirm: null
+      },
       filters: [
         { key: 'all', label: 'Todos', count: null },
         { key: 'recent', label: 'Recentes', count: null },
@@ -574,7 +577,7 @@ export default {
             this.workoutPlans.push(savedPlan);
           }
           
-          alert('Plano de treino salvo com sucesso!');
+          this.showSuccessMessage('Plano de treino salvo com sucesso!');
           this.closeModal();
           // Resetar estado de salvamento no modal filho
           if (this.$refs.workoutPlanModal) {
@@ -591,7 +594,7 @@ export default {
         }
       } catch (error) {
         console.error('❌ Erro ao salvar plano:', error);
-        alert('Erro ao salvar plano: ' + error.message);
+        this.showErrorMessage('Erro ao salvar plano: ' + error.message);
         // Resetar estado de salvamento em caso de erro
         if (this.$refs.workoutPlanModal) {
           this.$refs.workoutPlanModal.isSaving = false;
@@ -621,43 +624,101 @@ export default {
       }
     },
 
-    async deletePlan(plan) {
+    async confirmDeletePlan(plan) {
       const studentsCount = plan.assignedStudents?.length || plan.studentsCount || 0;
-      const warningMsg = studentsCount > 0 
-        ? `Tem certeza que deseja excluir o plano "${plan.name}"?\n\nEste plano está atribuído a ${studentsCount} aluno(s) e será removido de todos eles.`
-        : `Tem certeza que deseja excluir o plano "${plan.name}"?`;
       
-      if (confirm(warningMsg)) {
-        try {
-          const token = sessionStorage.getItem('token');
-          console.log('🗑️ Deletando plano:', plan._id);
-          
-          const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+      this.confirmationConfig = {
+        title: 'Excluir Plano de Treino',
+        message: studentsCount > 0 
+          ? `<strong>⚠️ ATENÇÃO:</strong> O plano "<strong>${plan.name}</strong>" está atribuído a <strong>${studentsCount} aluno(s)</strong>.\n\nAo excluir este plano:\n• Ele será removido de todos os alunos\n• Histórico de treinos será mantido\n• Esta ação <strong>NÃO pode ser desfeita</strong>`
+          : `Tem certeza que deseja excluir o plano "<strong>${plan.name}</strong>"?\n\nEsta ação <strong>NÃO pode ser desfeita</strong>.`,
+        iconType: 'danger',
+        requireTextConfirmation: true,
+        confirmationText: 'EXCLUIR',
+        details: [
+          { label: '📋 Plano', value: plan.name },
+          { label: '👥 Alunos afetados', value: studentsCount },
+          { label: '🏋️ Total de exercícios', value: this.getTotalExercises(plan) },
+          { label: '🗓️ Criado em', value: this.formatDate(plan.createdAt) }
+        ],
+        onConfirm: () => this.deletePlan(plan)
+      };
+      
+      this.showConfirmation = true;
+    },
 
-          if (response.ok) {
-            console.log('✅ Plano deletado com sucesso');
-            const index = this.workoutPlans.findIndex(p => p._id === plan._id);
-            if (index > -1) {
-              this.workoutPlans.splice(index, 1);
-            }
-            this.openMenuId = null;
-            alert('Plano de treino excluído com sucesso!');
-          } else {
-            const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-            throw new Error(errorData.message || 'Erro ao excluir plano');
+    async deletePlan(plan) {
+      try {
+        const token = sessionStorage.getItem('token');
+        console.log('🗑️ Deletando plano:', plan._id);
+        
+        const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        } catch (error) {
-          console.error('❌ Erro ao excluir plano:', error);
-          alert('Erro ao excluir plano: ' + error.message);
+        });
+
+        if (response.ok) {
+          console.log('✅ Plano deletado com sucesso');
+          const index = this.workoutPlans.findIndex(p => p._id === plan._id);
+          if (index > -1) {
+            this.workoutPlans.splice(index, 1);
+          }
+          this.showSuccessMessage('🎉 Plano de treino excluído com sucesso!');
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+          throw new Error(errorData.message || 'Erro ao excluir plano');
         }
+      } catch (error) {
+        console.error('❌ Erro ao excluir plano:', error);
+        this.showErrorMessage('❌ Erro ao excluir plano: ' + error.message);
       }
-      this.openMenuId = null;
+    },
+    
+    showSuccessMessage(message) {
+      this.confirmationConfig = {
+        title: 'Sucesso!',
+        message: message,
+        iconType: 'success',
+        requireTextConfirmation: false,
+        details: [],
+        onConfirm: () => this.closeConfirmation()
+      };
+      this.showConfirmation = true;
+    },
+    
+    showErrorMessage(message) {
+      this.confirmationConfig = {
+        title: 'Erro!',
+        message: message,
+        iconType: 'danger',
+        requireTextConfirmation: false,
+        details: [],
+        onConfirm: () => this.closeConfirmation()
+      };
+      this.showConfirmation = true;
+    },
+    
+    closeConfirmation() {
+      this.showConfirmation = false;
+      this.confirmationConfig = {
+        title: '',
+        message: '',
+        iconType: 'warning',
+        requireTextConfirmation: false,
+        confirmationText: 'EXCLUIR',
+        details: [],
+        onConfirm: null
+      };
+    },
+    
+    async handleConfirmAction() {
+      if (this.confirmationConfig.onConfirm) {
+        await this.confirmationConfig.onConfirm();
+        this.closeConfirmation();
+      }
     },
 
     getTotalExercises(plan) {
@@ -669,10 +730,6 @@ export default {
 
     formatDate(dateString) {
       return new Date(dateString).toLocaleDateString('pt-BR');
-    },
-
-    togglePlanMenu(planId) {
-      this.openMenuId = this.openMenuId === planId ? null : planId;
     },
 
     openCreateModal() {
@@ -696,12 +753,19 @@ export default {
 
         if (response.ok) {
           const fullPlan = await response.json();
-          console.log('✅ Plano carregado:', fullPlan);
+          console.log('✅ Plano carregado para edição:', fullPlan);
+          console.log('📋 Detalhes do plano:');
+          console.log('  - Nome:', fullPlan.name);
+          console.log('  - Descrição:', fullPlan.description);
+          console.log('  - Objetivo:', fullPlan.goal);
+          console.log('  - Divisões:', fullPlan.divisions?.length || 0);
+          console.log('  - Alunos:', fullPlan.assignedStudents?.length || 0);
           
           this.isEditing = true;
           this.selectedPlan = fullPlan;
           this.showModal = true;
-          this.openMenuId = null;
+          
+          console.log('🎭 Modal será aberto com:', { isEditing: this.isEditing, selectedPlan: !!this.selectedPlan });
         } else {
           throw new Error('Erro ao carregar plano para edição');
         }
@@ -714,26 +778,6 @@ export default {
     viewPlan(plan) {
       this.selectedPlan = plan;
       this.showViewModal = true;
-      this.openMenuId = null;
-    },
-
-    assignPlan(plan) {
-      this.selectedPlan = plan;
-      this.showAssignModal = true;
-      this.openMenuId = null;
-    },
-
-    duplicatePlan(plan) {
-      const newPlan = {
-        ...plan,
-        _id: null,
-        name: `${plan.name} (Cópia)`,
-        createdAt: new Date().toISOString()
-      };
-      this.selectedPlan = newPlan;
-      this.isEditing = false;
-      this.showModal = true;
-      this.openMenuId = null;
     },
 
     closeModal() {
@@ -758,19 +802,27 @@ export default {
 
     async fetchStudents() {
       try {
-        const response = await fetch('/api/students');
+        const token = sessionStorage.getItem('token');
+        const response = await fetch('/api/students', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         if (response.ok) {
           this.students = await response.json();
+          console.log('✅ Students loaded:', this.students.length);
+        } else {
+          console.error('❌ Error fetching students:', response.status);
         }
       } catch (error) {
-        console.error('Erro ao buscar alunos:', error);
+        console.error('❌ Error fetching students:', error);
       }
     },
 
     manageStudents(plan) {
       this.selectedPlan = plan;
       this.showManageStudentsModal = true;
-      this.openMenuId = null;
     },
 
     closeManageStudentsModal() {
@@ -1366,7 +1418,7 @@ body:has(.navbar-collapsed) .floating-header,
   opacity: 0.03;
 }
 
-/* Header melhorado */
+/* Header melhorado com novos botões */
 .plan-header {
   position: relative;
   z-index: 1;
@@ -1408,92 +1460,53 @@ body:has(.navbar-collapsed) .floating-header,
   border: 1px solid var(--border-secondary);
 }
 
-.plan-menu-wrapper {
-  position: relative;
+.plan-actions-header {
+  display: flex;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.menu-trigger {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.menu-trigger:hover {
-  background: var(--gradient-primary);
-  color: white;
-  border-color: transparent;
-  transform: scale(1.1);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px;
-  background: var(--bg-tertiary);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  box-shadow: var(--shadow-xl);
-  z-index: 1000;
-  min-width: 160px;
-  padding: 8px;
-  animation: dropdownFade 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dropdown-option {
-  width: 100%;
-  padding: 10px 12px;
+.action-btn {
+  padding: 12px 18px;
   border: none;
-  background: transparent;
-  color: var(--text-primary);
-  text-align: left;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.dropdown-option:hover {
-  background: var(--bg-primary);
-  transform: translateX(2px);
-}
-
-.dropdown-option.danger {
-  color: #ef4444;
-}
-
-.dropdown-option.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.menu-badge {
-  margin-left: auto;
-  background: var(--gradient-primary);
+.manage-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  min-width: 140px;
+  justify-content: center;
 }
 
-.dropdown-separator {
-  height: 1px;
-  background: var(--border-primary);
-  margin: 6px 0;
+.manage-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.delete-btn {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.delete-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+}
+
+.action-btn:active {
+  transform: translateY(0) scale(0.95);
 }
 
 /* Estatísticas principais melhoradas */
@@ -1914,7 +1927,7 @@ body:has(.navbar-collapsed) .floating-header,
     padding: 20px 20px 16px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
   }
   
   .plan-title-section {
@@ -1922,8 +1935,15 @@ body:has(.navbar-collapsed) .floating-header,
     width: 100%;
   }
   
-  .plan-menu-wrapper {
-    align-self: flex-end;
+  .plan-actions-header {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 16px;
   }
   
   .plan-stats-main {

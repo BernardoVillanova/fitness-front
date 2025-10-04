@@ -1,7 +1,6 @@
 <template>
   <div v-if="show" class="modal-overlay" @click.self="close">
     <div :class="isDarkMode ? 'modal-dark' : 'modal-light'" class="modal-container">
-      <!-- Header -->
       <div class="modal-header">
         <div class="header-content">
           <div class="icon-wrapper">
@@ -17,145 +16,162 @@
             <p class="modal-subtitle">{{ plan.name }}</p>
           </div>
         </div>
-        <button @click="close" class="close-button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
+        <button @click="close" class="close-btn">
+          <i class="fas fa-times"></i>
         </button>
       </div>
-
-      <!-- Stats -->
-      <div class="stats-bar">
-        <div class="stat-item">
-          <div class="stat-icon-small">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-            </svg>
-          </div>
-          <span class="stat-label">{{ assignedStudents.length }} alunos usando</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-icon-small">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-            </svg>
-          </div>
-          <span class="stat-label">{{ plan.divisions?.length || 0 }} divisões</span>
-        </div>
-      </div>
-
-      <!-- Search Bar -->
-      <div class="search-section">
-        <div class="search-wrapper">
-          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
-          </svg>
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="Buscar alunos para adicionar..."
-            class="search-input"
-          >
-        </div>
-      </div>
-
-      <!-- Content Area -->
       <div class="modal-content">
-        <!-- Assigned Students -->
-        <div class="section">
-          <div class="section-header">
-            <h3 class="section-title">Alunos com este plano</h3>
-            <span class="count-badge">{{ assignedStudents.length }}</span>
-          </div>
-          
-          <div v-if="assignedStudents.length === 0" class="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-            </svg>
-            <p class="empty-text">Nenhum aluno usando este plano</p>
-            <p class="empty-hint">Busque e adicione alunos abaixo</p>
-          </div>
-
-          <div v-else class="students-list">
-            <div 
-              v-for="student in assignedStudents" 
-              :key="student._id"
-              class="student-card assigned"
+        <!-- Search Section -->
+        <div class="search-section">
+          <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Buscar alunos para adicionar..."
+              class="search-input"
+              @input="onSearchInput"
             >
-              <div class="student-info">
-                <div class="student-avatar">
-                  <img v-if="student.profileImage" :src="student.profileImage" :alt="student.name">
-                  <div v-else class="avatar-placeholder">
-                    {{ getInitials(student.name) }}
+          </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-icon-small">
+              <i class="fas fa-users"></i>
+            </div>
+            <span class="stat-label">{{ assignedStudents.length }} alunos usando este plano</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-icon-small">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <span class="stat-label">{{ filteredAvailableStudents.length }} disponíveis</span>
+          </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="content-sections">
+          <!-- Assigned Students -->
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">Alunos com este plano</h3>
+              <span class="count-badge">{{ assignedStudents.length }}</span>
+            </div>
+            
+            <div v-if="loadingAssigned" class="loading-state">
+              <div class="spinner"></div>
+              <p>Carregando alunos...</p>
+            </div>
+
+            <div v-else-if="assignedStudents.length === 0" class="empty-state">
+              <i class="fas fa-users fa-3x empty-icon"></i>
+              <p class="empty-text">Nenhum aluno usando este plano</p>
+              <p class="empty-hint">Busque e adicione alunos disponíveis abaixo</p>
+            </div>
+
+            <div v-else class="students-list">
+              <div 
+                v-for="student in assignedStudents" 
+                :key="student._id"
+                class="student-card assigned"
+              >
+                <div class="student-info">
+                  <div class="student-avatar">
+                    <img v-if="student.userId?.avatar" :src="student.userId.avatar" :alt="student.userId?.name">
+                    <div v-else class="avatar-placeholder">
+                      {{ getInitials(student.userId?.name || 'User') }}
+                    </div>
+                  </div>
+                  <div class="student-details">
+                    <h4 class="student-name">{{ student.userId?.name || 'Sem nome' }}</h4>
+                    <p class="student-email">{{ student.userId?.email || 'Sem email' }}</p>
+                    <span v-if="student.personalInfo?.weight" class="student-info-badge">
+                      {{ student.personalInfo.weight }}kg
+                    </span>
                   </div>
                 </div>
-                <div class="student-details">
-                  <h4 class="student-name">{{ student.name }}</h4>
-                  <p class="student-email">{{ student.email }}</p>
-                </div>
+                <button @click="removeStudent(student._id)" class="action-button remove-button" :disabled="processingStudents.includes(student._id)">
+                  <div v-if="processingStudents.includes(student._id)" class="button-spinner"></div>
+                  <i v-else class="fas fa-times"></i>
+                  {{ processingStudents.includes(student._id) ? 'Removendo...' : 'Remover' }}
+                </button>
               </div>
-              <button @click="removeStudent(student._id)" class="action-button remove-button">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Remover
-              </button>
             </div>
           </div>
-        </div>
 
-        <!-- Available Students -->
-        <div class="section">
-          <div class="section-header">
-            <h3 class="section-title">Adicionar alunos</h3>
-            <span class="count-badge">{{ filteredAvailableStudents.length }}</span>
-          </div>
+          <!-- Available Students -->
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">Adicionar alunos</h3>
+              <span class="count-badge">{{ filteredAvailableStudents.length }}</span>
+            </div>
 
-          <div v-if="loading" class="loading-state">
-            <div class="spinner"></div>
-            <p>Carregando alunos...</p>
-          </div>
+            <div v-if="loadingAvailable" class="loading-state">
+              <div class="spinner"></div>
+              <p>Carregando alunos disponíveis...</p>
+            </div>
 
-          <div v-else-if="filteredAvailableStudents.length === 0" class="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <p class="empty-text">Nenhum aluno disponível</p>
-            <p class="empty-hint">{{ searchQuery ? 'Tente outra busca' : 'Todos os alunos já estão usando este plano' }}</p>
-          </div>
+            <div v-else-if="filteredAvailableStudents.length === 0" class="empty-state">
+              <i class="fas fa-search fa-3x empty-icon"></i>
+              <p class="empty-text">
+                {{ searchQuery ? 'Nenhum aluno encontrado' : 'Nenhum aluno disponível' }}
+              </p>
+              <p class="empty-hint">
+                {{ searchQuery ? 'Tente buscar com outros termos' : 'Todos os alunos já estão usando planos' }}
+              </p>
+            </div>
 
-          <div v-else class="students-list">
-            <div 
-              v-for="student in filteredAvailableStudents" 
-              :key="student._id"
-              class="student-card available"
-            >
-              <div class="student-info">
-                <div class="student-avatar">
-                  <img v-if="student.profileImage" :src="student.profileImage" :alt="student.name">
-                  <div v-else class="avatar-placeholder">
-                    {{ getInitials(student.name) }}
+            <div v-else class="students-list">
+              <div 
+                v-for="student in paginatedAvailableStudents" 
+                :key="student._id"
+                class="student-card available"
+              >
+                <div class="student-info">
+                  <div class="student-avatar">
+                    <img v-if="student.userId?.avatar" :src="student.userId.avatar" :alt="student.userId?.name">
+                    <div v-else class="avatar-placeholder">
+                      {{ getInitials(student.userId?.name || 'User') }}
+                    </div>
+                  </div>
+                  <div class="student-details">
+                    <h4 class="student-name">{{ student.userId?.name || 'Sem nome' }}</h4>
+                    <p class="student-email">{{ student.userId?.email || 'Sem email' }}</p>
+                    <span v-if="student.workoutPlanId" class="has-plan-badge">Tem outro plano</span>
+                    <span v-if="student.personalInfo?.weight" class="student-info-badge">
+                      {{ student.personalInfo.weight }}kg
+                    </span>
                   </div>
                 </div>
-                <div class="student-details">
-                  <h4 class="student-name">{{ student.name }}</h4>
-                  <p class="student-email">{{ student.email }}</p>
-                  <span v-if="student.workoutPlanId" class="has-plan-badge">Tem plano</span>
-                </div>
+                <button @click="addStudent(student._id)" class="action-button add-button" :disabled="processingStudents.includes(student._id)">
+                  <div v-if="processingStudents.includes(student._id)" class="button-spinner"></div>
+                  <i v-else class="fas fa-plus"></i>
+                  {{ processingStudents.includes(student._id) ? 'Adicionando...' : 'Adicionar' }}
+                </button>
               </div>
-              <button @click="addStudent(student._id)" class="action-button add-button">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
-                Adicionar
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="filteredAvailableStudents.length > studentsPerPage" class="pagination">
+              <button 
+                @click="currentPage--" 
+                :disabled="currentPage === 1"
+                class="pagination-btn"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="pagination-info">
+                {{ currentPage }} de {{ totalPages }}
+              </span>
+              <button 
+                @click="currentPage++" 
+                :disabled="currentPage === totalPages"
+                class="pagination-btn"
+              >
+                <i class="fas fa-chevron-right"></i>
               </button>
             </div>
           </div>
@@ -166,6 +182,7 @@
 </template>
 
 <script>
+import { ref, computed, watch } from 'vue';
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 
@@ -178,125 +195,450 @@ export default {
       required: true
     }
   },
-  setup() {
+  emits: ['close', 'updated'],
+  setup(props, { emit }) {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
-    return { isDarkMode };
-  },
-  data() {
-    return {
-      searchQuery: '',
-      assignedStudents: [],
-      availableStudents: [],
-      loading: false
-    }
-  },
-  computed: {
-    filteredAvailableStudents() {
-      const assignedIds = this.assignedStudents.map(s => s._id);
-      const available = this.availableStudents.filter(s => !assignedIds.includes(s._id));
+
+    // State
+    const searchQuery = ref('');
+    const assignedStudents = ref([]);
+    const availableStudents = ref([]);
+    const loadingAssigned = ref(false);
+    const loadingAvailable = ref(false);
+    const processingStudents = ref([]);
+    const currentPage = ref(1);
+    const studentsPerPage = 5;
+
+    // Computed
+    const filteredAvailableStudents = computed(() => {
+      console.log('\n🔍 Computing filteredAvailableStudents...');
+      console.log('🔍 Search query:', searchQuery.value || '<EMPTY>');
+      console.log('🔍 Available students:', availableStudents.value);
+      console.log('🔍 Available students length:', availableStudents.value.length);
+      console.log('🔍 Available students type:', typeof availableStudents.value);
+      console.log('🔍 Is available students array?', Array.isArray(availableStudents.value));
       
-      if (!this.searchQuery) return available;
+      if (!Array.isArray(availableStudents.value)) {
+        console.log('🔍 ⚠️ Available students is not an array!');
+        return [];
+      }
       
-      const query = this.searchQuery.toLowerCase();
-      return available.filter(student => 
-        student.name.toLowerCase().includes(query) ||
-        student.email.toLowerCase().includes(query)
-      );
-    }
-  },
-  watch: {
-    show(newVal) {
-      if (newVal) {
-        this.fetchStudents();
+      if (availableStudents.value.length === 0) {
+        console.log('🔍 ⚠️ Available students array is empty!');
+        return [];
       }
-    }
-  },
-  methods: {
-    async fetchStudents() {
-      this.loading = true;
-      try {
-        // Buscar alunos do plano
-        const assignedResponse = await fetch(`/api/workout/workout-plans/${this.plan._id}/students`);
-        if (assignedResponse.ok) {
-          this.assignedStudents = await assignedResponse.json();
-        }
-
-        // Buscar todos os alunos disponíveis
-        const allStudentsResponse = await fetch('/api/students');
-        if (allStudentsResponse.ok) {
-          this.availableStudents = await allStudentsResponse.json();
-        }
-      } catch (error) {
-        console.error('Erro ao buscar alunos:', error);
-      } finally {
-        this.loading = false;
+      
+      if (!searchQuery.value || searchQuery.value.trim() === '') {
+        console.log('No search query, returning all', availableStudents.value.length, 'available students');
+        console.log('Students being returned:', availableStudents.value.map(s => s.userId?.name || 'Unnamed'));
+        return availableStudents.value;
       }
-    },
+      
+      const query = searchQuery.value.toLowerCase();
+      console.log('🔍 Filtering with query:', query);
+      
+      const filtered = availableStudents.value.filter(student => {
+        const matchesName = (student.userId?.name || '').toLowerCase().includes(query);
+        const matchesEmail = (student.userId?.email || '').toLowerCase().includes(query);
+        const matches = matchesName || matchesEmail;
+        console.log(`Student ${student.userId?.name}: name match=${matchesName}, email match=${matchesEmail}, final=${matches}`);
+        return matches;
+      });
+      
+      console.log('🔍 Filtered students:', filtered);
+      console.log('🔍 Filtered count:', filtered.length);
+      console.log('=== END filteredAvailableStudents ===\n');
+      return filtered;
+    });
 
-    async addStudent(studentId) {
-      try {
-        const response = await fetch(`/api/students/${studentId}/assign-workout-plan`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ workoutPlanId: this.plan._id })
-        });
+    const totalPages = computed(() => {
+      return Math.ceil(filteredAvailableStudents.value.length / studentsPerPage);
+    });
 
-        if (response.ok) {
-          await this.fetchStudents();
-          this.$emit('updated');
+    const paginatedAvailableStudents = computed(() => {
+      const start = (currentPage.value - 1) * studentsPerPage;
+      const end = start + studentsPerPage;
+      return filteredAvailableStudents.value.slice(start, end);
+    });
+
+    // Watch
+    watch(() => props.show, async (isOpen) => {
+      console.log('\n=== MODAL SHOW STATE CHANGED ===');
+      console.log('📺 Modal show state:', isOpen);
+      console.log('📍 Plan object:', props.plan);
+      console.log('📍 Plan ID:', props.plan?._id);
+      console.log('📍 Plan name:', props.plan?.name);
+      
+      if (isOpen && props.plan && props.plan._id) {
+        console.log('\n🚀 MODAL OPENED - STARTING DATA LOAD');
+        console.log('📈 Available students BEFORE load:', availableStudents.value.length);
+        console.log('📈 Assigned students BEFORE load:', assignedStudents.value.length);
+        
+        // Aguardar o carregamento de dados
+        console.log('🔄 Awaiting loadStudentData...');
+        await loadStudentData();
+        console.log('🏁 loadStudentData completed!');
+        
+        console.log('\n📈 FINAL RESULTS AFTER LOAD:');
+        console.log('📈 Available students AFTER load:', availableStudents.value.length);
+        console.log('📈 Assigned students AFTER load:', assignedStudents.value.length);
+        console.log('📈 Available students names:', availableStudents.value.map(s => s.userId?.name || 'Unnamed'));
+        console.log('📈 Assigned students names:', assignedStudents.value.map(s => s.userId?.name || 'Unnamed'));
+      } else {
+        console.log('\n📴 MODAL CLOSED OR NO PLAN - RESETTING');
+        if (!isOpen) {
+          console.log('🔄 Resetting modal state...');
+          searchQuery.value = '';
+          currentPage.value = 1;
+          processingStudents.value = [];
+          availableStudents.value = [];
+          assignedStudents.value = [];
+          console.log('🔄 State reset completed');
         } else {
-          throw new Error('Erro ao adicionar aluno');
+          console.log('⚠️ Modal opened but no plan or plan ID!');
         }
-      } catch (error) {
-        console.error('Erro ao adicionar aluno:', error);
-        alert('Erro ao adicionar aluno: ' + error.message);
       }
-    },
+      console.log('=== END MODAL STATE CHANGE ===\n');
+    });
 
-    async removeStudent(studentId) {
-      if (!confirm('Deseja remover este aluno do plano?')) return;
+    watch(searchQuery, () => {
+      console.log('🔍 Search query changed to:', searchQuery.value);
+      currentPage.value = 1;
+      console.log('🔍 Reset currentPage to 1');
+    });
 
-      try {
-        const response = await fetch(`/api/workout/workout-plans/${this.plan._id}/students/${studentId}`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          await this.fetchStudents();
-          this.$emit('updated');
-        } else {
-          throw new Error('Erro ao remover aluno');
-        }
-      } catch (error) {
-        console.error('Erro ao remover aluno:', error);
-        alert('Erro ao remover aluno: ' + error.message);
-      }
-    },
-
-    getInitials(name) {
+    // Methods
+    const getInitials = (name) => {
       return name
         .split(' ')
-        .map(n => n[0])
-        .slice(0, 2)
+        .map(word => word.charAt(0))
         .join('')
-        .toUpperCase();
-    },
+        .toUpperCase()
+        .slice(0, 2);
+    };
 
-    close() {
-      this.$emit('close');
-    }
+    const onSearchInput = () => {
+      console.log('🔍 Search input changed:', searchQuery.value);
+      console.log('🔍 Available students count:', availableStudents.value.length);
+      console.log('🔍 Filtered students count:', filteredAvailableStudents.value.length);
+    };
+
+    const loadStudentData = async () => {
+      console.log('=== LOADING STUDENT DATA ===');
+      console.log('Plan object:', props.plan);
+      console.log('Plan ID:', props.plan._id);
+      console.log('Plan name:', props.plan.name);
+      
+      try {
+        // Load assigned students first, then available students
+        // This ensures proper filtering
+        console.log('🔄 Step 1: Loading assigned students...');
+        await loadAssignedStudents();
+        
+        console.log('🔄 Step 2: Loading available students...');
+        await loadAvailableStudents();
+        
+        console.log('=== STUDENT DATA LOADED SUCCESSFULLY ===');
+        console.log('📊 Final summary:');
+        console.log(`📊 Assigned students: ${assignedStudents.value.length}`);
+        console.log(`📊 Available students: ${availableStudents.value.length}`);
+      } catch (error) {
+        console.error('=== ERROR LOADING STUDENT DATA ===', error);
+      }
+    };
+
+    const loadAssignedStudents = async () => {
+      try {
+        loadingAssigned.value = true;
+        console.log('🔍 Fetching assigned students for plan:', props.plan._id);
+        
+        const token = sessionStorage.getItem('token');
+        const url = `http://localhost:3000/api/workout-plans/${props.plan._id}/students`;
+        console.log('📡 Making request to:', url);
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('✅ Assigned students response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Assigned students response data:', data);
+          console.log('✅ Type of response data:', typeof data);
+          console.log('✅ Is array?', Array.isArray(data));
+          
+          // A resposta vem diretamente como array de alunos
+          assignedStudents.value = data || [];
+          console.log('✅ Final assignedStudents array:', assignedStudents.value);
+          console.log('✅ assignedStudents length:', assignedStudents.value.length);
+        } else if (response.status === 404) {
+          console.log('⚠️ 404 - No students found for this plan');
+          assignedStudents.value = [];
+        } else {
+          console.error('❌ Failed to fetch assigned students:', response.status);
+          assignedStudents.value = [];
+        }
+        
+      } catch (error) {
+        console.error('❌ Error loading assigned students:', error);
+        console.log('⚠️ Setting empty array due to error');
+        assignedStudents.value = [];
+      } finally {
+        loadingAssigned.value = false;
+        console.log('🏁 loadingAssigned set to false');
+      }
+    };
+
+    const loadAvailableStudents = async () => {
+      try {
+        console.log('\n=== 🚀 STARTING LOAD AVAILABLE STUDENTS ===');
+        loadingAvailable.value = true;
+        
+        // Pegar dados do usuário logado
+        const userData = JSON.parse(sessionStorage.getItem('user'));
+        console.log('DEBUG 1: UserData from session:', userData);
+        
+        if (!userData || !userData.instructorId) {
+          console.error('DEBUG ERROR: Dados do instrutor não encontrados no token');
+          availableStudents.value = [];
+          return;
+        }
+        
+        const userId = userData.id;
+        console.log('� User ID:', userId);
+        
+        // Buscar o instrutor pelo userId usando a lista de instrutores
+        console.log('🔍 Fetching instructors...');
+        const instructorsResponse = await fetch('http://localhost:3000/api/instructors', {
+          headers: {
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!instructorsResponse.ok) {
+          throw new Error('Erro ao buscar instrutores');
+        }
+        
+        const allInstructors = await instructorsResponse.json();
+        console.log('� All instructors:', allInstructors);
+        
+        // Encontrar o instrutor que corresponde ao userId
+        const currentInstructor = allInstructors.find(
+          inst => inst.userId === userId || inst.userId?._id === userId
+        );
+        
+        console.log('DEBUG 2: Looking for instructor with userId:', userId);
+        console.log('DEBUG 3: Available instructors:', allInstructors.map(i => ({ id: i._id, userId: i.userId })));
+        console.log('DEBUG 4: Found instructor:', currentInstructor);
+        
+        if (!currentInstructor) {
+          console.log('DEBUG ERROR: Instrutor não encontrado para o userId:', userId);
+          availableStudents.value = [];
+          return;
+        }
+        
+        const instructorId = currentInstructor._id;
+        console.log('🔍 Instructor ID encontrado:', instructorId);
+        
+        // Buscar apenas alunos deste instrutor usando a rota específica
+        const url = `http://localhost:3000/api/students/instructor/${instructorId}`;
+        console.log('📡 Making fetch request to:', url);
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('\n📬 RESPONSE RECEIVED!');
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (response.ok) {
+          console.log('DEBUG 5: Parsing JSON response...');
+          const allStudents = await response.json();
+          
+          console.log('DEBUG 6: Raw response data:', allStudents);
+          console.log('DEBUG 7: Response type:', typeof allStudents);
+          console.log('DEBUG 8: Is response an array:', Array.isArray(allStudents));
+          console.log('DEBUG 9: Response length:', allStudents?.length || 'NO LENGTH PROPERTY');
+          
+          if (Array.isArray(allStudents) && allStudents.length > 0) {
+            console.log('DEBUG 10: First student sample:', allStudents[0]);
+          }
+          
+          console.log('DEBUG 11: Current assigned students for filtering:', assignedStudents.value);
+          console.log('DEBUG 12: Assigned students count:', assignedStudents.value.length);
+          
+          // Filter out students already assigned to this plan
+          const filtered = allStudents.filter(student => {
+            const isAssigned = assignedStudents.value.some(assigned => assigned._id === student._id);
+            console.log(`DEBUG FILTER: Student ${student.userId?.name || student.name} (${student._id}) - Already assigned: ${isAssigned ? 'YES' : 'NO'}`);
+            return !isAssigned;
+          });
+          
+          console.log('DEBUG 13: Filtered students:', filtered);
+          console.log('DEBUG 14: Filtered count:', filtered.length);
+          
+          availableStudents.value = filtered;
+          
+          console.log('DEBUG 15: availableStudents.value set to:', availableStudents.value);
+          console.log('DEBUG 16: availableStudents.value length:', availableStudents.value.length);
+          
+        } else if (response.status === 404) {
+          console.log('DEBUG ERROR: 404 - No students found for this instructor');
+          availableStudents.value = [];
+        } else {
+          console.error('DEBUG ERROR: HTTP ERROR!');
+          console.error('Status:', response.status);
+          console.error('Status text:', response.statusText);
+          availableStudents.value = [];
+        }
+        
+      } catch (error) {
+        console.error('DEBUG FATAL ERROR IN loadAvailableStudents:');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Full error object:', error);
+        availableStudents.value = [];
+      } finally {
+        loadingAvailable.value = false;
+        console.log('loadingAvailable set to false');
+        console.log('=== END LOAD AVAILABLE STUDENTS ===');
+      }
+    };
+
+    const addStudent = async (studentId) => {
+      try {
+        console.log('➕ Adding student to plan:', { studentId, planId: props.plan._id });
+        
+        processingStudents.value.push(studentId);
+        console.log('⏳ Added to processing:', processingStudents.value);
+        
+        const payload = { workoutPlanId: props.plan._id };
+        const url = `http://localhost:3000/api/students/${studentId}/assign-workout-plan`;
+        console.log('📡 POST request to:', url);
+        console.log('📡 Payload:', payload);
+        
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        console.log('✅ Student assignment response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Student assignment response data:', data);
+          
+          console.log('🔄 Reloading student data after assignment...');
+          await loadStudentData();
+          
+          console.log('📢 Emitting update event to parent');
+          emit('updated');
+        } else {
+          console.error('❌ Failed to assign student:', response.status);
+        }
+        
+      } catch (error) {
+        console.error('❌ Error adding student to plan:', error);
+        console.error('❌ Error response:', error.response);
+        console.error('❌ Error status:', error.response?.status);
+        console.error('❌ Error data:', error.response?.data);
+      } finally {
+        processingStudents.value = processingStudents.value.filter(id => id !== studentId);
+        console.log('🏁 Removed from processing:', processingStudents.value);
+      }
+    };
+
+    const removeStudent = async (studentId) => {
+      try {
+        console.log('➖ Removing student from plan:', { studentId, planId: props.plan._id });
+        
+        processingStudents.value.push(studentId);
+        console.log('⏳ Added to processing:', processingStudents.value);
+        
+        const payload = { workoutPlanId: null };
+        const url = `http://localhost:3000/api/students/${studentId}/assign-workout-plan`;
+        console.log('📡 POST request to:', url);
+        console.log('📡 Payload:', payload);
+        
+        const token = sessionStorage.getItem('token');
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        console.log('✅ Student removal response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Student removal response data:', data);
+          
+          console.log('🔄 Reloading student data after removal...');
+          await loadStudentData();
+          
+          console.log('📢 Emitting update event to parent');
+          emit('updated');
+        } else {
+          console.error('❌ Failed to remove student:', response.status);
+        }
+        
+      } catch (error) {
+        console.error('❌ Error removing student from plan:', error);
+        console.error('❌ Error response:', error.response);
+        console.error('❌ Error status:', error.response?.status);
+        console.error('❌ Error data:', error.response?.data);
+      } finally {
+        processingStudents.value = processingStudents.value.filter(id => id !== studentId);
+        console.log('🏁 Removed from processing:', processingStudents.value);
+      }
+    };
+
+    const close = () => {
+      emit('close');
+    };
+
+    return {
+      isDarkMode,
+      searchQuery,
+      assignedStudents,
+      availableStudents,
+      filteredAvailableStudents,
+      paginatedAvailableStudents,
+      loadingAssigned,
+      loadingAvailable,
+      processingStudents,
+      currentPage,
+      studentsPerPage,
+      totalPages,
+      getInitials,
+      onSearchInput,
+      addStudent,
+      removeStudent,
+      close
+    };
   }
 }
 </script>
 
 <style scoped>
-* {
-  box-sizing: border-box;
-}
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -310,69 +652,83 @@ export default {
   justify-content: center;
   z-index: 2000;
   padding: 20px;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.3s ease;
 }
 
 .modal-container {
   width: 100%;
-  max-width: 900px;
+  max-width: 800px;
   max-height: 90vh;
-  background: var(--bg-primary);
-  border-radius: 24px;
-  box-shadow: var(--shadow-xl);
+  background: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--border-primary);
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
 /* Theme Variables */
 .modal-light {
-  --bg-primary: #ffffff;
-  --bg-secondary: rgba(248, 250, 252, 0.9);
-  --bg-tertiary: rgba(255, 255, 255, 0.95);
-  
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  
-  --border-primary: rgba(226, 232, 240, 0.8);
-  --border-accent: rgba(37, 99, 235, 0.3);
-  
-  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 20px 25px -5px rgba(37, 99, 235, 0.15);
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --bg-secondary: #f8fafc;
+  --icon-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --close-btn-bg: #f3f4f6;
+  --close-btn-hover: #e5e7eb;
+  --close-btn-color: #6b7280;
+  --notice-bg: #f0f9ff;
+  --notice-border: #bae6fd;
+  --notice-icon-bg: #0ea5e9;
+  --search-bg: #f8fafc;
+  --search-border: #e2e8f0;
+  --stat-bg: #f1f5f9;
+  --student-card-bg: #ffffff;
+  --student-card-border: #e2e8f0;
+  --button-add-bg: #10b981;
+  --button-add-hover: #059669;
+  --button-remove-bg: #ef4444;
+  --button-remove-hover: #dc2626;
+  --empty-icon-color: #cbd5e1;
+  --pagination-btn-bg: #f8fafc;
+  --pagination-btn-hover: #e2e8f0;
 }
 
 .modal-dark {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: rgba(15, 16, 23, 0.8);
-  --bg-tertiary: rgba(26, 32, 44, 0.9);
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  
-  --border-primary: rgba(51, 65, 85, 0.6);
-  --border-accent: rgba(139, 92, 246, 0.3);
-  
-  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px -5px rgba(139, 92, 246, 0.3);
+  --card-bg: #1e1e2d;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-secondary: #6b7280;
+  --border-color: #2d2d3f;
+  --bg-secondary: #171723;
+  --icon-bg: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --close-btn-bg: #2d2d3f;
+  --close-btn-hover: #3f3f54;
+  --close-btn-color: #9ca3af;
+  --notice-bg: #1e1b4b;
+  --notice-border: #3730a3;
+  --notice-icon-bg: #6366f1;
+  --search-bg: #0f172a;
+  --search-border: #334155;
+  --stat-bg: #0f172a;
+  --student-card-bg: #1e293b;
+  --student-card-border: #334155;
+  --button-add-bg: #10b981;
+  --button-add-hover: #059669;
+  --button-remove-bg: #ef4444;
+  --button-remove-hover: #dc2626;
+  --empty-icon-color: #475569;
+  --pagination-btn-bg: #0f172a;
+  --pagination-btn-hover: #334155;
 }
 
-/* Header */
 .modal-header {
   padding: 32px;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -383,210 +739,264 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
 }
 
 .icon-wrapper {
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: var(--gradient-primary);
+  background: var(--icon-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  flex-shrink: 0;
 }
 
 .header-text {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
 .modal-title {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-color);
+  line-height: 1.2;
 }
 
 .modal-subtitle {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
-.close-button {
+.close-btn {
   width: 40px;
   height: 40px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  background: var(--close-btn-bg);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-secondary);
+  color: var(--close-btn-color);
+  flex-shrink: 0;
+  font-size: 16px;
 }
 
-.close-button:hover {
-  background: var(--gradient-danger);
-  border-color: transparent;
-  color: white;
+.close-btn:hover {
+  background: var(--close-btn-hover);
   transform: scale(1.05);
 }
 
-/* Stats Bar */
-.stats-bar {
-  padding: 16px 32px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
+.modal-content {
+  flex: 1;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stat-icon-small {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.stat-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border-primary);
+  flex-direction: column;
 }
 
 /* Search Section */
 .search-section {
-  padding: 20px 32px;
-  border-bottom: 1px solid var(--border-primary);
-  flex-shrink: 0;
+  padding: 24px 32px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .search-wrapper {
   position: relative;
-  display: flex;
-  align-items: center;
+  max-width: 400px;
 }
 
 .search-icon {
   position: absolute;
   left: 16px;
-  color: var(--text-tertiary);
-  pointer-events: none;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 16px;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 16px 12px 48px;
-  border: 2px solid var(--border-primary);
+  padding: 14px 16px 14px 48px;
+  border: 2px solid var(--search-border);
   border-radius: 12px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
+  background: var(--search-bg);
+  color: var(--text-color);
+  font-size: 16px;
   transition: all 0.2s ease;
-}
-
-.search-input::placeholder {
-  color: var(--text-tertiary);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--border-accent);
-  background: var(--bg-primary);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Content */
-.modal-content {
-  padding: 24px 32px;
-  overflow-y: auto;
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Stats Bar */
+.stats-bar {
+  padding: 20px 32px;
+  background: var(--stat-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-icon-small {
+  width: 36px;
+  height: 36px;
+  background: var(--icon-bg);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+}
+
+/* Content Sections */
+.content-sections {
   flex: 1;
+  overflow-y: auto;
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 40px;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .section-title {
-  margin: 0;
-  font-size: 1rem;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--text-color);
+  margin: 0;
 }
 
 .count-badge {
-  background: var(--gradient-primary);
+  background: var(--icon-bg);
   color: white;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-/* Students List */
+/* Loading and Empty States */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  color: var(--empty-icon-color);
+  margin-bottom: 8px;
+}
+
+.empty-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Student Cards */
 .students-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .student-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+  background: var(--student-card-bg);
+  border: 1px solid var(--student-card-border);
   border-radius: 16px;
-  padding: 16px;
+  padding: 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  transition: all 0.3s ease;
+  justify-content: space-between;
+  transition: all 0.2s ease;
 }
 
 .student-card:hover {
-  transform: translateX(4px);
-  border-color: var(--border-accent);
-  box-shadow: var(--shadow-md);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
 }
 
 .student-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
 }
 
@@ -595,7 +1005,9 @@ export default {
   height: 48px;
   border-radius: 12px;
   overflow: hidden;
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .student-avatar img {
@@ -607,133 +1019,206 @@ export default {
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: var(--gradient-primary);
+  background: var(--icon-bg);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 0.875rem;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .student-details {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .student-name {
-  margin: 0;
-  font-size: 0.95rem;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-color);
+  margin: 0;
 }
 
 .student-email {
+  font-size: 14px;
+  color: var(--text-muted);
   margin: 0;
-  font-size: 0.8rem;
+}
+
+.student-info-badge,
+.has-plan-badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.student-info-badge {
+  background: var(--stat-bg);
   color: var(--text-secondary);
 }
 
 .has-plan-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  background: rgba(251, 146, 60, 0.1);
-  border: 1px solid rgba(251, 146, 60, 0.3);
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #f59e0b;
-  margin-top: 4px;
+  background: #fbbf24;
+  color: #92400e;
 }
 
+/* Action Buttons */
 .action-button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .add-button {
-  background: var(--gradient-success);
+  background: var(--button-add-bg);
   color: white;
 }
 
-.add-button:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
+.add-button:not(:disabled):hover {
+  background: var(--button-add-hover);
+  transform: translateY(-1px);
 }
 
 .remove-button {
-  background: var(--gradient-danger);
+  background: var(--button-remove-bg);
   color: white;
 }
 
-.remove-button:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
+.remove-button:not(:disabled):hover {
+  background: var(--button-remove-hover);
+  transform: translateY(-1px);
 }
 
-/* Empty State */
-.empty-state {
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--text-tertiary);
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Pagination */
+.pagination {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-}
-
-.empty-text {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.empty-hint {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-tertiary);
-}
-
-/* Loading State */
-.loading-state {
-  padding: 48px 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
   gap: 16px;
-  color: var(--text-secondary);
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
 }
 
-.spinner {
+.pagination-btn {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border-primary);
-  border-top-color: var(--text-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--pagination-btn-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:not(:disabled):hover {
+  background: var(--pagination-btn-hover);
+  border-color: #3b82f6;
+  color: var(--text-color);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.development-notice {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  background: var(--notice-bg);
+  border: 1px solid var(--notice-border);
+  border-radius: 16px;
+  align-items: flex-start;
+}
+
+.notice-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--notice-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.notice-content {
+  flex: 1;
+}
+
+.notice-title {
+  margin: 0 0 8px 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.notice-description {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -741,37 +1226,97 @@ export default {
   }
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* Responsividade */
 @media (max-width: 768px) {
   .modal-container {
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
+    margin: 16px;
+    max-height: calc(100vh - 32px);
   }
-
-  .modal-header,
-  .search-section,
-  .modal-content {
+  
+  .modal-header {
+    padding: 24px 20px;
+  }
+  
+  .content-sections {
     padding: 20px;
   }
-
-  .stats-bar {
-    padding: 12px 20px;
+  
+  .search-section {
+    padding: 20px;
   }
-
-  .student-card {
+  
+  .stats-bar {
+    padding: 16px 20px;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 12px;
   }
-
-  .action-button {
-    width: 100%;
+  
+  .stat-item {
     justify-content: center;
+  }
+  
+  .stat-divider {
+    display: none;
+  }
+  
+  .header-content {
+    gap: 12px;
+  }
+  
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
+  }
+  
+  .student-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .action-button {
+    min-width: auto;
+  }
+  
+  .development-notice {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .notice-icon {
+    align-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+  
+  .modal-header {
+    padding: 20px 16px;
+  }
+  
+  .content-sections {
+    padding: 16px;
+  }
+  
+  .search-section {
+    padding: 16px;
+  }
+  
+  .stats-bar {
+    padding: 12px 16px;
+  }
+  
+  .development-notice {
+    padding: 20px;
   }
 }
 </style>
