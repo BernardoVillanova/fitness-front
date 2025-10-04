@@ -315,10 +315,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 /* === LAYOUT PRINCIPAL === */
 .instructor-profile {
   margin-left: 280px;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -609,7 +612,7 @@ textarea {
   color: var(--text-color);
   background: var(--bg-secondary);
   transition: all 0.3s ease;
-  font-family: inherit, sans-serif;
+  font-family: "Inter", sans-serif;
   box-sizing: border-box;
 }
 

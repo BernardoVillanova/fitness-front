@@ -597,10 +597,13 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 /* Layout principal */
 .workout-session {
   display: flex;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1035,7 +1038,7 @@ export default {
   padding: 1rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   font-size: 1rem;
   background: #f8fafc;
   color: #1a202c;

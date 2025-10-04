@@ -601,10 +601,10 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
 * {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Inter", sans-serif;
   box-sizing: border-box;
 }
 
@@ -879,7 +879,7 @@ select.form-input {
 .form-textarea {
   resize: vertical;
   min-height: 80px;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
 }
 
 .form-hint {

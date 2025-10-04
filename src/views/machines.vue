@@ -863,7 +863,7 @@ export default {
 
 <style scoped>
 /* Reusing the same styles from exercises.vue */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
 
 * {
@@ -874,7 +874,7 @@ export default {
 
 .dashboard-container {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Inter", sans-serif;
   position: relative;
   overflow-x: hidden;
   display: flex;
@@ -2483,7 +2483,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   font-size: 1rem;
   color: var(--text-primary);
   transition: all 0.2s ease;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 .form-input:focus,

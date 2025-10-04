@@ -439,10 +439,13 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 .student-workouts {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  font-family: "Inter", sans-serif;
 }
 
 .page-header {

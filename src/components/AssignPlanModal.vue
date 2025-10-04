@@ -731,7 +731,7 @@ export default {
   font-size: 14px;
   transition: border-color 0.3s ease;
   box-sizing: border-box;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
 }
 
 .form-input:focus,

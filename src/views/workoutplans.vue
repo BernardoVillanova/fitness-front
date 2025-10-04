@@ -787,18 +787,20 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-family: "Inter", sans-serif;
 }
 
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  font-family: var(--font-family);
+  font-family: "Inter", sans-serif;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;

@@ -445,9 +445,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
 .student-workout-plans {
   display: flex;
   min-height: 100vh;
+  font-family: "Inter", sans-serif;
   background-color: var(--bg-secondary);
 }
 
@@ -1256,7 +1259,7 @@ body:has(.navbar-collapsed) .main-content {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-color);
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   resize: vertical;
 }
 
@@ -1876,7 +1879,7 @@ body:has(.navbar-collapsed) .main-content {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   color: var(--text-color);
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   font-size: 0.95rem;
   resize: vertical;
   transition: all 0.2s ease;

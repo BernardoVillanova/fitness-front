@@ -927,15 +927,15 @@ export default {
 
 :root {
   --font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'SF Pro Display', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-family: "Inter", sans-serif;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  font-family: var(--font-family);
+  font-family: "Inter", sans-serif;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
@@ -1332,7 +1332,7 @@ body:has(.navbar-collapsed) .floating-header,
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   width: 100%;
   text-align: left;
 }
@@ -1523,7 +1523,7 @@ body:has(.navbar-collapsed) .floating-header,
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
 }
 
 .clear-filters-btn:hover {
@@ -1544,7 +1544,7 @@ body:has(.navbar-collapsed) .floating-header,
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
 }
 
 .export-btn:hover {
@@ -2756,7 +2756,7 @@ body:has(.navbar-collapsed) .floating-header,
   border: 2px solid var(--border-color);
   border-radius: 12px;
   font-size: 1rem;
-  font-family: inherit;
+  font-family: "Inter", sans-serif;
   color: var(--text-primary);
   background: var(--input-background);
   transition: all 0.2s ease;
