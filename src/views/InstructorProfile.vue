@@ -12,74 +12,77 @@
 
       <!-- Content -->
       <div v-else class="profile-content">
-        <!-- Page Title -->
-        <div class="page-title-section">
-          <div>
-            <h1 class="page-title">Meu Perfil</h1>
-            <p class="page-subtitle">Gerencie suas informações profissionais</p>
+        <!-- Profile Header -->
+        <div class="profile-header">
+          <div class="header-content">
+            <div class="avatar-wrapper">
+              <div class="avatar">
+                <img :src="instructorData.avatar" :alt="instructorData.name" />
+              </div>
+              <label for="avatar-upload" class="avatar-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                  <circle cx="12" cy="13" r="3" />
+                </svg>
+                <input 
+                  type="file" 
+                  id="avatar-upload" 
+                  accept="image/*" 
+                  @change="handleAvatarUpload"
+                  style="display: none;"
+                />
+              </label>
+            </div>
+
+            <div class="header-info">
+              <div class="name-section">
+                <h1>{{ instructorData.name || 'Instrutor' }}</h1>
+                <span class="badge">Personal Trainer</span>
+              </div>
+              <p class="email">{{ instructorData.email }}</p>
+              <p class="subtitle">Gerencie suas informações profissionais</p>
+            </div>
           </div>
         </div>
 
-        <form @submit.prevent="saveProfile" id="profile-form" class="profile-grid">
+        <form @submit.prevent="saveProfile" class="sections">
           
-          <!-- Card de Perfil Principal -->
-          <div class="card card-profile-main">
-            <div class="card-body profile-header-body">
-              <div class="avatar-wrapper">
-                <img :src="instructorData.avatar" :alt="instructorData.name" class="avatar" />
-                <label for="avatar-upload" class="avatar-badge">
-                  <i class="fas fa-camera"></i>
-                  <input 
-                    type="file" 
-                    id="avatar-upload" 
-                    accept="image/*" 
-                    @change="handleAvatarUpload" 
-                    style="display: none;"
-                  />
-                </label>
-              </div>
-              <div class="profile-info">
-                <h2>{{ instructorData.name || 'Instrutor' }}</h2>
-                <p class="profile-email">{{ instructorData.email }}</p>
-                <span class="profile-badge">Personal Trainer</span>
-              </div>
-            </div>
-          </div>
-
           <!-- Card Informações Pessoais -->
-          <div class="card card-span-2">
+          <div class="card">
             <div class="card-header">
-              <i class="fas fa-user-circle"></i>
-              <h3>Informações Pessoais</h3>
+              <h3>
+                <i class="fas fa-user-circle"></i>
+                Informações Pessoais
+              </h3>
             </div>
-            <div class="card-body">
-              <div class="input-grid">
-                <div class="input-group">
-                  <label>Nome Completo *</label>
-                  <div class="input-with-icon">
+            <div class="card-content">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="name">Nome Completo <span class="required">*</span></label>
+                  <div class="input-wrapper">
                     <i class="fas fa-user"></i>
-                    <input v-model="instructorData.name" type="text" required placeholder="Digite seu nome">
+                    <input id="name" v-model="instructorData.name" type="text" required placeholder="Digite seu nome">
                   </div>
                 </div>
-                <div class="input-group">
-                  <label>Email *</label>
-                  <div class="input-with-icon">
+                <div class="form-group">
+                  <label for="email">Email <span class="required">*</span></label>
+                  <div class="input-wrapper">
                     <i class="fas fa-envelope"></i>
-                    <input v-model="instructorData.email" type="email" required placeholder="seu@email.com">
+                    <input id="email" v-model="instructorData.email" type="email" required placeholder="seu@email.com">
                   </div>
                 </div>
-                <div class="input-group">
-                  <label>Telefone</label>
-                  <div class="input-with-icon">
+                <div class="form-group">
+                  <label for="phone">Telefone</label>
+                  <div class="input-wrapper">
                     <i class="fas fa-phone"></i>
-                    <input v-model="instructorData.phone" type="tel" placeholder="(00) 00000-0000">
+                    <input id="phone" v-model="instructorData.phone" type="tel" placeholder="(00) 00000-0000">
                   </div>
                 </div>
-                <div class="input-group">
-                  <label>Data de Nascimento</label>
-                  <div class="input-with-icon">
+                <div class="form-group">
+                  <label for="birthdate">Data de Nascimento</label>
+                  <div class="input-wrapper">
                     <i class="fas fa-calendar"></i>
-                    <input v-model="instructorData.birthDate" type="date">
+                    <input id="birthdate" v-model="instructorData.birthDate" type="date">
                   </div>
                 </div>
               </div>
@@ -87,39 +90,41 @@
           </div>
 
           <!-- Card Informações Profissionais -->
-          <div class="card card-span-2">
+          <div class="card">
             <div class="card-header">
-              <i class="fas fa-briefcase"></i>
-              <h3>Informações Profissionais</h3>
+              <h3>
+                <i class="fas fa-briefcase"></i>
+                Informações Profissionais
+              </h3>
             </div>
-            <div class="card-body">
-              <div class="input-grid">
-                <div class="input-group">
-                  <label>CREF (Registro Profissional)</label>
-                  <div class="input-with-icon">
+            <div class="card-content">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="cref">CREF (Registro Profissional)</label>
+                  <div class="input-wrapper">
                     <i class="fas fa-id-card"></i>
-                    <input v-model="instructorData.cref" type="text" placeholder="000000-G/UF">
+                    <input id="cref" v-model="instructorData.cref" type="text" placeholder="000000-G/UF">
                   </div>
                 </div>
-                <div class="input-group">
-                  <label>Especialização</label>
-                  <div class="input-with-icon">
+                <div class="form-group">
+                  <label for="specialization">Especialização</label>
+                  <div class="input-wrapper">
                     <i class="fas fa-graduation-cap"></i>
-                    <input v-model="instructorData.specialization" type="text" placeholder="Ex: Musculação, Funcional, etc.">
+                    <input id="specialization" v-model="instructorData.specialization" type="text" placeholder="Ex: Musculação, Funcional, etc.">
                   </div>
                 </div>
-                <div class="input-group">
-                  <label>Anos de Experiência</label>
-                  <div class="input-with-icon">
+                <div class="form-group">
+                  <label for="experience">Anos de Experiência</label>
+                  <div class="input-wrapper">
                     <i class="fas fa-award"></i>
-                    <input v-model="instructorData.yearsOfExperience" type="number" min="0" placeholder="0">
+                    <input id="experience" v-model="instructorData.yearsOfExperience" type="number" min="0" placeholder="0">
                   </div>
                 </div>
-                <div class="input-group">
-                  <label>Academia Atual</label>
-                  <div class="input-with-icon">
+                <div class="form-group">
+                  <label for="gym">Academia Atual</label>
+                  <div class="input-wrapper">
                     <i class="fas fa-building"></i>
-                    <input v-model="instructorData.currentGym" type="text" placeholder="Nome da academia" readonly>
+                    <input id="gym" v-model="instructorData.currentGym" type="text" placeholder="Nome da academia" readonly>
                   </div>
                 </div>
               </div>
@@ -127,28 +132,40 @@
           </div>
 
           <!-- Card Sobre Mim -->
-          <div class="card card-span-full">
+          <div class="card">
             <div class="card-header">
-              <i class="fas fa-info-circle"></i>
-              <h3>Sobre Mim</h3>
+              <h3>
+                <i class="fas fa-info-circle"></i>
+                Sobre Mim
+              </h3>
             </div>
-            <div class="card-body">
-              <div class="input-group">
-                <label>Descrição Profissional</label>
+            <div class="card-content">
+              <div class="form-group">
+                <label for="bio">Descrição Profissional</label>
                 <textarea 
+                  id="bio"
                   v-model="instructorData.bio" 
-                  rows="4"
+                  rows="6"
                   placeholder="Conte um pouco sobre sua experiência, metodologia de treino e especializações..."
                 ></textarea>
               </div>
             </div>
           </div>
 
-          <!-- Botão Salvar -->
+          <!-- Botões de Ação -->
           <div class="save-section">
+            <button type="button" class="btn-cancel" @click="cancelEdit">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Cancelar
+            </button>
             <button type="submit" class="btn-save" :disabled="saving">
-              <i :class="saving ? 'fas fa-spinner fa-spin' : 'fas fa-check-circle'"></i>
-              {{ saving ? 'Salvando alterações...' : 'Salvar Todas as Alterações' }}
+              <div v-if="saving" class="spinner-small"></div>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              {{ saving ? 'Salvando...' : 'Salvar Alterações' }}
             </button>
           </div>
 
@@ -171,6 +188,8 @@ const { isDarkMode } = storeToRefs(themeStore);
 const loading = ref(false);
 const saving = ref(false);
 const instructorId = ref(null);
+const originalAvatar = ref(''); // Armazena o avatar original
+const pendingAvatarFile = ref(null); // Armazena o arquivo pendente
 
 const instructorData = reactive({
   avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=3b82f6&color=fff&size=200',
@@ -209,7 +228,32 @@ const fetchProfile = async () => {
     instructorData.email = instructor.userId?.email || instructor.email || userData.email || '';
     instructorData.phone = instructor.userId?.phone || instructor.phone || '';
     instructorData.birthDate = instructor.userId?.birthDate?.split('T')[0] || '';
-    instructorData.avatar = instructor.userId?.avatar || userData.avatar || instructorData.avatar;
+    
+    // Avatar: priorizar do userId, depois userData, depois default
+    const avatarFromUser = instructor.userId?.avatar || userData.avatar;
+    if (avatarFromUser) {
+      // Se for base64, usar direto; se for URL antiga, construir path completo
+      if (avatarFromUser.startsWith('data:image')) {
+        // É base64, usar diretamente
+        instructorData.avatar = avatarFromUser;
+        originalAvatar.value = avatarFromUser;
+      } else if (avatarFromUser.startsWith('http')) {
+        // Já é URL completa
+        instructorData.avatar = avatarFromUser;
+        originalAvatar.value = avatarFromUser;
+      } else {
+        // É path relativo (sistema antigo)
+        const avatarUrl = `http://localhost:3000${avatarFromUser}`;
+        instructorData.avatar = avatarUrl;
+        originalAvatar.value = avatarUrl;
+      }
+    } else {
+      originalAvatar.value = instructorData.avatar; // Salvar avatar padrão
+    }
+    
+    // Limpar arquivo pendente ao recarregar
+    pendingAvatarFile.value = null;
+    
     instructorData.cref = instructor.cref || '';
     instructorData.specialization = (instructor.specialties && instructor.specialties.length > 0) 
       ? instructor.specialties.join(', ') 
@@ -235,6 +279,36 @@ const saveProfile = async () => {
 
     const userData = JSON.parse(storedUser);
     const userId = userData.id || userData._id;
+
+    // Se houver um arquivo de avatar pendente, fazer upload primeiro
+    if (pendingAvatarFile.value) {
+      const formData = new FormData();
+      formData.append('avatar', pendingAvatarFile.value);
+
+      try {
+        const avatarResponse = await api.post(`/auth/user/${userId}/avatar`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        if (avatarResponse.data.avatarUrl) {
+          // Avatar retorna em base64, usar diretamente
+          const avatarBase64 = avatarResponse.data.avatarUrl;
+          
+          // Atualizar avatar no sessionStorage
+          userData.avatar = avatarBase64;
+          
+          // Atualizar avatar original e atual
+          originalAvatar.value = avatarBase64;
+          instructorData.avatar = avatarBase64;
+        }
+      } catch (avatarError) {
+        console.error('Erro ao fazer upload do avatar:', avatarError);
+        alert('❌ Erro ao salvar a foto de perfil. Outras alterações serão salvas.');
+      }
+      
+      // Limpar arquivo pendente após upload
+      pendingAvatarFile.value = null;
+    }
 
     // Update user data
     await api.put(`/auth/user/${userId}`, {
@@ -266,46 +340,47 @@ const saveProfile = async () => {
   }
 };
 
-// Handle avatar upload
-const handleAvatarUpload = async (event) => {
+// Handle avatar upload - apenas preview, não salva ainda
+const handleAvatarUpload = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
   // Validação
   if (file.size > 5 * 1024 * 1024) {
     alert('❌ Arquivo muito grande! Tamanho máximo: 5MB');
+    event.target.value = '';
     return;
   }
 
   if (!file.type.startsWith('image/')) {
     alert('❌ Por favor, selecione uma imagem válida');
+    event.target.value = '';
     return;
   }
 
-  const formData = new FormData();
-  formData.append('avatar', file);
+  // Armazenar o arquivo para upload posterior
+  pendingAvatarFile.value = file;
 
-  try {
-    const storedUser = sessionStorage.getItem('user');
-    if (!storedUser) return;
+  // Criar preview local da imagem
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    instructorData.avatar = e.target.result;
+  };
+  reader.readAsDataURL(file);
 
-    const userData = JSON.parse(storedUser);
-    const userId = userData.id || userData._id;
+  // Limpar input
+  event.target.value = '';
+};
 
-    const response = await api.post(`/auth/user/${userId}/avatar`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-
-    // Atualizar avatar localmente
-    if (response.data.avatarUrl) {
-      instructorData.avatar = response.data.avatarUrl;
-      userData.avatar = response.data.avatarUrl;
-      sessionStorage.setItem('user', JSON.stringify(userData));
-      alert('✅ Foto de perfil atualizada com sucesso!');
-    }
-  } catch (error) {
-    console.error('Erro ao fazer upload do avatar:', error);
-    alert(`❌ Erro ao atualizar foto: ${error.response?.data?.message || 'Tente novamente.'}`);
+// Cancel edit and reload
+const cancelEdit = async () => {
+  if (confirm('⚠️ Deseja descartar as alterações não salvas?')) {
+    // Restaurar avatar original
+    instructorData.avatar = originalAvatar.value;
+    // Limpar arquivo pendente
+    pendingAvatarFile.value = null;
+    // Recarregar dados do perfil
+    await fetchProfile();
   }
 };
 
@@ -315,11 +390,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
+* {
+  box-sizing: border-box;
+}
+
 /* === LAYOUT PRINCIPAL === */
 .instructor-profile {
   margin-left: 280px;
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Detecta quando o navbar está colapsado */
@@ -329,32 +409,36 @@ body:has(.navbar-collapsed) .instructor-profile {
 
 /* Light mode colors */
 .instructor-profile {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background-color: #f9fafb;
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --border-color: #e2e8f0;
-  --text-color: #1e293b;
-  --text-muted: #64748b;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --bg-secondary: #f9fafb;
+  --border-color: #e5e7eb;
+  --text-color: #111827;
+  --text-muted: #6b7280;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
 }
 
 /* Dark mode colors */
 .instructor-profile.dark-mode {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  --bg-primary: #1e1e2d;
-  --bg-secondary: #171723;
-  --border-color: #2d2d3f;
-  --text-color: #f1f5f9;
-  --text-muted: #94a3b8;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  background-color: #111827;
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --border-color: #374151;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
 }
 
 .main-content {
-  padding: 2rem;
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 32px 16px;
 }
 
 /* === LOADING STATE === */
@@ -371,13 +455,9 @@ body:has(.navbar-collapsed) .instructor-profile {
   width: 50px;
   height: 50px;
   border: 4px solid var(--border-color);
-  border-top-color: #3b82f6;
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-.dark-mode .loader {
-  border-top-color: #7c3aed;
 }
 
 @keyframes spin {
@@ -389,296 +469,442 @@ body:has(.navbar-collapsed) .instructor-profile {
   font-size: 1rem;
 }
 
-/* === PAGE TITLE === */
-.page-title-section {
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.page-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.page-subtitle {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 1rem;
-}
-
-/* === PROFILE GRID === */
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-}
-
-.card {
-  background: var(--bg-primary);
-  border-radius: 16px;
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.card-profile-main {
-  grid-column: span 1;
-  border: 2px solid;
-  border-color: #3b82f6;
-}
-
-.dark-mode .card-profile-main {
-  border-color: #7c3aed;
-}
-
-.card-span-2 {
-  grid-column: span 2;
-}
-
-.card-span-full {
-  grid-column: span 3;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.card-header i {
-  color: #3b82f6;
-  font-size: 1.25rem;
-}
-
-.dark-mode .card-header i {
-  color: #7c3aed;
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.card-body {
-  padding: 1.5rem;
-}
-
 /* === PROFILE HEADER === */
-.profile-header-body {
+.profile-header {
+  margin-bottom: 32px;
+}
+
+.header-content {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 2rem 1.5rem !important;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 640px) {
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .avatar-wrapper {
   position: relative;
-  flex-shrink: 0;
 }
 
 .avatar {
-  width: 100px;
-  height: 100px;
+  position: relative;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
+  border: 4px solid var(--bg-primary);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border: 3px solid #3b82f6;
 }
 
-.dark-mode .avatar {
-  border-color: #7c3aed;
-}
-
-.avatar-badge {
+/* Overlay de loading no avatar */
+.avatar-overlay {
   position: absolute;
-  bottom: 0;
+  top: 0;
+  left: 0;
   right: 0;
-  width: 32px;
-  height: 32px;
-  background: #3b82f6;
-  border-radius: 50%;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.avatar-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.avatar-button {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #111827;
   border: 3px solid var(--bg-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dark-mode .avatar-badge {
-  background: #7c3aed;
+.dark-mode .avatar-button {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  color: #f9fafb;
+  border-color: var(--bg-primary);
 }
 
-.avatar-badge:hover {
-  transform: scale(1.1);
+.avatar-button:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.avatar-badge i {
-  color: white;
-  font-size: 0.875rem;
+.avatar-button.uploading {
+  pointer-events: none;
+  opacity: 0.8;
 }
 
-.profile-info {
+.dark-mode .avatar-button:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Spinner branco pequeno */
+.spinner-small-white {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.header-info {
   flex: 1;
 }
 
-.profile-info h2 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.profile-email {
-  margin: 0 0 0.5rem 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-
-.profile-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.dark-mode .profile-badge {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-}
-
-/* === INPUTS === */
-.input-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-.input-group {
+.name-section {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.input-group label {
-  font-size: 0.875rem;
-  font-weight: 600;
+.header-info h1 {
+  font-size: 30px;
+  font-weight: 700;
   color: var(--text-color);
   margin: 0;
 }
 
-.input-with-icon {
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.email {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 4px 0;
+}
+
+/* === SECTIONS === */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* === CARD === */
+.card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.dark-mode .card:hover {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+.card-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  position: relative;
+}
+
+.card-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  border-radius: 0 4px 4px 0;
+}
+
+.card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.card-header i {
+  color: var(--primary-color);
+  font-size: 22px;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-content {
+  padding: 28px;
+  background-color: var(--bg-primary);
+}
+
+/* === FORM === */
+.form-grid {
+  display: grid;
+  gap: 28px;
+}
+
+@media (min-width: 640px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.input-with-icon i {
+.input-wrapper i {
   position: absolute;
-  left: 1rem;
+  left: 14px;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  pointer-events: none;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+.input-wrapper:focus-within i {
+  color: var(--primary-color);
 }
 
 input[type="text"],
 input[type="email"],
 input[type="tel"],
 input[type="date"],
-input[type="number"],
-textarea {
+input[type="number"] {
   width: 100%;
-  padding: 0.75rem 1rem;
-  padding-left: 2.75rem;
-  border: 1px solid var(--border-color);
+  height: 46px;
+  padding: 12px 14px 12px 44px;
+  border: 2px solid var(--border-color);
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 15px;
   color: var(--text-color);
-  background: var(--bg-secondary);
-  transition: all 0.3s ease;
+  background-color: var(--bg-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
-  box-sizing: border-box;
+  font-weight: 500;
 }
 
 input[readonly] {
-  background: var(--border-color);
+  background-color: var(--bg-secondary);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.65;
+  border-style: dashed;
 }
 
 textarea {
-  padding-left: 1rem;
+  width: 100%;
+  min-height: 140px;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 15px;
+  color: var(--text-color);
+  background-color: var(--bg-primary);
+  font-family: inherit;
+  font-weight: 500;
   resize: vertical;
-  min-height: 100px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.6;
+}
+
+input:hover:not([readonly]),
+textarea:hover {
+  border-color: var(--primary-color);
 }
 
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
 }
 
 .dark-mode input:focus,
 .dark-mode textarea:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
-/* === SAVE BUTTON === */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* === SAVE SECTION === */
 .save-section {
-  grid-column: span 3;
-  margin-top: 1rem;
+  margin-top: 32px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
 }
 
+.btn-cancel,
 .btn-save {
-  width: 100%;
-  padding: 1rem 2rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  gap: 10px;
+  padding: 14px 24px;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  font-family: inherit;
 }
 
-.dark-mode .btn-save {
-  background: #7c3aed;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+.btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-save:hover::before {
+  left: 100%;
 }
 
 .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
-.dark-mode .btn-save:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+.btn-save:active {
+  transform: translateY(0);
 }
 
 .btn-save:disabled {
-  opacity: 0.6;
+  background: #cbd5e1;
+  color: #94a3b8;
   cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* === RESPONSIVE === */
@@ -687,38 +913,35 @@ textarea:focus {
     margin-left: 0;
     padding-bottom: 80px;
   }
-
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .card-span-2,
-  .card-span-full {
-    grid-column: span 1;
-  }
-
-  .input-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 1rem;
+    padding: 16px;
   }
 
-  .profile-header-body {
-    flex-direction: column;
+  .header-content {
     text-align: center;
-    padding: 1.5rem !important;
   }
 
-  .card-body {
-    padding: 1rem;
+  .form-grid {
+    grid-template-columns: 1fr !important;
   }
 
-  .page-title {
-    font-size: 1.5rem;
+  .header-info h1 {
+    font-size: 24px;
+  }
+
+  .save-section {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
   }
 }
 </style>

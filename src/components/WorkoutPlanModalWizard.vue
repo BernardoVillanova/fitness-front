@@ -594,7 +594,7 @@
         <button 
           v-if="currentStep > 1"
           @click="previousStep" 
-          class="btn-secondary"
+          class="btn-cancel"
           type="button"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -602,24 +602,34 @@
           </svg>
           Voltar
         </button>
-        <div v-else></div>
+        <button 
+          v-else
+          @click="closeModal" 
+          class="btn-cancel"
+          type="button"
+        >
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancelar
+        </button>
 
         <button 
           v-if="currentStep < 4"
           @click="nextStep" 
-          class="btn-primary"
+          class="btn-save"
           :disabled="!canProceedToNextStep"
           type="button"
         >
-          Próximo
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
+          Próxima Etapa
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
           </svg>
         </button>
         <button 
           v-else
           @click="savePlan" 
-          class="btn-primary"
+          class="btn-save"
           :disabled="!isFormValid || isSaving"
           type="button"
         >
@@ -631,12 +641,49 @@
         </button>
       </div>
     </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+      @close="notification.visible = false"
+    />
+
+    <!-- Confirmation Modal -->
+    <div v-if="confirmation.visible" class="modal-overlay" style="z-index: 10000;" @click.self="cancelConfirmation">
+      <div class="confirmation-modal" @click.stop>
+        <div class="confirmation-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <h3 class="confirmation-title">{{ confirmation.title }}</h3>
+        <p class="confirmation-message">{{ confirmation.message }}</p>
+        <div class="confirmation-actions">
+          <button class="btn-confirm-cancel" @click="cancelConfirmation">
+            Cancelar
+          </button>
+          <button class="btn-confirm-ok" @click="confirmAction">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import NotificationModal from './NotificationModal.vue'
+
 export default {
   name: 'WorkoutPlanModalWizard',
+  components: {
+    NotificationModal
+  },
   props: {
     show: Boolean,
     isEditing: Boolean,
@@ -658,6 +705,20 @@ export default {
       exerciseCurrentPage: 1,
       exercisesPerPage: 3,
       isSaving: false,
+      
+      notification: {
+        visible: false,
+        type: 'info',
+        title: '',
+        message: ''
+      },
+      
+      confirmation: {
+        visible: false,
+        title: '',
+        message: '',
+        onConfirm: null
+      },
       
       stepTitles: [
         'Informações do Plano',
@@ -1031,7 +1092,7 @@ export default {
             errorText = await response.text();
             console.error('❌ Erro Text:', errorText);
           }
-          alert(`Erro ao buscar alunos: ${errorText}`);
+          this.showNotification('error', 'Erro ao buscar alunos', `Erro ao buscar alunos: ${errorText}`);
           this.availableStudents = [];
           return;
         }
@@ -1117,16 +1178,76 @@ export default {
     },
 
     closeModal() {
-      if (confirm('Tem certeza que deseja sair? As alterações não salvas serão perdidas.')) {
-        this.resetForm();
-        this.$emit('close');
+      this.showConfirmation(
+        'Confirmar saída',
+        'Tem certeza que deseja sair? As alterações não salvas serão perdidas.',
+        () => {
+          this.resetForm();
+          this.$emit('close');
+        }
+      );
+    },
+
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    },
+
+    showConfirmation(title, message, onConfirm) {
+      this.confirmation = {
+        visible: true,
+        title,
+        message,
+        onConfirm
+      };
+    },
+
+    confirmAction() {
+      if (this.confirmation.onConfirm) {
+        this.confirmation.onConfirm();
       }
+      this.confirmation.visible = false;
+    },
+
+    cancelConfirmation() {
+      this.confirmation.visible = false;
     }
   }
 }
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Theme Variables */
+.dashboard-light {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #ffffff;
+  --text-primary: #1a202c;
+  --text-secondary: #718096;
+  --border-color: #e2e8f0;
+  --border-primary: rgba(226, 232, 240, 0.6);
+  --input-background: #ffffff;
+  --header-gradient: linear-gradient(to bottom, #ffffff, #f8f9fa);
+}
+
+.dashboard-dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --border-primary: rgba(51, 65, 85, 0.6);
+  --input-background: #0f172a;
+  --header-gradient: linear-gradient(to bottom, #1e293b, #0f172a);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -2294,55 +2415,87 @@ export default {
 .modal-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px 32px;
-  border-top: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  gap: 16px;
+  padding: 32px 48px;
+  border-top: 1px solid var(--border-color);
+  background: var(--header-gradient);
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
+.btn-cancel,
+.btn-save {
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  flex: 1;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
   font-family: inherit;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: white;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+.btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-cancel:hover {
+  background: var(--bg-primary);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary:disabled {
+.btn-save {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-save:hover::before {
+  left: 100%;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-save:active {
+  transform: translateY(0);
+}
+
+.btn-save:disabled {
   background: #cbd5e1;
   color: #94a3b8;
   cursor: not-allowed;
   box-shadow: none;
-}
-
-.btn-secondary {
-  background: white;
-  color: #64748b;
-  border: 2px solid #e2e8f0;
-}
-
-.btn-secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  transform: translateY(-2px);
+  opacity: 0.6;
 }
 
 /* ========== RESPONSIVIDADE ========== */
@@ -2357,6 +2510,26 @@ export default {
     width: 100%;
     max-height: 100vh;
     border-radius: 0;
+  }
+
+  .modal-header {
+    padding: 24px;
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    padding: 20px 24px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    width: 100%;
+    max-width: 100%;
   }
 
   .form-grid,
@@ -2439,5 +2612,135 @@ export default {
   color: #94a3b8;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* ========== CONFIRMATION MODAL ========== */
+.confirmation-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10001;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirmation-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(251, 146, 60, 0.05));
+  border: 3px solid rgba(251, 146, 60, 0.2);
+  color: #ea580c;
+}
+
+.confirmation-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+}
+
+.confirmation-message {
+  margin: 0;
+  font-size: 1rem;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.btn-confirm-cancel,
+.btn-confirm-ok {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-confirm-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-confirm-cancel:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-confirm-ok {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-confirm-ok:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+@media (max-width: 480px) {
+  .confirmation-modal {
+    padding: 1.5rem;
+  }
+
+  .confirmation-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .confirmation-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .confirmation-title {
+    font-size: 1.25rem;
+  }
+
+  .confirmation-message {
+    font-size: 0.9rem;
+  }
+
+  .confirmation-actions {
+    flex-direction: column;
+  }
 }
 </style>

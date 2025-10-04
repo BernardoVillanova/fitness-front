@@ -479,44 +479,6 @@
                 </div>
               </div>
 
-              <!-- Paginação -->
-              <div class="pagination-controls" v-if="featuredEquipments.length > 3">
-                <button 
-                  type="button"
-                  class="pagination-btn"
-                  :disabled="currentFeaturedPage === 1"
-                  @click="currentFeaturedPage--"
-                >
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                  </svg>
-                </button>
-                
-                <div class="pagination-numbers">
-                  <button
-                    v-for="page in totalFeaturedPages"
-                    :key="page"
-                    type="button"
-                    class="pagination-number"
-                    :class="{ active: currentFeaturedPage === page }"
-                    @click="currentFeaturedPage = page"
-                  >
-                    {{ page }}
-                  </button>
-                </div>
-
-                <button 
-                  type="button"
-                  class="pagination-btn"
-                  :disabled="currentFeaturedPage === totalFeaturedPages"
-                  @click="currentFeaturedPage++"
-                >
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </button>
-              </div>
-
               <!-- Grid de Aparelhos em Destaque -->
               <div class="exercises-grid-featured">
                 <div 
@@ -606,6 +568,44 @@
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Paginação -->
+              <div class="pagination-controls" v-if="featuredEquipments.length > 3">
+                <button 
+                  type="button"
+                  class="pagination-btn"
+                  :disabled="currentFeaturedPage === 1"
+                  @click="currentFeaturedPage--"
+                >
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                </button>
+                
+                <div class="pagination-numbers">
+                  <button
+                    v-for="page in totalFeaturedPages"
+                    :key="page"
+                    type="button"
+                    class="pagination-number"
+                    :class="{ active: currentFeaturedPage === page }"
+                    @click="currentFeaturedPage = page"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <button 
+                  type="button"
+                  class="pagination-btn"
+                  :disabled="currentFeaturedPage === totalFeaturedPages"
+                  @click="currentFeaturedPage++"
+                >
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -3187,6 +3187,7 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 16px;
+  margin-top: 32px;
   margin-bottom: 32px;
 }
 
@@ -3202,6 +3203,13 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  padding: 0;
+}
+
+.pagination-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .pagination-btn:hover:not(:disabled) {
@@ -3212,9 +3220,9 @@ export default {
 }
 
 .dashboard-dark .pagination-btn:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: #8b5cf6;
-  color: #a855f7;
+  background: rgba(37, 99, 235, 0.15);
+  border-color: #2563eb;
+  color: #3b82f6;
 }
 
 .pagination-btn:disabled {
@@ -3370,7 +3378,7 @@ export default {
   flex-direction: column;
   gap: 32px;
   padding: 40px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);
   border: 2px solid var(--border-color);
   border-radius: 24px;
   position: relative;
@@ -3385,7 +3393,7 @@ export default {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -3396,17 +3404,17 @@ export default {
 }
 
 .custom-equipment-section:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
 }
 
 .dashboard-dark .custom-equipment-section {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
 }
 
 .dashboard-dark .custom-equipment-section:hover {
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+  border-color: rgba(37, 99, 235, 0.5);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
 }
 
 /* Header do Formulário Customizado */
@@ -3424,22 +3432,22 @@ export default {
   width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   box-shadow: 
-    0 8px 20px rgba(99, 102, 241, 0.35),
-    0 0 0 6px rgba(99, 102, 241, 0.1);
+    0 8px 20px rgba(37, 99, 235, 0.35),
+    0 0 0 6px rgba(37, 99, 235, 0.1);
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .custom-equipment-section:hover .header-icon {
   transform: scale(1.05) rotate(-3deg);
   box-shadow: 
-    0 12px 28px rgba(99, 102, 241, 0.45),
-    0 0 0 8px rgba(99, 102, 241, 0.15);
+    0 12px 28px rgba(37, 99, 235, 0.45),
+    0 0 0 8px rgba(37, 99, 235, 0.15);
 }
 
 .header-content {
@@ -3450,14 +3458,14 @@ export default {
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 8px 0;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .dashboard-dark .custom-form-title {
-  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -3506,24 +3514,24 @@ export default {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6366f1;
+  color: #2563eb;
   transition: all 0.3s ease;
 }
 
 .dashboard-dark .label-icon {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  color: #818cf8;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+  color: #3b82f6;
 }
 
 .form-field-modern:focus-within .label-icon {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .label-text-modern {
@@ -3551,15 +3559,15 @@ export default {
 
 .input-modern:hover,
 .textarea-modern:hover {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 .input-modern:focus,
 .textarea-modern:focus {
-  border-color: #6366f1;
+  border-color: #2563eb;
   box-shadow: 
-    0 0 0 4px rgba(99, 102, 241, 0.1),
-    0 4px 12px rgba(99, 102, 241, 0.15);
+    0 0 0 4px rgba(37, 99, 235, 0.1),
+    0 4px 12px rgba(37, 99, 235, 0.15);
   transform: translateY(-1px);
 }
 
@@ -3616,9 +3624,9 @@ export default {
 }
 
 .btn-add-modern {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -3645,8 +3653,8 @@ export default {
 
 .btn-add-modern:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
 }
 
 .btn-add-modern:active {
@@ -3686,7 +3694,7 @@ export default {
   gap: 20px;
   margin-bottom: 32px;
   padding: 24px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
   border: 1px solid var(--border-color);
   border-radius: 20px;
 }
@@ -3701,12 +3709,12 @@ export default {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .section-title {
@@ -3727,7 +3735,7 @@ export default {
   align-items: center;
   gap: 10px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -3735,12 +3743,12 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .btn-add-equipment:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 /* Formulário de Equipamento */
@@ -3841,7 +3849,7 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -3849,12 +3857,12 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 /* Lista de Equipamentos */
@@ -3878,7 +3886,7 @@ export default {
 .equipment-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 .equipment-icon {
@@ -3886,11 +3894,11 @@ export default {
   height: 48px;
   min-width: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6366f1;
+  color: #2563eb;
 }
 
 .equipment-info {
