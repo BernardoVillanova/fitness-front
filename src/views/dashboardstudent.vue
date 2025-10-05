@@ -379,7 +379,7 @@ const fetchDashboardData = async () => {
     
     try {
       // Primeira tentativa: API de histórico existente
-      const historyResponse = await api.get('/student/sessions/history', {
+      const historyResponse = await api.get('/workout-sessions/sessions/history', {
         params: { limit: 1000 }
       })
       
@@ -405,7 +405,7 @@ const fetchDashboardData = async () => {
         
         // Segunda tentativa: Nova API que busca todas as sessões
         try {
-          const allSessionsResponse = await api.get('/student/sessions/all')
+          const allSessionsResponse = await api.get('/workout-sessions/sessions/all')
           console.log('📊 Resposta da API alternativa:', allSessionsResponse.data)
           const alternativeSessions = allSessionsResponse.data?.sessions || []
           
@@ -503,7 +503,7 @@ const fetchDashboardData = async () => {
     
     // 2. Buscar próximo treino (plano de treino ativo)
     try {
-      const workoutsResponse = await api.get('/student/workouts')
+      const workoutsResponse = await api.get('/workout-sessions/workouts')
       const workouts = workoutsResponse.data || []
       
       console.log('🏋️ Planos de treino encontrados:', workouts.length)

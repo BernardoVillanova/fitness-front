@@ -408,7 +408,7 @@ const fetchProgressData = async () => {
     loading.value = true
     
     // Buscar histórico de treinos completo
-    const historyResponse = await api.get('/student/sessions/history', {
+    const historyResponse = await api.get('/workout-sessions/sessions/history', {
       params: { limit: 1000 }
     })
     
@@ -420,7 +420,7 @@ const fetchProgressData = async () => {
     
     // Calcular total de treinos disponíveis (estimativa)
     try {
-      const workoutsResponse = await api.get('/student/workouts')
+      const workoutsResponse = await api.get('/workout-sessions/workouts')
       const workouts = workoutsResponse.data || []
       
       // Cada divisão pode ser feita 4x por mês

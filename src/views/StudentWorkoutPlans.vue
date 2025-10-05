@@ -314,7 +314,7 @@ const clearAllFilters = () => {
 const fetchWorkouts = async () => {
   loading.value = true
   try {
-    const response = await api.get('/student/workouts')
+    const response = await api.get('/workout-sessions/workouts')
     workouts.value = response.data
   } catch (error) {
     console.error('Erro ao buscar treinos:', error)
@@ -326,7 +326,7 @@ const fetchWorkouts = async () => {
 
 const checkActiveSession = async () => {
   try {
-    const response = await api.get('/student/sessions/active')
+    const response = await api.get('/workout-sessions/sessions/active')
     if (response.data.hasActive) {
       activeSession.value = response.data.session
     }
@@ -348,7 +348,7 @@ const closeDivisionModal = () => {
 const startWorkoutWithDivision = async (divisionIndex) => {
   try {
     loading.value = true
-    const response = await api.post('/student/sessions/start', {
+    const response = await api.post('/workout-sessions/sessions/start', {
       workoutPlanId: selectedWorkout.value._id,
       divisionIndex
     })
@@ -379,7 +379,7 @@ const cancelWorkout = async () => {
   
   try {
     loading.value = true
-    await api.post(`/student/sessions/${activeSession.value._id}/cancel`)
+    await api.post(`/workout-sessions/sessions/${activeSession.value._id}/cancel`)
     
     // Usar nextTick para evitar problemas de reatividade
     await nextTick(() => {

@@ -1317,7 +1317,7 @@ const markExerciseComplete = (exIndex) => {
 const saveProgress = async () => {
   try {
     loading.value = true
-    await api.put(`/student/sessions/${props.workoutSession._id}`, {
+    await api.put(`/workout-sessions/sessions/${props.workoutSession._id}`, {
       exercises: props.workoutSession.exercises,
       notes: props.workoutSession.notes
     })
@@ -1342,7 +1342,7 @@ const finishWorkout = async () => {
   
   try {
     loading.value = true
-    await api.post(`/student/sessions/${props.workoutSession._id}/complete`, {
+    await api.post(`/workout-sessions/sessions/${props.workoutSession._id}/complete`, {
       exercises: props.workoutSession.exercises,
       notes: props.workoutSession.notes
     })
@@ -1416,7 +1416,7 @@ const confirmSkipExercise = async () => {
     
     const reason = skipReason.value === 'Outro' ? customSkipReason.value : skipReason.value
     
-    await api.post(`/student/sessions/${props.workoutSession._id}/skip-exercise`, {
+    await api.post(`/workout-sessions/sessions/${props.workoutSession._id}/skip-exercise`, {
       exerciseIndex: currentExerciseIndex.value,
       reason: reason || 'Não informado'
     })
