@@ -1036,10 +1036,7 @@ export default {
         eq.description.toLowerCase().includes(query) ||
         eq.category.toLowerCase().includes(query)
       );
-      
-      console.log('Search query:', query);
-      console.log('Filtered equipments:', filteredEquipments.value.length);
-      
+            
       // Inicializa quantidades para os resultados
       filteredEquipments.value.forEach(eq => {
         if (!quantityInputs.value[eq.id]) {

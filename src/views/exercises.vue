@@ -456,13 +456,9 @@ export default {
     },
   },
   async mounted() {
-    console.log('🎬 Componente exercises.vue montado');
-    
     await this.fetchInstructorId();
-    console.log('🆔 InstructorId após fetch:', this.instructorId);
     
     if (this.instructorId) {
-      console.log('✅ InstructorId válido, buscando dados...');
       await Promise.all([
         this.fetchExercises(),
         this.fetchEquipments()
@@ -473,16 +469,11 @@ export default {
   },
   methods: {
     async fetchInstructorId() {
-      console.log('🔑 Buscando instructorId...');
       try {
-        // Tentar primeiro do localStorage
         let userId = localStorage.getItem('userId');
-        console.log('👤 UserId do localStorage:', userId);
         
-        // Se não tiver, tentar do sessionStorage
         if (!userId) {
           userId = sessionStorage.getItem('userId');
-          console.log('👤 UserId do sessionStorage:', userId);
         }
         
         if (!userId) {
@@ -493,7 +484,6 @@ export default {
           if (userStr) {
             const user = JSON.parse(userStr);
             userId = user._id || user.id;
-            console.log('👤 UserId extraído do objeto user:', userId);
           }
         }
         
@@ -502,14 +492,11 @@ export default {
           return;
         }
 
-        console.log('📡 Fazendo requisição para /instructors/user/' + userId);
         const response = await api.get(`/instructors/user/${userId}`);
-        console.log('📡 Resposta do instructor:', response.data);
         
         // A API retorna o instructor diretamente, não em response.data.instructor
         const instructor = response.data.instructor || response.data;
         this.instructorId = instructor._id;
-        console.log('✅ InstructorId obtido:', this.instructorId);
       } catch (error) {
         console.error('❌ Erro ao buscar instructorId:', error);
         console.error('❌ Detalhes:', error.response?.data);
@@ -526,7 +513,6 @@ export default {
 
         const response = await api.get(`/exercises/instructor/${this.instructorId}`);
         this.exercises = response.data.exercises || [];
-        console.log('✅ Exercícios carregados:', this.exercises.length);
         
         // Atualiza estatísticas
         this.exercisesStats.total = this.exercises.length;
@@ -542,26 +528,17 @@ export default {
     },
 
     async fetchEquipments() {
-      console.log('🚀 fetchEquipments chamado!');
-      console.log('🆔 instructorId atual:', this.instructorId);
-      
       try {
         if (!this.instructorId) {
           console.warn('⚠️ Sem instructorId para buscar equipamentos');
-          console.log('⚠️ InstructorId é:', this.instructorId);
           return;
         }
         
-        console.log('🔄 Buscando equipamentos para instructorId:', this.instructorId);
         const url = `/equipments/instructor/${this.instructorId}`;
-        console.log('🌐 URL da requisição:', url);
         
         const response = await api.get(url);
-        console.log('📦 Resposta da API:', response.data);
         
         this.equipments = response.data.equipments || [];
-        console.log('✅ Equipamentos carregados:', this.equipments.length);
-        console.log('📋 Lista de equipamentos:', this.equipments);
       } catch (error) {
         console.error('❌ Erro ao buscar equipamentos:', error);
         console.error('❌ Detalhes do erro:', error.response?.data);
@@ -586,7 +563,6 @@ export default {
 
       try {
         await api.delete(`/exercises/${exercise._id}`);
-        console.log('✅ Exercício deletado');
         
         // Remove da lista local
         this.exercises = this.exercises.filter(ex => ex._id !== exercise._id);
@@ -613,19 +589,9 @@ export default {
     },
 
     openEditModal(exercise) {
-      console.log('📝 Abrindo modal de edição com dados:', exercise);
       
       // Passamos o exercício original - o componente filho irá processar os dados
       this.editingExercise = exercise;
-      
-      console.log('✅ Abrindo EditExerciseModal com exercício:', {
-        _id: exercise._id,
-        name: exercise.name,
-        category: exercise.category,
-        difficulty: exercise.difficulty,
-        muscleGroups: exercise.muscleGroups,
-        equipmentId: exercise.equipmentId
-      });
       
       this.showEditModal = true;
     },
@@ -638,8 +604,6 @@ export default {
     async handleEditSave(updateData) {
       try {
         const response = await api.put(`/exercises/${updateData._id}`, updateData);
-        
-        console.log('✅ Exercício atualizado');
         
         // Atualiza na lista local
         const index = this.exercises.findIndex(ex => ex._id === updateData._id);
@@ -724,22 +688,13 @@ export default {
       return categoryMap[categoryId] || categoryId;
     },
     async openCreateExerciseModal() {
-      console.log('🔓 Abrindo modal de criar exercício');
-      console.log('📦 Equipamentos disponíveis antes:', this.equipments.length);
-      console.log('🆔 InstructorId antes do fetch:', this.instructorId);
-      
-      // Se não tiver instructorId, buscar primeiro
       if (!this.instructorId) {
         console.warn('⚠️ Sem instructorId, buscando novamente...');
         await this.fetchInstructorId();
-        console.log('🆔 InstructorId após busca:', this.instructorId);
       }
       
       // Re-fetch equipments para garantir dados atualizados
       await this.fetchEquipments();
-      
-      console.log('📦 Equipamentos disponíveis após fetch:', this.equipments.length);
-      console.log('📋 Lista:', this.equipments);
       
       this.exerciseModalKey++; // Force re-render
       this.showCreateModal = true;
@@ -794,7 +749,6 @@ export default {
 
     async saveNewExercise(formData) {
       try {
-        console.log('💾 Salvando exercício:', formData);
         
         // formData já vem do modal com todos os campos preenchidos
         const exerciseData = {
@@ -813,10 +767,7 @@ export default {
           exerciseData.imageBase64 = formData.imageBase64;
         }
 
-        console.log('📤 Enviando para API:', exerciseData);
         const response = await api.post(`/exercises/instructor/${this.instructorId}`, exerciseData);
-        
-        console.log('✅ Exercício criado com sucesso:', response.data);
         
         this.exercises.push(response.data.exercise);
         this.exercisesStats.total = this.exercises.length;

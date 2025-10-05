@@ -181,7 +181,6 @@ export default {
     const logout = () => {
       sessionStorage.removeItem('user');
       sessionStorage.removeItem('token');
-      console.log('Usuário deslogado');
       router.push('/login');
     };
 

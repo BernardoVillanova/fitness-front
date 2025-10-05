@@ -843,29 +843,20 @@ const exerciseProgress = computed(() => {
   return Math.round((currentSetIndex.value / totalSetsInExercise.value) * 100)
 })
 
-const currentEquipment = computed(() => {
-  console.log('🔍 [currentEquipment] Iniciando verificação...')
-  
+const currentEquipment = computed(() => {  
   const exerciseName = currentExercise.value?.exerciseName
-  console.log('🔍 [currentEquipment] Exercise name:', exerciseName)
   
   if (!exerciseName) {
-    console.log('🚫 [currentEquipment] Nenhum exercício atual')
     return null
   }
   
-  console.log('🔍 [currentEquipment] exerciseDetails:', Object.keys(exerciseDetails.value))
   const exercise = exerciseDetails.value[exerciseName]
-  console.log('🔍 [currentEquipment] Exercise data:', exercise)
   
   if (!exercise) {
-    console.log('🚫 [currentEquipment] Detalhes do exercício não carregados para:', exerciseName)
     return null
   }
   
-  console.log('🔍 [currentEquipment] Equipment ID:', exercise.equipmentId)
   if (!exercise.equipmentId) {
-    console.log('ℹ️ [currentEquipment] Exercício não possui equipamento:', exerciseName)
     return null
   }
 
@@ -874,18 +865,12 @@ const currentEquipment = computed(() => {
     ? exercise.equipmentId._id || exercise.equipmentId.toString()
     : exercise.equipmentId;
   
-  console.log('🔍 [currentEquipment] Equipment ID string:', equipmentIdStr)
-  console.log('🔍 [currentEquipment] equipmentDetails:', Object.keys(equipmentDetails.value))
   const equipment = equipmentDetails.value[equipmentIdStr]
-  console.log('🔍 [currentEquipment] Equipment data:', equipment)
   
   if (!equipment) {
-    console.log('🚫 [currentEquipment] Equipamento não carregado para ID:', equipmentIdStr)
-    console.log('🔍 [currentEquipment] Available equipment IDs:', Object.keys(equipmentDetails.value))
     return null
   }
   
-  console.log('✅ [currentEquipment] Equipamento encontrado:', equipment.name || 'Nome não disponível')
   return equipment
 })
 
@@ -916,19 +901,16 @@ watch(() => props.show, (newValue) => {
     
     // Buscar detalhes dos exercícios
     if (props.workoutSession?.exercises) {
-      console.log('🔄 [init] Carregando', props.workoutSession.exercises.length, 'exercícios');
       
       // Carregar primeiro o exercício atual
       const currentEx = props.workoutSession.exercises[currentExerciseIndex.value]
       if (currentEx) {
-        console.log('🎯 [init] Carregando exercício atual primeiro:', currentEx.exerciseName)
         fetchExerciseDetails(currentEx.exerciseName)
       }
       
       // Depois carregar todos os outros exercícios
-      props.workoutSession.exercises.forEach((ex, index) => {
+      props.workoutSession.exercises.forEach((ex) => {
         if (ex.exerciseName !== currentEx?.exerciseName) {
-          console.log(`🔄 [init] Carregando exercício ${index + 1}:`, ex.exerciseName)
           fetchExerciseDetails(ex.exerciseName)
         }
       })
@@ -940,10 +922,8 @@ watch(() => props.show, (newValue) => {
 })
 
 watch(() => currentExerciseIndex.value, () => {
-  console.log('🔄 [watcher] Exercício mudou para index:', currentExerciseIndex.value);
   // Reset série para primeira não completa quando trocar exercício
   const exercise = currentExercise.value
-  console.log('🔄 [watcher] Exercício atual:', exercise?.exerciseName);
   if (exercise) {
     const firstIncompleteSet = exercise.sets.findIndex(set => !set.completed)
     currentSetIndex.value = firstIncompleteSet !== -1 ? firstIncompleteSet : 0
@@ -954,7 +934,6 @@ watch(() => currentExerciseIndex.value, () => {
     
     // Carregar detalhes do exercício atual se ainda não foram carregados
     if (!exerciseDetails.value[exercise.exerciseName]) {
-      console.log('🔄 [watcher] Carregando detalhes do exercício:', exercise.exerciseName)
       fetchExerciseDetails(exercise.exerciseName)
     } else {
       console.log('✅ [watcher] Detalhes já carregados para:', exercise.exerciseName)
@@ -967,7 +946,6 @@ watch(() => currentExerciseIndex.value, () => {
 watch(() => [userWeight.value, currentSet.value, isBodyWeightExercise.value], ([newUserWeight, newCurrentSet, isBodyWeight]) => {
   if (isBodyWeight && newUserWeight && newCurrentSet && !newCurrentSet.completed && !newCurrentSet.weight) {
     newCurrentSet.weight = newUserWeight
-    console.log('🏋️ Peso corporal aplicado automaticamente via watcher:', newUserWeight)
   }
 }, { immediate: true })
 
@@ -1034,7 +1012,6 @@ const setUserWeight = (weight) => {
   // Aplicar peso corporal ao set atual se for exercício de peso corporal
   if (isBodyWeightExercise.value && currentSet.value && !currentSet.value.completed) {
     currentSet.value.weight = weight
-    console.log('🏋️ Peso corporal aplicado automaticamente ao set:', weight)
   }
 }
 
@@ -1047,23 +1024,17 @@ const applyBodyWeightToAllSets = () => {
     exercise.sets.forEach(set => {
       if (!set.completed && !set.weight) {
         set.weight = userWeight.value
-        console.log('🏋️ Peso corporal aplicado à série:', set)
       }
     })
   }
 }
 
 const fetchExerciseDetails = async (exerciseName) => {
-  try {
-    console.log('🔍 [fetchExerciseDetails] INICIANDO para:', exerciseName);
-    console.log('🔍 [fetchExerciseDetails] Estado atual exerciseDetails:', Object.keys(exerciseDetails.value));
-    console.log('🔍 [fetchExerciseDetails] Estado atual equipmentDetails:', Object.keys(equipmentDetails.value));
-    
+  try {    
     // Buscar dados do usuário no sessionStorage
     let studentData
     try {
       studentData = JSON.parse(sessionStorage.getItem('user'))
-      console.log('📋 Dados do usuário do sessionStorage:', studentData);
     } catch (e) {
       console.error('💥 Erro ao parsear dados do usuário:', e)
       return
@@ -1071,41 +1042,28 @@ const fetchExerciseDetails = async (exerciseName) => {
     
     // Buscar apenas dados reais da API
     if (studentData && studentData.id) {
-      try {
-        console.log('🔍 Buscando dados da API para exercício:', exerciseName);
-        console.log('👤 Usando userId:', studentData.id);
-        
+      try {        
         const studentResponse = await api.get(`/students/user/${studentData.id}`)
-        console.log('✅ Resposta do /students/user:', studentResponse.data);
         
         const studentInfo = studentResponse.data
         const instructorId = studentInfo?.instructorId?._id || studentInfo?.instructorId || studentInfo?.assignedInstructor
         
-        console.log('👨‍💼 InstructorId encontrado:', instructorId);
         
         if (instructorId) {
-          console.log('🏋️‍♂️ Buscando exercícios do instrutor:', instructorId);
           const response = await api.get(`/exercises/instructor/${instructorId}`)
-          console.log('📋 Resposta dos exercícios:', response.data);
           
           if (response.data.exercises && response.data.exercises.length > 0) {
             const exercise = response.data.exercises.find(ex => ex.name === exerciseName)
-            console.log('🎯 Exercício encontrado:', exercise ? exercise.name : 'Não encontrado');
             
             if (exercise) {
               exerciseDetails.value[exerciseName] = exercise
-              console.log('💾 [fetchExerciseDetails] Exercício salvo nos detalhes:', exerciseName);
-              console.log('🎥 [fetchExerciseDetails] VideoUrl do exercício:', exercise.videoUrl || 'Nenhum');
-              console.log('🔧 [fetchExerciseDetails] Equipment ID do exercício:', exercise.equipmentId || 'Nenhum');
               
               // Buscar equipamento se existir
               if (exercise.equipmentId) {
-                console.log('🔧 [fetchExerciseDetails] Carregando equipamento:', exercise.equipmentId);
                 // Extrair o ID como string se for um objeto
                 const equipmentIdStr = typeof exercise.equipmentId === 'object' 
                   ? exercise.equipmentId._id || exercise.equipmentId.toString()
                   : exercise.equipmentId;
-                console.log('🔧 [fetchExerciseDetails] Equipment ID string:', equipmentIdStr);
                 await loadEquipmentDetails(equipmentIdStr);
               } else {
                 console.log('ℹ️ Exercício não possui equipamento');
@@ -1163,26 +1121,21 @@ const formatRestTime = (seconds) => {
 
 const loadEquipmentDetails = async (equipmentId) => {
   try {
-    console.log('🔧 [loadEquipmentDetails] Carregando equipamento:', equipmentId);
-    console.log('🔧 [loadEquipmentDetails] Tipo do equipmentId:', typeof equipmentId);
     
     // Normalizar equipmentId para string
     let equipmentIdStr = equipmentId;
     if (typeof equipmentId === 'object' && equipmentId !== null) {
       equipmentIdStr = equipmentId._id || equipmentId.toString();
-      console.log('🔧 [loadEquipmentDetails] ID normalizado de objeto para string:', equipmentIdStr);
     }
     
     // Verificar se já foi carregado
     if (equipmentDetails.value[equipmentIdStr]) {
-      console.log('✅ [loadEquipmentDetails] Equipamento já carregado:', equipmentDetails.value[equipmentIdStr].name);
       return equipmentDetails.value[equipmentIdStr];
     }
 
     // Tentar buscar por ID específico
     try {
       const response = await api.get(`/equipments/${equipmentIdStr}`);
-      console.log('✅ [loadEquipmentDetails] Resposta da API:', response.data);
       
       if (response.data) {
         let equipment = response.data;
@@ -1194,7 +1147,6 @@ const loadEquipmentDetails = async (equipmentId) => {
         
         if (equipment && (equipment._id || equipment.id)) {
           equipmentDetails.value[equipmentIdStr] = equipment;
-          console.log('💾 [loadEquipmentDetails] Equipamento salvo:', equipment.name);
           return equipment;
         }
       }
@@ -1204,14 +1156,12 @@ const loadEquipmentDetails = async (equipmentId) => {
 
     // Fallback: buscar na lista de todos os equipamentos
     try {
-      console.log('🔄 [loadEquipmentDetails] Usando fallback - buscar todos equipamentos');
       const allResponse = await api.get('/equipments');
       
       if (allResponse.data && allResponse.data.equipments) {
         const equipment = allResponse.data.equipments.find(eq => eq._id === equipmentIdStr);
         if (equipment) {
           equipmentDetails.value[equipmentIdStr] = equipment;
-          console.log('💾 [loadEquipmentDetails] FALLBACK - Equipamento salvo:', equipment.name);
           return equipment;
         } else {
           console.log('❌ [loadEquipmentDetails] FALLBACK - Equipamento não encontrado na lista');
@@ -1221,7 +1171,6 @@ const loadEquipmentDetails = async (equipmentId) => {
       console.error('💥 [loadEquipmentDetails] Erro no fallback:', fallbackError);
     }
 
-    console.log('🚫 [loadEquipmentDetails] Equipamento não encontrado:', equipmentIdStr);
     return null;
   } catch (error) {
     console.error('💥 [loadEquipmentDetails] Erro geral:', error);
@@ -1239,7 +1188,6 @@ const completeCurrentSet = () => {
   // Garantir que peso corporal seja aplicado antes de completar
   if (isBodyWeightExercise.value && userWeight.value && !currentSet.value.weight) {
     currentSet.value.weight = userWeight.value
-    console.log('🏋️ Peso corporal aplicado antes de completar:', userWeight.value)
   }
   
   // Mostrar feedback de dificuldade
@@ -1317,7 +1265,7 @@ const markExerciseComplete = (exIndex) => {
 const saveProgress = async () => {
   try {
     loading.value = true
-    await api.put(`/student/sessions/${props.workoutSession._id}`, {
+    await api.put(`/workout-sessions/sessions/${props.workoutSession._id}`, {
       exercises: props.workoutSession.exercises,
       notes: props.workoutSession.notes
     })
@@ -1342,7 +1290,7 @@ const finishWorkout = async () => {
   
   try {
     loading.value = true
-    await api.post(`/student/sessions/${props.workoutSession._id}/complete`, {
+    await api.post(`/workout-sessions/sessions/${props.workoutSession._id}/complete`, {
       exercises: props.workoutSession.exercises,
       notes: props.workoutSession.notes
     })
@@ -1367,19 +1315,14 @@ const confirmCloseWorkout = () => {
   }
 }
 
-const showExerciseDetails = async (exercise) => {
-  console.log('🔍 [showExerciseDetails] Abrindo modal para exercício:', exercise.exerciseName)
-  console.log('🔍 [showExerciseDetails] Detalhes já carregados?', !!exerciseDetails.value[exercise.exerciseName])
-  
+const showExerciseDetails = async (exercise) => {  
   selectedExerciseInfo.value = exercise
   
   // Buscar detalhes do exercício se ainda não temos
   if (!exerciseDetails.value[exercise.exerciseName]) {
-    console.log('🔄 [showExerciseDetails] Carregando detalhes...')
     await fetchExerciseDetails(exercise.exerciseName)
   }
   
-  console.log('✅ [showExerciseDetails] Abrindo modal com detalhes:', exerciseDetails.value[exercise.exerciseName])
   showExerciseInfo.value = true
 }
 
@@ -1416,7 +1359,7 @@ const confirmSkipExercise = async () => {
     
     const reason = skipReason.value === 'Outro' ? customSkipReason.value : skipReason.value
     
-    await api.post(`/student/sessions/${props.workoutSession._id}/skip-exercise`, {
+    await api.post(`/workout-sessions/sessions/${props.workoutSession._id}/skip-exercise`, {
       exerciseIndex: currentExerciseIndex.value,
       reason: reason || 'Não informado'
     })
@@ -1447,19 +1390,16 @@ const confirmSkipExercise = async () => {
 
 // Funções de edição pós-conclusão
 const editCompletedSet = () => {
-  console.log('🔧 Iniciando edição da série concluída')
   isEditingCompletedSet.value = true
 }
 
 const saveEditedSet = async () => {
   try {
     loading.value = true
-    console.log('💾 Salvando alterações da série')
     
     // Para exercícios de peso corporal, garantir que o peso seja o peso do usuário
     if (isBodyWeightExercise.value && userWeight.value) {
       currentSet.value.weight = userWeight.value
-      console.log('🏋️ Peso corporal aplicado:', userWeight.value)
     }
     
     // Salvar no backend
@@ -1479,7 +1419,6 @@ const saveEditedSet = async () => {
 }
 
 const cancelEditSet = () => {
-  console.log('❌ Cancelando edição da série')
   isEditingCompletedSet.value = false
   // Aqui poderíamos restaurar valores originais se necessário
 }

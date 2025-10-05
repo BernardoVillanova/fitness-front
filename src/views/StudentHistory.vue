@@ -218,7 +218,7 @@ const fetchWorkoutHistory = async () => {
     loading.value = true
     
     // Buscar histórico completo (sem limite para ter todos os dados)
-    const response = await api.get('/student/sessions/history', {
+    const response = await api.get('/workout-sessions/sessions/history', {
       params: { limit: 1000 } // Buscar muitas sessões para estatísticas
     })
     

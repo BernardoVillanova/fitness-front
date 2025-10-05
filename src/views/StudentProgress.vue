@@ -348,13 +348,11 @@ const currentStreak = computed(() => progressData.value.currentStreak)
 // Computed for measurements chart
 const hasAnyMeasurements = computed(() => {
   const result = measurementsHistory.value.length > 0
-  console.log('🔍 hasAnyMeasurements:', result, '(total:', measurementsHistory.value.length, ')')
   return result
 })
 
 const hasInitialMeasurement = computed(() => {
   const result = measurementsHistory.value.some(m => m.isInitial === true)
-  console.log('🔍 hasInitialMeasurement:', result)
   return result
 })
 
@@ -408,7 +406,7 @@ const fetchProgressData = async () => {
     loading.value = true
     
     // Buscar histórico de treinos completo
-    const historyResponse = await api.get('/student/sessions/history', {
+    const historyResponse = await api.get('/workout-sessions/sessions/history', {
       params: { limit: 1000 }
     })
     
@@ -420,7 +418,7 @@ const fetchProgressData = async () => {
     
     // Calcular total de treinos disponíveis (estimativa)
     try {
-      const workoutsResponse = await api.get('/student/workouts')
+      const workoutsResponse = await api.get('/workout-sessions/workouts')
       const workouts = workoutsResponse.data || []
       
       // Cada divisão pode ser feita 4x por mês
@@ -644,25 +642,12 @@ const processWeeklyData = (sessions) => {
 
 const fetchMeasurementsHistory = async () => {
   try {
-    console.log('🔍 Iniciando busca de histórico de medidas...')
-    
     const userData = JSON.parse(sessionStorage.getItem('user'))
-    console.log('👤 Dados do usuário:', userData)
     
     const userId = userData.id
-    console.log('🆔 User ID:', userId)
     
-    // Buscar dados do aluno pela rota /user/:userId
     const studentResponse = await api.get(`/students/user/${userId}`)
     const studentData = studentResponse.data
-    
-    console.log('✅ Resposta da API recebida com sucesso!')
-    console.log('📦 Student ID:', studentData._id)
-    console.log('📦 Dados completos do estudante:', studentData)
-    console.log('📏 personalInfo:', studentData?.personalInfo)
-    console.log('📏 initialMeasurements:', studentData?.personalInfo?.initialMeasurements)
-    console.log('📊 progressHistory:', studentData?.progressHistory)
-    console.log('📅 createdAt:', studentData?.createdAt)
     
     const initialMeasurements = studentData?.personalInfo?.initialMeasurements
     const progressHistory = studentData?.progressHistory || []
@@ -671,8 +656,6 @@ const fetchMeasurementsHistory = async () => {
     
     // Adicionar medida inicial se existir e tiver pelo menos uma medida não-null
     if (initialMeasurements) {
-      console.log('🔍 Verificando initialMeasurements...')
-      
       const measurementValues = {
         shoulder: initialMeasurements.shoulder,
         chest: initialMeasurements.chest,
@@ -684,13 +667,9 @@ const fetchMeasurementsHistory = async () => {
         calf: initialMeasurements.calf
       }
       
-      console.log('📏 Valores das medidas:', measurementValues)
-      
       const hasAnyInitialMeasurement = Object.values(measurementValues).some(v => {
         return v !== null && v !== undefined && v !== '' && !isNaN(v)
       })
-      
-      console.log('✅ Tem alguma medida inicial?', hasAnyInitialMeasurement)
       
       if (hasAnyInitialMeasurement && studentData?.createdAt) {
         const initialEntry = {
@@ -706,18 +685,13 @@ const fetchMeasurementsHistory = async () => {
           calf: initialMeasurements.calf
         }
         
-        console.log('➕ Adicionando medida inicial:', initialEntry)
         history.push(initialEntry)
       }
     } else {
       console.log('⚠️ Nenhuma medida inicial encontrada')
     }
     
-    // Adicionar histórico de progresso
-    console.log(`📊 Processando ${progressHistory.length} entradas de histórico...`)
-    
-    progressHistory.forEach((p, index) => {
-      console.log(`📌 Entrada ${index + 1}:`, p)
+    progressHistory.forEach((p) => {
       
       if (p.measurements) {
         const progressEntry = {
@@ -734,7 +708,6 @@ const fetchMeasurementsHistory = async () => {
           weight: p.weight
         }
         
-        console.log('➕ Adicionando entrada de progresso:', progressEntry)
         history.push(progressEntry)
       } else {
         console.log('⚠️ Entrada sem measurements, pulando...')
@@ -744,13 +717,8 @@ const fetchMeasurementsHistory = async () => {
     // Ordenar por data
     history.sort((a, b) => new Date(a.date) - new Date(b.date))
     
-    console.log('✅ Histórico final ordenado:', history)
-    console.log(`📊 Total de ${history.length} medições no histórico`)
-    
     measurementsHistory.value = history
     
-    // Log das medidas disponíveis para cada tipo
-    console.log('📋 Resumo por tipo de medida:')
     availableMeasurements.forEach(m => {
       const count = history.filter(h => h[m.key] != null && h[m.key] !== '').length
       console.log(`  ${m.label} (${m.key}): ${count} medições`)
@@ -767,10 +735,7 @@ const fetchMeasurementsHistory = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('🚀 Componente montado, iniciando fetchProgressData...')
   await fetchProgressData()
-  console.log('✅ fetchProgressData concluído')
-  console.log('📊 measurementsHistory final:', measurementsHistory.value)
 })
 </script>
 

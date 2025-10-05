@@ -99,12 +99,9 @@ export default {
           avatar: response.data.user?.avatar
         };
 
-        console.log('📋 Dados do usuário após login:', userData);
-
         // Se for personal, buscar instructorId
         if (decodedToken.role === 'personal') {
           try {
-            console.log('🔍 Buscando instructorId para userId:', userId);
             const instructorResponse = await api.get(`/instructors/user/${userId}`);
             
             userData = {
@@ -113,7 +110,6 @@ export default {
               name: instructorResponse.data.name || userData.name
             };
             
-            console.log('✅ InstructorId encontrado:', userData.instructorId);
           } catch (err) {
             console.error('❌ Erro ao buscar dados do instructor:', err);
           }
@@ -174,18 +170,11 @@ export default {
           }
         }
 
-        // Salvar no sessionStorage
-        console.log('💾 Salvando no sessionStorage:', userData);
         sessionStorage.setItem("user", JSON.stringify(userData));
-        
-        // Verificar se foi salvo corretamente
-        console.log('✅ Usuário salvo no sessionStorage:', JSON.parse(sessionStorage.getItem("user")));
 
         if (userData.role === "personal") {
-          console.log('🏃 Redirecionando para dashboard de personal');
           this.$router.push("/dashboard");
         } else if (userData.role === "aluno") {
-          console.log('🏃 Redirecionando para dashboard de aluno');
           this.$router.push("/student-dashboard");
         } else {
           console.error('❌ Role desconhecida:', userData.role);

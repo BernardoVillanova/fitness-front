@@ -743,12 +743,8 @@ export default {
   },
 
   computed: {
-    filteredStudents() {
-      console.log('🔍 filteredStudents - availableStudents:', this.availableStudents);
-      console.log('🔍 filteredStudents - studentSearch:', this.studentSearch);
-      
+    filteredStudents() {      
       if (!this.studentSearch) {
-        console.log('✅ Retornando todos os alunos:', this.availableStudents.length);
         return this.availableStudents;
       }
       
@@ -759,7 +755,6 @@ export default {
         return studentName.includes(search) || studentEmail.includes(search);
       });
       
-      console.log('✅ Alunos filtrados:', filtered.length);
       return filtered;
     },
 
@@ -824,9 +819,7 @@ export default {
 
   watch: {
     show(newVal) {
-      if (newVal) {
-        console.log('🎭 Modal aberto!', { isEditing: this.isEditing, planData: this.planData });
-        
+      if (newVal) {        
         // Só inicializa se NÃO estiver em modo de edição
         // Em modo de edição, deixa os watchers de isEditing/planData cuidarem
         if (!this.isEditing) {
@@ -846,7 +839,6 @@ export default {
         
         // Se entrou em modo de edição e tem dados do plano
         if (newVal && this.planData && this.planData._id) {
-          console.log('📝 Inicializando formulário para edição...');
           this.initializeForm();
         }
       }
@@ -856,11 +848,8 @@ export default {
       immediate: true,
       deep: true,
       handler(newPlanData) {
-        console.log('🔄 Watch planData:', newPlanData);
-        
         // Se está em modo de edição e recebeu dados do plano
         if (this.isEditing && newPlanData && newPlanData._id) {
-          console.log('📝 Inicializando formulário com dados do plano...');
           this.initializeForm();
         }
       }
@@ -885,9 +874,7 @@ export default {
     },
 
     initializeForm() {
-      if (this.planData && this.isEditing) {
-        console.log('📝 Inicializando formulário em modo de edição:', this.planData);
-        
+      if (this.planData && this.isEditing) {        
         // Criar cópia profunda dos dados
         const planCopy = JSON.parse(JSON.stringify(this.planData));
         
@@ -923,11 +910,6 @@ export default {
           this.selectedStudents = [];
         }
         
-        console.log('✅ Formulário inicializado:', {
-          name: this.formData.name,
-          divisions: this.numberOfDivisions,
-          students: this.selectedStudents.length
-        });
       } else {
         this.resetForm();
       }
@@ -1010,12 +992,10 @@ export default {
 
     async fetchExercises() {
       this.loadingExercises = true;
-      console.log('🔄 Iniciando busca de exercícios...');
       
       try {
         // Buscar o ID do instrutor logado
         const userStr = sessionStorage.getItem('user');
-        console.log('👤 User do sessionStorage:', userStr);
         
         if (!userStr) {
           console.error('❌ Usuário não encontrado na sessão');
@@ -1026,8 +1006,6 @@ export default {
         const user = JSON.parse(userStr);
         // CORREÇÃO: usar instructorId do objeto user (campo correto do backend)
         const instructorId = user.instructorId || user._id || user.id;
-        console.log('🆔 Instructor ID (usando instructorId):', instructorId);
-        console.log('👤 User completo:', user);
         
         if (!instructorId) {
           console.error('❌ ID do instrutor não encontrado');
@@ -1037,8 +1015,6 @@ export default {
 
         const token = sessionStorage.getItem('token');
         const url = `http://localhost:3000/api/exercises/instructor/${instructorId}`;
-        console.log('🌐 URL da requisição:', url);
-        console.log('🔑 Token:', token ? 'Presente' : 'Ausente');
         
         const response = await fetch(url, {
           headers: {
@@ -1046,22 +1022,15 @@ export default {
             'Content-Type': 'application/json'
           }
         });
-        
-        console.log('📡 Status da resposta:', response.status);
-        
+                
         if (response.ok) {
           const data = await response.json();
-          console.log('📦 Resposta da API:', data);
-          console.log('📊 Tipo de data:', typeof data);
-          console.log('📊 É array?', Array.isArray(data));
-          console.log('📊 Tem propriedade exercises?', data && 'exercises' in data);
           
           // Garantir que sempre seja um array
           if (Array.isArray(data)) {
             this.availableExercises = data;
           } else if (data && Array.isArray(data.exercises)) {
             this.availableExercises = data.exercises;
-            console.log('📋 Exercícios encontrados:', data.exercises);
           } else if (data && typeof data === 'object') {
             // Se for um objeto único, transforma em array
             this.availableExercises = [data];
@@ -1069,10 +1038,8 @@ export default {
             this.availableExercises = [];
           }
           
-          console.log('✅ Exercícios carregados:', this.availableExercises.length);
           if (this.availableExercises.length === 0) {
             console.warn('⚠️ Nenhum exercício cadastrado para este instrutor!');
-            console.log('💡 Dica: Cadastre exercícios primeiro na página de Exercícios');
           }
         } else {
           const errorText = await response.text();
@@ -1084,7 +1051,6 @@ export default {
         this.availableExercises = [];
       } finally {
         this.loadingExercises = false;
-        console.log('🏁 Busca finalizada');
       }
     },
 
@@ -1100,12 +1066,9 @@ export default {
 
     async fetchStudents() {
       this.loadingStudents = true;
-      console.log('🔄 Iniciando busca de alunos...');
       
       try {
         const token = sessionStorage.getItem('token');
-        console.log('🔑 Token encontrado:', token ? 'SIM' : 'NÃO');
-        console.log('🔑 Token length:', token?.length);
         
         const response = await fetch('http://localhost:3000/api/students', {
           headers: {
@@ -1113,9 +1076,7 @@ export default {
             'Content-Type': 'application/json'
           }
         });
-        
-        console.log('📡 Status resposta alunos:', response.status);
-        
+                
         if (!response.ok) {
           let errorText;
           try {
@@ -1133,8 +1094,6 @@ export default {
         
         if (response.ok) {
           const data = await response.json();
-          console.log('👥 Alunos recebidos:', data);
-          console.log('👥 Primeiro aluno:', data[0]);
           
           // Normalizar estrutura dos alunos (alguns têm personalInfo, outros não)
           this.availableStudents = (Array.isArray(data) ? data : []).map(student => {
@@ -1150,8 +1109,6 @@ export default {
             return student;
           });
           
-          console.log('✅ Alunos carregados:', this.availableStudents.length);
-          console.log('👤 Primeiro aluno normalizado:', this.availableStudents[0]);
         } else {
           console.error('❌ Erro ao buscar alunos:', response.status);
           this.availableStudents = [];
@@ -1161,7 +1118,6 @@ export default {
         this.availableStudents = [];
       } finally {
         this.loadingStudents = false;
-        console.log('🏁 Busca de alunos finalizada');
       }
     },
 
@@ -1201,7 +1157,6 @@ export default {
       if (!this.isFormValid || this.isSaving) return;
 
       this.isSaving = true;
-      console.log('💾 Salvando plano...', { isEditing: this.isEditing, planData: this.planData });
 
       const planToSave = {
         ...this.formData,
@@ -1211,11 +1166,8 @@ export default {
       // Se está editando, incluir o _id
       if (this.isEditing && this.planData && this.planData._id) {
         planToSave._id = this.planData._id;
-        console.log('📝 Incluindo ID para edição:', planToSave._id);
       }
       
-      console.log('📦 Dados que serão salvos:', planToSave);
-
       this.$emit('save', planToSave);
     },
 

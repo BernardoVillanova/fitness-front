@@ -275,11 +275,11 @@ export default {
         error.value = null;
         
         // Fetch workout plans
-        const plansResponse = await api.get('/student/workouts');
+        const plansResponse = await api.get('/workout-sessions/workouts');
         const plans = plansResponse.data || [];
         
         // Fetch session history for stats
-        const sessionsResponse = await api.get('/student/sessions/history', {
+        const sessionsResponse = await api.get('/workout-sessions/sessions/history', {
           params: { limit: 1000 }
         });
         const allSessions = sessionsResponse.data?.sessions || [];
