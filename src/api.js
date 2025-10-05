@@ -63,7 +63,14 @@ export const getStudentsByInstructor = (instructorId) => api.get(`/students/inst
 // API de Sessões de Treino
 export const getWorkoutSessions = () => api.get("/workout-sessions/sessions/all");
 export const getSessionHistory = () => api.get("/workout-sessions/sessions/history");
-export const getInstructorSessions = (instructorId) => api.get(`/workout-sessions/sessions/instructor/${instructorId || ''}`);
+export const getInstructorSessions = (instructorId) => {
+  if (instructorId) {
+    return api.get(`/workout-sessions/sessions/instructor/${instructorId}`);
+  } else {
+    // Se não tem instructorId, chama sem parâmetro (usa o userId do token)
+    return api.get('/workout-sessions/sessions/instructor');
+  }
+};
 export const unlinkStudent = (studentId) => api.put(`/students/${studentId}/unlink`);
 
 export default api;
