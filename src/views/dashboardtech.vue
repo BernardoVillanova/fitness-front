@@ -136,7 +136,6 @@
               </div>
               <div class="student-basic-info">
                 <h3 class="student-name">{{ student.name }}</h3>
-                <p class="student-id">#{{ String(student.id).padStart(4, '0') }}</p>
               </div>
               <div class="student-menu">
                 <button class="menu-btn">
@@ -383,6 +382,7 @@ import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 import VueApexCharts from "vue3-apexcharts";
 import { getStudentsByInstructor, getInstructorSessions } from "@/api";
+import api from "@/api";
 
 export default {
   name: "DashboardTech",
@@ -882,18 +882,31 @@ export default {
         
         console.log('[DEBUG] Iniciando carregamento do dashboard...');
         
-        // Pegar o ID do instrutor do token/user
+        // Pegar o ID do usuário logado
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         console.log('[DEBUG] Usuário logado:', user);
         
-        // Tentar diferentes formas de obter o instructorId
-        const instructorId = user.instructorId || user._id || user.id;
-        
-        console.log('[DEBUG] Tentando usar instructorId:', instructorId);
-        
-        if (!instructorId) {
-          throw new Error('ID do instrutor não encontrado. Verifique se você está logado como instrutor.');
+        const userId = user.id;
+        if (!userId) {
+          throw new Error('ID do usuário não encontrado. Faça login novamente.');
         }
+        
+        console.log('[DEBUG] UserId:', userId);
+        
+        // Buscar o instrutor pelo userId
+        const instructorsResponse = await api.get('/instructors');
+        const allInstructors = instructorsResponse.data;
+        const currentInstructor = allInstructors.find(
+          inst => inst.userId === userId || inst.userId?._id === userId
+        );
+        
+        if (!currentInstructor) {
+          throw new Error('Instrutor não encontrado para este usuário. Verifique se você está logado como instrutor.');
+        }
+        
+        const instructorId = currentInstructor._id;
+        console.log('[DEBUG] InstructorId encontrado:', instructorId);
+        console.log('[DEBUG] Dados do instrutor:', currentInstructor.name);
         
         // Buscar estudantes do instrutor
         await this.loadStudents(instructorId);
@@ -901,7 +914,7 @@ export default {
         // Buscar sessões de treino
         console.log('[DEBUG] Antes de chamar loadWorkoutSessions...');
         try {
-          await this.loadWorkoutSessions();
+          await this.loadWorkoutSessions(instructorId);
           console.log('[DEBUG] loadWorkoutSessions executada com sucesso');
         } catch (sessionError) {
           console.error('[DEBUG] Erro específico em loadWorkoutSessions:', sessionError);
@@ -972,30 +985,22 @@ export default {
       }
     },
     
-    async loadWorkoutSessions() {
+    async loadWorkoutSessions(instructorId) {
       try {
-        console.log('🏋️ Buscando sessões de treino...');
-        
-        // Buscar ID do instrutor do usuário logado
-        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        const instructorId = user.instructorId || user._id;
-        
-        console.log('👨‍🏫 ID do instrutor:', instructorId);
-        console.log('👤 Dados do usuário completo:', user);
+        console.log('🏋️ Buscando sessões de treino para instructorId:', instructorId);
         
         if (!instructorId) {
-          console.warn('⚠️ ID do instrutor não encontrado');
+          console.warn('⚠️ ID do instrutor não fornecido');
           this.workoutSessions = [];
           return;
         }
         
-        // Buscar sessões usando a nova API para instrutor
-        console.log('🔗 Fazendo requisição para:', `/api/workout-sessions/sessions/all`);
+        // Buscar sessões usando a API correta para instrutor
+        console.log('🔗 Fazendo requisição para buscar sessões do instrutor:', instructorId);
         const response = await getInstructorSessions(instructorId);
         
         console.log('📊 Resposta completa da API de sessões:', response);
         console.log('📊 Status da resposta:', response?.status);
-        console.log('📊 Headers da resposta:', response?.headers);
         console.log('📊 Data da resposta:', response?.data);
         
         if (response && response.data) {
@@ -1016,7 +1021,8 @@ export default {
             console.log('📝 Tipos de sessões encontradas:', this.workoutSessions.map(s => ({
               id: s._id,
               studentId: s.studentId,
-              status: s.status
+              status: s.status,
+              studentName: s.studentId?.userId?.name || s.studentId?.name
             })));
           }
         } else {
@@ -2002,14 +2008,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.student-id {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  margin: 0;
-  font-weight: 500;
-  font-family: 'Fira Code', monospace;
 }
 
 .student-menu {

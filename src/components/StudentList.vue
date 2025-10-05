@@ -372,7 +372,7 @@ import { storeToRefs } from 'pinia'
 import DashboardNavBar from '@/components/DashboardNavBar.vue'
 import LinkStudentModal from '@/components/LinkStudentModal.vue'
 import ViewPlanModal from '@/components/ViewPlanModal.vue'
-import api from '@/api'
+import api, { unlinkStudent } from '@/api'
 
 const router = useRouter()
 const themeStore = useThemeStore()
@@ -567,8 +567,8 @@ const confirmUnlinkStudent = async (student) => {
   try {
     console.log('Desvinculando aluno:', student._id)
     
-    // Fazer chamada para a API de desvincular
-    await api.put(`/students/${student._id}/unlink`)
+    // Usar a função específica da API
+    await unlinkStudent(student._id)
     console.log('Aluno desvinculado com sucesso')
     
     // Atualizar a lista de alunos
