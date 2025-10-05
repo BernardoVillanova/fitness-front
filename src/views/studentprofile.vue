@@ -341,7 +341,6 @@ const fetchProfile = async () => {
     }
 
     const userData = JSON.parse(storedUser);
-    console.log('UserData parseado:', userData);
     
     // Buscar dados do User primeiro (tem name, email, phone, birthDate, cpf)
     const userId = userData.id || userData._id;
@@ -353,13 +352,9 @@ const fetchProfile = async () => {
       return;
     }
 
-    console.log('Buscando dados do usuário com ID:', userId);
-    
     // Buscar Student pelo userId usando a rota correta
     const studentResponse = await api.get(`/students/user/${userId}`);
     const studentData_API = studentResponse.data;
-    
-    console.log('Dados do Student recebidos:', studentData_API);
     
     if (!studentData_API) {
       console.error('Student não encontrado para este userId');
@@ -498,7 +493,6 @@ const saveProfile = async () => {
         birthDate: studentData.birthDate
       };
       
-      console.log('Atualizando User com:', userUpdateData);
       await api.put(`/auth/user/${userId}`, userUpdateData);
       
       // Atualizar sessionStorage com novos dados
@@ -543,7 +537,6 @@ const saveProfile = async () => {
       }
     };
 
-    console.log('Atualizando Student com:', studentUpdateData);
     const { data } = await api.put(`/students/${studentId.value}`, studentUpdateData);
     console.log('Student atualizado:', data);
     

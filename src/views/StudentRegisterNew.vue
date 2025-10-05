@@ -1152,11 +1152,9 @@ const addInjury = () => {
 }
 
 const addSurgery = () => {
-  console.log('📝 Adding surgery, current length:', form.value.health.surgeries.length)
   form.value.health.surgeries.push({
     type: ''
   })
-  console.log('✅ Surgery added, new length:', form.value.health.surgeries.length)
 }
 
 const addAllergy = () => {
@@ -1214,9 +1212,7 @@ const handleInjuryCheckbox = () => {
 }
 
 const handleSurgeryCheckbox = () => {
-  console.log('🔧 Surgery checkbox changed:', form.value.health.hasSurgeries, 'Length:', form.value.health.surgeries.length)
   if (form.value.health.hasSurgeries && form.value.health.surgeries.length === 0) {
-    console.log('➕ Adding first surgery field')
     addSurgery()
   } else if (!form.value.health.hasSurgeries) {
     // Limpar array quando desmarcar
@@ -1314,8 +1310,6 @@ const submitForm = async () => {
   isSubmitting.value = true
   
   try {
-    console.log('📋 Form data before submission:', JSON.stringify(form.value, null, 2))
-    
     // Criar perfil de estudante (usuário já foi criado na tela anterior)
     const studentPayload = {
       userId: form.value.userId,
@@ -1388,8 +1382,6 @@ const submitForm = async () => {
         personal: form.value.goals.personalGoals
       }
     }
-    
-    console.log('🚀 Sending payload to backend:', JSON.stringify(studentPayload, null, 2))
     
     const response = await axios.post('http://localhost:3000/api/students', studentPayload)
     

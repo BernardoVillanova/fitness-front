@@ -464,8 +464,6 @@ export default {
       if (this.exercise.image) {
         this.imagePreview = this.getImageUrl(this.exercise.image);
       }
-
-      console.log('✅ Dados carregados no EditExerciseModal:', this.formData);
     },
     closeModal() {
       this.$emit('close');

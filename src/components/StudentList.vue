@@ -202,9 +202,17 @@
               </div>
             </div>
 
-            <div v-if="student.currentWorkoutPlanId" class="plan-info">
+            <div v-if="student.hasActivePlan" class="plan-info">
               <i class="fas fa-clipboard-list"></i>
-              <span>Com plano ativo</span>
+              <span v-if="student.planInfo?.source === 'assigned' && student.planInfo?.count">
+                {{ student.planInfo.count }} plano(s) ativo(s)
+              </span>
+              <span v-else-if="student.planInfo?.latestPlan">
+                Último: {{ student.planInfo.latestPlan }}
+              </span>
+              <span v-else>
+                Com plano ativo
+              </span>
             </div>
             <div v-else class="plan-info no-plan">
               <i class="fas fa-exclamation-circle"></i>
@@ -275,9 +283,10 @@
                   </span>
                 </td>
                 <td>
-                  <div v-if="student.currentWorkoutPlanId" class="plan-status active">
+                  <div v-if="student.hasActivePlan" class="plan-status active">
                     <i class="fas fa-check-circle"></i>
-                    <span>Ativo</span>
+                    <span v-if="student.planInfo?.count">{{ student.planInfo.count }} plano(s)</span>
+                    <span v-else>Ativo</span>
                   </div>
                   <div v-else class="plan-status inactive">
                     <i class="fas fa-times-circle"></i>
@@ -299,7 +308,7 @@
                       <i class="fas fa-eye"></i>
                     </button>
                     <button 
-                      v-if="student.currentWorkoutPlanId"
+                      v-if="student.hasActivePlan"
                       @click="openViewPlan(student)" 
                       class="action-btn plan" 
                       title="Ver plano"
@@ -397,7 +406,7 @@ const selectedStudent = ref(null)
 const totalStudents = computed(() => students.value.length)
 const activeStudents = computed(() => students.value.filter(s => s.status === 'active').length)
 const pausedStudents = computed(() => students.value.filter(s => s.status === 'paused').length)
-const studentsWithPlans = computed(() => students.value.filter(s => s.currentWorkoutPlanId).length)
+const studentsWithPlans = computed(() => students.value.filter(s => s.hasActivePlan).length)
 
 const filteredStudents = computed(() => {
   let filtered = students.value
@@ -419,9 +428,9 @@ const filteredStudents = computed(() => {
 
   // Filtro de plano
   if (planFilter.value === 'with-plan') {
-    filtered = filtered.filter(s => s.currentWorkoutPlanId)
+    filtered = filtered.filter(s => s.hasActivePlan)
   } else if (planFilter.value === 'without-plan') {
-    filtered = filtered.filter(s => !s.currentWorkoutPlanId)
+    filtered = filtered.filter(s => !s.hasActivePlan)
   }
 
   // Filtro de experiência
@@ -493,6 +502,66 @@ const formatStatus = (status) => {
   return map[status] || status
 }
 
+// Helper function to calculate workout streak
+const calculateWorkoutStreak = (sessions) => {
+  if (!sessions || sessions.length === 0) return 0;
+  
+  const completedSessions = sessions
+    .filter(s => s.status === 'completed')
+    .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime));
+  
+  if (completedSessions.length === 0) return 0;
+  
+  // Agrupar sessões por dia (ignorar hora)
+  const sessionsByDay = {};
+  completedSessions.forEach(session => {
+    const sessionDate = new Date(session.endTime || session.startTime);
+    const dayKey = sessionDate.toDateString(); // Apenas a data, sem hora
+    sessionsByDay[dayKey] = true;
+  });
+  
+  // Converter para array de datas únicas ordenadas
+  const uniqueDays = Object.keys(sessionsByDay)
+    .map(dayStr => new Date(dayStr))
+    .sort((a, b) => b - a); // Mais recente primeiro
+  
+  if (uniqueDays.length === 0) return 0;
+  
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Começar do dia mais recente e verificar consecutividade
+  for (let i = 0; i < uniqueDays.length; i++) {
+    const currentDay = new Date(uniqueDays[i]);
+    currentDay.setHours(0, 0, 0, 0);
+    
+    const expectedDay = new Date(today);
+    expectedDay.setDate(today.getDate() - i);
+    
+    // Se o dia atual corresponde ao esperado (hoje - i dias)
+    if (currentDay.getTime() === expectedDay.getTime()) {
+      streak++;
+    } else {
+      // Se não é consecutivo, parar a contagem
+      break;
+    }
+  }
+  
+  return streak;
+};
+
+// Função para buscar workout sessions de um aluno
+const getStudentWorkoutSessions = async (studentId) => {
+  try {
+    const response = await api.get(`/workout-sessions/sessions/student/${studentId}`);
+    return response.data?.sessions || [];
+  } catch (error) {
+    console.error('❌ [StudentList] Erro ao buscar sessions para student', studentId, ':', error);
+    return [];
+  }
+};
+
 // Ações
 const fetchStudents = async () => {
   try {
@@ -501,9 +570,7 @@ const fetchStudents = async () => {
     // Pegar dados do usuário logado
     const userData = JSON.parse(sessionStorage.getItem('user'))
     const userId = userData.id
-    
-    console.log('User ID:', userId)
-    
+        
     // Buscar o instrutor pelo userId usando a lista de instrutores
     const instructorsResponse = await api.get('/instructors')
     const allInstructors = instructorsResponse.data
@@ -519,19 +586,83 @@ const fetchStudents = async () => {
     }
     
     const instructorId = currentInstructor._id
-    console.log('Instructor ID encontrado:', instructorId)
-    console.log('Buscando alunos do instrutor...')
     
     // Buscar apenas alunos deste instrutor usando a rota específica
     const response = await api.get(`/students/instructor/${instructorId}`)
-    
-    console.log('Resposta da API:', response.data)
-    
+        
     if (response.data) {
       // A resposta pode vir diretamente como array ou dentro de um objeto
-      students.value = Array.isArray(response.data) ? response.data : (response.data.students || [])
+      let studentsData = Array.isArray(response.data) ? response.data : (response.data.students || [])
+            
+      const studentsWithStats = await Promise.all(
+        studentsData.map(async (student) => {
+          const sessions = await getStudentWorkoutSessions(student._id);
+          const completedSessions = sessions.filter(s => s.status === 'completed');
+          
+          // Detectar se tem plano ativo baseado APENAS no instrutor atual
+          let hasActivePlan = false;
+          let planInfo = null;
+          
+          // 1. Verificar se tem workoutPlans atribuídos pelo instrutor atual
+          if (student.workoutPlans && student.workoutPlans.length > 0) {
+            
+            // Filtrar apenas planos criados pelo instrutor atual
+            const instructorPlans = student.workoutPlans.filter(plan => {
+              const planInstructorId = plan.instructorId?._id || plan.instructorId;
+              const match = planInstructorId === instructorId;
+              return match;
+            });
+                        
+            if (instructorPlans.length > 0) {
+              hasActivePlan = true;
+              planInfo = {
+                source: 'assigned',
+                count: instructorPlans.length,
+                latestPlan: instructorPlans[0].name,
+                plans: instructorPlans
+              };
+            }
+          }
+          
+          // 2. Se não encontrou planos atribuídos, verificar sessões com planos do instrutor
+          if (!hasActivePlan && sessions.length > 0) {            
+            const instructorSessions = sessions.filter(s => {
+              const hasWorkoutPlan = s.workoutPlanId && s.workoutName;
+              const sessionInstructorId = s.instructorId?._id || s.instructorId;
+              const match = sessionInstructorId === instructorId;
+              
+              return hasWorkoutPlan && match;
+            });
+                        
+            if (instructorSessions.length > 0) {
+              hasActivePlan = true;
+              const latestSessionWithPlan = instructorSessions
+                .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))[0];
+              planInfo = {
+                source: 'session',
+                latestPlan: latestSessionWithPlan.workoutName,
+                lastUsed: latestSessionWithPlan.endTime || latestSessionWithPlan.startTime
+              };
+            }
+          }
+          
+          return {
+            ...student,
+            totalWorkouts: completedSessions.length,
+            currentStreak: calculateWorkoutStreak(sessions),
+            lastWorkout: completedSessions.length > 0 ? 
+              completedSessions.sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))[0] : null,
+            // Adicionar informações de plano DO INSTRUTOR ATUAL
+            hasActivePlan,
+            planInfo,
+            // Manter compatibilidade com currentWorkoutPlanId
+            currentWorkoutPlanId: hasActivePlan ? (student.currentWorkoutPlanId || 'detected') : null
+          };
+        })
+      );
+      
+      students.value = studentsWithStats;
       totalPages.value = Math.ceil(filteredStudents.value.length / limit)
-      console.log('Alunos carregados:', students.value.length)
     } else {
       students.value = []
     }
@@ -564,12 +695,9 @@ const confirmUnlinkStudent = async (student) => {
   const studentName = student.name || 'este aluno'
   if (!confirm(`Tem certeza que deseja desvincular ${studentName}? O aluno ficará sem instrutor.`)) return
   
-  try {
-    console.log('Desvinculando aluno:', student._id)
-    
+  try {    
     // Usar a função específica da API
     await unlinkStudent(student._id)
-    console.log('Aluno desvinculado com sucesso')
     
     // Atualizar a lista de alunos
     await fetchStudents()
@@ -614,7 +742,6 @@ const confirmDeleteStudent = async (student) => {
   
   try {
     await api.delete(`/students/${student._id}`)
-    console.log('Aluno excluído com sucesso')
     await fetchStudents()
   } catch (error) {
     console.error('Erro ao excluir aluno:', error)

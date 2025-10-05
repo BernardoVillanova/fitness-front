@@ -432,25 +432,16 @@ export default {
   },
   computed: {
     studentsData() {
-      console.log('🔍 DEBUG: Calculando studentsData...');
-      console.log('📊 students array:', this.students);
-      console.log('🏋️ workoutSessions array:', this.workoutSessions);
       
       if (!this.students || !Array.isArray(this.students) || this.students.length === 0) {
         console.warn('⚠️ DEBUG: Nenhum estudante encontrado ou array inválido');
-        console.log('📈 Tipo de students:', typeof this.students);
-        console.log('📈 É array?', Array.isArray(this.students));
-        console.log('📈 Tamanho:', this.students?.length);
         return [];
       }
       
       if (!Array.isArray(this.workoutSessions)) {
         console.warn('⚠️ DEBUG: workoutSessions não é um array válido');
-        console.log('🏃 Tipo de workoutSessions:', typeof this.workoutSessions);
-        console.log('🏃 workoutSessions:', this.workoutSessions);
         
-        return this.students.map((student, index) => {
-          console.log(`👤 DEBUG: Processando estudante ${index + 1}:`, student);
+        return this.students.map((student) => {
           return {
             id: student._id,
             name: student.name || 'Nome não disponível',
@@ -468,19 +459,8 @@ export default {
         });
       }
       
-      console.log(`✅ DEBUG: Processando ${this.students.length} estudantes com ${this.workoutSessions.length} sessões`);
-      
-      return this.students.map((student, index) => {
+      return this.students.map((student) => {
         try {
-          console.log(`\n🎯 DEBUG: Processando estudante ${index + 1}/${this.students.length}:`);
-          console.log('👤 Dados do estudante:', {
-            id: student._id,
-            name: student.name,
-            email: student.email,
-            phone: student.phone,
-            personalInfo: student.personalInfo,
-            progressLogs: student.progressLogs?.length || 0
-          });
           
           const studentSessions = this.workoutSessions.filter(session => {
             if (!session) {
@@ -491,41 +471,21 @@ export default {
             const matches = session.studentId === student._id || 
                            (session.studentId && session.studentId._id === student._id);
             
-            if (matches) {
-              console.log('✅ Sessão encontrada para estudante:', {
-                sessionId: session._id,
-                studentId: session.studentId,
-                status: session.status,
-                startTime: session.startTime
-              });
-            }
-            
             return matches;
           });
-          
-          console.log(`📊 Total de sessões encontradas para ${student.name}: ${studentSessions.length}`);
           
           const completedSessions = studentSessions.filter(session => 
             session && session.status === 'completed'
           );
           
-          console.log(`✅ Sessões completadas para ${student.name}: ${completedSessions.length}`);
-          
-          // Calcular progresso de peso dos últimos registros
           const progressLogs = student.progressLogs || [];
           const weightProgress = this.calculateWeightProgress(progressLogs);
-          console.log(`⚖️ Progresso de peso para ${student.name}: ${weightProgress}kg`);
           
-          // Calcular aderência baseada nas sessões dos últimos 30 dias
           const adherence = this.calculateAdherence(studentSessions);
-          console.log(`📈 Aderência para ${student.name}: ${adherence}%`);
           
-          // Determinar tendência baseada nas últimas sessões
           const trend = this.calculateTrend(completedSessions);
-          console.log(`📊 Tendência para ${student.name}: ${trend}`);
           
           const lastWorkout = this.getLastWorkoutTime(studentSessions);
-          console.log(`⏰ Último treino para ${student.name}: ${lastWorkout}`);
           
           const result = {
             id: student._id,
@@ -542,7 +502,6 @@ export default {
             currentWorkoutPlan: student.currentWorkoutPlanId
           };
           
-          console.log(`✅ Resultado final para ${student.name}:`, result);
           return result;
           
         } catch (error) {
@@ -880,18 +839,13 @@ export default {
         this.loading = true;
         this.error = null;
         
-        console.log('[DEBUG] Iniciando carregamento do dashboard...');
-        
         // Pegar o ID do usuário logado
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        console.log('[DEBUG] Usuário logado:', user);
         
         const userId = user.id;
         if (!userId) {
           throw new Error('ID do usuário não encontrado. Faça login novamente.');
         }
-        
-        console.log('[DEBUG] UserId:', userId);
         
         // Buscar o instrutor pelo userId
         const instructorsResponse = await api.get('/instructors');
@@ -905,17 +859,13 @@ export default {
         }
         
         const instructorId = currentInstructor._id;
-        console.log('[DEBUG] InstructorId encontrado:', instructorId);
-        console.log('[DEBUG] Dados do instrutor:', currentInstructor.name);
         
         // Buscar estudantes do instrutor
         await this.loadStudents(instructorId);
         
         // Buscar sessões de treino
-        console.log('[DEBUG] Antes de chamar loadWorkoutSessions...');
         try {
           await this.loadWorkoutSessions(instructorId);
-          console.log('[DEBUG] loadWorkoutSessions executada com sucesso');
         } catch (sessionError) {
           console.error('[DEBUG] Erro específico em loadWorkoutSessions:', sessionError);
           console.error('[DEBUG] Stack do erro:', sessionError.stack);
@@ -923,10 +873,6 @@ export default {
         
         // Gerar dados dos gráficos
         this.generateChartData();
-        
-        console.log('[DEBUG] Dashboard carregado com sucesso');
-        console.log('[DEBUG] Estudantes:', this.students.length);
-        console.log('[DEBUG] Sessões:', this.workoutSessions.length);
         
       } catch (error) {
         console.error('[DEBUG] Erro ao carregar dados do dashboard:', error);
@@ -938,24 +884,10 @@ export default {
     
     async loadStudents(instructorId) {
       try {
-        console.log('🔍 DEBUG: Iniciando busca de estudantes...');
-        console.log('👨‍🏫 InstructorId:', instructorId);
-        
         const response = await getStudentsByInstructor(instructorId);
         
-        console.log('📋 DEBUG: Resposta completa da API de estudantes:', response);
-        console.log('📊 Status da resposta:', response?.status);
-        console.log('📈 Headers da resposta:', response?.headers);
-        
         if (response && response.data) {
-          console.log('✅ DEBUG: Dados recebidos da API:');
-          console.log('📊 Tipo de data:', typeof response.data);
-          console.log('📈 É array?', Array.isArray(response.data));
-          console.log('📋 Conteúdo completo:', response.data);
-          
           this.students = Array.isArray(response.data) ? response.data : [];
-          
-          console.log(`👥 DEBUG: ${this.students.length} estudantes processados`);
           
           this.students.forEach((student, index) => {
             console.log(`� DEBUG: Estudante ${index + 1}:`, {
@@ -970,7 +902,6 @@ export default {
           });
         } else {
           console.warn('⚠️ DEBUG: Resposta da API não contém dados válidos');
-          console.log('📊 Response object:', response);
           this.students = [];
         }
       } catch (error) {
@@ -987,32 +918,21 @@ export default {
     
     async loadWorkoutSessions(instructorId) {
       try {
-        console.log('🏋️ Buscando sessões de treino para instructorId:', instructorId);
-        
         if (!instructorId) {
           console.warn('⚠️ ID do instrutor não fornecido');
           this.workoutSessions = [];
           return;
         }
         
-        // Buscar sessões usando a API correta para instrutor
-        console.log('🔗 Fazendo requisição para buscar sessões do instrutor:', instructorId);
         const response = await getInstructorSessions(instructorId);
-        
-        console.log('📊 Resposta completa da API de sessões:', response);
-        console.log('📊 Status da resposta:', response?.status);
-        console.log('📊 Data da resposta:', response?.data);
         
         if (response && response.data) {
           if (response.data.sessions) {
             this.workoutSessions = Array.isArray(response.data.sessions) ? response.data.sessions : [];
-            console.log('🏃‍♂️ Sessões carregadas (via .sessions):', this.workoutSessions.length);
           } else if (Array.isArray(response.data)) {
             this.workoutSessions = response.data;
-            console.log('🏃‍♂️ Sessões carregadas (array direto):', this.workoutSessions.length);
           } else {
             console.warn('⚠️ Resposta da API não contém sessões válidas');
-            console.log('🔍 Estrutura da resposta:', Object.keys(response.data));
             this.workoutSessions = [];
           }
           

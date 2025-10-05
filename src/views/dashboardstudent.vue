@@ -328,11 +328,7 @@ const fetchDashboardData = async () => {
     const userData = JSON.parse(sessionStorage.getItem('user'))
     const userIdFromSession = userData.id || userData.userId
     const token = sessionStorage.getItem('token')
-    
-    console.log('👤 Dados do usuário:', userData)
-    console.log('🆔 UserId do sessionStorage:', userIdFromSession)
-    console.log('🔑 Token no sessionStorage:', token ? 'Presente' : 'Ausente')
-    
+        
     if (!token) {
       console.error('❌ Token não encontrado no sessionStorage!')
       throw new Error('Token de autenticação não encontrado')
@@ -342,22 +338,15 @@ const fetchDashboardData = async () => {
     userName.value = userData.name ? userData.name.split(' ')[0] : 'Atleta'
     
     // IMPORTANTE: Buscar o studentId real do banco de dados
-    console.log('🔍 Buscando studentId real no banco...')
     let realStudentId = null
     let currentStudent = null
     
     try {
-      // Como o aluno não pode acessar /students (só instrutores), 
-      // vamos usar a API específica /students/user/{userId}
-      console.log('📞 Chamando API /students/user/' + userIdFromSession)
       const studentResponse = await api.get(`/students/user/${userIdFromSession}`)
       currentStudent = studentResponse.data
-      
-      console.log('📊 Estudante encontrado:', currentStudent)
-      
+            
       if (currentStudent) {
         realStudentId = currentStudent._id
-        console.log('✅ StudentId real encontrado:', realStudentId)
         
         // Atualizar nome se disponível
         if (currentStudent.name) {
@@ -371,10 +360,7 @@ const fetchDashboardData = async () => {
       console.error('❌ Erro ao buscar estudante:', error)
       throw error
     }
-    
-    // 1. Buscar TODAS as sessões de treino usando o studentId real
-    console.log('🔍 Buscando sessões para studentId:', realStudentId)
-    
+        
     let allSessions = []
     
     try {
@@ -383,30 +369,18 @@ const fetchDashboardData = async () => {
         params: { limit: 1000 }
       })
       
-      console.log('📊 Resposta da API de histórico:', historyResponse.data)
       allSessions = historyResponse.data?.sessions || []
       
-      // Filtrar sessões pelo studentId correto
       allSessions = allSessions.filter(session => {
         const sessionStudentId = session.studentId?._id || session.studentId
         const match = sessionStudentId === realStudentId
-        if (match) {
-          console.log('✅ Sessão encontrada para o estudante:', {
-            sessionId: session._id,
-            workoutName: session.workoutName,
-            studentId: sessionStudentId
-          })
-        }
         return match
       })
       
       if (allSessions.length === 0) {
-        console.log('⚠️ Nenhuma sessão encontrada na API de histórico, tentando API alternativa...')
-        
         // Segunda tentativa: Nova API que busca todas as sessões
         try {
           const allSessionsResponse = await api.get('/workout-sessions/sessions/all')
-          console.log('📊 Resposta da API alternativa:', allSessionsResponse.data)
           const alternativeSessions = allSessionsResponse.data?.sessions || []
           
           // Filtrar pelo studentId correto
@@ -423,36 +397,15 @@ const fetchDashboardData = async () => {
       allSessions = []
     }
     
-    console.log('📈 Total de sessões encontradas para o estudante:', allSessions.length)
-    
     // Filtrar apenas sessões completadas e adicionar logs detalhados
     const completedSessions = allSessions.filter(s => {
       const isCompleted = s.status === 'completed'
-      if (isCompleted) {
-        console.log(`✅ Sessão completada encontrada:`, {
-          id: s._id,
-          name: s.workoutName,
-          division: s.divisionName,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          duration: s.duration,
-          studentId: s.studentId
-        })
-      }
+
       return isCompleted
     })
     
-    console.log('🏆 Total de sessões completadas:', completedSessions.length)
-    
     if (completedSessions.length === 0) {
       console.warn('⚠️ Nenhuma sessão completada encontrada!')
-      console.log('🔍 Verificando se o realStudentId está correto...')
-      console.log('🔍 RealStudentId encontrado:', realStudentId)
-      console.log('🔍 Sessions raw:', allSessions.map(s => ({ 
-        id: s._id, 
-        studentId: s.studentId, 
-        status: s.status 
-      })))
     }
     
     // Calcular estatísticas baseadas em dados reais
@@ -463,27 +416,15 @@ const fetchDashboardData = async () => {
     const sessionsThisWeek = completedSessions.filter(s => {
       const sessionDate = new Date(s.endTime || s.startTime)
       const isThisWeek = sessionDate >= weekAgo
-      if (isThisWeek) {
-        console.log(`📅 Sessão desta semana: ${s.workoutName} em ${sessionDate.toLocaleDateString()}`)
-      }
       return isThisWeek
     })
-    
-    console.log('📊 Sessões desta semana:', sessionsThisWeek.length)
     
     // Calcular total de horas (duration está em minutos)
     const totalMinutes = completedSessions.reduce((sum, s) => {
       const minutes = s.duration || 0
-      console.log(`⏱️ Sessão ${s.workoutName}: ${minutes} minutos`)
       return sum + minutes
     }, 0)
     const totalHours = Math.round(totalMinutes / 60 * 10) / 10 // Arredondar para 1 casa decimal
-    
-    console.log('📊 Cálculos de tempo:', {
-      totalMinutes,
-      totalHours,
-      totalSessions: completedSessions.length
-    })
     
     // Calcular streak
     const streak = calculateStreak(completedSessions)
@@ -499,19 +440,14 @@ const fetchDashboardData = async () => {
       totalHours: totalHours
     }
     
-    console.log('📈 Dashboard stats calculadas:', dashboardData.value)
-    
     // 2. Buscar próximo treino (plano de treino ativo)
     try {
       const workoutsResponse = await api.get('/workout-sessions/workouts')
       const workouts = workoutsResponse.data || []
       
-      console.log('🏋️ Planos de treino encontrados:', workouts.length)
-      
       if (workouts.length > 0) {
         // Pegar o primeiro plano ativo ou o primeiro disponível
         const activePlan = workouts.find(w => w.isActive !== false) || workouts[0]
-        console.log('🎯 Plano ativo selecionado:', activePlan.name)
         
         // Calcular qual divisão fazer baseado no histórico
         const planSessions = completedSessions.filter(s => 
@@ -519,7 +455,6 @@ const fetchDashboardData = async () => {
           s.workoutPlanId === activePlan._id
         )
         
-        console.log('📈 Sessões do plano encontradas:', planSessions.length)
         
         // Determinar próxima divisão baseada no número de treinos completados
         const nextDivisionIndex = planSessions.length % (activePlan.divisions?.length || 1)
@@ -537,17 +472,10 @@ const fetchDashboardData = async () => {
             divisions: [nextDivision] // Para compatibilidade com o template
           }
           
-          console.log('✅ Próximo treino definido:', {
-            planName: nextWorkout.value.name,
-            divisionName: nextWorkout.value.divisionName,
-            exercises: nextDivision.exercises?.length || 0
-          })
         } else {
-          console.log('❌ Nenhuma divisão encontrada no plano')
           nextWorkout.value = null
         }
       } else {
-        console.log('❌ Nenhum plano de treino encontrado')
         nextWorkout.value = null
       }
     } catch (err) {
@@ -558,16 +486,11 @@ const fetchDashboardData = async () => {
     // 3. Processar atividades recentes (apenas sessões realmente completadas)
     recentActivities.value = []
     
-    console.log('📝 Processando atividades recentes...')
-    console.log('📊 Total de sessões completadas:', completedSessions.length)
-    
     // Adicionar últimas sessões completadas (ordenar por data mais recente)
     const recentCompletedSessions = completedSessions
       .filter(s => s.status === 'completed')
       .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))
       .slice(0, 5)
-    
-    console.log('🏋️ Sessões recentes encontradas:', recentCompletedSessions.length)
     
     recentCompletedSessions.forEach((session, index) => {
       const sessionDate = new Date(session.endTime || session.startTime)
@@ -584,19 +507,13 @@ const fetchDashboardData = async () => {
         exercises: session.totalExercises || 0
       })
       
-      console.log(`  ✅ Atividade ${index + 1}: ${title} - ${sessionDate.toLocaleDateString()}`)
     })
-    console.log('✅ Atividades recentes processadas:', recentActivities.value.length)
     
     // 4. Remover metas conforme solicitado pelo usuário
     goals.value = []
-    console.log('🎯 Metas removidas conforme solicitado')
     
     // 5. Configurar calendário semanal (apenas sessões completadas)
     const weekCompletions = Array(7).fill(0)
-    
-    console.log('📅 Configurando calendário semanal...')
-    console.log('📊 Sessões desta semana:', sessionsThisWeek.length)
     
     sessionsThisWeek
       .filter(s => s.status === 'completed')
@@ -606,10 +523,8 @@ const fetchDashboardData = async () => {
         const sessionDay = sessionDate.getDay()
         weekCompletions[sessionDay] = 1
         
-        console.log(`  📅 Treino em ${sessionDate.toLocaleDateString()} (${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][sessionDay]})`)
       })
     
-    console.log('📅 Dias com treino:', weekCompletions.map((day, i) => day ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i] : null).filter(Boolean))
     generateWeekCalendar(weekCompletions)
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error)
@@ -632,11 +547,8 @@ const fetchDashboardData = async () => {
 
 const calculateStreak = (sessions) => {
   if (!sessions || sessions.length === 0) {
-    console.log('🔥 Nenhuma sessão para calcular streak')
     return 0
   }
-  
-  console.log('🔥 Calculando streak com', sessions.length, 'sessões')
   
   // Ordenar por data mais recente (usar endTime se disponível, senão startTime)
   const sortedSessions = [...sessions].sort((a, b) => {
@@ -644,9 +556,6 @@ const calculateStreak = (sessions) => {
     const dateB = new Date(b.endTime || b.startTime)
     return dateB - dateA
   })
-  
-  console.log('📅 Primeira sessão:', new Date(sortedSessions[0].endTime || sortedSessions[0].startTime).toLocaleDateString())
-  console.log('📅 Última sessão:', new Date(sortedSessions[sortedSessions.length - 1].endTime || sortedSessions[sortedSessions.length - 1].startTime).toLocaleDateString())
   
   let streak = 0
   let currentDate = new Date()
@@ -667,25 +576,19 @@ const calculateStreak = (sessions) => {
     
     const daysDiff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24))
     
-    console.log(`📅 Verificando dia: ${sessionDate.toLocaleDateString()}, diferença: ${daysDiff} dias`)
-    
     if (daysDiff === streak) {
       streak++
       currentDate = sessionDate
-      console.log(`🔥 Streak aumentou para: ${streak}`)
     } else if (daysDiff === streak + 1) {
       // Dia consecutivo
       streak++
       currentDate = sessionDate
-      console.log(`🔥 Dia consecutivo, streak: ${streak}`)
     } else if (daysDiff > streak + 1) {
       // Gap maior que 1 dia, quebra a sequência
-      console.log('💔 Sequência quebrada por gap de', daysDiff, 'dias')
       break
     }
   }
   
-  console.log('🔥 Streak final calculado:', streak)
   return streak
 }
 

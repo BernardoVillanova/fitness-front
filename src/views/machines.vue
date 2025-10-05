@@ -543,33 +543,35 @@ export default {
     };
   },
   async created() {
-    console.log('🔵 [machines.vue] created() iniciado');
-    console.log('🔵 [machines.vue] user do store:', this.user);
-    console.log('🔵 [machines.vue] sessionStorage user:', sessionStorage.getItem('user'));
     console.log('🔵 [machines.vue] sessionStorage token:', sessionStorage.getItem('token'));
-    
-    // Aguardar um tick para garantir que o store está atualizado
+  },
+  async mounted() {
     await this.$nextTick();
     
-    await this.fetchInstructorId();
-    console.log('🔵 [machines.vue] instructorId após fetch:', this.instructorId);
-    if (this.instructorId) {
-      await this.fetchEquipments();
-    } else {
-      console.error('❌ [machines.vue] instructorId está null após fetchInstructorId');
-      console.error('❌ [machines.vue] Tentando novamente em 1 segundo...');
+    await this.loadData();
+  },
+  async loadData() {    
+    try {
+      // Primeiro, garantir que temos o instructorId
+      await this.fetchInstructorId();
       
-      // Tentar novamente após 1 segundo (pode ser que o store ainda esteja inicializando)
+      if (this.instructorId) {
+        await this.fetchEquipments();
+      } else {
+        console.warn('⚠️ [loadData] instructorId não encontrado, tentando novamente...');
+        
+        // Tentar novamente após um pequeno delay
+        setTimeout(async () => {
+          await this.loadData();
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('[loadData] Erro:', error);
+      
+      // Tentar uma última vez após delay maior
       setTimeout(async () => {
-        console.log('🔄 [machines.vue] Tentativa 2 de fetchInstructorId');
-        await this.fetchInstructorId();
-        if (this.instructorId) {
-          console.log('✅ [machines.vue] instructorId carregado na segunda tentativa:', this.instructorId);
-          await this.fetchEquipments();
-        } else {
-          console.error('❌ [machines.vue] instructorId continua null após segunda tentativa');
-        }
-      }, 1000);
+        await this.loadData();
+      }, 3000);
     }
   },
   computed: {
@@ -595,50 +597,95 @@ export default {
     },
   },
   watch: {
-    // Observar mudanças no user e buscar instructorId se ainda não tiver
+    // Observar mudanças no user e carregar dados se necessário
     user: {
       handler(newUser) {
-        console.log('👁️ [watch user] User mudou:', newUser);
         const userId = newUser?.userId || newUser?.id;
         if (newUser && userId && !this.instructorId) {
-          console.log('👁️ [watch user] User disponível e instructorId null, buscando...');
-          this.fetchInstructorId();
+          this.loadData();
         }
       },
       deep: true,
+      immediate: true
+    },
+    // Observar mudanças no instructorId e carregar equipamentos
+    instructorId: {
+      handler(newInstructorId) {
+        if (newInstructorId && this.machines.length === 0) {
+          this.fetchEquipments();
+        }
+      },
       immediate: false
     }
   },
   methods: {
-    async fetchInstructorId() {
-      console.log('🟢 [fetchInstructorId] Iniciando busca do instructorId');
-      console.log('🟢 [fetchInstructorId] this.user:', this.user);
-      
+    async loadData() {
       try {
+        // Primeiro, garantir que temos o instructorId
+        await this.fetchInstructorId();
+        
+        if (this.instructorId) {
+          await this.fetchEquipments();
+        } else {
+          console.warn('[loadData] instructorId não encontrado, tentando novamente...');
+          
+          // Tentar novamente após um pequeno delay
+          setTimeout(async () => {
+            await this.loadData();
+          }, 1500);
+        }
+      } catch (error) {
+        console.error('[loadData] Erro:', error);
+        
+        // Tentar uma última vez após delay maior
+        setTimeout(async () => {
+          await this.loadData();
+        }, 3000);
+      }
+    },
+    async fetchInstructorId() {
+      try {
+        // Se já temos instructorId, não precisa buscar novamente
+        if (this.instructorId) {
+          return;
+        }
+        
+        // Primeira tentativa: user do store
+        let userData = this.user;
+        
+        // Segunda tentativa: sessionStorage
+        if (!userData || (!userData.userId && !userData.id)) {
+          const storedUser = sessionStorage.getItem('user');
+          if (storedUser) {
+            try {
+              userData = JSON.parse(storedUser);
+            } catch (e) {
+              console.error('[fetchInstructorId] Erro ao parsear user do sessionStorage:', e);
+            }
+          }
+        }
+        
         // Se já tiver instructorId no user (vem do login), usar direto
-        if (this.user && this.user.instructorId) {
-          console.log('✅ [fetchInstructorId] instructorId já existe no user:', this.user.instructorId);
-          this.instructorId = this.user.instructorId;
+        if (userData && userData.instructorId) {
+          this.instructorId = userData.instructorId;
           return;
         }
         
         // Caso contrário, buscar usando userId ou id
-        const userId = this.user?.userId || this.user?.id;
-        console.log('🟢 [fetchInstructorId] userId extraído:', userId);
+        const userId = userData?.userId || userData?.id;
         
-        if (this.user && userId) {
-          console.log('🟢 [fetchInstructorId] Fazendo GET /instructors/user/' + userId);
+        if (userData && userId) {
           const response = await api.get(`/instructors/user/${userId}`);
-          console.log('🟢 [fetchInstructorId] Resposta da API:', response.data);
           this.instructorId = response.data._id;
-          console.log('✅ [fetchInstructorId] instructorId definido:', this.instructorId);
         } else {
-          console.error('❌ [fetchInstructorId] user ou userId não existe');
-          console.error('❌ [fetchInstructorId] this.user:', this.user);
+          console.error('[fetchInstructorId] user ou userId não existe');
+          console.error('[fetchInstructorId] userData:', userData);
+          throw new Error('Dados de usuário não encontrados');
         }
       } catch (error) {
-        console.error('❌ [fetchInstructorId] Erro ao buscar instrutor:', error);
-        console.error('❌ [fetchInstructorId] Error response:', error.response?.data);
+        console.error('[fetchInstructorId] Erro ao buscar instrutor:', error);
+        console.error('[fetchInstructorId] Error response:', error.response?.data);
+        throw error;
       }
     },
     async fetchEquipments() {
@@ -698,10 +745,6 @@ export default {
       return labels[difficulty] || difficulty;
     },
     async openCreateMachineModal() {
-      console.log('🟣 [openCreateMachineModal] Abrindo modal');
-      console.log('🟣 [openCreateMachineModal] instructorId atual:', this.instructorId);
-      console.log('🟣 [openCreateMachineModal] user atual:', this.user);
-      
       // Se instructorId não existe, tentar buscar novamente
       if (!this.instructorId) {
         console.warn('⚠️ [openCreateMachineModal] instructorId está null, tentando buscar novamente...');
@@ -751,9 +794,6 @@ export default {
     },
     async saveEditedMachine() {
       try {
-        console.log('🔵 [saveEditedMachine] Iniciando salvamento');
-        console.log('🔵 [saveEditedMachine] Dados:', this.editingMachine);
-        
         const updateData = {
           name: this.editingMachine.name,
           description: this.editingMachine.description || '',
@@ -766,11 +806,8 @@ export default {
 
         // Se houver nova imagem (base64), adicionar ao payload
         if (this.editingMachine.newImageBase64) {
-          console.log('🟢 [saveEditedMachine] Nova imagem detectada, enviando base64');
           updateData.imageBase64 = this.editingMachine.newImageBase64;
         }
-
-        console.log('🟣 [saveEditedMachine] Enviando para API:', updateData);
 
         const response = await api.put(`/equipments/${this.editingMachine._id}`, updateData);
         
@@ -801,7 +838,6 @@ export default {
     handleImageEdit(event) {
       const file = event.target.files[0];
       if (file) {
-        console.log('🖼️ [handleImageEdit] Processando nova imagem');
         
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -840,8 +876,6 @@ export default {
             // Atualizar preview e armazenar base64 para envio
             this.editingMachine.image = base64;
             this.editingMachine.newImageBase64 = base64;
-            
-            console.log('✅ [handleImageEdit] Imagem processada e convertida para base64');
           };
           img.src = e.target.result;
         };

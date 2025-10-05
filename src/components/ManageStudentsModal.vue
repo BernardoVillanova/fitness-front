@@ -211,44 +211,28 @@ export default {
     const studentsPerPage = 5;
 
     // Computed
-    const filteredAvailableStudents = computed(() => {
-      console.log('\n🔍 Computing filteredAvailableStudents...');
-      console.log('🔍 Search query:', searchQuery.value || '<EMPTY>');
-      console.log('🔍 Available students:', availableStudents.value);
-      console.log('🔍 Available students length:', availableStudents.value.length);
-      console.log('🔍 Available students type:', typeof availableStudents.value);
-      console.log('🔍 Is available students array?', Array.isArray(availableStudents.value));
-      
+    const filteredAvailableStudents = computed(() => {      
       if (!Array.isArray(availableStudents.value)) {
-        console.log('🔍 ⚠️ Available students is not an array!');
         return [];
       }
       
       if (availableStudents.value.length === 0) {
-        console.log('🔍 ⚠️ Available students array is empty!');
         return [];
       }
       
       if (!searchQuery.value || searchQuery.value.trim() === '') {
-        console.log('No search query, returning all', availableStudents.value.length, 'available students');
-        console.log('Students being returned:', availableStudents.value.map(s => s.userId?.name || 'Unnamed'));
         return availableStudents.value;
       }
       
       const query = searchQuery.value.toLowerCase();
-      console.log('🔍 Filtering with query:', query);
       
       const filtered = availableStudents.value.filter(student => {
         const matchesName = (student.userId?.name || '').toLowerCase().includes(query);
         const matchesEmail = (student.userId?.email || '').toLowerCase().includes(query);
         const matches = matchesName || matchesEmail;
-        console.log(`Student ${student.userId?.name}: name match=${matchesName}, email match=${matchesEmail}, final=${matches}`);
         return matches;
       });
       
-      console.log('🔍 Filtered students:', filtered);
-      console.log('🔍 Filtered count:', filtered.length);
-      console.log('=== END filteredAvailableStudents ===\n');
       return filtered;
     });
 
@@ -264,48 +248,23 @@ export default {
 
     // Watch
     watch(() => props.show, async (isOpen) => {
-      console.log('\n=== MODAL SHOW STATE CHANGED ===');
-      console.log('📺 Modal show state:', isOpen);
-      console.log('📍 Plan object:', props.plan);
-      console.log('📍 Plan ID:', props.plan?._id);
-      console.log('📍 Plan name:', props.plan?.name);
       
       if (isOpen && props.plan && props.plan._id) {
-        console.log('\n🚀 MODAL OPENED - STARTING DATA LOAD');
-        console.log('📈 Available students BEFORE load:', availableStudents.value.length);
-        console.log('📈 Assigned students BEFORE load:', assignedStudents.value.length);
         
-        // Aguardar o carregamento de dados
-        console.log('🔄 Awaiting loadStudentData...');
         await loadStudentData();
-        console.log('🏁 loadStudentData completed!');
-        
-        console.log('\n📈 FINAL RESULTS AFTER LOAD:');
-        console.log('📈 Available students AFTER load:', availableStudents.value.length);
-        console.log('📈 Assigned students AFTER load:', assignedStudents.value.length);
-        console.log('📈 Available students names:', availableStudents.value.map(s => s.userId?.name || 'Unnamed'));
-        console.log('📈 Assigned students names:', assignedStudents.value.map(s => s.userId?.name || 'Unnamed'));
       } else {
-        console.log('\n📴 MODAL CLOSED OR NO PLAN - RESETTING');
         if (!isOpen) {
-          console.log('🔄 Resetting modal state...');
           searchQuery.value = '';
           currentPage.value = 1;
           processingStudents.value = [];
           availableStudents.value = [];
           assignedStudents.value = [];
-          console.log('🔄 State reset completed');
-        } else {
-          console.log('⚠️ Modal opened but no plan or plan ID!');
         }
       }
-      console.log('=== END MODAL STATE CHANGE ===\n');
     });
 
     watch(searchQuery, () => {
-      console.log('🔍 Search query changed to:', searchQuery.value);
       currentPage.value = 1;
-      console.log('🔍 Reset currentPage to 1');
     });
 
     // Methods
@@ -319,30 +278,18 @@ export default {
     };
 
     const onSearchInput = () => {
-      console.log('🔍 Search input changed:', searchQuery.value);
-      console.log('🔍 Available students count:', availableStudents.value.length);
       console.log('🔍 Filtered students count:', filteredAvailableStudents.value.length);
     };
 
     const loadStudentData = async () => {
-      console.log('=== LOADING STUDENT DATA ===');
-      console.log('Plan object:', props.plan);
-      console.log('Plan ID:', props.plan._id);
-      console.log('Plan name:', props.plan.name);
       
       try {
         // Load assigned students first, then available students
         // This ensures proper filtering
-        console.log('🔄 Step 1: Loading assigned students...');
         await loadAssignedStudents();
         
-        console.log('🔄 Step 2: Loading available students...');
         await loadAvailableStudents();
         
-        console.log('=== STUDENT DATA LOADED SUCCESSFULLY ===');
-        console.log('📊 Final summary:');
-        console.log(`📊 Assigned students: ${assignedStudents.value.length}`);
-        console.log(`📊 Available students: ${availableStudents.value.length}`);
       } catch (error) {
         console.error('=== ERROR LOADING STUDENT DATA ===', error);
       }
@@ -351,11 +298,9 @@ export default {
     const loadAssignedStudents = async () => {
       try {
         loadingAssigned.value = true;
-        console.log('🔍 Fetching assigned students for plan:', props.plan._id);
         
         const token = sessionStorage.getItem('token');
         const url = `http://localhost:3000/api/workout-plans/${props.plan._id}/students`;
-        console.log('📡 Making request to:', url);
         
         const response = await fetch(url, {
           headers: {
@@ -364,20 +309,13 @@ export default {
           }
         });
         
-        console.log('✅ Assigned students response status:', response.status);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ Assigned students response data:', data);
-          console.log('✅ Type of response data:', typeof data);
-          console.log('✅ Is array?', Array.isArray(data));
           
           // A resposta vem diretamente como array de alunos
           assignedStudents.value = data || [];
-          console.log('✅ Final assignedStudents array:', assignedStudents.value);
-          console.log('✅ assignedStudents length:', assignedStudents.value.length);
         } else if (response.status === 404) {
-          console.log('⚠️ 404 - No students found for this plan');
           assignedStudents.value = [];
         } else {
           console.error('❌ Failed to fetch assigned students:', response.status);
@@ -386,22 +324,18 @@ export default {
         
       } catch (error) {
         console.error('❌ Error loading assigned students:', error);
-        console.log('⚠️ Setting empty array due to error');
         assignedStudents.value = [];
       } finally {
         loadingAssigned.value = false;
-        console.log('🏁 loadingAssigned set to false');
       }
     };
 
     const loadAvailableStudents = async () => {
       try {
-        console.log('\n=== 🚀 STARTING LOAD AVAILABLE STUDENTS ===');
         loadingAvailable.value = true;
         
         // Pegar dados do usuário logado
         const userData = JSON.parse(sessionStorage.getItem('user'));
-        console.log('DEBUG 1: UserData from session:', userData);
         
         if (!userData || !userData.instructorId) {
           console.error('DEBUG ERROR: Dados do instrutor não encontrados no token');
@@ -410,10 +344,7 @@ export default {
         }
         
         const userId = userData.id;
-        console.log('� User ID:', userId);
         
-        // Buscar o instrutor pelo userId usando a lista de instrutores
-        console.log('🔍 Fetching instructors...');
         const instructorsResponse = await fetch('http://localhost:3000/api/instructors', {
           headers: {
             'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
@@ -426,29 +357,22 @@ export default {
         }
         
         const allInstructors = await instructorsResponse.json();
-        console.log('� All instructors:', allInstructors);
         
         // Encontrar o instrutor que corresponde ao userId
         const currentInstructor = allInstructors.find(
           inst => inst.userId === userId || inst.userId?._id === userId
         );
         
-        console.log('DEBUG 2: Looking for instructor with userId:', userId);
-        console.log('DEBUG 3: Available instructors:', allInstructors.map(i => ({ id: i._id, userId: i.userId })));
-        console.log('DEBUG 4: Found instructor:', currentInstructor);
         
         if (!currentInstructor) {
-          console.log('DEBUG ERROR: Instrutor não encontrado para o userId:', userId);
           availableStudents.value = [];
           return;
         }
         
         const instructorId = currentInstructor._id;
-        console.log('🔍 Instructor ID encontrado:', instructorId);
         
         // Buscar apenas alunos deste instrutor usando a rota específica
         const url = `http://localhost:3000/api/students/instructor/${instructorId}`;
-        console.log('📡 Making fetch request to:', url);
         
         const response = await fetch(url, {
           headers: {
@@ -457,43 +381,22 @@ export default {
           }
         });
         
-        console.log('\n📬 RESPONSE RECEIVED!');
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        
         if (response.ok) {
-          console.log('DEBUG 5: Parsing JSON response...');
           const allStudents = await response.json();
-          
-          console.log('DEBUG 6: Raw response data:', allStudents);
-          console.log('DEBUG 7: Response type:', typeof allStudents);
-          console.log('DEBUG 8: Is response an array:', Array.isArray(allStudents));
-          console.log('DEBUG 9: Response length:', allStudents?.length || 'NO LENGTH PROPERTY');
-          
+                    
           if (Array.isArray(allStudents) && allStudents.length > 0) {
             console.log('DEBUG 10: First student sample:', allStudents[0]);
           }
-          
-          console.log('DEBUG 11: Current assigned students for filtering:', assignedStudents.value);
-          console.log('DEBUG 12: Assigned students count:', assignedStudents.value.length);
-          
+                    
           // Filter out students already assigned to this plan
           const filtered = allStudents.filter(student => {
             const isAssigned = assignedStudents.value.some(assigned => assigned._id === student._id);
-            console.log(`DEBUG FILTER: Student ${student.userId?.name || student.name} (${student._id}) - Already assigned: ${isAssigned ? 'YES' : 'NO'}`);
             return !isAssigned;
           });
-          
-          console.log('DEBUG 13: Filtered students:', filtered);
-          console.log('DEBUG 14: Filtered count:', filtered.length);
-          
+                    
           availableStudents.value = filtered;
-          
-          console.log('DEBUG 15: availableStudents.value set to:', availableStudents.value);
-          console.log('DEBUG 16: availableStudents.value length:', availableStudents.value.length);
-          
+                    
         } else if (response.status === 404) {
-          console.log('DEBUG ERROR: 404 - No students found for this instructor');
           availableStudents.value = [];
         } else {
           console.error('DEBUG ERROR: HTTP ERROR!');
@@ -510,22 +413,16 @@ export default {
         availableStudents.value = [];
       } finally {
         loadingAvailable.value = false;
-        console.log('loadingAvailable set to false');
-        console.log('=== END LOAD AVAILABLE STUDENTS ===');
       }
     };
 
     const addStudent = async (studentId) => {
       try {
-        console.log('➕ Adding student to plan:', { studentId, planId: props.plan._id });
         
         processingStudents.value.push(studentId);
-        console.log('⏳ Added to processing:', processingStudents.value);
         
         const payload = { workoutPlanId: props.plan._id };
         const url = `http://localhost:3000/api/students/${studentId}/assign-workout-plan`;
-        console.log('📡 POST request to:', url);
-        console.log('📡 Payload:', payload);
         
         const token = sessionStorage.getItem('token');
         const response = await fetch(url, {
@@ -536,17 +433,13 @@ export default {
           },
           body: JSON.stringify(payload)
         });
-        
-        console.log('✅ Student assignment response status:', response.status);
-        
+                
         if (response.ok) {
           const data = await response.json();
           console.log('✅ Student assignment response data:', data);
           
-          console.log('🔄 Reloading student data after assignment...');
           await loadStudentData();
           
-          console.log('📢 Emitting update event to parent');
           emit('updated');
         } else {
           console.error('❌ Failed to assign student:', response.status);
@@ -559,21 +452,15 @@ export default {
         console.error('❌ Error data:', error.response?.data);
       } finally {
         processingStudents.value = processingStudents.value.filter(id => id !== studentId);
-        console.log('🏁 Removed from processing:', processingStudents.value);
       }
     };
 
     const removeStudent = async (studentId) => {
-      try {
-        console.log('➖ Removing student from plan:', { studentId, planId: props.plan._id });
-        
+      try {        
         processingStudents.value.push(studentId);
-        console.log('⏳ Added to processing:', processingStudents.value);
         
         const payload = { workoutPlanId: null };
         const url = `http://localhost:3000/api/students/${studentId}/assign-workout-plan`;
-        console.log('📡 POST request to:', url);
-        console.log('📡 Payload:', payload);
         
         const token = sessionStorage.getItem('token');
         const response = await fetch(url, {
@@ -584,17 +471,12 @@ export default {
           },
           body: JSON.stringify(payload)
         });
-        
-        console.log('✅ Student removal response status:', response.status);
-        
+                
         if (response.ok) {
           const data = await response.json();
           console.log('✅ Student removal response data:', data);
           
-          console.log('🔄 Reloading student data after removal...');
-          await loadStudentData();
-          
-          console.log('📢 Emitting update event to parent');
+          await loadStudentData();          
           emit('updated');
         } else {
           console.error('❌ Failed to remove student:', response.status);
@@ -607,7 +489,6 @@ export default {
         console.error('❌ Error data:', error.response?.data);
       } finally {
         processingStudents.value = processingStudents.value.filter(id => id !== studentId);
-        console.log('🏁 Removed from processing:', processingStudents.value);
       }
     };
 
