@@ -533,7 +533,9 @@ export default {
           { label: 'Perda de Peso Total', value: '0kg', percentage: 0 },
           { label: 'Total de Treinos Concluídos', value: '0', percentage: 0 },
           { label: 'Aumento de Carga (Média)', value: '0%', percentage: 0 },
-          { label: 'Taxa de Adesão', value: '0%', percentage: 0 }
+          { label: 'Taxa de Adesão', value: '0%', percentage: 0 },
+          { label: 'Eficiência dos Treinos', value: '0%', percentage: 0 },
+          { label: 'Volume Peso Corporal', value: '0%', percentage: 0 }
         ];
       }
       
@@ -541,6 +543,8 @@ export default {
       const totalCompletedWorkouts = this.workoutSessions.filter(s => s.status === 'completed').length;
       const averageLoadIncrease = this.calculateAverageLoadIncrease();
       const adherenceRate = this.calculateOverallAdherence();
+      const workoutEfficiency = this.calculateWorkoutEfficiency();
+      const bodyweightRatio = this.calculateBodyweightExerciseRatio();
       
       return [
         { 
@@ -562,6 +566,16 @@ export default {
           label: 'Taxa de Adesão', 
           value: `${adherenceRate.toFixed(0)}%`, 
           percentage: adherenceRate 
+        },
+        { 
+          label: 'Eficiência dos Treinos', 
+          value: `${workoutEfficiency.toFixed(0)}%`, 
+          percentage: workoutEfficiency 
+        },
+        { 
+          label: 'Volume Peso Corporal', 
+          value: `${bodyweightRatio.toFixed(0)}%`, 
+          percentage: bodyweightRatio 
         }
       ];
     },
@@ -575,7 +589,7 @@ export default {
       
       const achievements = [];
       
-      // Verificar conquistas dos estudantes
+      // Verificar conquistas dos estudantes baseadas em dados reais
       this.studentsData.forEach(student => {
         if (student.totalSessions > 0 && student.totalSessions % 10 === 0) {
           achievements.push({
@@ -598,6 +612,41 @@ export default {
             id: `adherence_${student.id}`,
             student: student.name.split(' ')[0],
             description: `mantém 90%+ de aderência!`
+          });
+        }
+        
+        // Verificar conquistas baseadas nas sessões reais do aluno
+        const studentSessions = this.workoutSessions.filter(s => 
+          s.studentId === student._id && s.status === 'completed'
+        );
+        
+        // Conquista por alta performance
+        const highPerformanceSessions = studentSessions.filter(session => {
+          if (!session.exercises) return false;
+          const avgDifficulty = this.calculateSessionAverageDifficulty(session);
+          return avgDifficulty >= 4;
+        });
+        
+        if (highPerformanceSessions.length >= 5) {
+          achievements.push({
+            id: `performance_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `mantém treinos intensos!`
+          });
+        }
+        
+        // Conquista por consistência nos exercícios
+        const recentSessions = studentSessions.slice(-10); // Últimas 10 sessões
+        const consistentSessions = recentSessions.filter(session => {
+          if (!session.exercises) return false;
+          return this.calculateSessionConsistency(session) >= 85;
+        });
+        
+        if (consistentSessions.length >= 8) {
+          achievements.push({
+            id: `consistency_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `muito consistente nos exercícios!`
           });
         }
       });
@@ -1122,7 +1171,7 @@ export default {
     },
     
     calculateAverageLoadIncrease() {
-      // Calcular aumento médio de carga baseado nas sessões
+      // Calcular aumento médio de carga baseado nas sessões REAIS
       const increases = [];
       
       this.students.forEach(student => {
@@ -1132,12 +1181,19 @@ export default {
         
         if (studentSessions.length >= 2) {
           const sorted = studentSessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-          const first = sorted[0];
-          const last = sorted[sorted.length - 1];
           
-          if (first.totalVolume && last.totalVolume && first.totalVolume > 0) {
-            const increase = ((last.totalVolume - first.totalVolume) / first.totalVolume) * 100;
-            increases.push(increase);
+          // Pegar sessões com pelo menos 30 dias de diferença para medir progressão
+          for (let i = 0; i < sorted.length - 1; i++) {
+            const first = sorted[i];
+            const last = sorted[sorted.length - 1];
+            
+            const daysDiff = (new Date(last.startTime) - new Date(first.startTime)) / (1000 * 60 * 60 * 24);
+            
+            if (daysDiff >= 30 && first.totalVolume && last.totalVolume && first.totalVolume > 0) {
+              const increase = ((last.totalVolume - first.totalVolume) / first.totalVolume) * 100;
+              increases.push(increase);
+              break; // Usar apenas a primeira comparação válida
+            }
           }
         }
       });
@@ -1146,11 +1202,274 @@ export default {
         increases.reduce((sum, inc) => sum + inc, 0) / increases.length : 0;
     },
     
+    calculateWeightProgression() {
+      // Calcular progressão de peso baseada nos dados REAIS dos exercícios
+      const progressions = [];
+      
+      this.students.forEach(student => {
+        const studentSessions = this.workoutSessions.filter(session => 
+          session.studentId === student._id && 
+          session.status === 'completed' &&
+          session.exercises && 
+          session.exercises.length > 0
+        );
+        
+        if (studentSessions.length >= 2) {
+          // Agrupar por exercício
+          const exerciseProgressions = {};
+          
+          studentSessions.forEach(session => {
+            session.exercises.forEach(exercise => {
+              const exerciseName = exercise.exerciseName;
+              
+              if (!exerciseProgressions[exerciseName]) {
+                exerciseProgressions[exerciseName] = [];
+              }
+              
+              // Pegar peso máximo da sessão para este exercício
+              let maxWeight = 0;
+              exercise.sets.forEach(set => {
+                if (set.completed && set.weight) {
+                  const actualWeight = set.isBodyWeight ? session.studentWeight : set.weight;
+                  maxWeight = Math.max(maxWeight, actualWeight);
+                }
+              });
+              
+              if (maxWeight > 0) {
+                exerciseProgressions[exerciseName].push({
+                  date: new Date(session.startTime),
+                  weight: maxWeight,
+                  isBodyWeight: exercise.sets.some(s => s.isBodyWeight)
+                });
+              }
+            });
+          });
+          
+          // Calcular progressão para cada exercício
+          Object.keys(exerciseProgressions).forEach(exerciseName => {
+            const records = exerciseProgressions[exerciseName]
+              .sort((a, b) => a.date - b.date);
+            
+            if (records.length >= 2) {
+              const first = records[0];
+              const last = records[records.length - 1];
+              const daysDiff = (last.date - first.date) / (1000 * 60 * 60 * 24);
+              
+              // Só considerar se há pelo menos 14 dias de diferença
+              if (daysDiff >= 14 && first.weight > 0) {
+                const progression = ((last.weight - first.weight) / first.weight) * 100;
+                progressions.push({
+                  student: student.name,
+                  exercise: exerciseName,
+                  progression: progression,
+                  from: first.weight,
+                  to: last.weight,
+                  isBodyWeight: first.isBodyWeight
+                });
+              }
+            }
+          });
+        }
+      });
+      
+      return progressions;
+    },
+    
     calculateOverallAdherence() {
       if (this.students.length === 0) return 0;
       
       const adherences = this.studentsData.map(student => student.adherence);
       return adherences.reduce((sum, adh) => sum + adh, 0) / adherences.length;
+    },
+    
+    calculateWorkoutEfficiency() {
+      // Calcular eficiência baseada em actualReps vs plannedReps e tempo de descanso
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      
+      if (completedSessions.length === 0) return 0;
+      
+      let totalEfficiency = 0;
+      let validSessions = 0;
+      
+      completedSessions.forEach(session => {
+        if (session.exercises && session.exercises.length > 0) {
+          let sessionEfficiency = 0;
+          let validExercises = 0;
+          
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && exercise.sets.length > 0) {
+              exercise.sets.forEach(set => {
+                if (set.actualReps && set.plannedReps && set.plannedReps > 0) {
+                  // Calcular eficiência de repetições (actualReps / plannedReps)
+                  const repsEfficiency = Math.min((set.actualReps / set.plannedReps), 1.5); // Cap em 150%
+                  
+                  // Ajustar pela dificuldade (difficulty 1-5, onde 3 é ideal)
+                  let difficultyFactor = 1;
+                  if (set.difficulty) {
+                    if (set.difficulty === 3) difficultyFactor = 1; // Dificuldade ideal
+                    else if (set.difficulty < 3) difficultyFactor = 0.8; // Muito fácil
+                    else if (set.difficulty > 3) difficultyFactor = 1.1; // Mais desafiador
+                  }
+                  
+                  // Considerar tempo de descanso se disponível
+                  let restFactor = 1;
+                  if (set.restTimeTaken && set.plannedRestTime) {
+                    const restRatio = set.restTimeTaken / set.plannedRestTime;
+                    if (restRatio <= 1.2) restFactor = 1; // Dentro do esperado
+                    else restFactor = 0.9; // Descanso excessivo
+                  }
+                  
+                  sessionEfficiency += (repsEfficiency * difficultyFactor * restFactor);
+                  validExercises++;
+                }
+              });
+            }
+          });
+          
+          if (validExercises > 0) {
+            totalEfficiency += (sessionEfficiency / validExercises) * 100;
+            validSessions++;
+          }
+        }
+      });
+      
+      return validSessions > 0 ? totalEfficiency / validSessions : 0;
+    },
+    
+    calculateAveragePerformance() {
+      // Calcular desempenho médio baseado na dificuldade dos exercícios
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      
+      if (completedSessions.length === 0) return 0;
+      
+      let totalDifficulty = 0;
+      let totalSets = 0;
+      
+      completedSessions.forEach(session => {
+        if (session.exercises && session.exercises.length > 0) {
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && exercise.sets.length > 0) {
+              exercise.sets.forEach(set => {
+                if (set.difficulty && set.difficulty >= 1 && set.difficulty <= 5) {
+                  totalDifficulty += set.difficulty;
+                  totalSets++;
+                }
+              });
+            }
+          });
+        }
+      });
+      
+      return totalSets > 0 ? totalDifficulty / totalSets : 0;
+    },
+    
+    calculateBodyweightExerciseRatio() {
+      // Calcular proporção de exercícios com peso corporal vs peso externo
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      
+      if (completedSessions.length === 0) return 0;
+      
+      let bodyweightVolume = 0;
+      let externalWeightVolume = 0;
+      
+      completedSessions.forEach(session => {
+        if (session.exercises && session.exercises.length > 0) {
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && exercise.sets.length > 0) {
+              exercise.sets.forEach(set => {
+                if (set.actualReps && set.weight) {
+                  const setVolume = set.actualReps * set.weight;
+                  
+                  if (set.isBodyWeight) {
+                    // Para exercícios de peso corporal, usar o peso do aluno
+                    const studentWeight = session.studentWeight || 70; // Peso padrão se não disponível
+                    bodyweightVolume += set.actualReps * studentWeight;
+                  } else {
+                    // Exercícios com peso externo
+                    externalWeightVolume += setVolume;
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+      
+      const totalVolume = bodyweightVolume + externalWeightVolume;
+      return totalVolume > 0 ? (bodyweightVolume / totalVolume) * 100 : 0;
+    },
+    
+    calculateEnhancedVolumeProgression() {
+      // Calcular progressão de volume separando peso corporal de peso externo
+      const progressions = [];
+      
+      this.students.forEach(student => {
+        const studentSessions = this.workoutSessions.filter(session => 
+          session.studentId === student._id && session.status === 'completed'
+        );
+        
+        if (studentSessions.length >= 2) {
+          const sorted = studentSessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+          
+          for (let i = 0; i < sorted.length - 1; i++) {
+            const first = sorted[i];
+            const last = sorted[sorted.length - 1];
+            
+            const daysDiff = (new Date(last.startTime) - new Date(first.startTime)) / (1000 * 60 * 60 * 24);
+            
+            if (daysDiff >= 30) {
+              // Calcular volume separado por tipo
+              const firstVolumes = this.calculateSessionVolumeBreakdown(first);
+              const lastVolumes = this.calculateSessionVolumeBreakdown(last);
+              
+              if (firstVolumes.total > 0 && lastVolumes.total > 0) {
+                progressions.push({
+                  studentId: student._id,
+                  studentName: student.name,
+                  daysDifference: Math.round(daysDiff),
+                  totalVolumeProgress: ((lastVolumes.total - firstVolumes.total) / firstVolumes.total) * 100,
+                  bodyweightVolumeProgress: firstVolumes.bodyweight > 0 ? 
+                    ((lastVolumes.bodyweight - firstVolumes.bodyweight) / firstVolumes.bodyweight) * 100 : 0,
+                  externalWeightVolumeProgress: firstVolumes.external > 0 ? 
+                    ((lastVolumes.external - firstVolumes.external) / firstVolumes.external) * 100 : 0
+                });
+              }
+              break;
+            }
+          }
+        }
+      });
+      
+      return progressions;
+    },
+    
+    calculateSessionVolumeBreakdown(session) {
+      // Calcular breakdown de volume da sessão por tipo de peso
+      let bodyweightVolume = 0;
+      let externalWeightVolume = 0;
+      
+      if (session.exercises && session.exercises.length > 0) {
+        session.exercises.forEach(exercise => {
+          if (exercise.sets && exercise.sets.length > 0) {
+            exercise.sets.forEach(set => {
+              if (set.actualReps && set.weight) {
+                if (set.isBodyWeight) {
+                  const studentWeight = session.studentWeight || 70;
+                  bodyweightVolume += set.actualReps * studentWeight;
+                } else {
+                  externalWeightVolume += set.actualReps * set.weight;
+                }
+              }
+            });
+          }
+        });
+      }
+      
+      return {
+        bodyweight: bodyweightVolume,
+        external: externalWeightVolume,
+        total: bodyweightVolume + externalWeightVolume
+      };
     },
     
     calculateMonthlyAverageWeight(month) {
@@ -1185,20 +1504,92 @@ export default {
     
     // ========= MÉTODOS AUXILIARES =========
     generateEventsForDay(day) {
+      // Usar dados REAIS das sessões ao invés de dados mockados
       const events = [];
-      const eventTypes = ['personal', 'group', 'assessment'];
       
-      if ([3, 5, 8, 12, 15, 17, 19, 22, 24, 26, 29].includes(day)) {
-        const numEvents = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < numEvents; i++) {
-          events.push({
-            id: `${day}-${i}`,
-            type: eventTypes[Math.floor(Math.random() * eventTypes.length)]
-          });
+      // Filtrar sessões do dia específico
+      const sessionsOnDay = this.workoutSessions.filter(session => {
+        const sessionDate = new Date(session.startTime);
+        return sessionDate.getDate() === day &&
+               sessionDate.getMonth() === this.currentDate.getMonth() &&
+               sessionDate.getFullYear() === this.currentDate.getFullYear();
+      });
+      
+      sessionsOnDay.forEach((session, index) => {
+        // Determinar tipo baseado nos dados da sessão
+        let eventType = 'personal'; // padrão
+        
+        // Se a sessão tem muitos exercícios, pode ser treino em grupo
+        if (session.exercises && session.exercises.length > 6) {
+          eventType = 'group';
         }
-      }
+        
+        // Se é primeira sessão do aluno ou tem poucas séries, pode ser avaliação
+        const studentSessions = this.workoutSessions.filter(s => s.studentId === session.studentId);
+        if (studentSessions.length <= 2) {
+          eventType = 'assessment';
+        }
+        
+        events.push({
+          id: `${session._id}-${index}`,
+          type: eventType,
+          sessionId: session._id,
+          studentName: this.getStudentName(session.studentId),
+          workoutName: session.workoutName,
+          status: session.status,
+          duration: session.duration
+        });
+      });
       
       return events;
+    },
+    
+    getStudentName(studentId) {
+      const student = this.students.find(s => s._id === studentId);
+      return student ? student.name : 'Aluno';
+    },
+    
+    calculateSessionAverageDifficulty(session) {
+      // Calcular dificuldade média da sessão baseada nos sets
+      if (!session.exercises || session.exercises.length === 0) return 0;
+      
+      let totalDifficulty = 0;
+      let totalSets = 0;
+      
+      session.exercises.forEach(exercise => {
+        if (exercise.sets && exercise.sets.length > 0) {
+          exercise.sets.forEach(set => {
+            if (set.difficulty && set.difficulty >= 1 && set.difficulty <= 5) {
+              totalDifficulty += set.difficulty;
+              totalSets++;
+            }
+          });
+        }
+      });
+      
+      return totalSets > 0 ? totalDifficulty / totalSets : 0;
+    },
+    
+    calculateSessionConsistency(session) {
+      // Calcular consistência da sessão baseada em actualReps vs plannedReps
+      if (!session.exercises || session.exercises.length === 0) return 0;
+      
+      let totalConsistency = 0;
+      let totalSets = 0;
+      
+      session.exercises.forEach(exercise => {
+        if (exercise.sets && exercise.sets.length > 0) {
+          exercise.sets.forEach(set => {
+            if (set.actualReps && set.plannedReps && set.plannedReps > 0) {
+              const consistency = Math.min((set.actualReps / set.plannedReps) * 100, 120); // Cap em 120%
+              totalConsistency += consistency;
+              totalSets++;
+            }
+          });
+        }
+      });
+      
+      return totalSets > 0 ? totalConsistency / totalSets : 0;
     },
 
     getCurrentMonthName() {
