@@ -176,11 +176,6 @@
               />
               <span :class="['status-indicator', student.status]"></span>
             </div>
-            <div class="card-actions">
-              <button @click.stop="editStudent(student._id)" class="icon-btn" title="Editar">
-                <i class="fas fa-edit"></i>
-              </button>
-            </div>
           </div>
 
           <div class="card-body">
@@ -218,10 +213,16 @@
           </div>
 
           <div class="card-footer">
-            <button @click.stop="viewStudentProfile(student._id)" class="btn-view">
-              <i class="fas fa-chart-line"></i>
-              Ver Desempenho
-            </button>
+            <div class="card-footer-actions">
+              <button @click.stop="confirmUnlinkStudent(student)" class="btn-unlink" title="Desvincular aluno">
+                <i class="fas fa-unlink"></i>
+                Desvincular
+              </button>
+              <button @click.stop="viewStudentProfile(student._id)" class="btn-view">
+                <i class="fas fa-chart-line"></i>
+                Ver Desempenho
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -297,9 +298,6 @@
                     <button @click="viewStudentProfile(student._id)" class="action-btn view" title="Ver perfil">
                       <i class="fas fa-eye"></i>
                     </button>
-                    <button @click="editStudent(student._id)" class="action-btn edit" title="Editar">
-                      <i class="fas fa-edit"></i>
-                    </button>
                     <button 
                       v-if="student.currentWorkoutPlanId"
                       @click="openViewPlan(student)" 
@@ -307,6 +305,9 @@
                       title="Ver plano"
                     >
                       <i class="fas fa-clipboard-list"></i>
+                    </button>
+                    <button @click="confirmUnlinkStudent(student)" class="action-btn unlink" title="Desvincular">
+                      <i class="fas fa-unlink"></i>
                     </button>
                     <button @click="confirmDeleteStudent(student)" class="action-btn delete" title="Excluir">
                       <i class="fas fa-trash"></i>
@@ -554,14 +555,34 @@ const viewStudentProfile = (id) => {
   router.push(`/student/${id}/profile`)
 }
 
-const editStudent = (id) => {
-  selectedStudent.value = students.value.find(s => s._id === id)
-  showAddStudentModal.value = true
-}
-
 const openAddStudentModal = () => {
   selectedStudent.value = null
   showAddStudentModal.value = true
+}
+
+const confirmUnlinkStudent = async (student) => {
+  const studentName = student.name || 'este aluno'
+  if (!confirm(`Tem certeza que deseja desvincular ${studentName}? O aluno ficará sem instrutor.`)) return
+  
+  try {
+    console.log('Desvinculando aluno:', student._id)
+    
+    // Fazer chamada para a API de desvincular
+    await api.put(`/students/${student._id}/unlink`)
+    console.log('Aluno desvinculado com sucesso')
+    
+    // Atualizar a lista de alunos
+    await fetchStudents()
+    
+    // Notificar sucesso
+    alert(`${studentName} foi desvinculado com sucesso!`)
+  } catch (error) {
+    console.error('Erro ao desvincular aluno:', error)
+    
+    // Mostrar mensagem de erro específica
+    const errorMessage = error.response?.data?.message || 'Erro ao desvincular aluno'
+    alert(`Erro: ${errorMessage}`)
+  }
 }
 
 const closeStudentForm = () => {
@@ -1174,8 +1195,14 @@ body:has(.navbar-collapsed) .main-content,
   border-top: 1px solid var(--border-color);
 }
 
-.btn-view {
+.card-footer-actions {
+  display: flex;
+  gap: 0.75rem;
   width: 100%;
+}
+
+.btn-view {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1188,10 +1215,33 @@ body:has(.navbar-collapsed) .main-content,
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.875rem;
 }
 
 .btn-view:hover {
   background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.btn-unlink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f87171;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  min-width: 110px;
+}
+
+.btn-unlink:hover {
+  background: #f87171 ;
   transform: translateY(-2px);
 }
 
@@ -1376,6 +1426,7 @@ body:has(.navbar-collapsed) .main-content,
 .action-btn.view { background: #eff6ff; color: #2563eb; }
 .action-btn.edit { background: #f0fdf4; color: #16a34a; }
 .action-btn.plan { background: #fefbef; color: #d97706; }
+.action-btn.unlink { background: #fef3c7; color: #d97706; }
 .action-btn.delete { background: #fef2f2; color: #dc2626; }
 
 .action-btn:hover {

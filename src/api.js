@@ -63,6 +63,6 @@ export const getStudentsByInstructor = (instructorId) => api.get(`/students/inst
 // API de Sessões de Treino
 export const getWorkoutSessions = () => api.get("/workout-sessions/sessions/all");
 export const getSessionHistory = () => api.get("/workout-sessions/sessions/history");
-export const getInstructorSessions = (instructorId) => api.get(`/workout-sessions/sessions/instructor/${instructorId}`);
+export const getInstructorSessions = () => api.get(`/workout-sessions/sessions/all`);
 
 export default api;
