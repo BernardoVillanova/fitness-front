@@ -54,9 +54,17 @@
 
       <!-- Empty State -->
       <div v-else-if="filteredWorkouts.length === 0" class="empty-state">
-        <i class="fas fa-calendar-times"></i>
-        <h3>Nenhum treino encontrado</h3>
-        <p>Não há treinos disponíveis para o filtro selecionado.</p>
+        <template v-if="!hasInstructor">
+          <i class="fas fa-user-times"></i>
+          <h3>Instrutor não vinculado</h3>
+          <p>Você precisa estar vinculado a um instrutor para acessar os treinos.</p>
+          <p class="empty-subtitle">Entre em contato com a academia para vincular um instrutor ao seu perfil.</p>
+        </template>
+        <template v-else>
+          <i class="fas fa-calendar-times"></i>
+          <h3>Nenhum treino encontrado</h3>
+          <p>Não há treinos disponíveis para o filtro selecionado.</p>
+        </template>
       </div>
 
       <!-- Plans Grid -->
@@ -232,6 +240,7 @@ const loading = ref(false)
 const showDivisionModal = ref(false)
 const showWorkoutModal = ref(false)
 const workoutStartTime = ref(null)
+const hasInstructor = ref(true) // Para rastrear se o estudante tem instrutor
 
 // Computed
 const filters = computed(() => [
@@ -315,10 +324,21 @@ const fetchWorkouts = async () => {
   loading.value = true
   try {
     const response = await api.get('/workout-sessions/workouts')
-    workouts.value = response.data
+    const data = response.data
+    
+    // Verificar se a resposta contém informações sobre instrutor
+    if (data && typeof data === 'object' && 'hasInstructor' in data) {
+      hasInstructor.value = data.hasInstructor
+      workouts.value = data.workouts || []
+    } else {
+      // Resposta no formato antigo (array direto)
+      hasInstructor.value = true
+      workouts.value = Array.isArray(data) ? data : []
+    }
   } catch (error) {
     console.error('Erro ao buscar treinos:', error)
     workouts.value = []
+    hasInstructor.value = true
   } finally {
     loading.value = false
   }
@@ -625,6 +645,23 @@ body:has(.navbar-collapsed) .main-content {
   font-size: 4rem;
   margin-bottom: 1rem;
   opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 1rem 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: var(--text-color);
+}
+
+.empty-state p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.empty-subtitle {
+  font-size: 0.9rem !important;
+  font-style: italic;
+  opacity: 0.8;
 }
 
 /* Plans Grid */
