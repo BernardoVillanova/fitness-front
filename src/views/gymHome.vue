@@ -450,7 +450,6 @@ export default {
       this.loading = true;
       try {
         const response = await getAllGyms();
-        console.log('Gyms fetched:', response.data);
         
         // Se houver academias da API, usa elas, senão mantém os mockados
         if (response.data && response.data.length > 0) {
@@ -460,13 +459,9 @@ export default {
           }));
         }
         // Se não houver academias da API, mantém os dados mockados do setup
-        
-        console.log('Gyms after mapping:', this.gyms);
-        console.log('Filtered gyms:', this.filteredGyms);
       } catch (error) {
         console.error('Error fetching gyms:', error);
         // Em caso de erro, mantém os dados mockados
-        console.log('Usando dados mockados devido ao erro');
       } finally {
         this.loading = false;
       }

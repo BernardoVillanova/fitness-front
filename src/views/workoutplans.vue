@@ -533,7 +533,6 @@ export default {
           throw new Error(`Erro ao carregar planos: ${response.status}`);
         }
         this.workoutPlans = await response.json();
-        console.log('✅ Planos de treino carregados:', this.workoutPlans.length);
       } catch (error) {
         console.error('Erro ao carregar planos:', error);
         this.error = error.message;
@@ -551,7 +550,6 @@ export default {
           : 'http://localhost:3000/api/workout/workout-plans';
         
         const method = this.isEditing ? 'PUT' : 'POST';
-        console.log('💾 Salvando plano:', { method, url, planData });
         
         const response = await fetch(url, {
           method,
@@ -562,11 +560,8 @@ export default {
           body: JSON.stringify(planData)
         });
 
-        console.log('📡 Status da resposta:', response.status);
-
         if (response.ok) {
           const savedPlan = await response.json();
-          console.log('✅ Plano salvo com sucesso:', savedPlan);
           
           if (this.isEditing) {
             const index = this.workoutPlans.findIndex(p => p._id === savedPlan._id);
@@ -650,7 +645,6 @@ export default {
     async deletePlan(plan) {
       try {
         const token = sessionStorage.getItem('token');
-        console.log('🗑️ Deletando plano:', plan._id);
         
         const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
           method: 'DELETE',
@@ -661,7 +655,6 @@ export default {
         });
 
         if (response.ok) {
-          console.log('✅ Plano deletado com sucesso');
           const index = this.workoutPlans.findIndex(p => p._id === plan._id);
           if (index > -1) {
             this.workoutPlans.splice(index, 1);
@@ -741,7 +734,6 @@ export default {
     async editPlan(plan) {
       try {
         const token = sessionStorage.getItem('token');
-        console.log('✏️ Carregando plano para edição:', plan._id);
         
         // Buscar dados completos do plano
         const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
@@ -753,19 +745,10 @@ export default {
 
         if (response.ok) {
           const fullPlan = await response.json();
-          console.log('✅ Plano carregado para edição:', fullPlan);
-          console.log('📋 Detalhes do plano:');
-          console.log('  - Nome:', fullPlan.name);
-          console.log('  - Descrição:', fullPlan.description);
-          console.log('  - Objetivo:', fullPlan.goal);
-          console.log('  - Divisões:', fullPlan.divisions?.length || 0);
-          console.log('  - Alunos:', fullPlan.assignedStudents?.length || 0);
           
           this.isEditing = true;
           this.selectedPlan = fullPlan;
           this.showModal = true;
-          
-          console.log('🎭 Modal será aberto com:', { isEditing: this.isEditing, selectedPlan: !!this.selectedPlan });
         } else {
           throw new Error('Erro ao carregar plano para edição');
         }
@@ -811,7 +794,6 @@ export default {
         });
         if (response.ok) {
           this.students = await response.json();
-          console.log('✅ Students loaded:', this.students.length);
         } else {
           console.error('❌ Error fetching students:', response.status);
         }

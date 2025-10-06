@@ -322,9 +322,6 @@ export default {
     return { isDarkMode };
   },
   mounted() {
-    console.log('🟡 [EquipmentModal] mounted()');
-    console.log('🟡 [EquipmentModal] instructorId recebido via prop:', this.instructorId);
-    console.log('🟡 [EquipmentModal] equipmentList length:', this.equipmentList?.length);
     if (!this.instructorId) {
       console.error('❌ [EquipmentModal] CRÍTICO: instructorId está null/undefined!');
     }
@@ -466,10 +463,6 @@ export default {
           ...this.formData,
           safetyTips: this.safetyTipsInput || ''
         };
-
-        console.log('Enviando dados para:', `/equipments/instructor/${this.instructorId}`);
-        console.log('Dados do equipamento:', equipmentData);
-        console.log('Tamanho da imagem:', equipmentData.imageBase64 ? equipmentData.imageBase64.length : 0);
 
         await api.post(`/equipments/instructor/${this.instructorId}`, equipmentData);
         

@@ -386,8 +386,6 @@ export default {
             }
           };
 
-          console.log('📤 Enviando payload:', JSON.stringify(payload, null, 2));
-
           await axios.post('http://localhost:3000/api/students', payload);
 
           this.step++;

@@ -428,18 +428,14 @@ export default {
       return this.equipments.find(eq => eq._id === this.formData.equipmentId);
     },
     filteredEquipments() {
-      console.log('🔍 Total equipments:', this.equipments.length);
-      console.log('🔍 Search term:', this.equipmentSearch);
       
       if (!this.equipmentSearch.trim()) {
-        console.log('✅ No search, returning all:', this.equipments.length);
         return this.equipments;
       }
       const search = this.equipmentSearch.toLowerCase().trim();
       const filtered = this.equipments.filter(equipment => 
         equipment.name.toLowerCase().includes(search)
       );
-      console.log('✅ Filtered results:', filtered.length);
       return filtered;
     },
     totalPages() {
@@ -449,17 +445,13 @@ export default {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       const paginated = this.filteredEquipments.slice(start, end);
-      console.log('📄 Paginated equipments:', paginated.length, 'of', this.filteredEquipments.length);
       return paginated;
     }
   },
   watch: {
     equipments: {
       handler(newVal) {
-        console.log('👀 Equipments prop changed:', newVal?.length || 0, 'items');
         if (newVal && newVal.length > 0) {
-          console.log('📦 First equipment:', newVal[0]);
-          console.log('🖼️ First equipment image field:', newVal[0]?.image);
           console.log('🖼️ Image URL would be:', this.getEquipmentImageUrl(newVal[0]));
         }
       },
@@ -467,7 +459,6 @@ export default {
     },
     currentStep(newVal) {
       if (newVal === 2) {
-        console.log('📍 Entered Step 2 - Equipment Selection');
         console.log('📦 Available equipments:', this.equipments.length);
       }
     }

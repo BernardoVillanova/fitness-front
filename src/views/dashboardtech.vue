@@ -2,19 +2,23 @@
   <div :class="isDarkMode ? 'dashboard-dark' : 'dashboard-light'" class="dashboard-container">
     <DashboardNavBar />
     <main class="dashboard-main">
-      <!-- Header sem título -->
-      <header class="dashboard-header">
-        <div class="user-info">
-          <div class="user-avatar"></div>
-          <div>
-            <h2 class="user-name">Alexandre</h2>
-            <p class="user-role">Personal Trainer</p>
-          </div>
-        </div>
-      </header>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Carregando dados do dashboard...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h3>Erro ao carregar dados</h3>
+        <p>{{ error }}</p>
+        <button @click="loadDashboardData" class="retry-btn">Tentar novamente</button>
+      </div>
 
       <!-- Main Content Grid -->
-      <section class="content-grid">
+      <section v-else class="content-grid">
         <!-- Progress Overview -->
         <div class="card progress-overview-card">
           <div class="card-header-with-dropdown">
@@ -24,7 +28,7 @@
             </div>
             <div class="dropdown-container">
               <span class="dropdown-text">{{ selectedPeriod }}</span>
-              <span class="material-symbols-outlined dropdown-icon">expand_more</span>
+              <i class="fas fa-chevron-down dropdown-icon"></i>
             </div>
           </div>
           
@@ -107,11 +111,11 @@
           </div>
           <div class="section-actions">
             <button class="filter-btn">
-              <span class="material-symbols-outlined">tune</span>
+              <i class="fas fa-filter"></i>
               Filtros
             </button>
             <button class="export-btn">
-              <span class="material-symbols-outlined">download</span>
+              <i class="fas fa-download"></i>
               Exportar
             </button>
           </div>
@@ -132,11 +136,10 @@
               </div>
               <div class="student-basic-info">
                 <h3 class="student-name">{{ student.name }}</h3>
-                <p class="student-id">#{{ String(student.id).padStart(4, '0') }}</p>
               </div>
               <div class="student-menu">
                 <button class="menu-btn">
-                  <span class="material-symbols-outlined">more_vert</span>
+                  <i class="fas fa-ellipsis-v"></i>
                 </button>
               </div>
             </div>
@@ -146,7 +149,7 @@
               <div class="stat-row">
                 <div class="stat-item weight-stat">
                   <div class="stat-icon-container">
-                    <span class="material-symbols-outlined stat-icon">{{ getWeightIcon(student.weightProgress) }}</span>
+                    <i class="fas stat-icon" :class="getWeightIconFA(student.weightProgress)"></i>
                   </div>
                   <div class="stat-content">
                     <span class="stat-label">Progresso de Peso</span>
@@ -160,7 +163,7 @@
 
                 <div class="stat-item adherence-stat">
                   <div class="stat-icon-container">
-                    <span class="material-symbols-outlined stat-icon">fitness_center</span>
+                    <i class="fas fa-dumbbell stat-icon"></i>
                   </div>
                   <div class="stat-content">
                     <span class="stat-label">Adesão ao Treino</span>
@@ -183,9 +186,7 @@
               <!-- Trend Analysis -->
               <div class="trend-analysis">
                 <div class="trend-indicator">
-                  <span class="material-symbols-outlined trend-icon" :class="getTrendClass(student.trend)">
-                    {{ getTrendIcon(student.trend) }}
-                  </span>
+                  <i class="fas trend-icon" :class="[getTrendClass(student.trend), getTrendIconFA(student.trend)]"></i>
                   <span class="trend-label">Tendência:</span>
                   <span :class="['trend-value', getTrendClass(student.trend)]">
                     {{ getTrendText(student.trend) }}
@@ -214,11 +215,11 @@
                 <div class="activity-info-wrapper">
                   <div class="activity-icon-container">
                     <div class="icon-pulse"></div>
-                    <span class="material-symbols-outlined activity-icon">schedule</span>
+                    <i class="fas fa-clock activity-icon"></i>
                   </div>
                   <div class="activity-details">
                     <span class="activity-label">Última atividade</span>
-                    <span class="activity-value">há {{ getLastWorkoutTime(student.id) }}</span>
+                    <span class="activity-value">há {{ student.lastWorkout }}</span>
                   </div>
                 </div>
               </div>
@@ -230,7 +231,7 @@
         <div class="summary-stats">
           <div class="summary-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">group</span>
+              <i class="fas fa-users"></i>
             </div>
             <div class="summary-content">
               <span class="summary-value">{{ studentsData.length }}</span>
@@ -240,7 +241,7 @@
           
           <div class="summary-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">trending_up</span>
+              <i class="fas fa-chart-line"></i>
             </div>
             <div class="summary-content">
               <span class="summary-value">{{ calculateAverageProgress() }}%</span>
@@ -250,7 +251,7 @@
           
           <div class="summary-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">fitness_center</span>
+              <i class="fas fa-dumbbell"></i>
             </div>
             <div class="summary-content">
               <span class="summary-value">{{ calculateAverageAdherence() }}%</span>
@@ -260,7 +261,7 @@
           
           <div class="summary-card">
             <div class="summary-icon">
-              <span class="material-symbols-outlined">emoji_events</span>
+              <i class="fas fa-trophy"></i>
             </div>
             <div class="summary-content">
               <span class="summary-value">{{ getPositiveTrends() }}</span>
@@ -282,14 +283,14 @@
           <div class="modern-calendar">
             <div class="calendar-nav">
               <button @click="previousMonth" class="nav-btn">
-                <span class="material-symbols-outlined">chevron_left</span>
+                <i class="fas fa-chevron-left"></i>
               </button>
               <div class="month-year">
                 <h4 class="current-month">{{ getCurrentMonthName() }}</h4>
                 <span class="current-year">{{ currentDate.getFullYear() }}</span>
               </div>
               <button @click="nextMonth" class="nav-btn">
-                <span class="material-symbols-outlined">chevron_right</span>
+                <i class="fas fa-chevron-right"></i>
               </button>
             </div>
 
@@ -380,35 +381,45 @@ import DashboardNavBar from "@/components/DashboardNavBar.vue";
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 import VueApexCharts from "vue3-apexcharts";
+import { getStudentsByInstructor, getInstructorSessions } from "@/api";
+import api from "@/api";
 
 export default {
   name: "DashboardTech",
   components: { 
-    DashboardNavBar, 
+    DashboardNavBar,
     apexchart: VueApexCharts 
+  },
+  async mounted() {
+    await this.loadDashboardData();
   },
   data() {
     return {
       currentDate: new Date(),
       selectedPeriod: 'Últimos 6 meses',
       weekDays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+      // Dados reais que serão carregados da API
+      students: [],
+      workoutSessions: [],
+      loading: true,
+      error: null,
       progressData: [
         {
           name: "Média de Peso",
           type: 'area',
-          data: [78, 76, 74, 75, 73, 71, 72, 70]
+          data: [0, 0, 0, 0, 0, 0, 0, 0]
         },
         {
           name: "Treinos Concluídos",
           type: 'area',
-          data: [42, 48, 46, 52, 49, 56, 58, 54]
+          data: [0, 0, 0, 0, 0, 0, 0, 0]
         }
       ],
       weeklyData: [
         {
           name: "Sessões Realizadas",
           type: 'bar',
-          data: [45, 52, 48, 61, 55, 67, 43]
+          data: [0, 0, 0, 0, 0, 0, 0]
         }
       ]
     };
@@ -421,57 +432,234 @@ export default {
   },
   computed: {
     studentsData() {
+      
+      if (!this.students || !Array.isArray(this.students) || this.students.length === 0) {
+        console.warn('⚠️ DEBUG: Nenhum estudante encontrado ou array inválido');
+        return [];
+      }
+      
+      if (!Array.isArray(this.workoutSessions)) {
+        console.warn('⚠️ DEBUG: workoutSessions não é um array válido');
+        
+        return this.students.map((student) => {
+          return {
+            id: student._id,
+            name: student.name || 'Nome não disponível',
+            avatar: student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`,
+            weightProgress: 0,
+            adherence: 0,
+            trend: 'neutral',
+            lastWorkout: 'Dados indisponíveis',
+            totalSessions: 0,
+            currentWeight: student.personalInfo?.currentWeight || 0,
+            phone: student.phone || '',
+            email: student.email || '',
+            currentWorkoutPlan: student.currentWorkoutPlanId
+          };
+        });
+      }
+      
+      return this.students.map((student) => {
+        try {
+          
+          const studentSessions = this.workoutSessions.filter(session => {
+            if (!session) {
+              console.warn('⚠️ Sessão nula encontrada');
+              return false;
+            }
+            
+            const matches = session.studentId === student._id || 
+                           (session.studentId && session.studentId._id === student._id);
+            
+            return matches;
+          });
+          
+          const completedSessions = studentSessions.filter(session => 
+            session && session.status === 'completed'
+          );
+          
+          const progressLogs = student.progressLogs || [];
+          const weightProgress = this.calculateWeightProgress(progressLogs);
+          
+          const adherence = this.calculateAdherence(studentSessions);
+          
+          const trend = this.calculateTrend(completedSessions);
+          
+          const lastWorkout = this.getLastWorkoutTime(studentSessions);
+          
+          const result = {
+            id: student._id,
+            name: student.name || 'Nome não disponível',
+            avatar: student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`,
+            weightProgress,
+            adherence,
+            trend,
+            lastWorkout,
+            totalSessions: completedSessions.length,
+            currentWeight: student.personalInfo?.currentWeight || 0,
+            phone: student.phone || '',
+            email: student.email || '',
+            currentWorkoutPlan: student.currentWorkoutPlanId
+          };
+          
+          return result;
+          
+        } catch (error) {
+          console.error(`❌ ERRO ao processar dados do aluno ${student.name}:`, error);
+          console.error('📋 Stack trace:', error.stack);
+          console.error('👤 Dados do estudante que causou erro:', student);
+          
+          return {
+            id: student._id,
+            name: student.name || 'Nome não disponível',
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`,
+            weightProgress: 0,
+            adherence: 0,
+            trend: 'neutral',
+            lastWorkout: 'Erro ao calcular',
+            totalSessions: 0,
+            currentWeight: 0,
+            phone: '',
+            email: '',
+            currentWorkoutPlan: null
+          };
+        }
+      });
+    },
+
+    performanceMetrics() {
+      if (!this.workoutSessions || this.workoutSessions.length === 0) {
+        return [
+          { label: 'Perda de Peso Total', value: '0kg', percentage: 0 },
+          { label: 'Total de Treinos Concluídos', value: '0', percentage: 0 },
+          { label: 'Aumento de Carga (Média)', value: '0%', percentage: 0 },
+          { label: 'Taxa de Adesão', value: '0%', percentage: 0 },
+          { label: 'Eficiência dos Treinos', value: '0%', percentage: 0 },
+          { label: 'Volume Peso Corporal', value: '0%', percentage: 0 }
+        ];
+      }
+      
+      const totalWeightLoss = this.calculateTotalWeightLoss();
+      const totalCompletedWorkouts = this.workoutSessions.filter(s => s.status === 'completed').length;
+      const averageLoadIncrease = this.calculateAverageLoadIncrease();
+      const adherenceRate = this.calculateOverallAdherence();
+      const workoutEfficiency = this.calculateWorkoutEfficiency();
+      const bodyweightRatio = this.calculateBodyweightExerciseRatio();
+      
       return [
-        {
-          id: 1,
-          name: 'Carlos Silva',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-          weightProgress: -2.5,
-          adherence: 95,
-          trend: 'positive'
+        { 
+          label: 'Perda de Peso Total', 
+          value: `${totalWeightLoss.toFixed(1)}kg`, 
+          percentage: Math.min(Math.max((totalWeightLoss / 50) * 100, 0), 100) 
         },
-        {
-          id: 2,
-          name: 'Sofia Santos',
-          avatar: 'https://images.unsplash.com/photo-1494790108755-2616b4fb0ce5?w=100&h=100&fit=crop&crop=face',
-          weightProgress: -1.0,
-          adherence: 80,
-          trend: 'stable'
+        { 
+          label: 'Total de Treinos Concluídos', 
+          value: totalCompletedWorkouts.toString(), 
+          percentage: Math.min((totalCompletedWorkouts / 500) * 100, 100) 
         },
-        {
-          id: 3,
-          name: 'Lucas Oliveira',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-          weightProgress: 0.5,
-          adherence: 65,
-          trend: 'negative'
+        { 
+          label: 'Aumento de Carga (Média)', 
+          value: `+${averageLoadIncrease.toFixed(0)}%`, 
+          percentage: Math.min(averageLoadIncrease, 100) 
         },
-        {
-          id: 4,
-          name: 'Ana Costa',
-          avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-          weightProgress: -3.2,
-          adherence: 88,
-          trend: 'positive'
+        { 
+          label: 'Taxa de Adesão', 
+          value: `${adherenceRate.toFixed(0)}%`, 
+          percentage: adherenceRate 
+        },
+        { 
+          label: 'Eficiência dos Treinos', 
+          value: `${workoutEfficiency.toFixed(0)}%`, 
+          percentage: workoutEfficiency 
+        },
+        { 
+          label: 'Volume Peso Corporal', 
+          value: `${bodyweightRatio.toFixed(0)}%`, 
+          percentage: bodyweightRatio 
         }
       ];
     },
 
-    performanceMetrics() {
-      return [
-        { label: 'Perda de Peso Total', value: '-25.4kg', percentage: 75 },
-        { label: 'Total de Treinos Concluídos', value: '342', percentage: 85 },
-        { label: 'Aumento de Carga (Média)', value: '+15%', percentage: 60 },
-        { label: 'Taxa de Adesão', value: '92%', percentage: 92 }
-      ];
-    },
-
     recentAchievements() {
-      return [
-        { id: 1, student: 'Sofia', description: 'atingiu a meta de perda de peso!' },
-        { id: 2, student: 'Lucas', description: 'completou 50 treinos.' },
-        { id: 3, student: 'Ana', description: 'melhorou 20% na força.' }
-      ];
+      if (!this.studentsData || this.studentsData.length === 0) {
+        return [
+          { id: 'empty_1', student: 'Sistema', description: 'aguardando dados dos alunos...' }
+        ];
+      }
+      
+      const achievements = [];
+      
+      // Verificar conquistas dos estudantes baseadas em dados reais
+      this.studentsData.forEach(student => {
+        if (student.totalSessions > 0 && student.totalSessions % 10 === 0) {
+          achievements.push({
+            id: `sessions_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `completou ${student.totalSessions} treinos!`
+          });
+        }
+        
+        if (student.weightProgress < -5) {
+          achievements.push({
+            id: `weight_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `perdeu mais de 5kg!`
+          });
+        }
+        
+        if (student.adherence >= 90) {
+          achievements.push({
+            id: `adherence_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `mantém 90%+ de aderência!`
+          });
+        }
+        
+        // Verificar conquistas baseadas nas sessões reais do aluno
+        const studentSessions = this.workoutSessions.filter(s => 
+          s.studentId === student._id && s.status === 'completed'
+        );
+        
+        // Conquista por alta performance
+        const highPerformanceSessions = studentSessions.filter(session => {
+          if (!session.exercises) return false;
+          const avgDifficulty = this.calculateSessionAverageDifficulty(session);
+          return avgDifficulty >= 4;
+        });
+        
+        if (highPerformanceSessions.length >= 5) {
+          achievements.push({
+            id: `performance_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `mantém treinos intensos!`
+          });
+        }
+        
+        // Conquista por consistência nos exercícios
+        const recentSessions = studentSessions.slice(-10); // Últimas 10 sessões
+        const consistentSessions = recentSessions.filter(session => {
+          if (!session.exercises) return false;
+          return this.calculateSessionConsistency(session) >= 85;
+        });
+        
+        if (consistentSessions.length >= 8) {
+          achievements.push({
+            id: `consistency_${student.id}`,
+            student: student.name.split(' ')[0],
+            description: `muito consistente nos exercícios!`
+          });
+        }
+      });
+      
+      // Se não houver conquistas, mostrar mensagem padrão
+      if (achievements.length === 0) {
+        return [
+          { id: 'default_1', student: 'Seus alunos', description: 'estão progredindo bem!' },
+          { id: 'default_2', student: 'Continue', description: 'acompanhando o desenvolvimento.' }
+        ];
+      }
+      
+      return achievements.slice(0, 5); // Limitar a 5 conquistas
     },
 
     progressChartOptions() {
@@ -616,10 +804,25 @@ export default {
     },
 
     weeklyStats() {
+      if (!this.workoutSessions || this.workoutSessions.length === 0) {
+        return {
+          totalSessions: 0,
+          avgDuration: 0,
+          completionRate: 0
+        };
+      }
+      
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      const totalSessions = completedSessions.length;
+      const avgDuration = totalSessions > 0 ? 
+        completedSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / totalSessions : 0;
+      const completionRate = this.workoutSessions.length > 0 ? 
+        (completedSessions.length / this.workoutSessions.length) * 100 : 0;
+      
       return {
-        totalSessions: 326,
-        avgDuration: 52,
-        completionRate: 94
+        totalSessions,
+        avgDuration: Math.round(avgDuration),
+        completionRate: Math.round(completionRate)
       };
     },
 
@@ -679,21 +882,714 @@ export default {
   },
 
   methods: {
-    generateEventsForDay(day) {
-      const events = [];
-      const eventTypes = ['personal', 'group', 'assessment'];
-      
-      if ([3, 5, 8, 12, 15, 17, 19, 22, 24, 26, 29].includes(day)) {
-        const numEvents = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < numEvents; i++) {
-          events.push({
-            id: `${day}-${i}`,
-            type: eventTypes[Math.floor(Math.random() * eventTypes.length)]
-          });
+    // ========= MÉTODOS DE CARREGAMENTO DE DADOS =========
+    async loadDashboardData() {
+      try {
+        this.loading = true;
+        this.error = null;
+        
+        // Pegar o ID do usuário logado
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+        
+        const userId = user.id;
+        if (!userId) {
+          throw new Error('ID do usuário não encontrado. Faça login novamente.');
         }
+        
+        // Buscar o instrutor pelo userId
+        const instructorsResponse = await api.get('/instructors');
+        const allInstructors = instructorsResponse.data;
+        const currentInstructor = allInstructors.find(
+          inst => inst.userId === userId || inst.userId?._id === userId
+        );
+        
+        if (!currentInstructor) {
+          throw new Error('Instrutor não encontrado para este usuário. Verifique se você está logado como instrutor.');
+        }
+        
+        const instructorId = currentInstructor._id;
+        
+        // Buscar estudantes do instrutor
+        await this.loadStudents(instructorId);
+        
+        // Buscar sessões de treino
+        try {
+          await this.loadWorkoutSessions(instructorId);
+        } catch (sessionError) {
+          console.error('[DEBUG] Erro específico em loadWorkoutSessions:', sessionError);
+          console.error('[DEBUG] Stack do erro:', sessionError.stack);
+        }
+        
+        // Gerar dados dos gráficos
+        this.generateChartData();
+        
+      } catch (error) {
+        console.error('[DEBUG] Erro ao carregar dados do dashboard:', error);
+        this.error = error.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async loadStudents(instructorId) {
+      try {
+        const response = await getStudentsByInstructor(instructorId);
+        
+        if (response && response.data) {
+          this.students = Array.isArray(response.data) ? response.data : [];
+          
+          this.students.forEach((student, index) => {
+            console.log(`� DEBUG: Estudante ${index + 1}:`, {
+              id: student._id,
+              name: student.name,
+              email: student.email,
+              instructorId: student.instructorId,
+              personalInfo: student.personalInfo ? 'Presente' : 'Ausente',
+              progressLogs: student.progressLogs?.length || 0,
+              workoutPlans: student.workoutPlans?.length || 0
+            });
+          });
+        } else {
+          console.warn('⚠️ DEBUG: Resposta da API não contém dados válidos');
+          this.students = [];
+        }
+      } catch (error) {
+        console.error('❌ DEBUG: Erro detalhado ao buscar estudantes:');
+        console.error('🔥 Error object:', error);
+        console.error('📊 Error message:', error.message);
+        console.error('📈 Error stack:', error.stack);
+        console.error('🌐 Response status:', error.response?.status);
+        console.error('� Response data:', error.response?.data);
+        console.error('🔗 Request config:', error.config);
+        this.students = [];
+      }
+    },
+    
+    async loadWorkoutSessions(instructorId) {
+      try {
+        if (!instructorId) {
+          console.warn('⚠️ ID do instrutor não fornecido');
+          this.workoutSessions = [];
+          return;
+        }
+        
+        const response = await getInstructorSessions(instructorId);
+        
+        if (response && response.data) {
+          if (response.data.sessions) {
+            this.workoutSessions = Array.isArray(response.data.sessions) ? response.data.sessions : [];
+          } else if (Array.isArray(response.data)) {
+            this.workoutSessions = response.data;
+          } else {
+            console.warn('⚠️ Resposta da API não contém sessões válidas');
+            this.workoutSessions = [];
+          }
+          
+          if (this.workoutSessions.length > 0) {
+            console.log('📝 Primeira sessão:', this.workoutSessions[0]);
+            console.log('📝 Tipos de sessões encontradas:', this.workoutSessions.map(s => ({
+              id: s._id,
+              studentId: s.studentId,
+              status: s.status,
+              studentName: s.studentId?.userId?.name || s.studentId?.name
+            })));
+          }
+        } else {
+          console.warn('⚠️ Resposta da API está vazia ou inválida');
+          this.workoutSessions = [];
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar sessões:', error);
+        console.error('📊 Status:', error.response?.status);
+        console.error('📄 Data:', error.response?.data);
+        console.error('📄 Message:', error.message);
+        console.error('📄 Stack:', error.stack);
+        this.workoutSessions = [];
+      }
+    },
+    
+    generateChartData() {
+      // Gerar dados para o gráfico de progresso
+      this.generateProgressData();
+      
+      // Gerar dados para o gráfico semanal
+      this.generateWeeklyData();
+    },
+    
+    generateProgressData() {
+      // Gerar dados para o gráfico de progresso
+      const months = [];
+      const weightData = [];
+      const completedData = [];
+      
+      for (let i = 7; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
+        months.push(monthName);
+        
+        // Calcular peso médio dos alunos neste mês
+        const monthWeight = this.calculateMonthlyAverageWeight(date);
+        weightData.push(monthWeight || 0);
+        
+        // Calcular treinos completados neste mês
+        const monthCompleted = this.calculateMonthlyCompletedWorkouts(date);
+        completedData.push(monthCompleted || 0);
       }
       
+      this.progressData = [
+        {
+          name: "Média de Peso",
+          type: 'area',
+          data: weightData
+        },
+        {
+          name: "Treinos Concluídos",
+          type: 'area',
+          data: completedData
+        }
+      ];
+    },
+    
+    generateWeeklyData() {
+      // Gerar dados para os últimos 7 dias
+      const weekData = [];
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        
+        const dayWorkouts = this.workoutSessions.filter(session => {
+          const sessionDate = new Date(session.startTime);
+          return sessionDate.toDateString() === date.toDateString() && 
+                 session.status === 'completed';
+        }).length;
+        
+        weekData.push(dayWorkouts);
+      }
+      
+      // Se não há dados, adicionar valores de exemplo
+      if (weekData.every(val => val === 0) && this.workoutSessions.length === 0) {
+        weekData.fill(0); // Manter zeros se realmente não há dados
+      }
+      
+      this.weeklyData = [
+        {
+          name: "Sessões Realizadas",
+          type: 'bar',
+          data: weekData
+        }
+      ];
+    },
+    
+    // ========= MÉTODOS DE CÁLCULO DE MÉTRICAS =========
+    calculateWeightProgress(progressLogs) {
+      if (!progressLogs || progressLogs.length < 2) return 0;
+      
+      const sortedLogs = progressLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const latest = sortedLogs[0];
+      const previous = sortedLogs[1];
+      
+      if (latest.weight && previous.weight) {
+        return latest.weight - previous.weight;
+      }
+      
+      return 0;
+    },
+    
+    calculateAdherence(studentSessions) {
+      // Validar se é um array
+      if (!Array.isArray(studentSessions) || studentSessions.length === 0) {
+        return 0;
+      }
+      
+      try {
+        const last30Days = new Date();
+        last30Days.setDate(last30Days.getDate() - 30);
+        
+        const recentSessions = studentSessions.filter(session => {
+          return session && session.startTime && new Date(session.startTime) >= last30Days;
+        });
+        
+        if (recentSessions.length === 0) return 0;
+        
+        const completedSessions = recentSessions.filter(session => 
+          session.status === 'completed'
+        );
+        
+        return Math.round((completedSessions.length / recentSessions.length) * 100);
+      } catch (error) {
+        console.error('Erro ao calcular aderência:', error);
+        return 0;
+      }
+    },
+    
+    calculateTrend(completedSessions) {
+      // Validar se é um array
+      if (!Array.isArray(completedSessions) || completedSessions.length < 3) {
+        return 'neutral';
+      }
+      
+      try {
+        // Pegar as últimas 3 sessões e verificar tendência
+        const lastThree = completedSessions
+          .filter(session => session && session.startTime && session.totalVolume !== undefined)
+          .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+          .slice(0, 3);
+        
+        if (lastThree.length < 3) return 'neutral';
+        
+        const volumes = lastThree.map(session => session.totalVolume || 0);
+        
+        if (volumes[0] > volumes[1] && volumes[1] > volumes[2]) return 'positive';
+        if (volumes[0] < volumes[1] && volumes[1] < volumes[2]) return 'negative';
+        return 'stable';
+      } catch (error) {
+        console.error('Erro ao calcular tendência:', error);
+        return 'neutral';
+      }
+    },
+    
+    calculateTotalWeightLoss() {
+      let totalLoss = 0;
+      
+      this.students.forEach(student => {
+        const progressLogs = student.progressLogs || [];
+        if (progressLogs.length >= 2) {
+          const sortedLogs = progressLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+          const initial = sortedLogs[0].weight;
+          const current = sortedLogs[sortedLogs.length - 1].weight;
+          
+          if (initial && current && initial > current) {
+            totalLoss += (initial - current);
+          }
+        }
+      });
+      
+      return totalLoss;
+    },
+    
+    calculateAverageLoadIncrease() {
+      // Calcular aumento médio de carga baseado nas sessões REAIS
+      const increases = [];
+      
+      this.students.forEach(student => {
+        const studentSessions = this.workoutSessions.filter(session => 
+          session.studentId === student._id && session.status === 'completed'
+        );
+        
+        if (studentSessions.length >= 2) {
+          const sorted = studentSessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+          
+          // Pegar sessões com pelo menos 30 dias de diferença para medir progressão
+          for (let i = 0; i < sorted.length - 1; i++) {
+            const first = sorted[i];
+            const last = sorted[sorted.length - 1];
+            
+            const daysDiff = (new Date(last.startTime) - new Date(first.startTime)) / (1000 * 60 * 60 * 24);
+            
+            if (daysDiff >= 30 && first.totalVolume && last.totalVolume && first.totalVolume > 0) {
+              const increase = ((last.totalVolume - first.totalVolume) / first.totalVolume) * 100;
+              increases.push(increase);
+              break; // Usar apenas a primeira comparação válida
+            }
+          }
+        }
+      });
+      
+      return increases.length > 0 ? 
+        increases.reduce((sum, inc) => sum + inc, 0) / increases.length : 0;
+    },
+    
+    calculateWeightProgression() {
+      // Calcular progressão de peso baseada nos dados REAIS dos exercícios
+      const progressions = [];
+      
+      this.students.forEach(student => {
+        const studentSessions = this.workoutSessions.filter(session => 
+          session.studentId === student._id && 
+          session.status === 'completed' &&
+          session.exercises && 
+          session.exercises.length > 0
+        );
+        
+        if (studentSessions.length >= 2) {
+          // Agrupar por exercício
+          const exerciseProgressions = {};
+          
+          studentSessions.forEach(session => {
+            session.exercises.forEach(exercise => {
+              const exerciseName = exercise.exerciseName;
+              
+              if (!exerciseProgressions[exerciseName]) {
+                exerciseProgressions[exerciseName] = [];
+              }
+              
+              // Pegar peso máximo da sessão para este exercício
+              let maxWeight = 0;
+              exercise.sets.forEach(set => {
+                if (set.completed && set.weight) {
+                  const actualWeight = set.isBodyWeight ? session.studentWeight : set.weight;
+                  maxWeight = Math.max(maxWeight, actualWeight);
+                }
+              });
+              
+              if (maxWeight > 0) {
+                exerciseProgressions[exerciseName].push({
+                  date: new Date(session.startTime),
+                  weight: maxWeight,
+                  isBodyWeight: exercise.sets.some(s => s.isBodyWeight)
+                });
+              }
+            });
+          });
+          
+          // Calcular progressão para cada exercício
+          Object.keys(exerciseProgressions).forEach(exerciseName => {
+            const records = exerciseProgressions[exerciseName]
+              .sort((a, b) => a.date - b.date);
+            
+            if (records.length >= 2) {
+              const first = records[0];
+              const last = records[records.length - 1];
+              const daysDiff = (last.date - first.date) / (1000 * 60 * 60 * 24);
+              
+              // Só considerar se há pelo menos 14 dias de diferença
+              if (daysDiff >= 14 && first.weight > 0) {
+                const progression = ((last.weight - first.weight) / first.weight) * 100;
+                progressions.push({
+                  student: student.name,
+                  exercise: exerciseName,
+                  progression: progression,
+                  from: first.weight,
+                  to: last.weight,
+                  isBodyWeight: first.isBodyWeight
+                });
+              }
+            }
+          });
+        }
+      });
+      
+      return progressions;
+    },
+    
+    calculateOverallAdherence() {
+      if (this.students.length === 0) return 0;
+      
+      const adherences = this.studentsData.map(student => student.adherence);
+      return adherences.reduce((sum, adh) => sum + adh, 0) / adherences.length;
+    },
+    
+    calculateWorkoutEfficiency() {
+      // Calcular eficiência baseada em actualReps vs plannedReps e tempo de descanso
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      
+      if (completedSessions.length === 0) return 0;
+      
+      let totalEfficiency = 0;
+      let validSessions = 0;
+      
+      completedSessions.forEach(session => {
+        if (session.exercises && session.exercises.length > 0) {
+          let sessionEfficiency = 0;
+          let validExercises = 0;
+          
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && exercise.sets.length > 0) {
+              exercise.sets.forEach(set => {
+                if (set.actualReps && set.plannedReps && set.plannedReps > 0) {
+                  // Calcular eficiência de repetições (actualReps / plannedReps)
+                  const repsEfficiency = Math.min((set.actualReps / set.plannedReps), 1.5); // Cap em 150%
+                  
+                  // Ajustar pela dificuldade (difficulty 1-5, onde 3 é ideal)
+                  let difficultyFactor = 1;
+                  if (set.difficulty) {
+                    if (set.difficulty === 3) difficultyFactor = 1; // Dificuldade ideal
+                    else if (set.difficulty < 3) difficultyFactor = 0.8; // Muito fácil
+                    else if (set.difficulty > 3) difficultyFactor = 1.1; // Mais desafiador
+                  }
+                  
+                  // Considerar tempo de descanso se disponível
+                  let restFactor = 1;
+                  if (set.restTimeTaken && set.plannedRestTime) {
+                    const restRatio = set.restTimeTaken / set.plannedRestTime;
+                    if (restRatio <= 1.2) restFactor = 1; // Dentro do esperado
+                    else restFactor = 0.9; // Descanso excessivo
+                  }
+                  
+                  sessionEfficiency += (repsEfficiency * difficultyFactor * restFactor);
+                  validExercises++;
+                }
+              });
+            }
+          });
+          
+          if (validExercises > 0) {
+            totalEfficiency += (sessionEfficiency / validExercises) * 100;
+            validSessions++;
+          }
+        }
+      });
+      
+      return validSessions > 0 ? totalEfficiency / validSessions : 0;
+    },
+    
+    calculateAveragePerformance() {
+      // Calcular desempenho médio baseado na dificuldade dos exercícios
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      
+      if (completedSessions.length === 0) return 0;
+      
+      let totalDifficulty = 0;
+      let totalSets = 0;
+      
+      completedSessions.forEach(session => {
+        if (session.exercises && session.exercises.length > 0) {
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && exercise.sets.length > 0) {
+              exercise.sets.forEach(set => {
+                if (set.difficulty && set.difficulty >= 1 && set.difficulty <= 5) {
+                  totalDifficulty += set.difficulty;
+                  totalSets++;
+                }
+              });
+            }
+          });
+        }
+      });
+      
+      return totalSets > 0 ? totalDifficulty / totalSets : 0;
+    },
+    
+    calculateBodyweightExerciseRatio() {
+      // Calcular proporção de exercícios com peso corporal vs peso externo
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      
+      if (completedSessions.length === 0) return 0;
+      
+      let bodyweightVolume = 0;
+      let externalWeightVolume = 0;
+      
+      completedSessions.forEach(session => {
+        if (session.exercises && session.exercises.length > 0) {
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && exercise.sets.length > 0) {
+              exercise.sets.forEach(set => {
+                if (set.actualReps && set.weight) {
+                  const setVolume = set.actualReps * set.weight;
+                  
+                  if (set.isBodyWeight) {
+                    // Para exercícios de peso corporal, usar o peso do aluno
+                    const studentWeight = session.studentWeight || 70; // Peso padrão se não disponível
+                    bodyweightVolume += set.actualReps * studentWeight;
+                  } else {
+                    // Exercícios com peso externo
+                    externalWeightVolume += setVolume;
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+      
+      const totalVolume = bodyweightVolume + externalWeightVolume;
+      return totalVolume > 0 ? (bodyweightVolume / totalVolume) * 100 : 0;
+    },
+    
+    calculateEnhancedVolumeProgression() {
+      // Calcular progressão de volume separando peso corporal de peso externo
+      const progressions = [];
+      
+      this.students.forEach(student => {
+        const studentSessions = this.workoutSessions.filter(session => 
+          session.studentId === student._id && session.status === 'completed'
+        );
+        
+        if (studentSessions.length >= 2) {
+          const sorted = studentSessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+          
+          for (let i = 0; i < sorted.length - 1; i++) {
+            const first = sorted[i];
+            const last = sorted[sorted.length - 1];
+            
+            const daysDiff = (new Date(last.startTime) - new Date(first.startTime)) / (1000 * 60 * 60 * 24);
+            
+            if (daysDiff >= 30) {
+              // Calcular volume separado por tipo
+              const firstVolumes = this.calculateSessionVolumeBreakdown(first);
+              const lastVolumes = this.calculateSessionVolumeBreakdown(last);
+              
+              if (firstVolumes.total > 0 && lastVolumes.total > 0) {
+                progressions.push({
+                  studentId: student._id,
+                  studentName: student.name,
+                  daysDifference: Math.round(daysDiff),
+                  totalVolumeProgress: ((lastVolumes.total - firstVolumes.total) / firstVolumes.total) * 100,
+                  bodyweightVolumeProgress: firstVolumes.bodyweight > 0 ? 
+                    ((lastVolumes.bodyweight - firstVolumes.bodyweight) / firstVolumes.bodyweight) * 100 : 0,
+                  externalWeightVolumeProgress: firstVolumes.external > 0 ? 
+                    ((lastVolumes.external - firstVolumes.external) / firstVolumes.external) * 100 : 0
+                });
+              }
+              break;
+            }
+          }
+        }
+      });
+      
+      return progressions;
+    },
+    
+    calculateSessionVolumeBreakdown(session) {
+      // Calcular breakdown de volume da sessão por tipo de peso
+      let bodyweightVolume = 0;
+      let externalWeightVolume = 0;
+      
+      if (session.exercises && session.exercises.length > 0) {
+        session.exercises.forEach(exercise => {
+          if (exercise.sets && exercise.sets.length > 0) {
+            exercise.sets.forEach(set => {
+              if (set.actualReps && set.weight) {
+                if (set.isBodyWeight) {
+                  const studentWeight = session.studentWeight || 70;
+                  bodyweightVolume += set.actualReps * studentWeight;
+                } else {
+                  externalWeightVolume += set.actualReps * set.weight;
+                }
+              }
+            });
+          }
+        });
+      }
+      
+      return {
+        bodyweight: bodyweightVolume,
+        external: externalWeightVolume,
+        total: bodyweightVolume + externalWeightVolume
+      };
+    },
+    
+    calculateMonthlyAverageWeight(month) {
+      const weights = [];
+      
+      this.students.forEach(student => {
+        const progressLogs = student.progressLogs || [];
+        const monthLogs = progressLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate.getMonth() === month.getMonth() && 
+                 logDate.getFullYear() === month.getFullYear();
+        });
+        
+        if (monthLogs.length > 0) {
+          const avgWeight = monthLogs.reduce((sum, log) => sum + (log.weight || 0), 0) / monthLogs.length;
+          weights.push(avgWeight);
+        }
+      });
+      
+      return weights.length > 0 ? 
+        Math.round(weights.reduce((sum, w) => sum + w, 0) / weights.length) : 0;
+    },
+    
+    calculateMonthlyCompletedWorkouts(month) {
+      return this.workoutSessions.filter(session => {
+        const sessionDate = new Date(session.startTime);
+        return sessionDate.getMonth() === month.getMonth() && 
+               sessionDate.getFullYear() === month.getFullYear() &&
+               session.status === 'completed';
+      }).length;
+    },
+    
+    // ========= MÉTODOS AUXILIARES =========
+    generateEventsForDay(day) {
+      // Usar dados REAIS das sessões ao invés de dados mockados
+      const events = [];
+      
+      // Filtrar sessões do dia específico
+      const sessionsOnDay = this.workoutSessions.filter(session => {
+        const sessionDate = new Date(session.startTime);
+        return sessionDate.getDate() === day &&
+               sessionDate.getMonth() === this.currentDate.getMonth() &&
+               sessionDate.getFullYear() === this.currentDate.getFullYear();
+      });
+      
+      sessionsOnDay.forEach((session, index) => {
+        // Determinar tipo baseado nos dados da sessão
+        let eventType = 'personal'; // padrão
+        
+        // Se a sessão tem muitos exercícios, pode ser treino em grupo
+        if (session.exercises && session.exercises.length > 6) {
+          eventType = 'group';
+        }
+        
+        // Se é primeira sessão do aluno ou tem poucas séries, pode ser avaliação
+        const studentSessions = this.workoutSessions.filter(s => s.studentId === session.studentId);
+        if (studentSessions.length <= 2) {
+          eventType = 'assessment';
+        }
+        
+        events.push({
+          id: `${session._id}-${index}`,
+          type: eventType,
+          sessionId: session._id,
+          studentName: this.getStudentName(session.studentId),
+          workoutName: session.workoutName,
+          status: session.status,
+          duration: session.duration
+        });
+      });
+      
       return events;
+    },
+    
+    getStudentName(studentId) {
+      const student = this.students.find(s => s._id === studentId);
+      return student ? student.name : 'Aluno';
+    },
+    
+    calculateSessionAverageDifficulty(session) {
+      // Calcular dificuldade média da sessão baseada nos sets
+      if (!session.exercises || session.exercises.length === 0) return 0;
+      
+      let totalDifficulty = 0;
+      let totalSets = 0;
+      
+      session.exercises.forEach(exercise => {
+        if (exercise.sets && exercise.sets.length > 0) {
+          exercise.sets.forEach(set => {
+            if (set.difficulty && set.difficulty >= 1 && set.difficulty <= 5) {
+              totalDifficulty += set.difficulty;
+              totalSets++;
+            }
+          });
+        }
+      });
+      
+      return totalSets > 0 ? totalDifficulty / totalSets : 0;
+    },
+    
+    calculateSessionConsistency(session) {
+      // Calcular consistência da sessão baseada em actualReps vs plannedReps
+      if (!session.exercises || session.exercises.length === 0) return 0;
+      
+      let totalConsistency = 0;
+      let totalSets = 0;
+      
+      session.exercises.forEach(exercise => {
+        if (exercise.sets && exercise.sets.length > 0) {
+          exercise.sets.forEach(set => {
+            if (set.actualReps && set.plannedReps && set.plannedReps > 0) {
+              const consistency = Math.min((set.actualReps / set.plannedReps) * 100, 120); // Cap em 120%
+              totalConsistency += consistency;
+              totalSets++;
+            }
+          });
+        }
+      });
+      
+      return totalSets > 0 ? totalConsistency / totalSets : 0;
     },
 
     getCurrentMonthName() {
@@ -722,6 +1618,20 @@ export default {
 
     getWeightIcon(weight) {
       return weight < 0 ? 'arrow_downward' : weight > 0 ? 'arrow_upward' : 'remove';
+    },
+
+    // Novos métodos Font Awesome
+    getWeightIconFA(weight) {
+      return weight < 0 ? 'fa-arrow-down' : weight > 0 ? 'fa-arrow-up' : 'fa-minus';
+    },
+
+    getTrendIconFA(trend) {
+      const icons = {
+        'positive': 'fa-arrow-trend-up',
+        'stable': 'fa-arrow-right',
+        'negative': 'fa-arrow-trend-down'
+      };
+      return icons[trend] || 'fa-minus';
     },
 
     formatWeight(weight) {
@@ -780,17 +1690,51 @@ export default {
       return points[trend] || '0,15 20,15 40,15 60,15 80,15';
     },
 
-    getLastWorkoutTime(studentId) {
-      const times = ['2 horas', '1 dia', '3 dias', '5 dias'];
-      return times[studentId % times.length];
+    getLastWorkoutTime(studentSessions) {
+      // Validar se é um array
+      if (!Array.isArray(studentSessions) || studentSessions.length === 0) {
+        return 'Nunca';
+      }
+      
+      try {
+        const completedSessions = studentSessions.filter(session => 
+          session && session.status === 'completed'
+        );
+        
+        if (completedSessions.length === 0) return 'Nunca';
+        
+        const lastSession = completedSessions.sort((a, b) => {
+          const dateA = new Date(a.startTime);
+          const dateB = new Date(b.startTime);
+          return dateB - dateA;
+        })[0];
+        
+        if (!lastSession || !lastSession.startTime) return 'Nunca';
+        
+        const lastDate = new Date(lastSession.startTime);
+        const now = new Date();
+        const diffTime = Math.abs(now - lastDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'hoje';
+        if (diffDays === 1) return '1 dia';
+        if (diffDays < 7) return `${diffDays} dias`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} semanas`;
+        return `${Math.floor(diffDays / 30)} meses`;
+      } catch (error) {
+        console.error('Erro ao calcular último treino:', error);
+        return 'Erro';
+      }
     },
 
     calculateAverageProgress() {
+      if (this.studentsData.length === 0) return 0;
       const total = this.studentsData.reduce((sum, student) => sum + Math.abs(student.weightProgress), 0);
       return Math.round((total / this.studentsData.length) * 10);
     },
 
     calculateAverageAdherence() {
+      if (this.studentsData.length === 0) return 0;
       const total = this.studentsData.reduce((sum, student) => sum + student.adherence, 0);
       return Math.round(total / this.studentsData.length);
     },
@@ -801,6 +1745,7 @@ export default {
 
     viewStudentDetails(studentId) {
       console.log('Viewing details for student:', studentId);
+      // TODO: Implementar navegação para detalhes do aluno
     }
   }
 };
@@ -868,13 +1813,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   --glass-bg: rgba(30, 30, 45, 0.8);
   --glass-border: rgba(139, 92, 246, 0.2);
   background-color: #0f172a;
-}
-
-.dashboard-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 2rem;
 }
 
 .user-info {
@@ -1381,14 +2319,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.student-id {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  margin: 0;
-  font-weight: 500;
-  font-family: 'Fira Code', monospace;
 }
 
 .student-menu {
@@ -1903,7 +2833,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   background: rgba(255, 255, 255, 0.18);
 }
 
-.btn-arrow-container .material-symbols-outlined {
+.btn-arrow-container .fas {
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -1970,7 +2900,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
 }
 
-.summary-icon .material-symbols-outlined {
+.summary-icon .fas {
   font-size: 1.5rem;
   color: white;
 }
@@ -2235,11 +3165,6 @@ body:has(.navbar-collapsed) .dashboard-main,
     padding: 1rem;
   }
   
-  .dashboard-header {
-    justify-content: center;
-    margin-bottom: 1.5rem;
-  }
-  
   .user-info {
     width: 100%;
     justify-content: center;
@@ -2432,7 +3357,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 .summary-card:nth-child(3) { animation-delay: 0.3s; }
 .summary-card:nth-child(4) { animation-delay: 0.4s; }
 
-.btn-view-details:hover .material-symbols-outlined {
+.btn-view-details:hover .fas {
   animation: arrowBounce 0.6s ease-in-out infinite;
 }
 
@@ -2488,6 +3413,63 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 .dashboard-dark ::-webkit-scrollbar-thumb:hover {
   background: #8b5cf6;
+}
+
+/* Loading and Error States */
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container .error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.error-container h3 {
+  color: var(--error-color);
+  margin-bottom: 0.5rem;
+}
+
+.error-container p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.retry-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: var(--primary-light);
 }
 
 /* Print Styles */

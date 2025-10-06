@@ -806,24 +806,33 @@
               <div class="card-body">
                 <div v-if="!activePlan" class="empty-plan">
                   <i class="fas fa-clipboard-list"></i>
-                  <p>Nenhum plano ativo</p>
+                  <p>Nenhum plano ativo encontrado</p>
+                  <p class="empty-subtitle">Inicie um treino para ver o plano mais recente</p>
                   <button @click="openAssignPlanModal" class="btn-primary">
                     Atribuir Plano
                   </button>
                 </div>
                 <div v-else class="plan-details">
                   <h4>{{ activePlan.name }}</h4>
-                  <p class="plan-created">Criado em: {{ formatDateFull(activePlan.createdAt) }}</p>
+                  <p v-if="activePlan.isFromSession" class="plan-created">
+                    <i class="fas fa-clock"></i> Baseado no último treino realizado
+                  </p>
+                  <p v-else class="plan-created">
+                    <i class="fas fa-calendar"></i> Criado em: {{ formatDateFull(activePlan.createdAt) }}
+                  </p>
                   <div class="plan-divisions">
                     <div v-for="(division, idx) in activePlan.divisions" :key="idx" class="division-item">
                       <div class="division-header">
                         <span class="division-name">{{ division.name }}</span>
                         <span class="division-count">{{ division.exercises?.length || 0 }} exercícios</span>
                       </div>
-                      <div class="division-exercises">
+                      <div v-if="division.exercises && division.exercises.length > 0" class="division-exercises">
                         <div v-for="(exercise, exIdx) in division.exercises" :key="exIdx" class="exercise-item">
                           <span class="exercise-name">{{ exercise.name }}</span>
-                          <span class="exercise-details">{{ exercise.sets }}x{{ exercise.reps }} - {{ exercise.idealWeight }}kg</span>
+                          <span class="exercise-details">
+                            {{ exercise.sets || 3 }}x{{ exercise.reps || 10 }}
+                            <span v-if="exercise.weight && exercise.weight > 0"> - {{ exercise.weight }}kg</span>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -840,7 +849,7 @@
                 </div>
                 <div class="stat-info">
                   <span class="stat-value">{{ workoutStats.frequency }}%</span>
-                  <span class="stat-label">Frequência</span>
+                  <span class="stat-label">Frequência Semanal</span>
                 </div>
               </div>
               <div class="stat-card">
@@ -861,6 +870,33 @@
                   <span class="stat-label">Exercícios Feitos</span>
                 </div>
               </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ workoutStats.totalHours }}h</span>
+                  <span class="stat-label">Horas Treinando</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ workoutStats.streak }}</span>
+                  <span class="stat-label">Sequência (dias)</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-calendar-week"></i>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ workoutStats.weeklyCount }}/4</span>
+                  <span class="stat-label">Meta Semanal</span>
+                </div>
+              </div>
             </div>
 
             <!-- Workout History -->
@@ -879,7 +915,10 @@
                       <i class="fas fa-calendar"></i>
                       {{ formatDateFull(workout.date) }}
                     </div>
-                    <div class="history-name">{{ workout.name }}</div>
+                    <div class="history-name">
+                      {{ workout.name }}
+                      <span v-if="workout.division" class="division-tag">{{ workout.division }}</span>
+                    </div>
                     <div class="history-stats">
                       <span><i class="fas fa-clock"></i> {{ workout.duration }}min</span>
                       <span><i class="fas fa-list-check"></i> {{ workout.exercisesCompleted }}/{{ workout.totalExercises }}</span>
@@ -1040,6 +1079,7 @@ import { useRoute } from 'vue-router';
 import { useThemeStore } from '../store/theme';
 import DashboardNavBar from '../components/DashboardNavBar.vue';
 import { getStudentById, addStudentProgress, getWorkoutPlans, assignPlanToStudent } from '../api';
+import api from '../api';
 
 export default {
   name: 'StudentProfileView',
@@ -1063,6 +1103,10 @@ export default {
     const workoutPlans = ref([]);
     const selectedPlan = ref(null);
     const loadingPlans = ref(false);
+    
+    // Workout sessions data
+    const workoutSessions = ref([]);
+    const loadingSessions = ref(false);
 
     const tabs = [
       { id: 'dados', label: 'Dados', icon: 'fas fa-user' },
@@ -1091,6 +1135,55 @@ export default {
     const chartHeight = ref(300);
     const volumeChartHeight = ref(350);
     const chartPadding = ref(40);
+    
+    // Helper function to calculate workout streak
+    const calculateWorkoutStreak = (sessions) => {
+      if (!sessions || sessions.length === 0) return 0;
+      
+      const completedSessions = sessions
+        .filter(s => s.status === 'completed')
+        .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime));
+      
+      if (completedSessions.length === 0) return 0;
+      
+      // Agrupar sessões por dia (ignorar hora)
+      const sessionsByDay = {};
+      completedSessions.forEach(session => {
+        const sessionDate = new Date(session.endTime || session.startTime);
+        const dayKey = sessionDate.toDateString(); // Apenas a data, sem hora
+        sessionsByDay[dayKey] = true;
+      });
+      
+      // Converter para array de datas únicas ordenadas
+      const uniqueDays = Object.keys(sessionsByDay)
+        .map(dayStr => new Date(dayStr))
+        .sort((a, b) => b - a); // Mais recente primeiro
+      
+      if (uniqueDays.length === 0) return 0;
+      
+      let streak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Começar do dia mais recente e verificar consecutividade
+      for (let i = 0; i < uniqueDays.length; i++) {
+        const currentDay = new Date(uniqueDays[i]);
+        currentDay.setHours(0, 0, 0, 0);
+        
+        const expectedDay = new Date(today);
+        expectedDay.setDate(today.getDate() - i);
+        
+        // Se o dia atual corresponde ao esperado (hoje - i dias)
+        if (currentDay.getTime() === expectedDay.getTime()) {
+          streak++;
+        } else {
+          // Se não é consecutivo, parar a contagem
+          break;
+        }
+      }
+      
+      return streak;
+    };
 
     // Computed
     const weightChartData = computed(() => {
@@ -1115,35 +1208,107 @@ export default {
     });
 
     const activePlan = computed(() => {
-      if (!student.value.workoutPlans || student.value.workoutPlans.length === 0) return null;
-      return student.value.workoutPlans[0];
+      // Primeiro, verificar se tem workout sessions recentes
+      if (workoutSessions.value && workoutSessions.value.length > 0) {
+        // Pegar a sessão mais recente que tem workoutPlanId
+        const recentSessionsWithPlan = workoutSessions.value
+          .filter(s => s.workoutPlanId && s.workoutName)
+          .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime));
+        
+        if (recentSessionsWithPlan.length > 0) {
+          const latestSession = recentSessionsWithPlan[0];
+          
+          // Agrupar exercícios da sessão por divisão (se houver)
+          let divisions = [];
+          if (latestSession.exercises && latestSession.exercises.length > 0) {
+            divisions = [{
+              name: latestSession.divisionName || 'Treino Principal',
+              exercises: latestSession.exercises.map(ex => ({
+                name: ex.exerciseName || ex.name || 'Exercício',
+                sets: ex.sets ? ex.sets.length : 3,
+                reps: ex.sets && ex.sets[0] ? ex.sets[0].reps : 10,
+                weight: ex.sets && ex.sets[0] ? ex.sets[0].weight : 0
+              }))
+            }];
+          }
+          
+          return {
+            _id: latestSession.workoutPlanId,
+            name: latestSession.workoutName,
+            divisions: divisions,
+            description: `Último treino realizado`,
+            isFromSession: true
+          };
+        }
+      }
+      
+      // Fallback: verificar se o estudante tem planos atribuídos
+      if (student.value.workoutPlans && student.value.workoutPlans.length > 0) {
+        return {
+          ...student.value.workoutPlans[0],
+          isFromSession: false
+        };
+      }
+      
+      return null;
     });
 
     const workoutStats = computed(() => {
-      const summary = student.value.workoutSummary || [];
-      const completed = summary.filter(w => w.status === 'completed').length;
-      const total = summary.length || 1;
-      const exercises = summary.reduce((acc, w) => acc + (w.exercisesCompleted || 0), 0);
+      if (!workoutSessions.value || workoutSessions.value.length === 0) {
+        return {
+          frequency: 0,
+          completed: 0,
+          exercises: 0,
+          totalHours: 0,
+          streak: 0,
+          weeklyCount: 0
+        };
+      }
+      
+      const completedSessions = workoutSessions.value.filter(s => s.status === 'completed');
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      const sessionsThisWeek = completedSessions.filter(s => {
+        const sessionDate = new Date(s.endTime || s.startTime);
+        return sessionDate >= weekAgo;
+      });
+      
+      const totalMinutes = completedSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+      const totalHours = Math.round(totalMinutes / 60 * 10) / 10;
+      
+      const totalExercises = completedSessions.reduce((sum, s) => {
+        return sum + (s.completedExercises || 0);
+      }, 0);
+      
+      // Calcular streak (dias consecutivos)
+      const streak = calculateWorkoutStreak(completedSessions);
       
       return {
-        frequency: Math.round((completed / total) * 100),
-        completed,
-        exercises
+        frequency: completedSessions.length > 0 ? Math.round((sessionsThisWeek.length / 4) * 100) : 0,
+        completed: completedSessions.length,
+        exercises: totalExercises,
+        totalHours,
+        streak,
+        weeklyCount: sessionsThisWeek.length
       };
     });
 
     const workoutHistory = computed(() => {
-      if (!student.value.workoutSummary) return [];
-      return [...student.value.workoutSummary]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
+      if (!workoutSessions.value || workoutSessions.value.length === 0) return [];
+      
+      return [...workoutSessions.value]
+        .filter(s => s.status === 'completed')
+        .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))
         .slice(0, 10)
-        .map(w => ({
-          date: w.date,
-          name: 'Treino',
-          duration: w.duration || 0,
-          exercisesCompleted: w.exercisesCompleted || 0,
-          totalExercises: w.totalExercises || 0,
-          status: w.status
+        .map(session => ({
+          date: session.endTime || session.startTime,
+          name: session.workoutName || 'Treino',
+          division: session.divisionName || '',
+          duration: session.duration || 0,
+          exercisesCompleted: session.completedExercises || 0,
+          totalExercises: session.totalExercises || 0,
+          status: 'completed'
         }));
     });
 
@@ -1153,19 +1318,38 @@ export default {
     });
 
     // Methods
+    const loadWorkoutSessions = async (studentId) => {
+      try {
+        loadingSessions.value = true;
+        
+        const response = await api.get(`/workout-sessions/sessions/student/${studentId}`);
+        
+        const sessions = response.data?.sessions || [];
+        workoutSessions.value = sessions;
+        
+      } catch (error) {
+        console.error('❌ [StudentProfile] Erro ao carregar workout sessions:', error);
+        
+        try {
+          const fallbackResponse = await api.get('/workout-sessions/sessions/all');
+          const allSessions = fallbackResponse.data?.sessions || [];
+          workoutSessions.value = allSessions;
+        } catch (fallbackError) {
+          console.error('❌ [StudentProfile] Fallback também falhou:', fallbackError);
+          workoutSessions.value = [];
+        }
+      } finally {
+        loadingSessions.value = false;
+      }
+    };
+
     const loadStudentData = async () => {
       try {
         loading.value = true;
         error.value = null;
         const studentId = route.params.id;
-        console.log('🔍 [StudentProfileView] Carregando aluno ID:', studentId);
-        console.log('🔍 [StudentProfileView] URL completa:', route.fullPath);
         
         const response = await getStudentById(studentId);
-        console.log('✅ [StudentProfileView] Response completo:', response);
-        console.log('✅ [StudentProfileView] Dados do aluno (response.data):', response.data);
-        console.log('✅ [StudentProfileView] Tipo de response.data:', typeof response.data);
-        console.log('✅ [StudentProfileView] É array?', Array.isArray(response.data));
         
         // Se for array, pegar o primeiro elemento
         if (Array.isArray(response.data)) {
@@ -1175,8 +1359,10 @@ export default {
           student.value = response.data;
         }
         
-        console.log('✅ [StudentProfileView] Student.value atribuído:', student.value);
-        console.log('✅ [StudentProfileView] Nome do aluno:', student.value.name);
+        // Carregar workout sessions do aluno
+        if (student.value._id) {
+          await loadWorkoutSessions(student.value._id);
+        }
       } catch (err) {
         console.error('❌ [StudentProfileView] Erro ao carregar aluno:', err);
         console.error('❌ [StudentProfileView] Erro completo:', err.response);
@@ -1313,36 +1499,56 @@ export default {
 
     // Volume Chart Data and Calculations
     const volumeChartData = computed(() => {
-      if (!student.value.workoutSummary || student.value.workoutSummary.length === 0) return [];
+      if (!workoutSessions.value || workoutSessions.value.length === 0) return [];
       
-      // Get last 3 months of workout data
+      // Pegar últimos 3 meses de dados de treino
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
       
-      const workouts = [...student.value.workoutSummary]
-        .filter(w => w.status === 'completed' && new Date(w.date) >= threeMonthsAgo)
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      const completedSessions = workoutSessions.value
+        .filter(s => s.status === 'completed' && new Date(s.endTime || s.startTime) >= threeMonthsAgo)
+        .sort((a, b) => new Date(a.endTime || a.startTime) - new Date(b.endTime || b.startTime));
       
-      if (workouts.length === 0) return [];
+      if (completedSessions.length === 0) return [];
       
-      // Calculate volume for each workout (approximation: exercises * sets * reps * avg weight)
-      // Since we don't have exact volume, we'll use exercisesCompleted as proxy
-      const volumeData = workouts.map((workout) => {
-        const volume = (workout.exercisesCompleted || 0) * (workout.duration || 60) / 10; // Proxy calculation
+      // Calcular volume para cada treino baseado em dados reais
+      const volumeData = completedSessions.map((session) => {
+        // Volume = exercícios completados * sets completados * peso médio estimado
+        let totalVolume = 0;
+        
+        if (session.exercises && Array.isArray(session.exercises)) {
+          session.exercises.forEach(exercise => {
+            if (exercise.sets && Array.isArray(exercise.sets)) {
+              exercise.sets.forEach(set => {
+                if (set.completed && set.weight && set.actualReps) {
+                  totalVolume += set.weight * set.actualReps;
+                }
+              });
+            }
+          });
+        }
+        
+        // Se não temos dados detalhados de volume, usar aproximação
+        if (totalVolume === 0) {
+          totalVolume = (session.completedExercises || 0) * (session.completedSets || 0) * 50; // 50kg peso médio estimado
+        }
+        
         return {
-          date: workout.date,
-          volume: volume,
-          isPlateau: false
+          date: session.endTime || session.startTime,
+          volume: totalVolume,
+          isPlateau: false,
+          sessionName: session.workoutName,
+          division: session.divisionName
         };
       });
       
-      // Detect plateaus (when volume doesn't increase significantly over 3+ sessions)
+      // Detectar platôs (quando o volume não aumenta significativamente em 3+ sessões)
       for (let i = 3; i < volumeData.length; i++) {
         const last3 = volumeData.slice(i - 3, i);
         const avgLast3 = last3.reduce((sum, d) => sum + d.volume, 0) / 3;
         const current = volumeData[i].volume;
         
-        // Plateau: less than 5% improvement over last 3 sessions
+        // Platô: menos de 5% de melhoria nas últimas 3 sessões
         if (current <= avgLast3 * 1.05) {
           volumeData[i].isPlateau = true;
         }
@@ -1572,12 +1778,8 @@ export default {
       try {
         submitting.value = true;
         
-        console.log('📤 Enviando dados de progresso:', JSON.stringify(progressForm.value, null, 2));
-        
         await addStudentProgress(student.value._id, progressForm.value);
         await loadStudentData();
-        
-        console.log('✅ Progresso adicionado com sucesso!');
         
         closeProgressModal();
       } catch (err) {
@@ -1666,6 +1868,9 @@ export default {
       workoutPlans,
       selectedPlan,
       loadingPlans,
+      workoutSessions,
+      loadingSessions,
+      loadWorkoutSessions,
       loadStudentData,
       calculateAge,
       formatPhone,
@@ -4530,10 +4735,27 @@ export default {
 .history-name {
   font-weight: 600;
   color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .dark-mode .history-name {
   color: #f9fafb;
+}
+
+.division-tag {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.dark-mode .division-tag {
+  background: #312e81;
+  color: #c7d2fe;
 }
 
 .history-stats {

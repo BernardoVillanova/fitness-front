@@ -409,7 +409,6 @@ const unassignStudent = async (studentId) => {
   
   try {
     await unassignInstructor(studentId)
-    console.log('Instrutor removido com sucesso')
     await fetchStudents(currentPage.value, search.value)
   } catch (error) {
     console.error('Erro ao remover instrutor:', error)
@@ -422,7 +421,6 @@ const confirmDeleteStudent = async (student) => {
   
   try {
     await deleteStudent(student._id)
-    console.log('Aluno excluído com sucesso')
     await fetchStudents(currentPage.value, search.value)
   } catch (error) {
     console.error('Erro ao excluir aluno:', error)

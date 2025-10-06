@@ -452,7 +452,6 @@ const searchStudents = () => {
   searchTimeout = setTimeout(async () => {
     loadingStudents.value = true
     try {
-      const token = sessionStorage.getItem('token')
       const config = {
         params: {
           search: studentSearch.value,
@@ -460,34 +459,17 @@ const searchStudents = () => {
         }
       }
       
-      // Adiciona token se existir
-      if (token) {
-        config.headers = {
-          Authorization: `Bearer ${token}`
-        }
-      }
-      
-      const response = await axios.get('http://localhost:3000/api/students', config)
-      
-      console.log('📊 Alunos encontrados:', response.data.length)
-      console.log('📋 Dados dos alunos:', response.data)
+      // Usar rota pública que não requer autenticação
+      const response = await axios.get('http://localhost:3000/api/students/public-search', config)
       
       // Filter out already selected students and students with instructor
       const filtered = response.data.filter(student => {
         const alreadySelected = form.value.students.some(s => s._id === student._id)
         const hasInstructor = student.instructorId && student.instructorId !== null
         
-        console.log(`🔍 Aluno ${student.name}:`, {
-          alreadySelected,
-          hasInstructor,
-          instructorId: student.instructorId,
-          willShow: !alreadySelected && !hasInstructor
-        })
-        
         return !alreadySelected && !hasInstructor
       })
       
-      console.log('✅ Alunos filtrados:', filtered.length)
       searchResults.value = filtered
     } catch (error) {
       console.error('❌ Error searching students:', error)
@@ -615,8 +597,6 @@ const submitForm = async () => {
       maxStudents: form.value.maxStudents,
       students: form.value.students.map(s => s._id)
     }
-
-    console.log('📋 Payload do instrutor:', instructorPayload)
 
     const { data } = await axios.post('http://localhost:3000/api/instructors', instructorPayload)
     

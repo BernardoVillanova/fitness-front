@@ -290,7 +290,7 @@ const fetchInstructorData = async () => {
       
       // Buscar sessões agendadas (se houver endpoint)
       try {
-        const sessionsResponse = await api.get('/student/sessions/upcoming')
+        const sessionsResponse = await api.get('/workout-sessions/sessions/upcoming')
         if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
           upcomingSessions.value = sessionsResponse.data.map(s => ({
             id: s._id || s.id,
