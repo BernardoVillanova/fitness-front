@@ -924,6 +924,7 @@ export default {
       name: '',
       description: '',
       image: null,
+      imageBase64: '', // Adiciona campo para imagem base64
       location: {
         address: '',
         city: '',
@@ -976,9 +977,49 @@ export default {
       }
 
       formData.value.image = file;
+      
+      // Comprimir a imagem antes de converter para base64
       const reader = new FileReader();
       reader.onload = (e) => {
-        imagePreview.value = e.target.result;
+        const img = new Image();
+        img.onload = () => {
+          // Criar canvas para redimensionar
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Redimensionar se for muito grande (máximo 1200px)
+          const maxSize = 1200;
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            } else {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Converter para base64 com qualidade reduzida
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          
+          // Verificar tamanho após compressão
+          const sizeInBytes = (compressedBase64.length * 3) / 4;
+          if (sizeInBytes > 10 * 1024 * 1024) { // 10MB após compressão
+            alert('❌ A imagem ainda está muito grande. Tente uma imagem menor.');
+            return;
+          }
+          
+          imagePreview.value = compressedBase64;
+          formData.value.imageBase64 = compressedBase64;
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     };
@@ -1002,6 +1043,7 @@ export default {
     const removeImage = () => {
       imagePreview.value = null;
       formData.value.image = null;
+      formData.value.imageBase64 = ''; // Remove também o base64
       if (fileInput.value) {
         fileInput.value.value = '';
       }
@@ -1009,6 +1051,7 @@ export default {
 
     const resetForm = () => {
       formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
+      formData.value.imageBase64 = ''; // Limpa também o base64
       imagePreview.value = null;
       isDragging.value = false;
       showModal.value = false;
@@ -1203,8 +1246,12 @@ export default {
           equipments: equipmentsList.value // Adiciona os equipamentos
         };
 
-        // Se houver imagem, adiciona ao payload
-        if (formData.value.image) {
+        // Se houver imagem base64, adiciona ao payload
+        if (formData.value.imageBase64) {
+          gymData.imageBase64 = formData.value.imageBase64;
+        }
+        // Se houver imagem (fallback para compatibilidade)
+        else if (formData.value.image) {
           gymData.image = formData.value.image;
         }
         
@@ -1233,6 +1280,7 @@ export default {
           name: newVal.name || '',
           description: newVal.description || '',
           image: newVal.image || null,
+          imageBase64: '', // Limpa o base64 ao carregar academia existente
           location: {
             address: newVal.location?.address || '',
             city: newVal.location?.city || '',
@@ -1242,7 +1290,12 @@ export default {
           phone: newVal.phone || '',
           email: newVal.email || '',
         };
-        imagePreview.value = newVal.imageUrl || null;
+        // Se a academia tem imagem, converte o caminho para URL completa
+        if (newVal.image) {
+          imagePreview.value = `http://localhost:3000${newVal.image}`;
+        } else {
+          imagePreview.value = newVal.imageUrl || null;
+        }
         equipmentsList.value = newVal.equipments || [];
       } else {
         formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
