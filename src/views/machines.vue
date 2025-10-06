@@ -612,11 +612,14 @@ export default {
   async mounted() {
     await this.$nextTick();
     
+    // Wait for auth store to be properly hydrated
+    await this.waitForAuthStore();
+    
     await this.fetchInstructorId();
     if (this.instructorId) {
       await this.fetchEquipments();
     } else {
-      
+      // Try again after a delay
       setTimeout(async () => {
         await this.fetchInstructorId();
         if (this.instructorId) {
@@ -628,7 +631,6 @@ export default {
       }, 1000);
     }
     document.addEventListener('click', this.handleClickOutside);
-
   },
   
   beforeUnmount() {
@@ -680,6 +682,28 @@ export default {
     }
   },
   methods: {
+    async waitForAuthStore() {
+      // Wait for auth store to be properly initialized
+      let retries = 0;
+      const maxRetries = 10;
+      
+      while (retries < maxRetries) {
+        const userData = this.user || this.currentUser;
+        const token = sessionStorage.getItem('token');
+        
+        // Check if we have either user data or at least a token
+        if (userData || token) {
+          console.log('✅ [waitForAuthStore] Auth store is ready, userData:', userData, 'token exists:', !!token);
+          return;
+        }
+        
+        console.log(`⏳ [waitForAuthStore] Waiting for auth store... attempt ${retries + 1}/${maxRetries}`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+      }
+      
+      console.warn('⚠️ [waitForAuthStore] Auth store not ready after max retries');
+    },
     async loadData() {
       try {
         // Primeiro, garantir que temos o instructorId
@@ -711,31 +735,54 @@ export default {
       
       try {
         // Priorizar user real, depois currentUser
-        const userData = this.user || this.currentUser;
+        let userData = this.user || this.currentUser;
         console.log('🟢 [fetchInstructorId] userData selecionado:', userData);
         
+        // Se não houver userData, tentar recuperar do sessionStorage
+        if (!userData) {
+          const sessionUser = sessionStorage.getItem('user');
+          if (sessionUser) {
+            try {
+              userData = JSON.parse(sessionUser);
+              console.log('🟢 [fetchInstructorId] userData recuperado do sessionStorage:', userData);
+            } catch (e) {
+              console.error('[fetchInstructorId] Erro ao parsear user do sessionStorage:', e);
+            }
+          }
+        }
+        
+        // Se não houver userData, alertar e abortar
+        if (!userData) {
+          alert('Erro: Dados de usuário não encontrados.\nPor favor, faça logout e login novamente.');
+          this.instructorId = null;
+          return;
+        }
+        
         // Se já tiver instructorId no userData (vem do login), usar direto
-        if (userData && userData.instructorId) {
+        if (userData.instructorId) {
           console.log('✅ [fetchInstructorId] instructorId já existe no userData:', userData.instructorId);
           this.instructorId = userData.instructorId;
           return;
         }
         
         // Caso contrário, buscar usando userId ou id
-        const userId = userData?.userId || userData?.id;
+        const userId = userData.userId || userData.id;
         
-        if (userData && userId) {
+        if (userId) {
           const response = await api.get(`/instructors/user/${userId}`);
           this.instructorId = response.data._id;
         } else {
-          console.error('[fetchInstructorId] user ou userId não existe');
-          console.error('[fetchInstructorId] userData:', userData);
-          throw new Error('Dados de usuário não encontrados');
+          console.error('[fetchInstructorId] userId não existe no userData:', userData);
+          alert('Erro: Dados de usuário incompletos.\nPor favor, faça logout e login novamente.');
+          this.instructorId = null;
+          return;
         }
       } catch (error) {
         console.error('[fetchInstructorId] Erro ao buscar instrutor:', error);
         console.error('[fetchInstructorId] Error response:', error.response?.data);
-        throw error;
+        alert('Erro ao buscar dados do instrutor.\nPor favor, tente novamente ou faça login novamente.');
+        this.instructorId = null;
+        return;
       }
     },
     async fetchEquipments() {
