@@ -738,7 +738,17 @@ export default {
         description: '',
         goal: '',
         divisions: []
-      }
+      },
+
+      // Estado inicial para comparar se houve alterações
+      initialFormData: {
+        name: '',
+        description: '',
+        goal: '',
+        divisions: []
+      },
+
+      initialSelectedStudents: []
     }
   },
 
@@ -803,6 +813,14 @@ export default {
         return this.formData.divisions.every(d => d.exercises.length > 0);
       }
       return true;
+    },
+
+    hasFormChanges() {
+      // Compara os dados atuais com o estado inicial
+      const formChanged = JSON.stringify(this.formData) !== JSON.stringify(this.initialFormData);
+      const studentsChanged = JSON.stringify(this.selectedStudents) !== JSON.stringify(this.initialSelectedStudents);
+      
+      return formChanged || studentsChanged;
     },
 
     isFormValid() {
@@ -928,6 +946,9 @@ export default {
           divisions: this.numberOfDivisions,
           students: this.selectedStudents.length
         });
+        
+        // Salva o estado inicial após carregar os dados de edição
+        this.saveInitialState();
       } else {
         this.resetForm();
       }
@@ -945,6 +966,15 @@ export default {
         goal: '',
         divisions: []
       };
+      
+      // Salva o estado inicial
+      this.saveInitialState();
+    },
+
+    saveInitialState() {
+      // Salva uma cópia profunda do estado atual como estado inicial
+      this.initialFormData = JSON.parse(JSON.stringify(this.formData));
+      this.initialSelectedStudents = [...this.selectedStudents];
     },
 
     initializeDivisions() {
@@ -1220,6 +1250,14 @@ export default {
     },
 
     closeModal() {
+      // Se não há alterações no formulário, fecha diretamente
+      if (!this.hasFormChanges) {
+        this.resetForm();
+        this.$emit('close');
+        return;
+      }
+      
+      // Se há alterações, mostra a confirmação
       this.showConfirmation(
         'Confirmar saída',
         'Tem certeza que deseja sair? As alterações não salvas serão perdidas.',

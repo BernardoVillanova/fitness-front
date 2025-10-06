@@ -67,7 +67,8 @@ import {
   faPersonWalking,
   faShoePrints,
   faLightbulb,
-  faUserPlus
+  faUserPlus,
+  faArrowTrendDown
 } from '@fortawesome/free-solid-svg-icons';
 
 // Add icons to library
@@ -131,7 +132,8 @@ library.add(
   faPersonWalking,
   faShoePrints,
   faLightbulb,
-  faUserPlus
+  faUserPlus,
+  faArrowTrendDown
 );const app = createApp(App);
 const pinia = createPinia();
 

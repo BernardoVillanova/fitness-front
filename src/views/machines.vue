@@ -150,6 +150,60 @@
                 </div>
               </div>
 
+              <!-- Settings Menu -->
+              <div class="machine-menu-wrapper" :ref="`dropdownRef-${machine._id}`">
+                <button 
+                  class="settings-button" 
+                  @click="toggleMachineMenu(machine._id)"
+                  aria-label="Settings"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="currentColor"
+                  >
+                    <circle cx="12" cy="5" r="2"/>
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="19" r="2"/>
+                  </svg>
+                </button>
+                
+                <transition name="dropdown">
+                  <div v-if="machine.showMenu" class="dropdown-menu">
+                    <a href="#" class="dropdown-item" @click.prevent="previewMachine(machine)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Ver detalhes
+                    </a>
+                    
+                    <a href="#" class="dropdown-item" @click.prevent="editMachine(machine)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                      </svg>
+                      Editar
+                    </a>
+                    
+                    <div class="divider"></div>
+                    
+                    <a href="#" class="dropdown-item logout" @click.prevent="deleteMachine(machine)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        <line x1="10" x2="10" y1="11" y2="17"/>
+                        <line x1="14" x2="14" y1="11" y2="17"/>
+                      </svg>
+                      Excluir
+                    </a>
+                  </div>
+                </transition>
+              </div>
+
               <!-- Machine Info -->
               <div class="exercise-info">
                 <div class="exercise-meta">
@@ -175,7 +229,15 @@
                       </div>
                       <div class="stat-content">
                         <span class="stat-label">Grupos Musculares</span>
-                        <span class="stat-value">{{ machine.muscleGroups.join(', ') }}</span>
+                        <div class="badges-wrapper">
+                          <span 
+                            v-for="group in machine.muscleGroups" 
+                            :key="group" 
+                            class="muscle-group-badge"
+                          >
+                            {{ group }}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -496,11 +558,12 @@ export default {
     const themeStore = useThemeStore();
     const authStore = useAuthStore();
     const { isDarkMode } = storeToRefs(themeStore);
-    const { user } = storeToRefs(authStore);
+    const { user, currentUser } = storeToRefs(authStore);
     
     return {
       isDarkMode,
       user,
+      currentUser,
     };
   },
   data() {
@@ -572,6 +635,16 @@ export default {
       }, 1000);
     }
   },
+  
+  mounted() {
+    // Adiciona listener para cliques fora do dropdown
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+  },
+  
   computed: {
     getImageUrl() {
       return (imagePath) => {
@@ -613,28 +686,34 @@ export default {
     async fetchInstructorId() {
       console.log('🟢 [fetchInstructorId] Iniciando busca do instructorId');
       console.log('🟢 [fetchInstructorId] this.user:', this.user);
+      console.log('🟢 [fetchInstructorId] this.currentUser:', this.currentUser);
       
       try {
-        // Se já tiver instructorId no user (vem do login), usar direto
-        if (this.user && this.user.instructorId) {
-          console.log('✅ [fetchInstructorId] instructorId já existe no user:', this.user.instructorId);
-          this.instructorId = this.user.instructorId;
+        // Priorizar user real, depois currentUser
+        const userData = this.user || this.currentUser;
+        console.log('🟢 [fetchInstructorId] userData selecionado:', userData);
+        
+        // Se já tiver instructorId no userData (vem do login), usar direto
+        if (userData && userData.instructorId) {
+          console.log('✅ [fetchInstructorId] instructorId já existe no userData:', userData.instructorId);
+          this.instructorId = userData.instructorId;
           return;
         }
         
         // Caso contrário, buscar usando userId ou id
-        const userId = this.user?.userId || this.user?.id;
+        const userId = userData?.userId || userData?.id;
         console.log('🟢 [fetchInstructorId] userId extraído:', userId);
         
-        if (this.user && userId) {
+        if (userData && userId) {
           console.log('🟢 [fetchInstructorId] Fazendo GET /instructors/user/' + userId);
           const response = await api.get(`/instructors/user/${userId}`);
           console.log('🟢 [fetchInstructorId] Resposta da API:', response.data);
           this.instructorId = response.data._id;
           console.log('✅ [fetchInstructorId] instructorId definido:', this.instructorId);
         } else {
-          console.error('❌ [fetchInstructorId] user ou userId não existe');
+          console.error('❌ [fetchInstructorId] userData ou userId não existe');
           console.error('❌ [fetchInstructorId] this.user:', this.user);
+          console.error('❌ [fetchInstructorId] this.currentUser:', this.currentUser);
         }
       } catch (error) {
         console.error('❌ [fetchInstructorId] Erro ao buscar instrutor:', error);
@@ -698,9 +777,10 @@ export default {
       return labels[difficulty] || difficulty;
     },
     async openCreateMachineModal() {
-      console.log('🟣 [openCreateMachineModal] Abrindo modal');
-      console.log('🟣 [openCreateMachineModal] instructorId atual:', this.instructorId);
-      console.log('🟣 [openCreateMachineModal] user atual:', this.user);
+      console.log('� [openCreateMachineModal] Abrindo modal');
+      console.log('� [openCreateMachineModal] instructorId atual:', this.instructorId);
+      console.log('� [openCreateMachineModal] user atual:', this.user);
+      console.log('🟢 [openCreateMachineModal] currentUser atual:', this.currentUser);
       
       // Se instructorId não existe, tentar buscar novamente
       if (!this.instructorId) {
@@ -710,9 +790,10 @@ export default {
         if (!this.instructorId) {
           console.error('❌ [openCreateMachineModal] CRÍTICO: instructorId continua null após segunda tentativa!');
           console.error('❌ [openCreateMachineModal] user:', this.user);
+          console.error('❌ [openCreateMachineModal] currentUser:', this.currentUser);
           console.error('❌ [openCreateMachineModal] sessionStorage user:', sessionStorage.getItem('user'));
           console.error('❌ [openCreateMachineModal] sessionStorage token:', sessionStorage.getItem('token'));
-          alert('❌ ERRO: Não foi possível carregar o ID do instrutor.\n\nDados de debug (verifique o console):\n- User: ' + JSON.stringify(this.user) + '\n\nPor favor, faça logout e login novamente.');
+          alert('❌ ERRO: Não foi possível carregar o ID do instrutor.\n\nDados de debug (verifique o console):\n- User: ' + JSON.stringify(this.user || this.currentUser) + '\n\nPor favor, faça logout e login novamente.');
           return;
         } else {
           console.log('✅ [openCreateMachineModal] instructorId carregado com sucesso na segunda tentativa:', this.instructorId);
@@ -726,6 +807,32 @@ export default {
     },
     async handleEquipmentAdded() {
       await this.fetchEquipments();
+    },
+    
+    toggleMachineMenu(machineId) {
+      this.machines = this.machines.map(machine => {
+        if (machine._id === machineId) {
+          return { ...machine, showMenu: !machine.showMenu };
+        }
+        return { ...machine, showMenu: false };
+      });
+    },
+    
+    handleClickOutside(event) {
+      const isClickInsideAnyDropdown = this.machines.some(machine => {
+        const dropdownRef = this.$refs[`dropdownRef-${machine._id}`];
+        if (!dropdownRef) return false;
+        
+        const element = Array.isArray(dropdownRef) ? dropdownRef[0] : dropdownRef;
+        return element && element.contains && element.contains(event.target);
+      });
+
+      if (!isClickInsideAnyDropdown) {
+        this.machines = this.machines.map(machine => ({
+          ...machine,
+          showMenu: false
+        }));
+      }
     },
     truncate(text, maxLength) {
       if (!text) return '';
@@ -1455,25 +1562,26 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 /* Machines Grid */
 .exercises-section {
-  margin-top: 32px;
+  margin-top: 2rem;
 }
 
 .exercises-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 32px;
 }
 
 .exercise-card {
   position: relative;
   background: var(--bg-secondary);
-  border-radius: 24px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border-color);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  max-width: 435px;
+  height: 618px;
 }
 
 .exercise-card:hover {
@@ -1504,7 +1612,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 .exercise-image {
   width: 100%;
-  height: 180px;
+  height: 200px;
   position: relative;
   overflow: hidden;
 }
@@ -1580,17 +1688,14 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 .image-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .exercise-card:hover .image-overlay {
@@ -1601,7 +1706,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   display: flex;
   gap: 12px;
   transform: translateY(20px);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
 }
 
 .exercise-card:hover .overlay-actions {
@@ -1854,6 +1959,13 @@ body:has(.navbar-collapsed) .dashboard-main,
   gap: 2px;
 }
 
+.badges-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
 .stat-label {
   font-size: 0.75rem;
   color: var(--text-secondary);
@@ -1866,14 +1978,38 @@ body:has(.navbar-collapsed) .dashboard-main,
   color: var(--text-primary);
 }
 
+/* Muscle Groups Badges */
+.muscle-group-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 15px;
+  border: none;
+  letter-spacing: 0.025em;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.dashboard-dark .muscle-group-badge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.muscle-group-badge:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
 /* Action Buttons */
 .exercise-actions {
   margin-top: auto;
   position: relative;
   z-index: 1;
-  padding: 24px 28px;
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-primary);
+  padding: 1rem 1.5rem;
   display: flex;
   gap: 12px;
 }
@@ -1881,18 +2017,18 @@ body:has(.navbar-collapsed) .dashboard-main,
 .action-button {
   position: relative;
   flex: 1;
-  padding: 14px 24px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 14px;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
   letter-spacing: 0.01em;
 }
@@ -1900,7 +2036,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 .action-button svg {
   width: 18px;
   height: 18px;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
 
@@ -1908,26 +2044,27 @@ body:has(.navbar-collapsed) .dashboard-main,
   position: relative;
   z-index: 2;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .button-shine {
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
   background: linear-gradient(
-    90deg,
-    transparent 0%,
+    45deg,
+    transparent 30%,
     rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%
+    transparent 70%
   );
-  transition: left 0.6s ease;
-  z-index: 1;
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
 }
 
 .action-button:hover .button-shine {
-  left: 100%;
+  transform: translateX(100%);
 }
 
 /* Primary Action - Gradient with Glow */
@@ -2052,15 +2189,11 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 /* Delete Button Specific Styles */
 .exercise-actions .secondary-action {
-  background: rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.2);
   color: #ef4444;
 }
 
 .exercise-actions .secondary-action:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: #ef4444;
-  color: #dc2626;
+  border-color: #ef4444; 
   box-shadow: 
     0 8px 25px rgba(239, 68, 68, 0.2),
     0 4px 15px rgba(239, 68, 68, 0.15);
@@ -2076,6 +2209,133 @@ body:has(.navbar-collapsed) .dashboard-main,
   background: rgba(239, 68, 68, 0.15);
   border-color: #ef4444;
   color: #fca5a5;
+}
+
+/* Settings Button and Dropdown */
+.machine-menu-wrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+}
+
+.settings-button {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF !important;
+  padding: 8px;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: color 0.2s ease;
+  border-radius: 50%;
+}
+
+.settings-button:hover {
+  color: #2563eb !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.settings-button:focus,
+.settings-button:active {
+  background: transparent !important;
+  color: #4a5568 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.settings-button svg {
+  transition: none !important;
+  transform: none !important;
+}
+
+.dashboard-dark .settings-button {
+  color: #64748b !important;
+  background: transparent !important;
+}
+
+.dashboard-dark .settings-button:hover {
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+
+.dashboard-dark .settings-button:focus,
+.dashboard-dark .settings-button:active {
+  color: #64748b !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-accent);
+  color: var(--primary-color);
+}
+
+.dropdown-item.logout {
+  color: #ef4444;
+}
+
+.dropdown-item.logout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.dropdown-enter-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
 }
 
 /* Empty State */

@@ -51,17 +51,17 @@
             </div>
           </div>
           <div class="header-actions">
-            <button @click="openAssignPlanModal" class="btn-primary">
+            <button @click="openAssignPlanModal" class="action-btn active">
               <i class="fas fa-dumbbell"></i>
-              Atribuir Plano
+              <span>Atribuir Plano</span>
             </button>
-            <button @click="showProgressModal = true" class="btn-secondary">
-              <i class="fas fa-chart-line"></i>
-              Adicionar Progresso
+            <button @click="showProgressModal = true" class="action-btn">
+              <i class="fas fa-plus"></i>
+              <span>Adicionar Progresso</span>
             </button>
-            <button @click="exportData" class="btn-outline">
+            <button @click="exportData" class="action-btn">
               <i class="fas fa-download"></i>
-              Exportar
+              <span>Exportar</span>
             </button>
           </div>
         </div>
@@ -85,95 +85,171 @@
           <div v-show="activeTab === 'dados'" class="dados-tab">
             <div class="cards-grid">
               <!-- Card Dados Pessoais -->
-              <div class="info-card">
-                <div class="card-header">
-                  <h3><i class="fas fa-user"></i> Dados Pessoais</h3>
+              <div class="info-card-new">
+                <div class="card-header-new">
+                  <div class="header-icon">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Dados Pessoais</h3>
+                    <span class="header-badge">{{ student.personalInfo?.trainingExperience || 'Iniciante' }}</span>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="info-row">
-                    <span class="label">Nome:</span>
-                    <span class="value">{{ student.name }}</span>
+                <div class="card-body-new">
+                  <div class="info-item-new">
+                    <div class="item-icon">
+                      <i class="fas fa-user"></i>
+                    </div>
+                    <div class="item-content">
+                      <span class="item-label">NOME</span>
+                      <span class="item-value">{{ student.name || 'rodrigo carlos' }}</span>
+                    </div>
                   </div>
-                  <div class="info-row">
-                    <span class="label">Email:</span>
-                    <span class="value">{{ student.email }}</span>
+                  <div class="info-item-new">
+                    <div class="item-icon">
+                      <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="item-content">
+                      <span class="item-label">EMAIL</span>
+                      <span class="item-value">{{ student.email || 'rdgatuno@gmail.com' }}</span>
+                    </div>
                   </div>
-                  <div class="info-row">
-                    <span class="label">Telefone:</span>
-                    <span class="value">{{ student.phone }}</span>
+                  <div class="info-item-new">
+                    <div class="item-icon">
+                      <i class="fas fa-phone"></i>
+                    </div>
+                    <div class="item-content">
+                      <span class="item-label">TELEFONE</span>
+                      <span class="item-value">{{ student.phone || '19999999999' }}</span>
+                    </div>
                   </div>
-                  <div class="info-row">
-                    <span class="label">CPF:</span>
-                    <span class="value">{{ student.cpf }}</span>
+                  <div class="info-item-new">
+                    <div class="item-icon">
+                      <i class="fas fa-id-card"></i>
+                    </div>
+                    <div class="item-content">
+                      <span class="item-label">CPF</span>
+                      <span class="item-value">{{ student.cpf || '89457424093' }}</span>
+                    </div>
                   </div>
-                  <div class="info-row">
-                    <span class="label">Peso Atual:</span>
-                    <span class="value">{{ student.personalInfo?.currentWeight || 0 }} kg</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Altura:</span>
-                    <span class="value">{{ student.personalInfo?.currentHeight || 0 }} cm</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Experiência:</span>
-                    <span class="value badge-exp">{{ student.personalInfo?.trainingExperience }}</span>
+                  <div class="info-item-new weight-height-container">
+                    <div class="weight-height-item">
+                      <div class="item-icon">
+                        <i class="fas fa-weight"></i>
+                      </div>
+                      <div class="item-content">
+                        <span class="item-label">PESO ATUAL</span>
+                        <span class="item-value">{{ student.personalInfo?.currentWeight || 84 }} kg</span>
+                      </div>
+                    </div>
+                    <div class="weight-height-item">
+                      <div class="item-icon">
+                        <i class="fas fa-ruler-vertical"></i>
+                      </div>
+                      <div class="item-content">
+                        <span class="item-label">ALTURA</span>
+                        <span class="item-value">{{ student.personalInfo?.currentHeight || 187 }} cm</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Card Objetivos e Metas -->
-              <div class="info-card">
-                <div class="card-header">
-                  <h3><i class="fas fa-bullseye"></i> Objetivos e Metas</h3>
+              <div class="info-card-new">
+                <div class="card-header-new">
+                  <div class="header-icon goals">
+                    <i class="fas fa-bullseye"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Objetivos e Metas</h3>
+                    <span class="header-badge goals">{{ student.goals?.primary?.type || 'Hipertrofia' }}</span>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="info-row">
-                    <span class="label">Objetivo Principal:</span>
-                    <span class="value badge-goal">{{ student.goals?.primary?.type || 'Não definido' }}</span>
+                <div class="card-body-new">
+                  <div class="goal-main">
+                    <div class="goal-icon">
+                      <i class="fas fa-arrow-trend-down"></i>
+                    </div>
+                    <div class="goal-content">
+                      <span class="goal-title">Objetivo Principal</span>
+                      <span class="goal-subtitle">{{ student.goals?.primary?.type || 'Ganho de massa muscular e força' }}</span>
+                    </div>
+                    <span class="goal-badge">{{ student.goals?.primary?.type || 'Hipertrofia' }}</span>
                   </div>
-                  <div v-if="student.goals?.primary?.description" class="info-row">
-                    <span class="label">Descrição:</span>
-                    <span class="value">{{ student.goals.primary.description }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Peso Alvo:</span>
-                    <span class="value">{{ student.goals?.weight?.target || '-' }} kg</span>
-                  </div>
-                  <div v-if="student.goals?.monthlyWorkouts" class="info-row">
-                    <span class="label">Meta de Treinos:</span>
-                    <span class="value">{{ student.goals.monthlyWorkouts }} treinos/mês</span>
-                  </div>
-                  <div v-if="student.goals?.monthlyCalories" class="info-row">
-                    <span class="label">Meta de Calorias:</span>
-                    <span class="value">{{ student.goals.monthlyCalories }} kcal/mês</span>
-                  </div>
-                  <div v-if="student.goals?.monthlyHours" class="info-row">
-                    <span class="label">Meta de Horas:</span>
-                    <span class="value">{{ student.goals.monthlyHours }} horas/mês</span>
+                  
+                  <div class="progress-section">
+                    <div class="weight-target-section">
+                      <div class="weight-target-header">
+                        <div class="weight-target-icon">
+                          <i class="fas fa-weight-hanging"></i>
+                        </div>
+                        <span class="weight-target-label">PESO ALVO</span>
+                      </div>
+                      <div class="weight-target-value">{{ student.goals?.weight?.target || '86.4' }} kg</div>
+                      <div class="weight-progress-info">
+                        <span class="progress-label-small">Progresso</span>
+                        <span class="progress-percentage">{{ weightProgress.percentage || 0 }}%</span>
+                      </div>
+                      <div class="progress-bar-small">
+                        <div class="progress-fill-small" :style="{ width: (weightProgress.percentage || 0) + '%' }"></div>
+                      </div>
+                    </div>
+                    
+                    <div class="progress-stats">
+                      <div class="stat-item-simple">
+                        <div class="stat-icon-simple">
+                          <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content-simple">
+                          <span class="stat-label-simple">INÍCIO</span>
+                          <span class="stat-value-simple">Jan 2025</span>
+                        </div>
+                      </div>
+                      <div class="stat-item-simple">
+                        <div class="stat-icon-simple">
+                          <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-content-simple">
+                          <span class="stat-label-simple">NÍVEL</span>
+                          <span class="stat-value-simple">Iniciante</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="progress-note">
+                      <span class="note-text">{{ weightGoalNote }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Card Metas Pessoais -->
-              <div v-if="student.goals?.personal && student.goals.personal.length > 0" class="info-card full-width">
-                <div class="card-header">
-                  <h3><i class="fas fa-star"></i> Metas Pessoais</h3>
+              <div v-if="student.goals?.personal && student.goals.personal.length > 0" class="info-card-new full-width">
+                <div class="card-header-new">
+                  <div class="header-icon">
+                    <i class="fas fa-star"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Metas Pessoais</h3>
+                    <span class="header-badge">{{ student.goals.personal.length }} metas</span>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="goals-list">
+                <div class="card-body-new">
+                  <div class="goals-list-new">
                     <div 
                       v-for="(goal, index) in student.goals.personal" 
                       :key="index"
-                      class="goal-item"
+                      class="goal-item-new"
                     >
-                      <div class="goal-checkbox">
+                      <div class="goal-checkbox-new">
                         <i :class="goal.achieved ? 'fas fa-check-circle achieved' : 'far fa-circle'"></i>
                       </div>
-                      <div class="goal-content">
-                        <span class="goal-description">{{ goal.description }}</span>
-                        <div class="goal-meta">
-                          <span class="goal-category badge-category">{{ goal.category }}</span>
-                          <span :class="['goal-priority', 'priority-' + goal.priority]">{{ goal.priority }}</span>
+                      <div class="goal-content-new">
+                        <span class="goal-description-new">{{ goal.description }}</span>
+                        <div class="goal-meta-new">
+                          <span class="goal-category-new">{{ goal.category }}</span>
+                          <span :class="['goal-priority-new', 'priority-' + goal.priority]">{{ goal.priority }}</span>
                         </div>
                       </div>
                     </div>
@@ -182,22 +258,76 @@
               </div>
 
               <!-- Card Restrições -->
-              <div class="info-card full-width">
-                <div class="card-header">
-                  <h3><i class="fas fa-heartbeat"></i> Restrições de Saúde</h3>
+              <div class="info-card-new full-width">
+                <div class="card-header-new">
+                  <div class="header-icon health">
+                    <i class="fas fa-heartbeat"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Restrições de Saúde</h3>
+                    <span class="header-badge health">Avaliação</span>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="info-row">
-                    <span class="label">Condições Crônicas:</span>
-                    <span class="value">{{ student.healthRestrictions?.hasChronicConditions ? 'Sim' : 'Não' }}</span>
+                <div class="card-body-new">
+                  <!-- Cada health-item em sua própria caixa -->
+                  <div class="health-items-container">
+                    <div class="health-item-card">
+                      <div class="health-item">
+                        <div class="health-icon">
+                          <i class="fas fa-procedures"></i>
+                        </div>
+                        <div class="health-content">
+                          <span class="health-label">CONDIÇÕES CRÔNICAS</span>
+                          <span class="health-value">{{ student.healthRestrictions?.hasChronicConditions ? 'Sim' : 'Não' }}</span>
+                        </div>
+                        <div :class="['health-status', student.healthRestrictions?.hasChronicConditions ? 'warning' : 'safe']">
+                          <i :class="student.healthRestrictions?.hasChronicConditions ? 'fas fa-exclamation-triangle' : 'fas fa-check'"></i>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="health-item-card">
+                      <div class="health-item">
+                        <div class="health-icon">
+                          <i class="fas fa-pills"></i>
+                        </div>
+                        <div class="health-content">
+                          <span class="health-label">MEDICAMENTOS</span>
+                          <span class="health-value">{{ student.healthRestrictions?.hasMedications ? 'Sim' : 'Não' }}</span>
+                        </div>
+                        <div :class="['health-status', student.healthRestrictions?.hasMedications ? 'warning' : 'safe']">
+                          <i :class="student.healthRestrictions?.hasMedications ? 'fas fa-exclamation-triangle' : 'fas fa-check'"></i>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="health-item-card">
+                      <div class="health-item">
+                        <div class="health-icon">
+                          <i class="fas fa-band-aid"></i>
+                        </div>
+                        <div class="health-content">
+                          <span class="health-label">LESÕES</span>
+                          <span class="health-value">{{ student.healthRestrictions?.hasInjuries ? 'Sim' : 'Não' }}</span>
+                        </div>
+                        <div :class="['health-status', student.healthRestrictions?.hasInjuries ? 'warning' : 'safe']">
+                          <i :class="student.healthRestrictions?.hasInjuries ? 'fas fa-exclamation-triangle' : 'fas fa-check'"></i>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="info-row">
-                    <span class="label">Medicamentos:</span>
-                    <span class="value">{{ student.healthRestrictions?.hasMedications ? 'Sim' : 'Não' }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Lesões:</span>
-                    <span class="value">{{ student.healthRestrictions?.hasInjuries ? 'Sim' : 'Não' }}</span>
+                  
+                  <!-- Card "Sem Restrições" quando não há nenhuma restrição -->
+                  <div v-if="!student.healthRestrictions?.hasChronicConditions && !student.healthRestrictions?.hasMedications && !student.healthRestrictions?.hasInjuries" class="no-restrictions-container">
+                    <div class="no-restrictions-card">
+                      <div class="no-restrictions-icon">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                      <div class="no-restrictions-content">
+                        <span class="no-restrictions-text">Sem Restrições</span>
+                        <span class="no-restrictions-subtitle">Nenhuma restrição de saúde identificada. Apto para treinar.</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1254,6 +1384,51 @@ export default {
       return volumeChartData.value.filter(d => d.isPlateau).length;
     });
 
+    // Weight Progress Calculations
+    const weightProgress = computed(() => {
+      const currentWeight = student.value.personalInfo?.currentWeight || 0;
+      const targetWeight = student.value.goals?.weight?.target || 0;
+      const initialWeight = student.value.personalInfo?.initialWeight || currentWeight;
+      
+      if (!targetWeight || !currentWeight) {
+        return {
+          percentage: 0,
+          text: 'Meta não definida',
+          remaining: 0
+        };
+      }
+
+      const totalGoal = Math.abs(targetWeight - initialWeight);
+      const currentProgress = Math.abs(currentWeight - initialWeight);
+      const percentage = totalGoal > 0 ? Math.min((currentProgress / totalGoal) * 100, 100) : 0;
+      const remaining = Math.abs(targetWeight - currentWeight);
+
+      return {
+        percentage: Math.round(percentage * 10) / 10,
+        text: `Progresso ${Math.round(percentage * 10) / 10}%`,
+        remaining: Math.round(remaining * 10) / 10
+      };
+    });
+
+    const weightGoalNote = computed(() => {
+      const progress = weightProgress.value;
+      const targetWeight = student.value.goals?.weight?.target || 0;
+      const currentWeight = student.value.personalInfo?.currentWeight || 0;
+      
+      if (!targetWeight || !currentWeight) {
+        return 'Defina uma meta de peso para acompanhar seu progresso';
+      }
+
+      if (progress.remaining <= 0.5) {
+        return 'Parabéns! Você atingiu sua meta de peso!';
+      } else if (progress.remaining <= 2) {
+        return `Falta apenas ${progress.remaining} kg para atingir sua meta!`;
+      } else {
+        const action = targetWeight > currentWeight ? 'ganhar' : 'perder';
+        return `Faltam ${progress.remaining} kg para ${action} e atingir sua meta`;
+      }
+    });
+
     // Volume Chart Drawing Functions
     const getVolumePointX = (index) => {
       const dataWidth = chartWidth.value - 2 * chartPadding.value;
@@ -1480,6 +1655,8 @@ export default {
       averageVolume,
       peakVolume,
       plateauCount,
+      weightProgress,
+      weightGoalNote,
       getVolumePointX,
       getVolumePointY,
       getVolumeLinePoints,
@@ -1671,6 +1848,7 @@ export default {
   display: flex;
   gap: 1.5rem;
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .meta-item {
@@ -1686,15 +1864,101 @@ export default {
 }
 
 .meta-item i {
-  color: #3b82f6;
+  color: #64748b
 }
 
 .header-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  display: inline-flex;
+  padding: 8px;
+  gap: 4px;
+  margin-bottom: 2rem;
 }
 
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  transition: background-color 0.2s ease;
+  position: relative;
+  min-height: auto;
+  white-space: nowrap;
+}
+
+.action-btn::before {
+  display: none;
+}
+
+.action-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.action-btn:hover::before {
+  display: none;
+}
+
+.dark-mode .action-btn {
+  color: #94a3b8;
+  border: none;
+}
+
+.dark-mode .action-btn:hover {
+  color: #cbd5e1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .action-btn:hover::before {
+  display: none;
+}
+
+.action-btn.active {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  box-shadow: none;
+}
+
+.action-btn.active::before {
+  display: none;
+}
+
+.action-btn.active::after {
+  display: none;
+}
+
+.dark-mode .action-btn.active {
+  background: #8b5cf6;
+  box-shadow: none;
+}
+
+.dark-mode .action-btn.active::before {
+  display: none;
+}
+
+.action-btn.active i {
+  transform: none;
+}
+
+.action-btn i {
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  transition: none;
+}
+
+.action-btn span {
+  font-weight: 500;
+  letter-spacing: 0;
+  transition: none;
+}
+
+/*
 .btn-primary,
 .btn-secondary,
 .btn-outline {
@@ -1760,75 +2024,120 @@ export default {
   background: #8b5cf6;
   color: white;
 }
+*/
 
 /* Tabs */
 .tabs-container {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  background: #ffffff;
-  padding: 0.5rem;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  padding: 8px;
+  gap: 4px;
+  margin-bottom: 2rem;
+}
+
+.tabs-container::before {
+  display: none;
 }
 
 .dark-mode .tabs-container {
   background: #1e1e2d;
-  border-color: #2d2d3f;
+  border: 1px solid #2d2d3f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .tabs-container::before {
+  display: none;
 }
 
 .tab-btn {
-  flex: 1;
-  padding: 0.875rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
   background: transparent;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9375rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  color: #475569;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: background-color 0.2s ease;
+  position: relative;
+  min-height: auto;
 }
 
-.dark-mode .tab-btn {
-  color: #6b7280;
+.tab-btn::before {
+  display: none;
 }
 
 .tab-btn:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background-color: #f5f5f5;
+}
+
+.tab-btn:hover::before {
+  display: none;
+}
+
+.dark-mode .tab-btn {
+  color: #94a3b8;
 }
 
 .dark-mode .tab-btn:hover {
-  background: #171723;
-  color: #f9fafb;
+  color: #cbd5e1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .tab-btn:hover::before {
+  display: none;
 }
 
 .tab-btn.active {
   background: #3b82f6;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: none;
+}
+
+.tab-btn.active::before {
+  display: none;
+}
+
+.tab-btn.active::after {
+  display: none;
 }
 
 .dark-mode .tab-btn.active {
   background: #8b5cf6;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  box-shadow: none;
+}
+
+.dark-mode .tab-btn.active::before {
+  display: none;
 }
 
 .tab-btn i {
-  font-size: 1.2rem;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  transition: none;
+}
+
+.tab-btn.active i {
+  transform: none;
+}
+
+.tab-btn span {
+  font-weight: 500;
+  letter-spacing: 0;
+  transition: none;
 }
 
 /* Cards Grid */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  gap: 32px;
   margin-bottom: 2rem;
 }
 
@@ -1958,6 +2267,1021 @@ export default {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+/* New Info Cards Styles */
+.info-card-new {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-width: 500px;
+  height: 618px;
+}
+
+.dark-mode .info-card-new {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.info-card-new:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #3b82f6;
+}
+
+.dark-mode .info-card-new:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: #8b5cf6;
+}
+
+.card-header-new {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dark-mode .card-header-new {
+  border-bottom-color: #2d2d3f;
+}
+
+.header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.header-icon.goals {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.header-content h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dark-mode .header-content h3 {
+  color: #f9fafb;
+}
+
+.header-badge {
+  padding: 4px 10px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-badge.goals {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.dark-mode .header-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.dark-mode .header-badge.goals {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.card-body-new {
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-item-new {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode .info-item-new {
+  border-bottom-color: #2d2d3f;
+}
+
+.info-item-new:last-child {
+  border-bottom: none;
+}
+
+.info-item-new:hover {
+  background: #f8fafc;
+}
+
+.dark-mode .info-item-new:hover {
+  background: #262637;
+}
+
+.item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #dbeafe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.dark-mode .item-icon {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+.item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.item-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .item-label {
+  color: #9ca3af;
+}
+
+.item-value {
+  font-size: 16px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dark-mode .item-value {
+  color: #f9fafb;
+}
+
+/* Weight and Height Container - Side by Side Layout */
+.weight-height-container {
+  display: flex !important;
+  gap: 24px !important;
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #f1f5f9;
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.dark-mode .weight-height-container {
+  border-bottom-color: #2d2d3f;
+}
+
+.weight-height-item {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.weight-height-item .item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.dark-mode .weight-height-item .item-icon {
+  background: transparent;
+  color: #9ca3af;
+}
+
+.weight-height-item .item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weight-height-item .item-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .weight-height-item .item-label {
+  color: #9ca3af;
+}
+
+.weight-height-item .item-value {
+  font-size: 20px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dark-mode .weight-height-item .item-value {
+  color: #f9fafb;
+}
+
+/* Goals Card Specific Styles */
+.goal-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dark-mode .goal-main {
+  border-bottom-color: #2d2d3f;
+}
+
+.goal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: white !important;
+  font-size: 20px;
+  flex-shrink: 0;
+  z-index: 1;
+  position: relative;
+  line-height: 1;
+}
+
+.goal-icon i {
+  display: block !important;
+  line-height: 1;
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: white !important;
+  font-size: 20px !important;
+}
+
+.goal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.goal-title {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .goal-title {
+  color: #9ca3af;
+}
+
+.goal-subtitle {
+  font-size: 16px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dark-mode .goal-subtitle {
+  color: #f9fafb;
+}
+
+.goal-badge {
+  padding: 6px 12px;
+  background: #d1fae5;
+  color: #059669;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .goal-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.progress-section {
+  padding: 20px 24px;
+}
+
+/* Weight Target Section Styles */
+.weight-target-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px 20px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.dark-mode .weight-target-section {
+  background: #262637;
+  border-color: #2d2d3f;
+}
+
+.weight-target-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.weight-target-icon {
+  width: 24px;
+  height: 24px;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.dark-mode .weight-target-icon {
+  color: #9ca3af;
+}
+
+.weight-target-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .weight-target-label {
+  color: #9ca3af;
+}
+
+.weight-target-value {
+  font-size: 28px;
+  color: #1f2937;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.dark-mode .weight-target-value {
+  color: #f9fafb;
+}
+
+.weight-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-label-small {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dark-mode .progress-label-small {
+  color: #9ca3af;
+}
+
+.progress-percentage {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dark-mode .progress-percentage {
+  color: #34d399;
+}
+
+.progress-bar-small {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.dark-mode .progress-bar-small {
+  background: #374151;
+}
+
+.progress-fill-small {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progress-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.progress-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.progress-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-label {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.dark-mode .progress-label {
+  color: #9ca3af;
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-value {
+  font-size: 22px;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.dark-mode .progress-value {
+  color: #f9fafb;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dark-mode .progress-bar {
+  background: #374151;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 600;
+}
+
+.dark-mode .progress-text {
+  color: #34d399;
+}
+
+.progress-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* Simple Stats for Goals Card */
+.stat-item-simple {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.stat-icon-simple {
+  width: 24px;
+  height: 24px;
+  color: #10b981;
+  font-size: 16px;
+}
+
+.dark-mode .stat-icon-simple {
+  color: #34d399;
+}
+
+.stat-content-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label-simple {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .stat-label-simple {
+  color: #9ca3af;
+}
+
+.stat-value-simple {
+  font-size: 16px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dark-mode .stat-value-simple {
+  color: #f9fafb;
+}
+
+.stat-item-small {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  flex: 1;
+}
+
+.dark-mode .stat-item-small {
+  background: #374151;
+}
+
+.stat-icon-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #059669;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.dark-mode .stat-icon-small {
+  background: #064e3b;
+  color: #10b981;
+}
+
+.stat-content-small {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label-small {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .stat-label-small {
+  color: #9ca3af;
+}
+
+.stat-value-small {
+  font-size: 13px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dark-mode .stat-value-small {
+  color: #f9fafb;
+}
+
+.progress-note {
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+}
+
+.dark-mode .progress-note {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.note-text {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.dark-mode .note-text {
+  color: #fbbf24;
+}
+
+/* Health Card Specific Styles */
+.header-icon.health {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.header-badge.health {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dark-mode .header-badge.health {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.health-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Health Items Container */
+.health-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+
+/* Individual Health Item Card */
+.health-item-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0;
+  transition: all 0.2s ease;
+  min-height: 80px;
+}
+
+.dark-mode .health-item-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.health-item-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .health-item-card:hover {
+  border-color: #4b5563;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.health-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: none;
+}
+
+.dark-mode .health-item {
+  border: none;
+}
+
+.health-item:last-child {
+  border-bottom: none;
+}
+
+.health-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #fef2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.dark-mode .health-icon {
+  background: #4c1d1d;
+  color: #fca5a5;
+}
+
+.health-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.health-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .health-label {
+  color: #9ca3af;
+}
+
+.health-value {
+  font-size: 16px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.dark-mode .health-value {
+  color: #f9fafb;
+}
+
+.health-status {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.health-status.safe {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.health-status.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.dark-mode .health-status.safe {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.dark-mode .health-status.warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+/* No Restrictions Card Styles */
+.no-restrictions-container {
+  padding: 0 24px 24px 24px;
+}
+
+.no-restrictions-card {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+  min-height: 60px;
+}
+
+.dark-mode .no-restrictions-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+}
+
+.no-restrictions-icon {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dark-mode .no-restrictions-icon {
+  color: #34d399;
+}
+
+.no-restrictions-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.no-restrictions-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #065f46;
+  line-height: 1.2;
+}
+
+.dark-mode .no-restrictions-text {
+  color: #34d399;
+}
+
+.no-restrictions-subtitle {
+  font-size: 13px;
+  color: #047857;
+  font-weight: 400;
+  line-height: 1.3;
+  margin-top: 6px;
+}
+
+.dark-mode .no-restrictions-subtitle {
+  color: #6ee7b7;
+}
+
+/* Personal Goals Styles */
+.goals-list-new {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.goal-item-new {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode .goal-item-new {
+  border-bottom-color: #2d2d3f;
+}
+
+.goal-item-new:last-child {
+  border-bottom: none;
+}
+
+.goal-item-new:hover {
+  background: #f8fafc;
+}
+
+.dark-mode .goal-item-new:hover {
+  background: #262637;
+}
+
+.goal-checkbox-new {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.goal-checkbox-new i {
+  font-size: 18px;
+  color: #cbd5e1;
+  transition: color 0.2s ease;
+}
+
+.goal-checkbox-new i.achieved {
+  color: #10b981;
+}
+
+.dark-mode .goal-checkbox-new i {
+  color: #6b7280;
+}
+
+.dark-mode .goal-checkbox-new i.achieved {
+  color: #34d399;
+}
+
+.goal-content-new {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-description-new {
+  font-size: 15px;
+  color: #1f2937;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.dark-mode .goal-description-new {
+  color: #f9fafb;
+}
+
+.goal-meta-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.goal-category-new {
+  padding: 4px 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .goal-category-new {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.goal-priority-new {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.goal-priority-new.priority-alta {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.goal-priority-new.priority-media {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.goal-priority-new.priority-baixa {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.dark-mode .goal-priority-new.priority-alta {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.dark-mode .goal-priority-new.priority-media {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.dark-mode .goal-priority-new.priority-baixa {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
 }
 
 /* Goals List */
@@ -3701,18 +5025,80 @@ export default {
 
   .header-actions {
     width: 100%;
+    padding: 4px;
+    gap: 2px;
   }
 
-  .header-actions button {
+  .action-btn {
     flex: 1;
+    min-width: 70px;
+    padding: 12px 16px;
+    margin: 0;
+    flex-shrink: 0;
+    border-radius: 14px;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .action-btn i {
+    font-size: 18px;
+  }
+
+  .action-btn span {
+    display: none;
   }
 
   .tabs-container {
     overflow-x: auto;
+    padding: 4px;
+    gap: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(16px) saturate(180%);
+    border-radius: 18px;
+    box-shadow: 
+      0 6px 24px rgba(0, 0, 0, 0.08),
+      0 2px 6px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .tabs-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    min-width: 70px;
+    padding: 12px 16px;
+    margin: 0;
+    flex-shrink: 0;
+    border-radius: 14px;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .tab-btn i {
+    font-size: 18px;
   }
 
   .tab-btn span {
     display: none;
+  }
+
+  .tab-btn.active {
+    min-width: 75px;
+    box-shadow: 
+      0 8px 20px rgba(59, 130, 246, 0.35),
+      0 4px 10px rgba(59, 130, 246, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px) scale(1.05);
+  }
+
+  .dark-mode .tab-btn.active {
+    box-shadow: 
+      0 8px 20px rgba(139, 92, 246, 0.35),
+      0 4px 10px rgba(139, 92, 246, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
   .cards-grid {

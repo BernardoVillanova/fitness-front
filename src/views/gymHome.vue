@@ -116,7 +116,7 @@
                     </div>
                   </div>
                   <div v-else class="image-container">
-                    <img :src="gym.image" :alt="gym.name" />
+                    <img :src="getGymImageUrl(gym.image)" :alt="gym.name" />
                   </div>
                   <div class="image-gradient"></div>
                 </div>
@@ -154,17 +154,14 @@
                 >
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    width="26" 
-                    height="26" 
+                    width="20" 
+                    height="20" 
                     viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    stroke-width="2" 
-                    stroke-linecap="round" 
-                    stroke-linejoin="round"
+                    fill="currentColor"
                   >
-                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                    <circle cx="12" cy="5" r="2"/>
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="19" r="2"/>
                   </svg>
                 </button>
                 
@@ -438,6 +435,13 @@ export default {
     };
   },
   methods: {
+    getGymImageUrl(imagePath) {
+      if (!imagePath) return null;
+      // Se já é uma URL completa, retorna como está
+      if (imagePath.startsWith('http')) return imagePath;
+      // Se é um caminho relativo, adiciona a URL base
+      return `http://localhost:3000${imagePath}`;
+    },
     openCreateModal() {
       this.selectedGym = null;
       this.showForm = true;
@@ -968,12 +972,14 @@ body:has(.navbar-collapsed) .dashboard-container,
   background: var(--card-background);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-radius: 24px;
+  border-radius: 12px;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.6s ease-out;
   display: flex;
   flex-direction: column;
+  max-width: 448px;
+  height: 618px;
 }
 
 .gym-card:hover {
@@ -1266,7 +1272,7 @@ body:has(.navbar-collapsed) .dashboard-container,
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4a5568 !important;
+  color: #FFFFFF !important;
   padding: 6px;
   box-shadow: none !important;
   outline: none !important;
