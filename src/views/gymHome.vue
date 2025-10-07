@@ -1558,6 +1558,7 @@ body:has(.navbar-collapsed) .dashboard-container,
   border: none;
   border-radius: 12px;
   font-size: 0.9rem;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   display: flex;

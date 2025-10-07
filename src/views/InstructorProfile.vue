@@ -838,11 +838,11 @@ textarea::placeholder {
   min-height: 56px;
   border-radius: 12px;
   font-size: 1rem;
+font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: none;
-  font-family: inherit;
 }
 
 .btn-cancel {

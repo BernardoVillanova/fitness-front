@@ -1,52 +1,50 @@
 <template>
-  <div class="not-found" :class="{ 'dark-mode': isDarkMode }">
-    <div class="not-found-container">
-      <div class="error-animation">
-        <div class="error-number">404</div>
-        <div class="error-icon">
-          <i class="fas fa-dumbbell"></i>
-        </div>
+  <div class="page-404">
+    <div class="container">
+      <div class="glitch-wrapper">
+        <h1 class="glitch-text">404</h1>
+        <h1 class="glitch-text-shadow">404</h1>
+        <h1 class="glitch-text-shadow-2">404</h1>
       </div>
-      
-      <div class="error-content">
-        <h1 class="error-title">Página não encontrada</h1>
-        <p class="error-message">
+
+      <div class="message-wrapper">
+        <p class="glitch-message">Página não encontrada.</p>
+        <p class="glitch-subtitle">
           Ops! A página que você está procurando não existe ou foi movida.
         </p>
-        
-        <div class="error-actions">
-          <button @click="goHome" class="btn-primary">
-            <i class="fas fa-home"></i>
-            Voltar ao Início
-          </button>
-          <button @click="goBack" class="btn-secondary">
-            <i class="fas fa-arrow-left"></i>
-            Página Anterior
-          </button>
-        </div>
-        
-        <div class="helpful-links">
-          <h3>Links úteis:</h3>
-          <ul>
-            <li><router-link to="/student-dashboard">Dashboard</router-link></li>
-            <li><router-link to="/student/workouts">Meus Treinos</router-link></li>
-            <li><router-link to="/student/progress">Meu Progresso</router-link></li>
-            <li><router-link to="/student/profile">Meu Perfil</router-link></li>
-          </ul>
-        </div>
+      </div>
+
+      <div class="button-wrapper">
+        <a @click="goHome" class="home-button">
+          <svg
+            class="home-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          Go Home
+        </a>
+      </div>
+
+      <div class="glitch-lines">
+        <div class="glitch-line glitch-line-1"></div>
+        <div class="glitch-line glitch-line-2"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useThemeStore } from '@/store/theme'
 import { useRouter } from 'vue-router'
-
-// Stores
-const themeStore = useThemeStore()
-const { isDarkMode } = storeToRefs(themeStore)
 
 // Router
 const router = useRouter()
@@ -54,200 +52,335 @@ const router = useRouter()
 const goHome = () => {
   router.push('/')
 }
-
-const goBack = () => {
-  router.go(-1)
-}
 </script>
 
 <style scoped>
-.not-found {
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;500;900&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.page-404 {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: #000;
+  color: #fff;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  padding: 2rem;
-  transition: background 0.3s ease;
+  padding: 1rem;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-.not-found-container {
+.container {
   text-align: center;
-  max-width: 600px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  max-width: 48rem;
+  margin: 0 auto;
 }
 
-.dark-mode .not-found-container {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.error-animation {
-  margin-bottom: 2rem;
+.glitch-wrapper {
   position: relative;
+  margin-bottom: 2rem;
 }
 
-.error-number {
-  font-size: 8rem;
+.glitch-text {
+  font-size: 9rem;
   font-weight: 900;
-  color: var(--primary-color);
-  line-height: 1;
-  margin-bottom: 1rem;
-  text-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+  user-select: none;
+  color: transparent;
+  animation: glitch-main 2s infinite;
 }
 
-.dark-mode .error-number {
-  text-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+.glitch-text-shadow {
+  position: absolute;
+  inset: 0;
+  font-size: 9rem;
+  font-weight: 900;
+  user-select: none;
+  color: #f1f5f9;
+  animation: glitch-shadow-1 2s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
 }
 
-.error-icon {
-  font-size: 3rem;
-  color: var(--primary-color);
-  animation: bounce 2s infinite;
+.glitch-text-shadow-2 {
+  position: absolute;
+  inset: 0;
+  font-size: 9rem;
+  font-weight: 900;
+  user-select: none;
+  color: #171717;
+  animation: glitch-shadow-2 2s infinite;
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
 }
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
+@media (min-width: 768px) {
+  .glitch-text,
+  .glitch-text-shadow,
+  .glitch-text-shadow-2 {
+    font-size: 12rem;
   }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
 }
 
-.error-title {
-  font-size: 2.5rem;
-  color: var(--text-color);
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
-
-.error-message {
-  font-size: 1.2rem;
-  color: var(--text-muted);
+.message-wrapper {
   margin-bottom: 2rem;
-  line-height: 1.6;
 }
 
-.error-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+.glitch-message {
+  font-size: 1.25rem;
+  font-weight: 200;
+  color: #737373;
+  margin-bottom: 1rem;
+  animation: glitch-flicker 3s infinite;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
+@media (min-width: 768px) {
+  .glitch-message {
+    font-size: 1.5rem;
+  }
+}
+
+.glitch-subtitle {
+  font-size: 0.875rem;
+  font-weight: 200;
+  color: #dc2626;
+  animation: glitch-typing 4s infinite;
+}
+
+@media (min-width: 768px) {
+  .glitch-subtitle {
+    font-size: 1rem;
+  }
+}
+
+.button-wrapper {
+  padding-top: 1rem;
+}
+
+.home-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-  background: var(--primary-hover);
-}
-
-.dark-mode .btn-primary:hover {
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-}
-
-.btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text-color);
-  border: 2px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: var(--border-color);
-  border-color: var(--text-muted);
-}
-
-.helpful-links {
-  text-align: left;
-  background: var(--bg-secondary);
-  padding: 1.5rem;
-  border-radius: 10px;
-  margin-top: 2rem;
-  border: 1px solid var(--border-color);
-}
-
-.helpful-links h3 {
-  color: var(--text-color);
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.helpful-links ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.helpful-links li {
-  margin-bottom: 0.5rem;
-}
-
-.helpful-links a {
-  color: var(--primary-color);
-  text-decoration: none;
+  background-color: #171717;
+  color: #f5f5f5;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
   font-weight: 500;
-  transition: color 0.3s ease;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
-.helpful-links a:hover {
-  color: var(--primary-hover);
-  text-decoration: underline;
+.home-button:hover {
+  background-color: #0a0a0a;
 }
 
-@media (max-width: 768px) {
-  .not-found {
-    padding: 1rem;
+.home-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s;
+}
+
+.home-button:hover .home-icon {
+  transform: scale(1.1);
+}
+
+.glitch-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.glitch-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #666, transparent);
+  opacity: 0;
+}
+
+.glitch-line-1 {
+  top: 15%;
+  animation: glitch-scan-1 3s infinite;
+}
+
+.glitch-line-2 {
+  top: 85%;
+  animation: glitch-scan-3 3.5s infinite;
+}
+
+@keyframes glitch-main {
+  0%,
+  100% {
+    transform: translate(0);
   }
-  
-  .not-found-container {
-    padding: 2rem;
-    margin: 0;
+  10% {
+    transform: translate(-2px, -1px);
   }
-  
-  .error-number {
-    font-size: 6rem;
+  20% {
+    transform: translate(2px, 1px);
   }
-  
-  .error-title {
-    font-size: 2rem;
+  30% {
+    transform: translate(-1px, 2px);
   }
-  
-  .error-actions {
-    flex-direction: column;
+  40% {
+    transform: translate(1px, -2px);
   }
-  
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    justify-content: center;
+  50% {
+    transform: translate(-2px, 1px);
+  }
+  60% {
+    transform: translate(2px, -1px);
+  }
+  70% {
+    transform: translate(-1px, -2px);
+  }
+  80% {
+    transform: translate(1px, 2px);
+  }
+  90% {
+    transform: translate(-2px, -1px);
+  }
+}
+
+@keyframes glitch-shadow-1 {
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  10% {
+    transform: translate(-4px, -2px);
+  }
+  20% {
+    transform: translate(4px, 2px);
+  }
+  30% {
+    transform: translate(-2px, 4px);
+  }
+  40% {
+    transform: translate(2px, -4px);
+  }
+  50% {
+    transform: translate(-4px, 2px);
+  }
+  60% {
+    transform: translate(4px, -2px);
+  }
+  70% {
+    transform: translate(-2px, -4px);
+  }
+  80% {
+    transform: translate(2px, 4px);
+  }
+  90% {
+    transform: translate(-4px, -2px);
+  }
+}
+
+@keyframes glitch-shadow-2 {
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  10% {
+    transform: translate(3px, 1px);
+  }
+  20% {
+    transform: translate(-3px, -1px);
+  }
+  30% {
+    transform: translate(1px, -3px);
+  }
+  40% {
+    transform: translate(-1px, 3px);
+  }
+  50% {
+    transform: translate(3px, -1px);
+  }
+  60% {
+    transform: translate(-3px, 1px);
+  }
+  70% {
+    transform: translate(1px, 3px);
+  }
+  80% {
+    transform: translate(-1px, -3px);
+  }
+  90% {
+    transform: translate(3px, 1px);
+  }
+}
+
+@keyframes glitch-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  51% {
+    opacity: 1;
+  }
+  52% {
+    opacity: 0.9;
+  }
+  53% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  91% {
+    opacity: 0.7;
+  }
+  92% {
+    opacity: 1;
+  }
+}
+
+@keyframes glitch-typing {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes glitch-scan-1 {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes glitch-scan-3 {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(10px);
   }
 }
 </style>

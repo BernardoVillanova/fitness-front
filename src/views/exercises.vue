@@ -2286,6 +2286,7 @@ body:has(.navbar-collapsed) .floating-header,
   z-index: 2;
   transition: all 0.3s ease;
   white-space: nowrap;
+  font-family: "Inter", sans-serif;
 }
 
 .button-shine {
