@@ -1454,6 +1454,7 @@ body:has(.navbar-collapsed) .floating-header,
   border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -1687,6 +1688,7 @@ body:has(.navbar-collapsed) .floating-header,
   border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
+ font-family: "Inter", sans-serif;
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -1926,6 +1928,7 @@ body:has(.navbar-collapsed) .floating-header,
     flex: 1;
     justify-content: center;
     padding: 12px 16px;
+  
   }
   
   .plan-stats-main {
@@ -1956,6 +1959,7 @@ body:has(.navbar-collapsed) .floating-header,
   
   .action-button {
     padding: 16px;
+    
   }
   
   .dashboard-content {

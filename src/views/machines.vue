@@ -2049,6 +2049,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   z-index: 2;
   transition: all 0.3s ease;
   white-space: nowrap;
+  font-family: "Inter", sans-serif;
 }
 
 .button-shine {
