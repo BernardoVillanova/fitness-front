@@ -76,7 +76,7 @@
 
       <div class="overview-card">
         <div class="card-icon">
-          <i class="fas fa-fire"></i>
+          <i class="fas fa-dumbbell"></i>
         </div>
         <div class="card-content">
           <div class="card-number">{{ totalCalories }}</div>
@@ -112,7 +112,7 @@
 
       <div class="overview-card">
         <div class="card-icon">
-          <i class="fas fa-dumbbell"></i>
+          <i class="fas fa-fire"></i>
         </div>
         <div class="card-content">
           <div class="card-number">{{ currentStreak }}</div>
@@ -139,15 +139,37 @@
     <div class="chart-section">
       <div class="chart-card">
         <div class="chart-header">
-          <h3>Atividade Semanal</h3>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-color primary"></div>
-              <span>Treinos</span>
+          <div class="chart-title-section">
+            <h3>Atividade Semanal</h3>
+            <div class="week-period">{{ currentWeekPeriod }}</div>
+          </div>
+          <div class="chart-controls">
+            <div class="chart-navigation">
+              <button 
+                @click="previousWeek" 
+                class="nav-btn"
+                :disabled="!canGoPrevious"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="week-indicator">{{ weekIndicator }}</span>
+              <button 
+                @click="nextWeek" 
+                class="nav-btn"
+                :disabled="!canGoNext"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
             </div>
-            <div class="legend-item">
-              <div class="legend-color secondary"></div>
-              <span>Calorias (x100)</span>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-color primary"></div>
+                <span>Treinos</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color secondary"></div>
+                <span>Calorias (x100)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -183,7 +205,7 @@
       <div class="section-header">
         <div>
           <h3>Medidas Corporais</h3>
-          <p class="section-subtitle">Evolução das suas circunferências e composição corporal</p>
+          <p class="section-subtitle">Evolução das suas circunferências registradas pelo seu personal trainer</p>
         </div>
         <div v-if="hasAnyMeasurements && latestMeasurementDate" class="measurement-date">
           <i class="fas fa-calendar-check"></i>
@@ -197,7 +219,7 @@
           <i class="fas fa-ruler-combined"></i>
         </div>
         <h3>Nenhuma medida registrada</h3>
-        <p>As medições corporais aparecerão aqui quando forem registradas pelo seu instrutor.</p>
+        <p>As medições corporais aparecerão aqui quando forem registradas pelo seu personal trainer. Entre em contato com ele para agendar suas avaliações físicas regulares.</p>
       </div>
 
       <!-- Measurements Grid -->
@@ -333,6 +355,10 @@ const weeklyData = ref([
   { day: 'Sáb', workouts: 0, calories: 0 }
 ])
 
+// Estado para navegação de semanas
+const currentWeekOffset = ref(0) // 0 = semana atual, -1 = semana anterior, etc.
+const allSessions = ref([]) // Guardar todas as sessões para processamento
+
 // Computed
 const overallProgress = computed(() => {
   if (progressData.value.totalWorkouts === 0) return 0
@@ -344,6 +370,62 @@ const totalGoals = computed(() => progressData.value.totalGoals)
 const totalCalories = computed(() => progressData.value.totalCalories)
 const totalTime = computed(() => progressData.value.totalTime)
 const currentStreak = computed(() => progressData.value.currentStreak)
+
+// Computed para navegação de semanas
+const currentWeekStart = computed(() => {
+  const now = new Date()
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - now.getDay() + (currentWeekOffset.value * 7))
+  weekStart.setHours(0, 0, 0, 0)
+  return weekStart
+})
+
+const currentWeekEnd = computed(() => {
+  const weekEnd = new Date(currentWeekStart.value)
+  weekEnd.setDate(weekEnd.getDate() + 6)
+  weekEnd.setHours(23, 59, 59, 999)
+  return weekEnd
+})
+
+const currentWeekPeriod = computed(() => {
+  const start = currentWeekStart.value
+  const end = currentWeekEnd.value
+  
+  const formatDate = (date) => {
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  }
+  
+  return `${formatDate(start)} - ${formatDate(end)}`
+})
+
+const weekIndicator = computed(() => {
+  if (currentWeekOffset.value === 0) return 'Esta semana'
+  if (currentWeekOffset.value === -1) return 'Semana passada'
+  if (currentWeekOffset.value > 0) return `${currentWeekOffset.value} semanas à frente`
+  return `${Math.abs(currentWeekOffset.value)} semanas atrás`
+})
+
+const canGoPrevious = computed(() => {
+  // Permitir voltar até onde há dados de sessões
+  if (allSessions.value.length === 0) return false
+  
+  const oldestSession = allSessions.value.reduce((oldest, session) => {
+    const sessionDate = new Date(session.endTime || session.startTime)
+    const oldestDate = new Date(oldest.endTime || oldest.startTime)
+    return sessionDate < oldestDate ? session : oldest
+  })
+  
+  const oldestWeekStart = new Date(oldestSession.endTime || oldestSession.startTime)
+  oldestWeekStart.setDate(oldestWeekStart.getDate() - oldestWeekStart.getDay())
+  oldestWeekStart.setHours(0, 0, 0, 0)
+  
+  return currentWeekStart.value > oldestWeekStart
+})
+
+const canGoNext = computed(() => {
+  // Não permitir ir além da semana atual
+  return currentWeekOffset.value < 0
+})
 
 // Computed for measurements chart
 const hasAnyMeasurements = computed(() => {
@@ -410,8 +492,9 @@ const fetchProgressData = async () => {
       params: { limit: 1000 }
     })
     
-    const allSessions = historyResponse.data?.sessions || []
-    const completedSessions = allSessions.filter(s => s.status === 'completed')
+    const sessions = historyResponse.data?.sessions || []
+    allSessions.value = sessions // Guardar para navegação de semanas
+    const completedSessions = sessions.filter(s => s.status === 'completed')
     
     // Calcular dados de progresso
     progressData.value.completedWorkouts = completedSessions.length
@@ -455,7 +538,7 @@ const fetchProgressData = async () => {
     calculateStreak(completedSessions)
     
     // Processar dados semanais
-    processWeeklyData(completedSessions)
+    processWeeklyData(sessions)
     
     // Calcular comparações com mês anterior
     calculateMonthComparisons(completedSessions)
@@ -606,12 +689,12 @@ const calculateStreak = (sessions) => {
   progressData.value.currentStreak = streak
 }
 
-const processWeeklyData = (sessions) => {
+const processWeeklyData = (sessions, weekStart = null, weekEnd = null) => {
   const completedSessions = sessions.filter(s => s.status === 'completed')
-  const now = new Date()
-  const weekStart = new Date(now)
-  weekStart.setDate(now.getDate() - now.getDay())
-  weekStart.setHours(0, 0, 0, 0)
+  
+  // Se não fornecidas, usar as datas da semana atual baseada no offset
+  const start = weekStart || currentWeekStart.value
+  const end = weekEnd || currentWeekEnd.value
   
   // Reset weekly data
   weeklyData.value = [
@@ -626,7 +709,7 @@ const processWeeklyData = (sessions) => {
   
   completedSessions.forEach(session => {
     const sessionDate = new Date(session.endTime)
-    if (sessionDate >= weekStart) {
+    if (sessionDate >= start && sessionDate <= end) {
       const dayOfWeek = sessionDate.getDay()
       weeklyData.value[dayOfWeek].workouts++
       
@@ -638,6 +721,21 @@ const processWeeklyData = (sessions) => {
       weeklyData.value[dayOfWeek].calories += calories
     }
   })
+}
+
+// Funções de navegação de semanas
+const previousWeek = () => {
+  if (canGoPrevious.value) {
+    currentWeekOffset.value--
+    processWeeklyData(allSessions.value)
+  }
+}
+
+const nextWeek = () => {
+  if (canGoNext.value) {
+    currentWeekOffset.value++
+    processWeeklyData(allSessions.value)
+  }
 }
 
 const fetchMeasurementsHistory = async () => {
@@ -1005,11 +1103,72 @@ body:has(.navbar-collapsed) .main-content {
   margin-bottom: 2rem;
 }
 
+.chart-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .chart-header h3 {
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--text-color);
   margin: 0;
+}
+
+.week-period {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.chart-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.nav-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.nav-btn:not(:disabled):hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.week-indicator {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  font-weight: 500;
+  min-width: 120px;
+  text-align: center;
 }
 
 .chart-legend {
@@ -1483,6 +1642,21 @@ body:has(.navbar-collapsed) .main-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+  
+  .chart-controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .chart-navigation {
+    align-self: center;
+  }
+  
+  .week-indicator {
+    min-width: 100px;
+    font-size: 0.8rem;
   }
   
   .section-header {
