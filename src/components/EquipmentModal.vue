@@ -214,13 +214,21 @@
             {{ errorMessage }}
           </div>
 
-          <!-- Botão Submit -->
-          <button type="submit" class="submit-button" :disabled="isSubmitting">
-            <svg v-if="!isSubmitting" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span>{{ isSubmitting ? 'Cadastrando...' : 'Cadastrar Aparelho' }}</span>
-          </button>
+          <!-- Ações do Modal -->
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" @click="closeModal">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Cancelar
+            </button>
+            <button type="submit" class="btn-save" :disabled="isSubmitting">
+              {{ isSubmitting ? 'Cadastrando...' : 'Cadastrar Aparelho' }}
+              <svg v-if="!isSubmitting" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </button>
+          </div>
         </form>
       </div>
 
@@ -682,22 +690,45 @@ export default {
 }
 
 .modal-close {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: white;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-dark .modal-close {
+  background: #334155;
+}
+
+.modal-close svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
 .modal-close:hover {
-  background: var(--border-color);
-  transform: rotate(90deg);
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-dark .modal-close:hover {
+  background: #475569;
+}
+
+.modal-close:hover svg {
+  transform: scale(1.1);
 }
 
 /* BODY */
@@ -834,7 +865,7 @@ select.form-input {
 .image-upload-area {
   width: 100%;
   min-height: 200px;
-  border: 2px dashed var(--border-color);
+  border: 3px dashed var(--border-color);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -847,7 +878,7 @@ select.form-input {
 }
 
 .image-upload-area:hover {
-  border-color: var(--primary-color);
+  border-color: #3b82f6;
   background: var(--bg-primary);
 }
 
@@ -929,35 +960,6 @@ select.form-input {
 
 .error-message svg {
   flex-shrink: 0;
-}
-
-/* SUBMIT BUTTON */
-.submit-button {
-  width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.submit-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(var(--primary-color-rgb), 0.5);
-}
-
-.submit-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
 }
 
 /* EQUIPMENT LIST */
@@ -1325,6 +1327,114 @@ select.form-input {
 
   .muscle-groups-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 32px;
+  margin-top: 32px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel,
+.btn-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  font-family: inherit;
+  flex: 1;
+}
+
+.btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-save:hover::before {
+  left: 100%;
+}
+
+.btn-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-save:active {
+  transform: translateY(0);
+}
+
+.btn-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-save:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.btn-save:disabled::before {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .modal-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .btn-cancel,
+  .btn-save {
+    max-width: none;
+    width: 100%;
   }
 }
 </style>

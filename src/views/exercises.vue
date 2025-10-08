@@ -91,7 +91,7 @@
           <div class="exercises-grid">
             <div 
               v-for="exercise in filteredExercises" 
-              :key="exercise.id" 
+              :key="exercise._id || exercise.id" 
               class="exercise-card"
             >
               <!-- Floating Glow Effect -->
@@ -102,7 +102,7 @@
                 <div class="exercise-image">
                   <div class="image-container">
                     <!-- Fixed Image Implementation with Proper Fallback -->
-                    <div v-if="!exercise.image || imageError[exercise.id]" class="image-placeholder">
+                    <div v-if="!exercise.image || imageError[exercise._id || exercise.id]" class="image-placeholder">
                       <div class="placeholder-icon">
                         <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
@@ -115,8 +115,8 @@
                       :src="getImageUrl(exercise.image)"
                       :key="exercise.image"
                       :alt="exercise.name"
-                      @error="handleImageError(exercise.id)"
-                      @load="handleImageLoad(exercise.id)"
+                      @error="handleImageError(exercise._id || exercise.id)"
+                      @load="handleImageLoad(exercise._id || exercise.id)"
                     />
                     <div class="image-gradient"></div>
                   </div>
@@ -147,52 +147,119 @@
                 </div>
               </div>
 
+              <!-- Settings Menu -->
+              <div class="exercise-menu-wrapper" :ref="`dropdownRef-${exercise._id || exercise.id}`">
+                <button 
+                  class="settings-button" 
+                  @click="toggleExerciseMenu(exercise._id || exercise.id)"
+                  aria-label="Settings"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="currentColor"
+                  >
+                    <circle cx="12" cy="5" r="2"/>
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="19" r="2"/>
+                  </svg>
+                </button>
+                
+                <transition name="dropdown">
+                  <div v-if="exercise.showMenu" class="dropdown-menu">
+                    <a href="#" class="dropdown-item" @click.prevent="previewExercise(exercise)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Ver detalhes
+                    </a>
+                    
+                    <a href="#" class="dropdown-item" @click.prevent="editExercise(exercise)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                      </svg>
+                      Editar
+                    </a>
+                    
+                    <div class="divider"></div>
+                    
+                    <a href="#" class="dropdown-item logout" @click.prevent="deleteExercise(exercise)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        <line x1="10" x2="10" y1="11" y2="17"/>
+                        <line x1="14" x2="14" y1="11" y2="17"/>
+                      </svg>
+                      Excluir
+                    </a>
+                  </div>
+                </transition>
+              </div>
+
               <!-- Exercise Info -->
               <div class="exercise-info">
                 <div class="exercise-meta">
-                  <div class="category-badge">
-                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
-                    </svg>
-                    {{ exercise.category }}
-                  </div>
-                  <div class="difficulty-indicator" :class="exercise.difficulty.toLowerCase()">
-                    <div class="difficulty-dot"></div>
-                    {{ exercise.difficulty }}
-                  </div>
-                </div>
-                
-                <h3 class="exercise-name">{{ exercise.name }}</h3>
-                <p class="exercise-description" v-if="exercise.description">{{ truncate(exercise.description, 200) }}</p>
-              </div>
-
-              <!-- Muscle Groups - Simplified -->
-              <div class="exercise-stats" v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0">
-                <div class="muscle-groups-tags">
-                  <span v-for="muscle in exercise.muscleGroups" :key="muscle" class="muscle-tag">
-                    {{ muscle }}
+                  <span class="category-badge">
+                    <i :class="getCategoryIcon(exercise.category)"></i>
+                    {{ getCategoryName(exercise.category) }}
+                  </span>
+                  <span :class="['difficulty-indicator', exercise.difficulty]">
+                    <span class="difficulty-dot"></span>
+                    {{ getDifficultyLabel(exercise.difficulty) }}
                   </span>
                 </div>
-              </div>
 
-              <!-- Exercise Actions -->
-              <div class="exercise-actions">
-                <button class="action-button danger-action" @click="deleteExercise(exercise)">
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                  </svg>
-                  <span class="button-text">Excluir</span>
-                </button>
-                <button class="action-button primary-action" @click="viewExerciseDetails(exercise)">
-                  <div class="button-shine"></div>
-                  <div class="button-particles"></div>
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-                  </svg>
-                  <span class="button-text">Ver Detalhes</span>
-                  <div class="button-arrow">→</div>
-                </button>
+                <h3 class="exercise-name">{{ exercise.name }}</h3>
+                <p class="exercise-description">{{ truncate(exercise.description || 'Sem descrição', 150) }}</p>
+
+                <!-- Exercise Details -->
+                <div class="exercise-stats" v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0">
+                  <div class="stats-row">
+                    <div class="stat-item full-width">
+                      <div class="stat-icon-wrapper">
+                        <i class="fas fa-bullseye"></i>
+                      </div>
+                      <div class="stat-content">
+                        <span class="stat-label">Grupos Musculares</span>
+                        <div class="badges-wrapper">
+                          <span 
+                            v-for="group in exercise.muscleGroups" 
+                            :key="group" 
+                            class="muscle-group-badge"
+                          >
+                            {{ group }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="exercise-actions">
+                  <button class="action-button secondary-action" @click="deleteExercise(exercise)">
+                    <div class="button-shine"></div>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="button-text">Excluir</span>
+                  </button>
+                  <button class="action-button primary-action" @click="viewExerciseDetails(exercise)">
+                    <div class="button-particles"></div>
+                    <div class="button-shine"></div>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="button-text">Ver Detalhes</span>
+                    <div class="button-arrow">→</div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -254,7 +321,7 @@
           </div>
 
           <!-- Description -->
-          <div v-if="selectedExercise.description" class="details-section">
+          <div v-if="selectedExercise.description" class="details-section description-section">
             <h3 class="details-section-title">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
@@ -265,7 +332,7 @@
           </div>
 
           <!-- How to Perform -->
-          <div v-if="selectedExercise.howToPerform" class="details-section">
+          <div v-if="selectedExercise.howToPerform" class="details-section howto-section">
             <h3 class="details-section-title">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
@@ -276,7 +343,7 @@
           </div>
 
           <!-- Muscle Groups -->
-          <div v-if="selectedExercise.muscleGroups && selectedExercise.muscleGroups.length > 0" class="details-section">
+          <div v-if="selectedExercise.muscleGroups && selectedExercise.muscleGroups.length > 0" class="details-section muscles-section">
             <h3 class="details-section-title">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
@@ -291,14 +358,16 @@
           </div>
 
           <!-- Safety Tips -->
-          <div v-if="selectedExercise.safetyTips" class="details-section warning-section">
+          <div v-if="selectedExercise.safetyTips || true" class="details-section warning-section safety-section">
             <h3 class="details-section-title">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
               </svg>
               Dicas de Segurança
             </h3>
-            <p class="details-text warning-text">{{ selectedExercise.safetyTips }}</p>
+            <p class="details-text warning-text">
+              {{ selectedExercise.safetyTips || 'Mantenha sempre a postura correta durante a execução do exercício. Em caso de dor ou desconforto, pare imediatamente e consulte um profissional.' }}
+            </p>
           </div>
 
           <!-- Video URL -->
@@ -455,6 +524,15 @@ export default {
       });
     },
   },
+  watch: {
+    exercises: {
+      handler() {
+        console.log('📝 Lista de exercícios foi atualizada, re-aplicando filtros');
+        this.applyFilters();
+      },
+      deep: true
+    }
+  },
   async mounted() {
     await this.fetchInstructorId();
     
@@ -466,6 +544,13 @@ export default {
     } else {
       console.error('❌ InstructorId inválido, não foi possível buscar dados');
     }
+    
+    // Adiciona listener para cliques fora do dropdown
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
     async fetchInstructorId() {
@@ -605,14 +690,19 @@ export default {
       try {
         const response = await api.put(`/exercises/${updateData._id}`, updateData);
         
-        // Atualiza na lista local
-        const index = this.exercises.findIndex(ex => ex._id === updateData._id);
+        // Atualiza na lista local usando _id como identificador
+        const index = this.exercises.findIndex(ex => ex._id === updateData._id || ex.id === updateData._id);
         if (index !== -1) {
-          this.exercises[index] = response.data.exercise;
+          // Substitui o exercício completo na lista
+          this.exercises.splice(index, 1, response.data.exercise || response.data);
+          console.log('✅ Lista local atualizada no índice:', index);
         }
 
         this.closeEditModal();
+        // Re-aplica os filtros para atualizar a lista filtrada
         this.applyFilters();
+        
+        console.log('🔄 Exercícios após atualização:', this.exercises.length);
       } catch (error) {
         console.error('❌ Erro ao atualizar exercício:', error);
         alert('Erro ao salvar exercício');
@@ -686,6 +776,25 @@ export default {
         'outros': 'Outros'
       };
       return categoryMap[categoryId] || categoryId;
+    },
+    getCategoryIcon(categoryId) {
+      const categoryMap = {
+        'forca': 'fas fa-dumbbell',
+        'cardio': 'fas fa-heartbeat',
+        'flexibilidade': 'fas fa-leaf',
+        'resistencia': 'fas fa-running',
+        'potencia': 'fas fa-bolt',
+        'outros': 'fas fa-cogs'
+      };
+      return categoryMap[categoryId] || 'fas fa-cogs';
+    },
+    getDifficultyLabel(difficulty) {
+      const labels = {
+        iniciante: 'Iniciante',
+        intermediario: 'Intermediário',
+        avancado: 'Avançado'
+      };
+      return labels[difficulty] || difficulty;
     },
     async openCreateExerciseModal() {
       if (!this.instructorId) {
@@ -865,6 +974,23 @@ export default {
       if (this.$refs.createFileInput) {
         this.$refs.createFileInput.value = '';
       }
+    },
+    
+    handleClickOutside(event) {
+      const isClickInsideAnyDropdown = this.exercises.some(exercise => {
+        const dropdownRef = this.$refs[`dropdownRef-${exercise._id || exercise.id}`];
+        if (!dropdownRef) return false;
+        
+        const element = Array.isArray(dropdownRef) ? dropdownRef[0] : dropdownRef;
+        return element && element.contains && element.contains(event.target);
+      });
+
+      if (!isClickInsideAnyDropdown) {
+        this.exercises = this.exercises.map(exercise => ({
+          ...exercise,
+          showMenu: false
+        }));
+      }
     }
   }
 }
@@ -921,7 +1047,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .dashboard-content {
-  padding: 100px 40px 40px;
+  padding: 140px 40px 40px;
   max-width: 1600px;
   margin: 0 auto;
   display: flex;
@@ -1511,104 +1637,70 @@ body:has(.navbar-collapsed) .floating-header,
 
 .exercises-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 32px;
-  justify-content: center;
-  align-items: stretch;
-  padding: 8px;
 }
 
 .exercise-card {
   position: relative;
   background: var(--bg-secondary);
-  backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid var(--border-primary);
-  border-radius: 28px;
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 4px 20px rgba(0, 0, 0, 0.08),
-    0 8px 40px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  border: 1px solid var(--border-color);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  height: 100%;
-  transform: translateY(0);
-  cursor: pointer;
+  max-width: 435px;
+  height: 618px;
 }
 
 .exercise-card:hover {
-  transform: translateY(-12px) scale(1.02);
-  box-shadow: 
-    0 25px 50px rgba(37, 99, 235, 0.15),
-    0 15px 35px rgba(37, 99, 235, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border-color: var(--border-accent);
-}
-
-.dashboard-dark .exercise-card:hover {
-  box-shadow: 
-    0 25px 50px rgba(139, 92, 246, 0.25),
-    0 15px 35px rgba(139, 92, 246, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-8px);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-lg);
 }
 
 .card-glow {
   position: absolute;
-  top: -50%;
-  left: -50%;
-  right: -50%;
-  bottom: -50%;
-  background: conic-gradient(from 0deg, transparent, var(--border-accent), transparent);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
   opacity: 0;
-  border-radius: 28px;
-  animation: rotate 6s linear infinite;
-  transition: opacity 0.5s ease;
-  z-index: -1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .exercise-card:hover .card-glow {
-  opacity: 0.1;
-}
-
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  opacity: 1;
 }
 
 .exercise-header {
   position: relative;
-  z-index: 1;
-  overflow: hidden;
 }
 
 .exercise-image {
-  position: relative;
   width: 100%;
-  height: 240px;
+  height: 200px;
+  position: relative;
   overflow: hidden;
-  border-radius: 28px 28px 0 0;
 }
 
 .image-container {
-  position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
 }
 
 .image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: brightness(0.9) saturate(1.1);
+  transition: transform 0.4s ease;
 }
 
 .exercise-card:hover .image-container img {
-  transform: scale(1.15);
-  filter: brightness(1) saturate(1.3);
+  transform: scale(1.05);
 }
 
 .image-placeholder {
@@ -1618,13 +1710,12 @@ body:has(.navbar-collapsed) .floating-header,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-primary);
-  color: white;
-  font-weight: 600;
-  text-align: center;
-  gap: 12px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
   position: relative;
-  overflow: hidden;
+}
+
+.dashboard-dark .image-placeholder {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
 }
 
 .image-placeholder::before {
@@ -1632,94 +1723,49 @@ body:has(.navbar-collapsed) .floating-header,
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  opacity: 0.8;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(45deg, transparent 45%, var(--border-color) 45%, var(--border-color) 55%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, var(--border-color) 45%, var(--border-color) 55%, transparent 55%);
+  background-size: 30px 30px;
+  opacity: 0.05;
 }
 
 .placeholder-icon {
-  position: relative;
-  z-index: 1;
-  opacity: 0.9;
-  transition: all 0.3s ease;
-}
-
-.exercise-card:hover .placeholder-icon {
-  transform: scale(1.1);
-  opacity: 1;
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 12px;
 }
 
 .placeholder-text {
-  position: relative;
-  z-index: 1;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  opacity: 0.9;
-  transition: all 0.3s ease;
-}
-
-.exercise-card:hover .placeholder-text {
-  opacity: 1;
-  transform: translateY(-2px);
+  letter-spacing: 0.5px;
 }
 
 .image-gradient {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
   bottom: 0;
-  background: linear-gradient(
-    135deg, 
-    rgba(37, 99, 235, 0.1) 0%, 
-    transparent 30%, 
-    transparent 70%, 
-    rgba(59, 130, 246, 0.15) 100%
-  );
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-
-.dashboard-dark .image-gradient {
-  background: linear-gradient(
-    135deg, 
-    rgba(139, 92, 246, 0.15) 0%, 
-    transparent 30%, 
-    transparent 70%, 
-    rgba(168, 85, 247, 0.2) 100%
-  );
-}
-
-.exercise-card:hover .image-gradient {
-  opacity: 1;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 .image-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg, 
-    rgba(0, 0, 0, 0.4) 0%, 
-    transparent 40%, 
-    transparent 60%, 
-    rgba(0, 0, 0, 0.3) 100%
-  );
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .exercise-card:hover .image-overlay {
@@ -1728,9 +1774,9 @@ body:has(.navbar-collapsed) .floating-header,
 
 .overlay-actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   transform: translateY(20px);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
 }
 
 .exercise-card:hover .overlay-actions {
@@ -1739,40 +1785,28 @@ body:has(.navbar-collapsed) .floating-header,
 
 .modern-overlay-btn {
   position: relative;
-  width: 56px;
-  height: 56px;
-  border: none;
-  background: #3b82f6;
-  backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 18px;
-  cursor: pointer;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  transition: all 0.3s ease;
   overflow: hidden;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-}
-
-/* Dark Mode - Roxo para todos os botões */
-.dashboard-dark .modern-overlay-btn {
-  background: #8b5cf6;
 }
 
 .modern-overlay-btn::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  padding: 1.5px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-gradient);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -1783,17 +1817,13 @@ body:has(.navbar-collapsed) .floating-header,
 
 .btn-glow-effect {
   position: absolute;
-  inset: -2px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.6), rgba(59, 130, 246, 0.6));
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
   opacity: 0;
-  filter: blur(12px);
-  transition: opacity 0.4s ease;
-  z-index: -1;
-}
-
-.dashboard-dark .btn-glow-effect {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.6), rgba(168, 85, 247, 0.6));
+  transition: opacity 0.3s ease;
 }
 
 .modern-overlay-btn:hover .btn-glow-effect {
@@ -1803,40 +1833,241 @@ body:has(.navbar-collapsed) .floating-header,
 .btn-icon-wrapper {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 24px;
+  height: 24px;
   color: white;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.3s ease;
 }
 
-.preview-btn:hover .btn-icon-wrapper,
-.edit-btn:hover .btn-icon-wrapper {
-  transform: scale(1.15) rotate(5deg);
+.btn-icon-wrapper svg {
+  width: 100%;
+  height: 100%;
 }
 
-.modern-overlay-btn:active .btn-icon-wrapper {
-  transform: scale(0.95);
+.modern-overlay-btn:hover .btn-icon-wrapper {
+  transform: scale(1.1);
 }
 
 .btn-tooltip {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: -40px;
   left: 50%;
-  transform: translateX(-50%) translateY(5px);
-  padding: 8px 14px;
+  transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.btn-tooltip::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.9);
+}
+
+.modern-overlay-btn:hover .btn-tooltip {
+  opacity: 1;
+  bottom: -32px;
+}
+
+/* Exercise Info */
+.exercise-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 24px;
+  gap: 16px;
+}
+
+.exercise-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.dashboard-dark .category-badge {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.difficulty-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.difficulty-indicator.iniciante {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.dashboard-dark .difficulty-indicator.iniciante {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.difficulty-indicator.intermediario {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.dashboard-dark .difficulty-indicator.intermediario {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.difficulty-indicator.avancado {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.dashboard-dark .difficulty-indicator.avancado {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.difficulty-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.exercise-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.exercise-stats {
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stats-row {
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: var(--bg-primary);
+}
+
+.stat-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-color);
+}
+
+.dashboard-dark .stat-icon-wrapper {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.stat-icon-wrapper i {
+  font-size: 1rem;
+}
+
+.stat-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.badges-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-item.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Muscle Groups Badges */
+.muscle-group-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   font-size: 12px;
   font-weight: 600;
-  border-radius: 8px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  pointer-events: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  border: none;
+  letter-spacing: 0.025em;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.dashboard-dark .muscle-group-badge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.muscle-group-badge:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
 }
 
 .btn-tooltip::after {
@@ -1876,89 +2107,60 @@ body:has(.navbar-collapsed) .floating-header,
   transform: translateY(-2px) scale(1.02);
 }
 
-.exercise-info {
-  position: relative;
-  z-index: 1;
-  padding: 24px 28px 20px;
-  flex: 1;
-  background: var(--bg-secondary);
-}
-
-.exercise-meta {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
 .category-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  padding: 6px 12px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--primary-color);
 }
 
 .dashboard-dark .category-badge {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
-}
-
-.category-badge svg {
-  width: 12px;
-  height: 12px;
-  opacity: 0.9;
+  background: rgba(139, 92, 246, 0.15);
 }
 
 .difficulty-indicator {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: capitalize;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
-/* Iniciante - Azul */
-.difficulty-indicator.iniciante,
-.difficulty-indicator.Iniciante {
+.difficulty-indicator.iniciante {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.dashboard-dark .difficulty-indicator.iniciante {
   background: rgba(59, 130, 246, 0.15);
-  color: #1e40af;
-  border: 2.5px solid #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-  font-weight: 700;
+  color: #60a5fa;
 }
 
-/* Intermediário - Amarelo */
-.difficulty-indicator.intermediário,
-.difficulty-indicator.Intermediário,
 .difficulty-indicator.intermediario {
-  background: rgba(245, 158, 11, 0.15);
-  color: #b45309;
-  border: 2.5px solid #f59e0b;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
-  font-weight: 700;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
 }
 
-/* Avançado - Vermelho */
-.difficulty-indicator.avançado,
-.difficulty-indicator.Avançado,
+.dashboard-dark .difficulty-indicator.intermediario {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
 .difficulty-indicator.avancado {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.dashboard-dark .difficulty-indicator.avancado {
   background: rgba(239, 68, 68, 0.15);
-  color: #b91c1c;
-  border: 2.5px solid #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
-  font-weight: 700;
+  color: #f87171;
 }
 
 .difficulty-dot {
@@ -1969,28 +2171,19 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .exercise-name {
-  margin: 0 0 12px 0;
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .exercise-description {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   line-height: 1.6;
   opacity: 0.9;
-}
-
-.exercise-stats {
-  position: relative;
-  z-index: 1;
-  padding: 16px 28px;
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-primary);
 }
 
 .muscle-groups-tags {
@@ -2003,61 +2196,30 @@ body:has(.navbar-collapsed) .floating-header,
   display: inline-flex;
   align-items: center;
   padding: 6px 14px;
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
-  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  border-radius: 15px;
+  border: none;
+  letter-spacing: 0.025em;
   text-transform: capitalize;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  box-shadow: none;
 }
 
 .dashboard-dark .muscle-tag {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
 }
 
 .muscle-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+  filter: brightness(1.1);
 }
 
 .stats-row {
   display: flex;
   gap: 24px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  padding: 12px 16px;
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  transition: all 0.3s ease;
-}
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon-wrapper {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gradient-primary);
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.stat-icon {
-  width: 16px;
-  height: 16px;
-  color: white;
 }
 
 .stat-content {
@@ -2082,12 +2244,13 @@ body:has(.navbar-collapsed) .floating-header,
   line-height: 1.2;
 }
 
+/* Action Buttons */
 .exercise-actions {
+  margin-top: auto;
   position: relative;
   z-index: 1;
-  padding: 24px 28px;
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-primary);
+  padding: 1rem 1.5rem;
+  background: transparent;
   display: flex;
   gap: 12px;
 }
@@ -2095,24 +2258,26 @@ body:has(.navbar-collapsed) .floating-header,
 .action-button {
   position: relative;
   flex: 1;
-  padding: 14px 24px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 14px;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
   letter-spacing: 0.01em;
 }
 
 .action-button svg {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 18px;
+  height: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
 
@@ -2120,22 +2285,176 @@ body:has(.navbar-collapsed) .floating-header,
   position: relative;
   z-index: 2;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  font-family: "Inter", sans-serif;
 }
 
 .button-shine {
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
   background: linear-gradient(
-    90deg,
-    transparent 0%,
+    45deg,
+    transparent 30%,
     rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%
+    transparent 70%
   );
-  transition: left 0.6s ease;
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.action-button:hover .button-shine {
+  transform: translateX(100%);
+}
+
+/* Primary Action - Gradient with Glow */
+.primary-action {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 
+    0 4px 20px rgba(37, 99, 235, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+
+.dashboard-dark .primary-action {
+  box-shadow: 
+    0 4px 20px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.button-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
   z-index: 1;
+}
+
+.primary-action:hover .button-particles {
+  opacity: 1;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.button-arrow {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: absolute;
+  right: 20px;
+}
+
+.primary-action:hover .button-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.primary-action:hover .button-text {
+  transform: translateX(-8px);
+}
+
+.primary-action:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 12px 35px rgba(37, 99, 235, 0.4),
+    0 6px 20px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-dark .primary-action:hover {
+  box-shadow: 
+    0 12px 35px rgba(139, 92, 246, 0.5),
+    0 6px 20px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.primary-action:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+/* Secondary Action - Glass Morphism */
+.secondary-action {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid var(--border-primary);
+  color: var(--text-primary);
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.secondary-action:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--border-accent);
+  background: var(--bg-tertiary);
+  box-shadow: 
+    0 8px 25px rgba(37, 99, 235, 0.15),
+    0 4px 15px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dashboard-dark .secondary-action:hover {
+  box-shadow: 
+    0 8px 25px rgba(139, 92, 246, 0.2),
+    0 4px 15px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.secondary-action:hover svg {
+  transform: scale(1.15);
+}
+
+.secondary-action:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+/* Delete Button Specific Styles */
+.danger-action,
+.exercise-actions .secondary-action {
+  color: #ef4444;
+}
+
+.danger-action:hover,
+.exercise-actions .secondary-action:hover {
+  border-color: #ef4444;
+  box-shadow: 
+    0 8px 25px rgba(239, 68, 68, 0.2),
+    0 4px 15px rgba(239, 68, 68, 0.15);
+}
+
+.dashboard-dark .danger-action,
+.dashboard-dark .exercise-actions .secondary-action {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+.dashboard-dark .danger-action:hover,
+.dashboard-dark .exercise-actions .secondary-action:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #fca5a5;
 }
 
 .action-button:hover .button-shine {
@@ -2295,6 +2614,133 @@ body:has(.navbar-collapsed) .floating-header,
 
 .secondary-action:active {
   transform: translateY(-1px) scale(1.01);
+}
+
+/* Settings Button and Dropdown */
+.exercise-menu-wrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+}
+
+.settings-button {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF !important;
+  padding: 8px;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: color 0.2s ease;
+  border-radius: 50%;
+}
+
+.settings-button:hover {
+  color: #2563eb !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.settings-button:focus,
+.settings-button:active {
+  background: transparent !important;
+  color: #4a5568 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.settings-button svg {
+  transition: none !important;
+  transform: none !important;
+}
+
+.dashboard-dark .settings-button {
+  color: #64748b !important;
+  background: transparent !important;
+}
+
+.dashboard-dark .settings-button:hover {
+  color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+
+.dashboard-dark .settings-button:focus,
+.dashboard-dark .settings-button:active {
+  color: #64748b !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-accent);
+  color: var(--primary-color);
+}
+
+.dropdown-item.logout {
+  color: #ef4444;
+}
+
+.dropdown-item.logout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.dropdown-enter-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
 }
 
 /* Empty State */
@@ -3671,6 +4117,23 @@ body:has(.navbar-collapsed) .floating-header,
 .details-section:nth-child(2) { animation-delay: 0.4s; }
 .details-section:nth-child(3) { animation-delay: 0.5s; }
 .details-section:nth-child(4) { animation-delay: 0.6s; }
+
+/* Specific animation delays for each section */
+.description-section {
+  animation-delay: 0.3s !important;
+}
+
+.howto-section {
+  animation-delay: 0.4s !important;
+}
+
+.muscles-section {
+  animation-delay: 0.5s !important;
+}
+
+.safety-section {
+  animation-delay: 0.6s !important;
+}
 
 .details-section-title {
   display: flex;

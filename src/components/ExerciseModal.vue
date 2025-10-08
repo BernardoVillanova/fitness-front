@@ -18,8 +18,8 @@
         </div>
 
         <button class="modal-close" @click="closeModal">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
@@ -322,34 +322,52 @@
           </div>
 
           <!-- Navigation Buttons -->
-          <div class="modal-footer">
+          <div class="modal-actions">
             <button 
               v-if="currentStep > 1" 
               type="button" 
-              class="nav-button secondary" 
+              class="btn-cancel" 
               @click="previousStep"
             >
-              <i class="fas fa-arrow-left"></i>
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+              </svg>
               Voltar
+            </button>
+
+            <button 
+              v-if="currentStep === 1" 
+              type="button" 
+              class="btn-cancel" 
+              @click="closeModal"
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Cancelar
             </button>
 
             <button 
               v-if="currentStep < 2" 
               type="button" 
-              class="nav-button primary" 
+              class="btn-save" 
               @click="nextStep"
             >
-              Próximo
-              <i class="fas fa-arrow-right"></i>
+              Próxima Etapa
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+              </svg>
             </button>
 
             <button 
               v-if="currentStep === 2" 
               type="submit" 
-              class="submit-button" 
+              class="btn-save" 
               :disabled="isSubmitting"
             >
-              <i v-if="!isSubmitting" class="fas fa-check"></i>
+              <svg v-if="!isSubmitting" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
               <i v-else class="fas fa-spinner fa-spin"></i>
               {{ isSubmitting ? 'Salvando...' : 'Criar Exercício' }}
             </button>
@@ -690,22 +708,45 @@ i[class*=" fa-"] {
 }
 
 .modal-close {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: white;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-dark .modal-close {
+  background: #334155;
+}
+
+.modal-close svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
 .modal-close:hover {
-  background: var(--border-color);
-  transform: rotate(90deg);
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-dark .modal-close:hover {
+  background: #475569;
+}
+
+.modal-close:hover svg {
+  transform: scale(1.1);
 }
 
 /* BODY */
@@ -992,9 +1033,12 @@ i.fab {
   margin-right: 0.5rem;
 }
 
-.nav-button i,
-.submit-button i {
+.btn-cancel svg,
+.btn-save svg,
+.btn-cancel i,
+.btn-save i {
   font-size: 16px !important;
+  flex-shrink: 0;
 }
 
 .error-message i {
@@ -1016,7 +1060,7 @@ i.fab {
 .image-upload-area {
   width: 100%;
   min-height: 200px;
-  border: 2px dashed var(--border-color);
+  border: 3px dashed var(--border-color);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1385,77 +1429,92 @@ i.fab {
 }
 
 /* MODAL FOOTER */
-.modal-footer {
+.modal-actions {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding-top: 2rem;
+  gap: 16px;
+  padding-top: 32px;
+  margin-top: 32px;
   border-top: 1px solid var(--border-color);
-  margin-top: 2rem;
 }
 
-.nav-button {
-  padding: 0.875rem 1.5rem;
-  border-radius: 12px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-}
-
-.nav-button.secondary {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-}
-
-.nav-button.secondary:hover {
-  background: var(--border-color);
-}
-
-.nav-button.primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  color: white;
-  margin-left: auto;
-}
-
-.nav-button.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(var(--primary-color-rgb), 0.5);
-}
-
-/* SUBMIT BUTTON */
-.submit-button {
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.btn-cancel,
+.btn-save {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 10px;
+  padding: 14px 24px;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  font-family: inherit;
+}
+
+.btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
   margin-left: auto;
 }
 
-.submit-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(var(--primary-color-rgb), 0.5);
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
 }
 
-.submit-button:disabled {
+.btn-save:hover::before {
+  left: 100%;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-save:active {
+  transform: translateY(0);
+}
+
+.btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.btn-save:disabled::before {
+  display: none;
 }
 
 .spinner {
@@ -1544,6 +1603,18 @@ i.fab {
   
   .pagination-info {
     order: -1;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    min-height: 48px;
   }
 }
 </style>

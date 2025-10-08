@@ -739,10 +739,13 @@ body:has(.navbar-collapsed) .instructor-profile {
 .input-wrapper i {
   position: absolute;
   left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
   pointer-events: none;
   font-size: 16px;
   transition: color 0.2s;
+  z-index: 10;
 }
 
 .input-wrapper:focus-within i {
@@ -765,6 +768,8 @@ input[type="number"] {
   transition: all 0.3s ease;
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 input[readonly] {
@@ -833,11 +838,11 @@ textarea::placeholder {
   min-height: 56px;
   border-radius: 12px;
   font-size: 1rem;
+font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: none;
-  font-family: inherit;
 }
 
 .btn-cancel {
