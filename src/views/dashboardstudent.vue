@@ -549,46 +549,36 @@ const calculateStreak = (sessions) => {
   if (!sessions || sessions.length === 0) {
     return 0
   }
-  
-  // Ordenar por data mais recente (usar endTime se disponível, senão startTime)
-  const sortedSessions = [...sessions].sort((a, b) => {
-    const dateA = new Date(a.endTime || a.startTime)
-    const dateB = new Date(b.endTime || b.startTime)
-    return dateB - dateA
-  })
-  
+  // Agrupar sessões por dia (usar apenas um treino por dia)
+  const daysSet = new Set(
+    sessions.map(s => {
+      const d = new Date(s.endTime || s.startTime)
+      d.setHours(0, 0, 0, 0)
+      return d.getTime()
+    })
+  )
+  // Converter para array e ordenar crescente
+  const daysArr = Array.from(daysSet).sort((a, b) => a - b)
+  // Começar do dia de hoje
   let streak = 0
-  let currentDate = new Date()
-  currentDate.setHours(0, 0, 0, 0)
-  
-  // Agrupar sessões por dia para evitar múltiplas contagens no mesmo dia
-  const sessionsByDay = new Set()
-  
-  for (const session of sortedSessions) {
-    const sessionDate = new Date(session.endTime || session.startTime)
-    sessionDate.setHours(0, 0, 0, 0)
-    const dayKey = sessionDate.getTime()
-    
-    if (sessionsByDay.has(dayKey)) {
-      continue // Pular se já contamos este dia
-    }
-    sessionsByDay.add(dayKey)
-    
-    const daysDiff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24))
-    
-    if (daysDiff === streak) {
+  let today = new Date()
+  today.setHours(0, 0, 0, 0)
+  // Se não treinou hoje, streak é 0
+  if (!daysSet.has(today.getTime())) {
+    return 0
+  }
+  // Contar para trás quantos dias consecutivos tem treino
+  for (let i = daysArr.length - 1; i >= 0; i--) {
+    const day = new Date(daysArr[i])
+    const expected = new Date(today)
+    expected.setDate(today.getDate() - streak)
+    expected.setHours(0, 0, 0, 0)
+    if (day.getTime() === expected.getTime()) {
       streak++
-      currentDate = sessionDate
-    } else if (daysDiff === streak + 1) {
-      // Dia consecutivo
-      streak++
-      currentDate = sessionDate
-    } else if (daysDiff > streak + 1) {
-      // Gap maior que 1 dia, quebra a sequência
+    } else {
       break
     }
   }
-  
   return streak
 }
 
