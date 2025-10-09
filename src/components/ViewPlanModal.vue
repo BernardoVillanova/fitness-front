@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="show" class="modal-overlay" @click="closeModal">
     <div class="modal-container" @click.stop>
       <div class="modal-header">
@@ -122,6 +122,14 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
@@ -139,6 +147,14 @@ export default {
   },
   emits: ['close'],
   methods: {
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    },
     closeModal() {
       this.$emit('close');
     },
@@ -165,7 +181,7 @@ export default {
     
     exportPDF() {
       // Implementar funcionalidade de exportar PDF
-      alert('Funcionalidade de exportar PDF será implementada em breve!');
+      this.showNotification('info', 'Informacao', 'Funcionalidade de exportar PDF será implementada em breve!');
     }
   },
   mounted() {

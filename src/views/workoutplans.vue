@@ -2,6 +2,13 @@
   <div :class="isDarkMode ? 'dashboard-dark' : 'dashboard-light'" class="dashboard-container">
     <DashboardNavBar />
     
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+    
     <main class="dashboard-main">
       <!-- Floating Header -->
       <div class="floating-header">
@@ -388,8 +395,10 @@ import AssignPlanModal from "@/components/AssignPlanModal.vue";
 import ViewPlanModal from "@/components/ViewPlanModal.vue";
 import ManageStudentsModal from "@/components/ManageStudentsModal.vue";
 import ConfirmationModal from "@/components/ConfirmationModal.vue";
+import NotificationModal from "@/components/NotificationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
+import { ref } from "vue";
 
 export default {
   name: "WorkoutPlans",
@@ -399,12 +408,30 @@ export default {
     AssignPlanModal,
     ViewPlanModal,
     ManageStudentsModal,
-    ConfirmationModal
+    ConfirmationModal,
+    NotificationModal
   },
   setup() {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
-    return { isDarkMode };
+    
+    const notification = ref({
+      visible: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    };
+
+    return { isDarkMode, notification, showNotification };
   },
   data() {
     return {
@@ -608,14 +635,14 @@ export default {
         });
 
         if (response.ok) {
-          alert('Plano atribuído com sucesso!');
+          this.showNotification('success', 'Sucesso!', 'Plano atribuído com sucesso!');
           this.closeAssignModal();
         } else {
           throw new Error('Erro ao atribuir plano');
         }
       } catch (error) {
         console.error('Erro ao atribuir plano:', error);
-        alert('Erro ao atribuir plano: ' + error.message);
+        this.showNotification('error', 'Erro!', 'Erro ao atribuir plano: ' + error.message);
       }
     },
 
@@ -754,7 +781,7 @@ export default {
         }
       } catch (error) {
         console.error('❌ Erro ao carregar plano:', error);
-        alert('Erro ao carregar plano: ' + error.message);
+        this.showNotification('error', 'Erro!', 'Erro ao carregar plano: ' + error.message);
       }
     },
 

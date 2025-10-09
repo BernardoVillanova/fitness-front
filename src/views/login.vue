@@ -1,5 +1,11 @@
 <template>
   <NavBar />
+  <NotificationModal 
+    v-model:visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+  />
   <div :class="isDarkMode ? 'full-screen dark' : 'full-screen light'">
     <div class="card-container">
       <div class="image-section">
@@ -50,17 +56,36 @@
 <script>
 import api from "@/api";
 import NavBar from "@/components/NavBar.vue";
+import NotificationModal from "@/components/NotificationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { jwtDecode } from "jwt-decode";
 import { storeToRefs } from "pinia";
+import { ref } from "vue";
 
 export default {
   name: "LoginPage",
-  components: { NavBar },
+  components: { NavBar, NotificationModal },
   setup() {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
-    return { isDarkMode };
+    
+    const notification = ref({
+      visible: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    };
+
+    return { isDarkMode, notification, showNotification };
   },
   data() {
     return {
@@ -178,14 +203,12 @@ export default {
           this.$router.push("/student-dashboard");
         } else {
           console.error('❌ Role desconhecida:', userData.role);
-          alert('Erro: Tipo de usuário desconhecido');
+          this.showNotification('error', 'Erro', 'Tipo de usuário desconhecido');
           return;
         }
-
-        alert("Login bem-sucedido!");
       } catch (error) {
         console.error("Erro no login:", error);
-        alert("Erro no login. Verifique suas credenciais.");
+        this.showNotification('error', 'Erro no Login', 'Erro no login. Verifique suas credenciais.');
       }
     },
   },
