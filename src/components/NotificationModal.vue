@@ -48,7 +48,7 @@ const typeClass = computed(() => `modal-${props.type}`)
 const iconConfig = computed(() => {
   const configs = {
     success: { icon: ['fas', 'check-circle'], class: 'icon-success' },
-    error: { icon: ['fas', 'exclamation-circle'], class: 'icon-error' },
+    error: { icon: ['fas', 'xmark'], class: 'icon-error' },
     warning: { icon: ['fas', 'exclamation-triangle'], class: 'icon-warning' },
     info: { icon: ['fas', 'info-circle'], class: 'icon-info' }
   }

@@ -1,4 +1,10 @@
 <template>
+  <NotificationModal 
+    v-model:visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+  />
   <div :class="['students-page', { 'dark-mode': isDarkMode }]">
     <DashboardNavBar />
 
@@ -381,11 +387,29 @@ import { storeToRefs } from 'pinia'
 import DashboardNavBar from '@/components/DashboardNavBar.vue'
 import LinkStudentModal from '@/components/LinkStudentModal.vue'
 import ViewPlanModal from '@/components/ViewPlanModal.vue'
+import NotificationModal from '@/components/NotificationModal.vue'
 import api, { unlinkStudent } from '@/api'
 
 const router = useRouter()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
+
+// Notification state
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
 
 // Estado
 const students = ref([])
@@ -703,13 +727,13 @@ const confirmUnlinkStudent = async (student) => {
     await fetchStudents()
     
     // Notificar sucesso
-    alert(`${studentName} foi desvinculado com sucesso!`)
+    showNotification('success', 'Sucesso', `${studentName} foi desvinculado com sucesso!`)
   } catch (error) {
     console.error('Erro ao desvincular aluno:', error)
     
     // Mostrar mensagem de erro específica
     const errorMessage = error.response?.data?.message || 'Erro ao desvincular aluno'
-    alert(`Erro: ${errorMessage}`)
+    showNotification('error', 'Erro ao Desvincular', errorMessage)
   }
 }
 
@@ -745,7 +769,7 @@ const confirmDeleteStudent = async (student) => {
     await fetchStudents()
   } catch (error) {
     console.error('Erro ao excluir aluno:', error)
-    alert('Erro ao excluir aluno')
+    showNotification('error', 'Erro ao Excluir', 'Erro ao excluir aluno')
   }
 }
 
