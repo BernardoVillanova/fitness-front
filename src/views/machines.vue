@@ -5,6 +5,19 @@
     :title="notification.title"
     :message="notification.message"
   />
+  
+  <ConfirmationModal
+    :show="showConfirmation"
+    :title="confirmationConfig.title"
+    :message="confirmationConfig.message"
+    :icon-type="confirmationConfig.iconType"
+    :confirm-text="confirmationConfig.confirmText"
+    :cancel-text="confirmationConfig.cancelText"
+    :button-class="confirmationConfig.buttonClass"
+    @confirm="confirmationConfig.onConfirm"
+    @close="showConfirmation = false"
+  />
+  
   <div :class="isDarkMode ? 'dashboard-dark' : 'dashboard-light'" class="dashboard-container">
     <DashboardNavBar />
     <main class="dashboard-main">
@@ -549,6 +562,7 @@ import DashboardNavBar from "@/components/DashboardNavBar.vue";
 import EquipmentModal from "@/components/EquipmentModal.vue";
 import CategoryFilter from "@/components/CategoryFilter.vue";
 import NotificationModal from "@/components/NotificationModal.vue";
+import ConfirmationModal from "@/components/ConfirmationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { useAuthStore } from "@/store/auth";
 import { storeToRefs } from "pinia";
@@ -562,6 +576,7 @@ export default {
     EquipmentModal,
     CategoryFilter,
     NotificationModal,
+    ConfirmationModal,
   },
   setup() {
     const themeStore = useThemeStore();
@@ -584,6 +599,18 @@ export default {
         message
       };
     };
+
+    // Confirmation system
+    const showConfirmation = ref(false);
+    const confirmationConfig = ref({
+      title: '',
+      message: '',
+      iconType: 'warning',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+      buttonClass: 'btn-danger',
+      onConfirm: () => {}
+    });
     
     return {
       isDarkMode,
@@ -591,6 +618,8 @@ export default {
       currentUser,
       notification,
       showNotification,
+      showConfirmation,
+      confirmationConfig,
     };
   },
   data() {
@@ -778,7 +807,7 @@ export default {
           }
         }
         
-        // Se não houver userData, alertar e abortar
+        // Se não houver userData,         ..\migrate-notifications.ps1 -DryRun -Verbosear e abortar
         if (!userData) {
           this.showNotification('error', 'Erro de Autenticação', 'Dados de usuário não encontrados.\nPor favor, faça logout e login novamente.');
           this.instructorId = null;
@@ -974,17 +1003,26 @@ export default {
       }
     },
     async deleteMachine(machine) {
-      if (!confirm(`Tem certeza que deseja excluir o aparelho "${machine.name}"?`)) {
-        return;
-      }
-      
-      try {
-        await api.delete(`/equipments/${machine._id}`);
-        await this.fetchEquipments();
-      } catch (error) {
-        console.error('Erro ao excluir aparelho:', error);
-        this.showNotification('error', 'Erro ao Excluir', 'Erro ao excluir aparelho');
-      }
+      this.confirmationConfig = {
+        title: 'Excluir Aparelho',
+        message: `Tem certeza que deseja excluir o aparelho "${machine.name}"? Esta ação não pode ser desfeita.`,
+        iconType: 'danger',
+        confirmText: 'Sim, Excluir',
+        cancelText: 'Cancelar',
+        buttonClass: 'btn-danger',
+        onConfirm: async () => {
+          try {
+            await api.delete(`/equipments/${machine._id}`);
+            await this.fetchEquipments();
+            this.showNotification('success', 'Aparelho Excluído', 'Aparelho excluído com sucesso!');
+            this.showConfirmation = false;
+          } catch (error) {
+            console.error('Erro ao excluir aparelho:', error);
+            this.showNotification('error', 'Erro ao Excluir', 'Erro ao excluir aparelho');
+          }
+        }
+      };
+      this.showConfirmation = true;
     },
     handleImageEdit(event) {
       const file = event.target.files[0];

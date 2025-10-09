@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="container">
     <aside class="sidebar">
       <h2 class="sidebar-title">Cadastro de Instrutor</h2>
@@ -49,15 +49,25 @@
       </div>
     </main>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
 import axios from 'axios';
 
+import NotificationModal from '@/components/NotificationModal.vue';
 export default {
   name: 'InstructorRegister',
   data() {
     return {
+      notification: { visible: false, type: 'info', title: '', message: '' },
       step: 1,
       maxStep: 3,
       isSubmitting: false,
@@ -70,6 +80,14 @@ export default {
     };
   },
   methods: {
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    },
     stepClass(n) {
       return {
         'active-step': this.step === n
@@ -77,11 +95,11 @@ export default {
     },
     nextStep() {
       if (this.step === 1 && !this.form.certifications.length) {
-        alert('Adicione pelo menos uma certificação.');
+        this.showNotification('info', 'Informacao', 'Adicione pelo menos uma certificação.');
         return;
       }
       if (this.step === 2 && !this.form.specialties.length) {
-        alert('Adicione pelo menos uma especialização.');
+        this.showNotification('info', 'Informacao', 'Adicione pelo menos uma especialização.');
         return;
       }
 
@@ -113,7 +131,7 @@ export default {
       const userId = this.$route.query.userId;
 
       if (!userId) {
-        alert('ID do usuário não encontrado. Volte ao início.');
+        this.showNotification('info', 'Informacao', 'ID do usuário não encontrado. Volte ao início.');
         this.isSubmitting = false;
         return;
       }
@@ -130,7 +148,7 @@ export default {
         this.$router.push('/login')
       } catch (err) {
         console.error(err);
-        alert('Erro ao cadastrar instrutor.');
+        this.showNotification('error', 'Erro', 'Erro ao cadastrar instrutor.');
       } finally {
         this.isSubmitting = false;
       }
@@ -247,3 +265,4 @@ export default {
   margin-top: 2rem;
 }
 </style>
+

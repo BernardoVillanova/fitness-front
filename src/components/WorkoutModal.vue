@@ -2,6 +2,25 @@
   <!-- Modal de Execução do Treino -->
   <Transition name="modal">
     <div v-if="show" class="modal-overlay workout-modal-overlay" @click="handleOverlayClick">
+      <NotificationModal 
+        v-model:visible="notification.visible"
+        :type="notification.type"
+        :title="notification.title"
+        :message="notification.message"
+      />
+      
+      <ConfirmationModal
+        :show="showConfirmation"
+        :title="confirmationConfig.title"
+        :message="confirmationConfig.message"
+        :icon-type="confirmationConfig.iconType"
+        :confirm-text="confirmationConfig.confirmText"
+        :cancel-text="confirmationConfig.cancelText"
+        :button-class="confirmationConfig.buttonClass"
+        @confirm="confirmationConfig.onConfirm"
+        @close="showConfirmation = false"
+      />
+      
       <div v-if="workoutSession" class="modal-content workout-modal-new" @click.stop>
         
         <!-- Header Compacto -->
@@ -753,6 +772,8 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, defineProps, defineEmits } from 'vue'
 import api from '@/api'
+import NotificationModal from '@/components/NotificationModal.vue'
+import ConfirmationModal from '@/components/ConfirmationModal.vue'
 
 // Props
 const props = defineProps({
@@ -787,6 +808,35 @@ const loading = ref(false)
 const currentTime = ref(Date.now())
 const timerInterval = ref(null)
 const showRestModal = ref(false)
+
+// Notification system
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
+
+// Confirmation system
+const showConfirmation = ref(false)
+const confirmationConfig = ref({
+  title: '',
+  message: '',
+  iconType: 'warning',
+  confirmText: 'Confirmar',
+  cancelText: 'Cancelar',
+  buttonClass: 'btn-danger',
+  onConfirm: () => {}
+})
 const restTimeRemaining = ref(0)
 const restInterval = ref(null)
 const exerciseDetails = ref({})
@@ -1271,38 +1321,49 @@ const saveProgress = async () => {
     })
     
     emit('progress-saved')
-    alert('Progresso salvo com sucesso!')
+    showNotification('success', 'Progresso Salvo', 'Progresso salvo com sucesso!')
   } catch (error) {
     console.error('Erro ao salvar progresso:', error)
-    alert('Erro ao salvar progresso')
+    showNotification('error', 'Erro!', 'Erro ao salvar progresso')
   } finally {
     loading.value = false
   }
 }
 
-const finishWorkout = async () => {
+const finishWorkout = () => {
   if (!allExercisesCompleted.value) {
-    alert('Complete todos os exercícios antes de finalizar')
+    showNotification('warning', 'Treino Incompleto', 'Complete todos os exercícios antes de finalizar')
     return
   }
   
-  if (!confirm('Deseja finalizar este treino?')) return
-  
-  try {
-    loading.value = true
-    await api.post(`/workout-sessions/sessions/${props.workoutSession._id}/complete`, {
-      exercises: props.workoutSession.exercises,
-      notes: props.workoutSession.notes
-    })
-    
-    alert('Treino finalizado com sucesso! 🎉')
-    emit('workout-finished')
-  } catch (error) {
-    console.error('Erro ao finalizar treino:', error)
-    alert('Erro ao finalizar treino')
-  } finally {
-    loading.value = false
+  confirmationConfig.value = {
+    title: 'Finalizar Treino',
+    message: 'Deseja finalizar este treino? Esta ação não pode ser desfeita.',
+    iconType: 'success',
+    confirmText: 'Sim, Finalizar',
+    cancelText: 'Cancelar',
+    buttonClass: 'btn-success',
+    onConfirm: async () => {
+      try {
+        loading.value = true
+        
+        await api.post(`/workout-sessions/sessions/${props.workoutSession._id}/complete`, {
+          exercises: props.workoutSession.exercises,
+          notes: props.workoutSession.notes
+        })
+        
+        showNotification('success', 'Treino Finalizado', 'Treino finalizado com sucesso! 🎉')
+        emit('workout-finished')
+        showConfirmation.value = false
+      } catch (error) {
+        console.error('Erro ao finalizar treino:', error)
+        showNotification('error', 'Erro!', 'Erro ao finalizar treino')
+      } finally {
+        loading.value = false
+      }
+    }
   }
+  showConfirmation.value = true
 }
 
 const handleOverlayClick = () => {
@@ -1310,9 +1371,19 @@ const handleOverlayClick = () => {
 }
 
 const confirmCloseWorkout = () => {
-  if (confirm('Deseja sair? O progresso não salvo será perdido.')) {
-    emit('close')
+  confirmationConfig.value = {
+    title: 'Sair do Treino',
+    message: 'Deseja sair? O progresso não salvo será perdido.',
+    iconType: 'warning',
+    confirmText: 'Sim, Sair',
+    cancelText: 'Cancelar',
+    buttonClass: 'btn-danger',
+    onConfirm: () => {
+      emit('close')
+      showConfirmation.value = false
+    }
   }
+  showConfirmation.value = true
 }
 
 const showExerciseDetails = async (exercise) => {  
@@ -1378,11 +1449,11 @@ const confirmSkipExercise = async () => {
       currentSetIndex.value = 0
     }
     
-    alert('Exercício pulado com sucesso!')
+    showNotification('success', 'Exercício Pulado', 'Exercício pulado com sucesso!')
     
   } catch (error) {
     console.error('Erro ao pular exercício:', error)
-    alert('Erro ao pular exercício')
+    showNotification('error', 'Erro!', 'Erro ao pular exercício')
   } finally {
     loading.value = false
   }
@@ -1412,7 +1483,7 @@ const saveEditedSet = async () => {
     
   } catch (error) {
     console.error('Erro ao salvar edição:', error)
-    alert('Erro ao salvar alterações')
+    showNotification('error', 'Erro!', 'Erro ao salvar alterações')
   } finally {
     loading.value = false
   }

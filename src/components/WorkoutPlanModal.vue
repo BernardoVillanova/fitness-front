@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="show" class="modal-overlay" @click.self="closeModal">
     <div class="modal-container-large">
       <div class="modal-header">
@@ -315,6 +315,14 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
@@ -337,6 +345,7 @@ export default {
   emits: ['close', 'save'],
   data() {
     return {
+      notification: { visible: false, type: 'info', title: '', message: '' },
       formData: {
         name: '',
         divisions: [{
@@ -387,6 +396,14 @@ export default {
     }
   },
   methods: {
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    },
     initializeForm() {
       if (this.planData && this.isEditing) {
         this.formData = JSON.parse(JSON.stringify(this.planData));
@@ -445,7 +462,7 @@ export default {
 
     processImageFile(file) {
       if (file.size > 10 * 1024 * 1024) {
-        alert('Arquivo muito grande! O tamanho máximo é 10MB.');
+        this.showNotification('info', 'Informacao', 'Arquivo muito grande! O tamanho máximo é 10MB.');
         return;
       }
 
