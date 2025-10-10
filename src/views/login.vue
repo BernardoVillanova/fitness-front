@@ -51,21 +51,11 @@
       </div>
     </div>
   </div>
-
-  <!-- Notification Modal -->
-  <NotificationModal
-    :visible="notification.visible"
-    :type="notification.type"
-    :title="notification.title"
-    :message="notification.message"
-    @close="closeNotification"
-  />
 </template>
 
 <script>
 import api from "@/api";
 import NavBar from "@/components/NavBar.vue";
-import NotificationModal from "@/components/NotificationModal.vue";
 import NotificationModal from "@/components/NotificationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { jwtDecode } from "jwt-decode";
@@ -100,27 +90,10 @@ export default {
   data() {
     return {
       email: "",
-      password: "",
-      notification: {
-        visible: false,
-        type: 'info',
-        title: '',
-        message: ''
-      }
+      password: ""
     };
   },
   methods: {
-    showNotification(type, title, message) {
-      this.notification = {
-        visible: true,
-        type,
-        title,
-        message
-      };
-    },
-    closeNotification() {
-      this.notification.visible = false;
-    },
     async login() {
       try {
         const response = await api.post("/auth/login", {
