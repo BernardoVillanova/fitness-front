@@ -62,6 +62,8 @@ const close = () => {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
 .notification-overlay {
   position: fixed;
   top: 0;
@@ -75,6 +77,7 @@ const close = () => {
   justify-content: center;
   z-index: 9999;
   padding: 1rem;
+  font-family: "Inter", sans-serif;
 }
 
 .notification-modal {
@@ -89,6 +92,11 @@ const close = () => {
   align-items: flex-start;
   gap: 1.5rem;
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-modal,
+.notification-modal * {
+  font-family: "Inter", sans-serif !important;
 }
 
 @keyframes modalSlideIn {

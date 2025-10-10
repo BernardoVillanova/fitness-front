@@ -414,6 +414,7 @@ onMounted(() => {
 
 * {
   box-sizing: border-box;
+  font-family: "Inter", sans-serif;
 }
 
 
@@ -423,7 +424,6 @@ onMounted(() => {
   min-height: 100vh;
   font-family: "Inter", sans-serif;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Detecta quando o navbar está colapsado */
@@ -858,7 +858,7 @@ textarea::placeholder {
   min-height: 56px;
   border-radius: 12px;
   font-size: 1rem;
-font-family: "Inter", sans-serif;
+  font-family: "Inter", sans-serif; 
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
