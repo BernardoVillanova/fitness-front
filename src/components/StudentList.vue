@@ -1,4 +1,21 @@
 <template>
+  <NotificationModal 
+    v-model:visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+  />
+  
+  <ConfirmationModal 
+    :show="confirmationModal.visible"
+    :title="confirmationModal.title"
+    :message="confirmationModal.message"
+    icon-type="warning"
+    confirm-text="Sim, Desvincular"
+    cancel-text="Cancelar"
+    @confirm="handleConfirmationConfirm"
+    @cancel="handleConfirmationCancel"
+  />
   <div :class="['students-page', { 'dark-mode': isDarkMode }]">
     <DashboardNavBar />
 
@@ -381,11 +398,63 @@ import { storeToRefs } from 'pinia'
 import DashboardNavBar from '@/components/DashboardNavBar.vue'
 import LinkStudentModal from '@/components/LinkStudentModal.vue'
 import ViewPlanModal from '@/components/ViewPlanModal.vue'
+import NotificationModal from '@/components/NotificationModal.vue'
+import ConfirmationModal from '@/components/ConfirmationModal.vue'
 import api, { unlinkStudent } from '@/api'
 
 const router = useRouter()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
+
+// Notification state
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+// Confirmation state
+const confirmationModal = ref({
+  visible: false,
+  title: '',
+  message: '',
+  onConfirm: null,
+  onCancel: null
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
+
+const showConfirmation = (title, message, onConfirm, onCancel = null) => {
+  confirmationModal.value = {
+    visible: true,
+    title,
+    message,
+    onConfirm,
+    onCancel
+  }
+}
+
+const handleConfirmationConfirm = () => {
+  if (confirmationModal.value.onConfirm) {
+    confirmationModal.value.onConfirm()
+  }
+  confirmationModal.value.visible = false
+}
+
+const handleConfirmationCancel = () => {
+  if (confirmationModal.value.onCancel) {
+    confirmationModal.value.onCancel()
+  }
+  confirmationModal.value.visible = false
+}
 
 // Estado
 const students = ref([])
@@ -693,24 +762,33 @@ const openAddStudentModal = () => {
 
 const confirmUnlinkStudent = async (student) => {
   const studentName = student.name || 'este aluno'
-  if (!confirm(`Tem certeza que deseja desvincular ${studentName}? O aluno ficará sem instrutor.`)) return
   
-  try {    
-    // Usar a função específica da API
-    await unlinkStudent(student._id)
-    
-    // Atualizar a lista de alunos
-    await fetchStudents()
-    
-    // Notificar sucesso
-    alert(`${studentName} foi desvinculado com sucesso!`)
-  } catch (error) {
-    console.error('Erro ao desvincular aluno:', error)
-    
-    // Mostrar mensagem de erro específica
-    const errorMessage = error.response?.data?.message || 'Erro ao desvincular aluno'
-    alert(`Erro: ${errorMessage}`)
-  }
+  showConfirmation(
+    'Confirmar Desvinculação',
+    `Tem certeza que deseja desvincular ${studentName}? O aluno ficará sem instrutor.`,
+    async () => {
+      // Função executada quando confirmar
+      try {    
+        // Usar a função específica da API
+        await unlinkStudent(student._id)
+        
+        // Atualizar a lista de alunos
+        await fetchStudents()
+        
+        // Notificar sucesso
+        showNotification('success', 'Sucesso', `${studentName} foi desvinculado com sucesso!`)
+      } catch (error) {
+        console.error('Erro ao desvincular aluno:', error)
+        
+        // Mostrar mensagem de erro específica
+        const errorMessage = error.response?.data?.message || 'Erro ao desvincular aluno'
+        showNotification('error', 'Erro ao Desvincular', errorMessage)
+      }
+    },
+    () => {
+      showNotification('info', 'Operação Cancelada', 'A desvinculação foi cancelada.')
+    }
+  )
 }
 
 const closeStudentForm = () => {
@@ -745,7 +823,7 @@ const confirmDeleteStudent = async (student) => {
     await fetchStudents()
   } catch (error) {
     console.error('Erro ao excluir aluno:', error)
-    alert('Erro ao excluir aluno')
+    showNotification('error', 'Erro ao Excluir', 'Erro ao excluir aluno')
   }
 }
 

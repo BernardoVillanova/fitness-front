@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div :class="isDarkMode ? 'dark' : 'light'" class="gym-home">
     <DashboardNavBar />
     <div class="dashboard-container">
@@ -291,10 +291,19 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
 import { ref, computed } from 'vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import { getAllGyms, createGym, updateGym, deleteGym } from '@/api';
@@ -304,10 +313,12 @@ import GymForm from '@/components/GymForm.vue';
 export default {
   name: 'GymHome',
   components: {
+    NotificationModal,
     GymForm,
     DashboardNavBar,
   },
   setup() {
+    const notification = ref({ visible: false, type: 'info', title: '', message: '' });
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
     
@@ -422,8 +433,19 @@ export default {
       );
     });
 
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    };
+
     return {
       isDarkMode,
+      notification,
+      showNotification,
       gyms,
       loading,
       selectedGym,
@@ -498,17 +520,17 @@ export default {
         
         if (this.selectedGym) {
           await updateGym(this.selectedGym._id, formData);
-          alert('✅ Academia atualizada com sucesso!');
+          this.showNotification('success', 'Sucesso', '✅ Academia atualizada com sucesso!');
         } else {
           await createGym(formData);
-          alert('✅ Academia cadastrada com sucesso!');
+          this.showNotification('success', 'Sucesso', '✅ Academia cadastrada com sucesso!');
         }
         
         await this.fetchGyms();
         this.handleCancel();
       } catch (error) {
         console.error('Error saving gym:', error);
-        alert(`❌ Erro: ${error.response?.data?.message || error.message || 'Erro ao salvar academia'}`);
+        this.showNotification('error', 'Erro', `${error.response?.data?.message || error.message || 'Erro ao salvar academia'}`);
       }
     },
     handleEdit(gym) {
@@ -535,11 +557,11 @@ export default {
     async handleDelete(gymId) {
       try {
         await deleteGym(gymId);
-        alert('✅ Academia excluída com sucesso!');
+        this.showNotification('success', 'Sucesso', '✅ Academia excluída com sucesso!');
         await this.fetchGyms();
       } catch (error) {
         console.error('Error deleting gym:', error);
-        alert('❌ Erro ao excluir academia. Tente novamente.');
+        this.showNotification('info', 'Informacao', '❌ Erro ao excluir academia. Tente novamente.');
       }
     },
     handleCancel() {
@@ -1820,3 +1842,4 @@ body:has(.navbar-collapsed) .dashboard-container,
   opacity: 0;
 }
 </style>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div :class="['student-profile-view', { 'dark-mode': isDarkMode }]">
     <DashboardNavBar />
     
@@ -1071,10 +1071,19 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 import { useRoute } from 'vue-router';
 import { useThemeStore } from '../store/theme';
 import DashboardNavBar from '../components/DashboardNavBar.vue';
@@ -1084,9 +1093,11 @@ import api from '../api';
 export default {
   name: 'StudentProfileView',
   components: {
+    NotificationModal,
     DashboardNavBar
   },
   setup() {
+    const notification = ref({ visible: false, type: 'info', title: '', message: '' });
     const route = useRoute();
     const themeStore = useThemeStore();
     const isDarkMode = computed(() => themeStore.isDarkMode);
@@ -1739,7 +1750,7 @@ export default {
         workoutPlans.value = response.data;
       } catch (err) {
         console.error('Error loading workout plans:', err);
-        alert('Erro ao carregar planos de treino');
+        showNotification('error', 'Erro', 'Erro ao carregar planos de treino');
       } finally {
         loadingPlans.value = false;
       }
@@ -1756,7 +1767,7 @@ export default {
 
     const assignPlan = async () => {
       if (!selectedPlan.value) {
-        alert('Selecione um plano de treino');
+        showNotification('warning', 'Atencao', 'Selecione um plano de treino');
         return;
       }
 
@@ -1765,10 +1776,10 @@ export default {
         await assignPlanToStudent(student.value._id, selectedPlan.value._id);
         await loadStudentData();
         closeAssignPlanModal();
-        alert('Plano atribuído com sucesso!');
+        showNotification('success', 'Sucesso', 'Plano atribuído com sucesso!');
       } catch (err) {
         console.error('Error assigning plan:', err);
-        alert('Erro ao atribuir plano');
+        showNotification('error', 'Erro', 'Erro ao atribuir plano');
       } finally {
         submitting.value = false;
       }
@@ -1784,7 +1795,7 @@ export default {
         closeProgressModal();
       } catch (err) {
         console.error('❌ Error adding progress:', err);
-        alert('Erro ao adicionar progresso: ' + (err.response?.data?.message || err.message));
+        showNotification('error', 'Erro', 'Erro ao adicionar progresso: ' + (err.response?.data?.message || err.message));
       } finally {
         submitting.value = false;
       }
@@ -1830,8 +1841,19 @@ export default {
       loadStudentData();
     });
 
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    };
+
     return {
       isDarkMode,
+      notification,
+      showNotification,
       loading,
       error,
       student,
@@ -5342,3 +5364,4 @@ export default {
   }
 }
 </style>
+

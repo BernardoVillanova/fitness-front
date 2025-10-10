@@ -5,6 +5,25 @@
     :class="[isDarkMode ? 'dashboard-dark' : 'dashboard-light']" 
     @click.self="resetForm"
   >
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+    
+    <ConfirmationModal
+      :show="showConfirmation"
+      :title="confirmationConfig.title"
+      :message="confirmationConfig.message"
+      :icon-type="confirmationConfig.iconType"
+      :confirm-text="confirmationConfig.confirmText"
+      :cancel-text="confirmationConfig.cancelText"
+      :button-class="confirmationConfig.buttonClass"
+      @confirm="confirmationConfig.onConfirm"
+      @close="showConfirmation = false"
+    />
+    
     <div class="modal-container-large">
       <div class="modal-header">
         <div class="modal-header-content">
@@ -785,10 +804,16 @@ import { ref, computed, watch } from 'vue';
 import { mask } from 'vue-the-mask';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
+import NotificationModal from '@/components/NotificationModal.vue';
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
 
 export default {
   name: 'GymForm',
   directives: { mask },
+  components: {
+    NotificationModal,
+    ConfirmationModal
+  },
   props: {
     gym: {
       type: Object,
@@ -803,6 +828,35 @@ export default {
   setup(props, { emit }) {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
+    
+    // Notification system
+    const notification = ref({
+      visible: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    };
+
+    // Confirmation system
+    const showConfirmation = ref(false);
+    const confirmationConfig = ref({
+      title: '',
+      message: '',
+      iconType: 'warning',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+      buttonClass: 'btn-danger',
+      onConfirm: () => {}
+    });
     
     const fileInput = ref(null);
     const imagePreview = ref(null);
@@ -965,14 +1019,14 @@ export default {
       // Validar tipo de arquivo
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        alert('❌ Tipo de arquivo inválido. Use PNG, JPG, GIF ou WEBP.');
+        showNotification('error', 'Arquivo Inválido', 'Tipo de arquivo inválido. Use PNG, JPG, GIF ou WEBP.');
         return;
       }
 
       // Validar tamanho (10MB)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
-        alert('❌ Arquivo muito grande. O tamanho máximo é 10MB.');
+        showNotification('error', 'Arquivo Muito Grande', 'Arquivo muito grande. O tamanho máximo é 10MB.');
         return;
       }
 
@@ -1012,7 +1066,7 @@ export default {
           // Verificar tamanho após compressão
           const sizeInBytes = (compressedBase64.length * 3) / 4;
           if (sizeInBytes > 10 * 1024 * 1024) { // 10MB após compressão
-            alert('❌ A imagem ainda está muito grande. Tente uma imagem menor.');
+            showNotification('error', 'Imagem Muito Grande', 'A imagem ainda está muito grande. Tente uma imagem menor.');
             return;
           }
           
@@ -1136,19 +1190,19 @@ export default {
     const goToStep2 = () => {
       // Validação básica
       if (!formData.value.name || !formData.value.email || !formData.value.phone) {
-        alert('⚠️ Por favor, preencha todos os campos obrigatórios (Nome, Email e Telefone).');
+        showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios (Nome, Email e Telefone).');
         return;
       }
       
       if (!formData.value.location.address || !formData.value.location.city || 
           !formData.value.location.state || !formData.value.location.zipCode) {
-        alert('⚠️ Por favor, preencha todos os campos de endereço.');
+        showNotification('warning', 'Endereço Incompleto', 'Por favor, preencha todos os campos de endereço.');
         return;
       }
       
       // Validar formato do estado (2 letras)
       if (formData.value.location.state.length !== 2) {
-        alert('⚠️ Estado deve ter 2 letras (UF).');
+        showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
         return;
       }
       
@@ -1182,7 +1236,7 @@ export default {
     
     const saveEquipment = () => {
       if (!equipmentForm.value.name || !equipmentForm.value.quantity) {
-        alert('⚠️ Por favor, preencha o nome e quantidade do equipamento.');
+        showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha o nome e quantidade do equipamento.');
         return;
       }
       
@@ -1210,9 +1264,19 @@ export default {
     };
     
     const removeEquipment = (index) => {
-      if (confirm('⚠️ Tem certeza que deseja remover este equipamento?')) {
-        equipmentsList.value.splice(index, 1);
-      }
+      confirmationConfig.value = {
+        title: 'Remover Equipamento',
+        message: 'Tem certeza que deseja remover este equipamento?',
+        iconType: 'warning',
+        confirmText: 'Sim, Remover',
+        cancelText: 'Cancelar',
+        buttonClass: 'btn-danger',
+        onConfirm: () => {
+          equipmentsList.value.splice(index, 1);
+          showConfirmation.value = false;
+        }
+      };
+      showConfirmation.value = true;
     };
 
     const handleSubmit = async () => {
@@ -1221,13 +1285,13 @@ export default {
         if (!formData.value.name || !formData.value.phone || 
             !formData.value.location.address || !formData.value.location.city || 
             !formData.value.location.state || !formData.value.location.zipCode) {
-          alert('⚠️ Por favor, preencha todos os campos obrigatórios.');
+          showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios.');
           return;
         }
         
         // Validar formato do estado (2 letras)
         if (formData.value.location.state.length !== 2) {
-          alert('⚠️ Estado deve ter 2 letras (UF).');
+          showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
           return;
         }
 
@@ -1259,7 +1323,7 @@ export default {
         resetForm();
       } catch (error) {
         console.error('Erro ao preparar dados do formulário:', error);
-        alert(`❌ Erro: ${error.message}`);
+        showNotification('error', 'Erro!', `Erro: ${error.message}`);
       }
     };
 
@@ -1306,6 +1370,10 @@ export default {
 
     return {
       isDarkMode,
+      notification,
+      showNotification,
+      showConfirmation,
+      confirmationConfig,
       fileInput,
       imagePreview,
       isDragging,

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div 
     class="modal-overlay" 
     :class="[isDarkMode ? 'dashboard-dark' : 'dashboard-light']" 
@@ -100,11 +100,17 @@
                     <input
                       type="checkbox"
                       :value="muscle.value"
-                      v-model="formData.muscleGroups"
+                      :checked="formData.muscleGroups.includes(muscle.value)"
+                      @change="toggleMuscleGroup(muscle.value)"
                       class="checkbox-input"
                     />
                     <span class="checkbox-text">{{ muscle.label }}</span>
                   </label>
+                </div>
+                
+                <!-- DEBUG: Mostrar grupos selecionados -->
+                <div v-if="formData.muscleGroups.length > 0" style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+                  Selecionados: {{ formData.muscleGroups.join(', ') }}
                 </div>
               </div>
             </div>
@@ -297,15 +303,27 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
 import { useThemeStore } from '@/store/theme';
+import NotificationModal from '@/components/NotificationModal.vue';
 import { storeToRefs } from 'pinia';
 import api from '@/api';
 
 export default {
   name: 'EquipmentModal',
+  components: {
+    NotificationModal
+  },
   props: {
     equipmentList: {
       type: Array,
@@ -325,9 +343,14 @@ export default {
     if (!this.instructorId) {
       console.error('❌ [EquipmentModal] CRÍTICO: instructorId está null/undefined!');
     }
+    console.log('EquipmentModal mounted:', {
+      muscleGroupOptions: this.muscleGroupOptions,
+      formDataMuscleGroups: this.formData.muscleGroups
+    });
   },
   data() {
     return {
+      notification: { visible: false, type: 'info', title: '', message: '' },
       formData: {
         name: '',
         category: '',
@@ -369,6 +392,45 @@ export default {
     }
   },
   methods: {
+    toggleMuscleGroup(muscleValue) {
+      console.log('Toggling muscle group:', muscleValue);
+      console.log('Current groups before:', [...this.formData.muscleGroups]);
+      
+      // Criar uma nova cópia do array para forçar reatividade
+      const currentGroups = [...this.formData.muscleGroups];
+      const index = currentGroups.indexOf(muscleValue);
+      
+      if (index > -1) {
+        // Remove se já existe
+        currentGroups.splice(index, 1);
+      } else {
+        // Adiciona se não existe
+        currentGroups.push(muscleValue);
+      }
+      
+      // Atualizar o array inteiro para garantir reatividade no Vue 3
+      this.formData.muscleGroups = currentGroups;
+      
+      console.log('Current groups after:', [...this.formData.muscleGroups]);
+    },
+    handleMuscleGroupChange(event) {
+      console.log('Checkbox event:', {
+        value: event.target.value,
+        checked: event.target.checked,
+        currentGroups: [...this.formData.muscleGroups]
+      });
+      
+      // Force reactivity update
+      this.$forceUpdate();
+    },
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    },
     closeModal() {
       this.$emit('close');
     },
@@ -503,7 +565,7 @@ export default {
         this.$emit('equipment-removed');
       } catch (error) {
         console.error('Erro ao remover equipamento:', error);
-        alert('Erro ao remover equipamento');
+        this.showNotification('error', 'Erro', 'Erro ao remover equipamento');
       }
     },
     viewEquipment(equipment) {
@@ -837,28 +899,47 @@ select.form-input {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
+}
+
+.dashboard-dark .checkbox-label {
+  background: #334155;
+  border-color: #475569;
 }
 
 .checkbox-label:hover {
-  border-color: var(--primary-color);
-  background: var(--bg-primary);
+  border-color: #3b82f6;
+  background: #ffffff;
+}
+
+.dashboard-dark .checkbox-label:hover {
+  background: #475569;
+  border-color: #3b82f6;
 }
 
 .checkbox-input {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: var(--primary-color);
+  accent-color: #3b82f6;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .checkbox-text {
   font-size: 0.875rem;
-  color: var(--text-color);
+  color: #1f2937;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dashboard-dark .checkbox-text {
+  color: #f1f5f9;
 }
 
 /* IMAGE UPLOAD */

@@ -3,6 +3,25 @@
   <div class="student-workout-plans" :class="{ 'dark-mode': isDarkMode }">
     <StudentNavBar />
     
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+    
+    <ConfirmationModal
+      :show="showConfirmation"
+      :title="confirmationConfig.title"
+      :message="confirmationConfig.message"
+      :icon-type="confirmationConfig.iconType"
+      :confirm-text="confirmationConfig.confirmText"
+      :cancel-text="confirmationConfig.cancelText"
+      :button-class="confirmationConfig.buttonClass"
+      @confirm="confirmationConfig.onConfirm"
+      @close="showConfirmation = false"
+    />
+    
     <main class="main-content">
       <!-- Header Section -->
       <div class="page-header">
@@ -224,11 +243,42 @@ import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import WorkoutModal from '@/components/WorkoutModal.vue'
 import CategoryFilter from '@/components/CategoryFilter.vue'
+import NotificationModal from '@/components/NotificationModal.vue'
+import ConfirmationModal from '@/components/ConfirmationModal.vue'
 import api from '@/api'
 
 // Stores
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
+
+// Notification system
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
+
+// Confirmation system
+const showConfirmation = ref(false)
+const confirmationConfig = ref({
+  title: '',
+  message: '',
+  iconType: 'warning',
+  confirmText: 'Confirmar',
+  cancelText: 'Cancelar',
+  buttonClass: 'btn-danger',
+  onConfirm: () => {}
+})
 
 // Reactive data
 const activeFilter = ref('all')
@@ -382,7 +432,7 @@ const startWorkoutWithDivision = async (divisionIndex) => {
     
   } catch (error) {
     console.error('Erro ao iniciar treino:', error)
-    alert(error.response?.data?.message || 'Erro ao iniciar treino')
+    showNotification('error', 'Erro!', error.response?.data?.message || 'Erro ao iniciar treino')
   } finally {
     loading.value = false
   }
@@ -394,27 +444,38 @@ const continueWorkout = () => {
   showWorkoutModal.value = true
 }
 
-const cancelWorkout = async () => {
-  if (!confirm('Deseja cancelar este treino? O progresso será perdido.')) return
-  
-  try {
-    loading.value = true
-    await api.post(`/workout-sessions/sessions/${activeSession.value._id}/cancel`)
-    
-    // Usar nextTick para evitar problemas de reatividade
-    await nextTick(() => {
-      activeSession.value = null
-      workoutSession.value = null
-      showWorkoutModal.value = false
-    })
-    
-    await checkActiveSession()
-  } catch (error) {
-    console.error('Erro ao cancelar treino:', error)
-    alert('Erro ao cancelar treino')
-  } finally {
-    loading.value = false
+const cancelWorkout = () => {
+  confirmationConfig.value = {
+    title: 'Cancelar Treino',
+    message: 'Deseja cancelar este treino? O progresso será perdido e não poderá ser recuperado.',
+    iconType: 'warning',
+    confirmText: 'Sim, Cancelar',
+    cancelText: 'Não, Manter',
+    buttonClass: 'btn-danger',
+    onConfirm: async () => {
+      try {
+        loading.value = true
+        await api.post(`/workout-sessions/sessions/${activeSession.value._id}/cancel`)
+        
+        // Usar nextTick para evitar problemas de reatividade
+        await nextTick(() => {
+          activeSession.value = null
+          workoutSession.value = null
+          showWorkoutModal.value = false
+        })
+        
+        await checkActiveSession()
+        showNotification('success', 'Treino Cancelado', 'O treino foi cancelado com sucesso.')
+        showConfirmation.value = false
+      } catch (error) {
+        console.error('Erro ao cancelar treino:', error)
+        showNotification('error', 'Erro!', 'Erro ao cancelar treino')
+      } finally {
+        loading.value = false
+      }
+    }
   }
+  showConfirmation.value = true
 }
 
 const openWorkoutModal = (workout) => {
