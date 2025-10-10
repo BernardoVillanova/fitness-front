@@ -45,18 +45,28 @@
       </div>
     </div>
   </div>
+
+  <!-- Notification Modal -->
+  <NotificationModal
+    :visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+    @close="closeNotification"
+  />
 </template>
 
 <script>
 import api from "@/api";
 import NavBar from "@/components/NavBar.vue";
+import NotificationModal from "@/components/NotificationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { jwtDecode } from "jwt-decode";
 import { storeToRefs } from "pinia";
 
 export default {
   name: "LoginPage",
-  components: { NavBar },
+  components: { NavBar, NotificationModal },
   setup() {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
@@ -66,9 +76,26 @@ export default {
     return {
       email: "",
       password: "",
+      notification: {
+        visible: false,
+        type: 'info',
+        title: '',
+        message: ''
+      }
     };
   },
   methods: {
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    },
+    closeNotification() {
+      this.notification.visible = false;
+    },
     async login() {
       try {
         const response = await api.post("/auth/login", {
@@ -172,20 +199,24 @@ export default {
 
         sessionStorage.setItem("user", JSON.stringify(userData));
 
-        if (userData.role === "personal") {
-          this.$router.push("/dashboard");
-        } else if (userData.role === "aluno") {
-          this.$router.push("/student-dashboard");
-        } else {
-          console.error('❌ Role desconhecida:', userData.role);
-          alert('Erro: Tipo de usuário desconhecido');
-          return;
-        }
+        // Exibir notificação de sucesso antes do redirecionamento
+        this.showNotification('success', 'Sucesso', 'Login realizado com sucesso!');
 
-        alert("Login bem-sucedido!");
+        // Aguardar um pouco antes de redirecionar para que a notificação seja visível
+        setTimeout(() => {
+          if (userData.role === "personal") {
+            this.$router.push("/dashboard");
+          } else if (userData.role === "aluno") {
+            this.$router.push("/student-dashboard");
+          } else {
+            console.error('❌ Role desconhecida:', userData.role);
+            this.showNotification('error', 'Erro', 'Tipo de usuário desconhecido');
+            return;
+          }
+        }, 1500);
       } catch (error) {
         console.error("Erro no login:", error);
-        alert("Erro no login. Verifique suas credenciais.");
+        this.showNotification('error', 'Erro no Login', 'Erro no login. Verifique suas credenciais.');
       }
     },
   },
@@ -210,6 +241,7 @@ export default {
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
+  --text-color: #0f172a;
 
   --border-color: #e2e8f0;
   --border-focus: #2563eb;
@@ -217,6 +249,8 @@ export default {
   --input-bg: #ffffff;
   --input-text: #0f172a;
   --input-placeholder: #94a3b8;
+
+  --bg-secondary: #f1f5f9;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -244,6 +278,7 @@ export default {
   --text-primary: #f8fafc;
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
+  --text-color: #f8fafc;
 
   --border-color: #2a2a32;
   --border-focus: #8b5cf6;
@@ -251,6 +286,8 @@ export default {
   --input-bg: #0f0f14;
   --input-text: #f8fafc;
   --input-placeholder: #71717a;
+
+  --bg-secondary: #1e1e26;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5),
@@ -268,7 +305,7 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-family);
   transition: background-color 0.3s ease;
 }
 

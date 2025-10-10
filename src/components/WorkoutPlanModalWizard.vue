@@ -1,3 +1,5 @@
+
+
 <template>
   <div v-if="show" class="modal-overlay" @click.self="closeModal">
     <div class="modal-container-wizard">
@@ -14,33 +16,34 @@
             <p class="modal-subtitle">Etapa {{ currentStep }} de 4 - {{ stepTitles[currentStep - 1] }}</p>
           </div>
         </div>
+
         <button class="modal-close" @click="closeModal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
 
       <!-- Barra de Progresso -->
-      <div class="progress-bar-container">
+      <div class="progress-stepper">
         <div 
-          v-for="step in 4" 
-          :key="step" 
-          class="progress-step"
-          :class="{ 
-            'active': step === currentStep, 
-            'completed': step < currentStep 
+          v-for="(step, index) in stepTitles" 
+          :key="index"
+          class="step-item"
+          :class="{
+            'active': currentStep === index + 1,
+            'completed': currentStep > index + 1
           }"
         >
           <div class="step-circle">
-            <svg v-if="step < currentStep" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <svg v-if="currentStep > index + 1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-            <span v-else>{{ step }}</span>
+            <span v-else>{{ index + 1 }}</span>
           </div>
-          <span class="step-label">{{ stepTitles[step - 1] }}</span>
+          <div class="step-label">{{ step }}</div>
+          <div v-if="index < stepTitles.length - 1" class="step-line"></div>
         </div>
-        <div class="progress-bar-fill" :style="{ width: `${((currentStep - 1) / 3) * 100}%` }"></div>
       </div>
 
       <!-- Corpo do Modal -->
@@ -161,66 +164,132 @@
             </div>
           </div>
 
-          <div class="divisions-list">
-            <div 
-              v-for="(division, index) in formData.divisions" 
-              :key="index"
-              class="division-card"
-            >
-              <div class="division-header">
-                <div class="division-number">{{ getDivisionLetter(index) }}</div>
-                <h4>Divisão {{ getDivisionLetter(index) }}</h4>
+          <!-- Carrossel das Divisões -->
+          <div class="divisions-carousel">
+            <div class="carousel-container">
+              <div 
+                class="carousel-track"
+                :style="{ transform: `translateX(-${currentDivisionIndex * 100}%)` }"
+              >
+                <div 
+                  v-for="(division, index) in formData.divisions" 
+                  :key="index"
+                  class="carousel-slide"
+                >
+                  <div 
+                    class="division-card-enhanced"
+                    :class="{ 'filled': division.name && division.muscleGroups.length > 0 }"
+                  >
+                    <!-- Indicador de divisão no canto superior direito -->
+                    <div class="division-indicator">
+                      <span class="division-index">Divisão {{ currentDivisionIndex + 1 }} de {{ numberOfDivisions }}</span>
+                    </div>
+
+                    <!-- Header melhorado -->
+                    <div class="division-header-enhanced">
+                <div class="division-badge">
+                  <div class="division-letter">{{ getDivisionLetter(index) }}</div>
+                  <div class="division-status">
+                    <svg v-if="division.name && division.muscleGroups.length > 0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <div class="division-title-section">
+                  <h4>Divisão {{ getDivisionLetter(index) }}</h4>
+                  <p class="division-subtitle">
+                    {{ division.muscleGroups.length > 0 ? 
+                        `${division.muscleGroups.length} grupo${division.muscleGroups.length !== 1 ? 's' : ''} muscular${division.muscleGroups.length !== 1 ? 'es' : ''}` : 
+                        'Configurar grupos musculares' 
+                    }}
+                  </p>
+                </div>
               </div>
 
-              <div class="form-grid">
-                <div class="form-group full-width">
-                  <label class="form-label">
-                    Nome da Divisão *
-                  </label>
-                  <input
-                    v-model="division.name"
-                    type="text"
-                    class="form-input"
-                    :placeholder="`Ex: Treino ${getDivisionLetter(index)} - Peito e Tríceps`"
-                    required
-                  />
+              <!-- Conteúdo do formulário -->
+              <div class="division-content">
+                <div class="form-row">
+                  <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                      </svg>
+                      Nome da Divisão
+                      <span class="required-indicator">*</span>
+                    </label>
+                    <input
+                      v-model="division.name"
+                      type="text"
+                      class="form-input-enhanced"
+                      :placeholder="`Ex: Treino ${getDivisionLetter(index)} - Peito e Tríceps`"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div class="form-group full-width">
-                  <label class="form-label">
-                    Descrição (Opcional)
-                  </label>
-                  <input
-                    v-model="division.description"
-                    type="text"
-                    class="form-input"
-                    placeholder="Ex: Foco em volume para hipertrofia"
-                  />
+                <div class="form-row">
+                  <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                      Descrição
+                      <span class="optional-indicator">(Opcional)</span>
+                    </label>
+                    <textarea
+                      v-model="division.description"
+                      class="form-textarea-enhanced"
+                      placeholder="Ex: Foco em volume para hipertrofia, trabalho de força..."
+                      rows="2"
+                    ></textarea>
+                  </div>
                 </div>
 
-                <div class="form-group full-width">
-                  <label class="form-label">
+                <!-- Seletor de grupos musculares aprimorado -->
+                <div class="muscle-groups-section">
+                  <label class="form-label-enhanced muscle-groups-label">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                       <circle cx="8.5" cy="7" r="4"/>
                       <polyline points="17 11 19 13 23 9"/>
                     </svg>
-                    Grupos Musculares *
+                    Grupos Musculares
+                    <span class="required-indicator">*</span>
                   </label>
-                  <div class="muscle-groups-selector">
-                    <label 
-                      v-for="muscle in availableMuscleGroups" 
-                      :key="muscle"
-                      class="muscle-checkbox"
-                    >
-                      <input
-                        type="checkbox"
-                        :value="muscle"
-                        v-model="division.muscleGroups"
-                      />
-                      <span>{{ muscle }}</span>
-                    </label>
+
+                  <!-- Seletor de grupos musculares -->
+                  <div class="muscle-groups-selector-enhanced">
+                    <div class="muscle-groups-grid">
+                      <label 
+                        v-for="muscle in availableMuscleGroups" 
+                        :key="muscle"
+                        class="muscle-checkbox-enhanced"
+                        :class="{ 'selected': division.muscleGroups.includes(muscle) }"
+                      >
+                        <input
+                          type="checkbox"
+                          :value="muscle"
+                          v-model="division.muscleGroups"
+                          class="muscle-checkbox-input"
+                        />
+                        <div class="muscle-checkbox-content">
+                          <div class="muscle-icon">
+                            <i :class="getMuscleGroupIcon(muscle)"></i>
+                          </div>
+                          <div class="checkbox-indicator">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </div>
+                          <span class="muscle-name">{{ muscle }}</span>
+                        </div>
+                      </label>
+                    </div>
                   </div>
+
+                  <!-- Músculos selecionados (versão original) -->
                   <div v-if="division.muscleGroups.length > 0" class="selected-muscles">
                     <span 
                       v-for="muscle in division.muscleGroups" 
@@ -228,9 +297,27 @@
                       class="muscle-tag"
                     >
                       {{ muscle }}
-                      <button @click="removeMuscleGroup(index, muscle)" type="button">×</button>
+                      <button @click="removeMuscleGroup(currentDivisionIndex, muscle)" type="button">×</button>
                     </span>
                   </div>
+                </div>
+
+                <!-- Botão para avançar etapa -->
+                <div class="division-content-footer">
+                  <button 
+                    @click.stop="handleDivisionNextButton" 
+                    class="btn-save"
+                    :disabled="!canProceedFromCurrentDivision"
+                    type="button"
+                  >
+                    {{ currentDivisionIndex < numberOfDivisions - 1 ? 'Próxima Divisão' : 'Próxima Etapa' }}
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
                 </div>
               </div>
             </div>
@@ -238,7 +325,7 @@
         </div>
 
         <!-- ETAPA 3: Exercícios por Divisão -->
-        <div v-else-if="currentStep === 3" class="step-content">
+        <div v-else-if="currentStep === 3" class="step-content step-exercises">
           <div class="step-header">
             <div class="step-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -249,253 +336,368 @@
             </div>
             <div>
               <h3 class="step-title">Adicionar Exercícios</h3>
-              <p class="step-description">Configure os exercícios para cada divisão de treino</p>
+              <p class="step-description">Selecione exercícios do catálogo e configure para cada divisão</p>
             </div>
           </div>
 
-          <!-- Tabs de Divisões -->
-          <div class="division-tabs">
-            <button
-              v-for="(division, index) in formData.divisions"
-              :key="index"
-              @click="activeDivision = index"
-              class="division-tab"
-              :class="{ active: activeDivision === index }"
-              type="button"
-            >
-              <span class="tab-letter">{{ getDivisionLetter(index) }}</span>
-              <span class="tab-name">{{ division.name }}</span>
-              <span class="tab-count">{{ division.exercises.length }} exercícios</span>
-            </button>
-          </div>
-
-          <!-- Catálogo de Exercícios -->
-          <div class="exercise-catalog-section">
-            <div class="catalog-header">
-              <i class="fas fa-dumbbell catalog-icon"></i>
-              <div>
-                <h4>Catálogo de Exercícios</h4>
-                <p>Selecione exercícios do catálogo para adicionar à divisão</p>
-              </div>
-            </div>
-
-            <!-- Busca de Exercícios -->
-            <div class="search-box">
-              <i class="fas fa-search search-icon"></i>
-              <input
-                v-model="exerciseSearch"
-                @input="handleExerciseSearchChange"
-                type="text"
-                class="search-input"
-                placeholder="Buscar exercícios por nome..."
-              />
-            </div>
-
-            <!-- Loading State -->
-            <div v-if="loadingExercises" class="loading-students">
-              <div class="spinner"></div>
-              <p>Carregando exercícios...</p>
-            </div>
-
-            <!-- Grid de Exercícios -->
-            <div v-else-if="filteredExercises.length > 0">
-              <div class="exercise-catalog-grid">
-                <div
-                  v-for="exercise in paginatedExercises"
-                  :key="exercise._id"
-                  @click="addExerciseToDivision(activeDivision, exercise)"
-                  class="exercise-catalog-card"
-                >
-                  <div class="exercise-catalog-image">
-                    <img v-if="exercise.image" :src="getImageUrl(exercise.image)" :alt="exercise.name" />
-                    <div v-else class="no-image-placeholder">
-                      <i class="fas fa-running"></i>
+          <!-- Layout em 2 colunas -->
+          <div class="exercises-layout">
+            <!-- COLUNA ESQUERDA: Catálogo -->
+            <div class="catalog-column">
+              <!-- Dropdown Moderno de Divisões -->
+              <div class="division-dropdown-modern">
+                <div class="dropdown-header" @click="toggleDivisionDropdown" :class="{ open: divisionDropdownOpen }">
+                  <div class="dropdown-current">
+                    <div class="current-badge">{{ getDivisionLetter(activeDivision) }}</div>
+                    <div class="current-info">
+                      <span class="current-name">{{ formData.divisions[activeDivision].name }}</span>
+                      <span class="current-meta">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                          <path d="M2 17l10 5 10-5"/>
+                          <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                        {{ formData.divisions[activeDivision].exercises.length }} exercícios • 
+                        {{ formData.divisions[activeDivision].muscleGroups.length }} grupos
+                      </span>
                     </div>
                   </div>
-                  <div class="exercise-catalog-content">
-                    <h5>{{ exercise.name }}</h5>
-                    <p v-if="exercise.description">{{ exercise.description }}</p>
-                    <div class="exercise-catalog-meta">
-                      <span v-if="exercise.muscleGroup" class="muscle-badge">
+                  <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+
+                <transition name="dropdown-fade">
+                  <div v-if="divisionDropdownOpen" class="dropdown-menu" @click.stop>
+                    <div
+                      v-for="(division, index) in formData.divisions"
+                      :key="index"
+                      @click="selectDivisionFromDropdown(index)"
+                      class="dropdown-item"
+                      :class="{ active: activeDivision === index }"
+                    >
+                      <div class="item-badge">{{ getDivisionLetter(index) }}</div>
+                      <div class="item-content">
+                        <div class="item-name">{{ division.name }}</div>
+                        <div class="item-stats">
+                          <span class="stat-item">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                              <path d="M2 17l10 5 10-5"/>
+                              <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                            {{ division.exercises.length }}
+                          </span>
+                          <span class="stat-item">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                              <circle cx="8.5" cy="7" r="4"/>
+                            </svg>
+                            {{ division.muscleGroups.length }}
+                          </span>
+                        </div>
+                      </div>
+                      <svg v-if="activeDivision === index" class="item-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+
+              <!-- Busca de Exercícios -->
+              <div class="search-box-compact">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input
+                  v-model="exerciseSearch"
+                  @input="handleExerciseSearchChange"
+                  type="text"
+                  class="search-input"
+                  placeholder="Buscar exercícios..."
+                />
+              </div>
+
+              <!-- Loading State -->
+              <div v-if="loadingExercises" class="loading-state">
+                <div class="spinner"></div>
+                <p>Carregando exercícios...</p>
+              </div>
+
+              <!-- Grid de Exercícios do Catálogo -->
+              <div v-else-if="filteredExercises.length > 0" class="catalog-content">
+                <div class="exercise-catalog-grid-new">
+                  <div
+                    v-for="exercise in paginatedExercises"
+                    :key="exercise._id"
+                    @click="openExerciseModal(exercise)"
+                    class="exercise-catalog-card-new"
+                  >
+                    <div class="exercise-image-new">
+                      <img v-if="exercise.image" :src="getImageUrl(exercise.image)" :alt="exercise.name" />
+                      <div v-else class="no-image-placeholder-new">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                      </div>
+                      <div class="add-overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="exercise-info-new">
+                      <h5>{{ exercise.name }}</h5>
+                      <span v-if="exercise.muscleGroup" class="muscle-badge-new">
                         {{ exercise.muscleGroup }}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Paginação -->
-              <div class="pagination">
-                <button 
-                  @click="changeExercisePage(exerciseCurrentPage - 1)" 
-                  :disabled="exerciseCurrentPage === 1"
-                  class="pagination-btn"
-                  type="button"
-                >
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-
-                <div class="pagination-info">
-                  <span>Página {{ exerciseCurrentPage }} de {{ totalExercisePages }}</span>
-                  <span class="results-count">{{ filteredExercises.length }} exercícios encontrados</span>
-                </div>
-
-                <button 
-                  @click="changeExercisePage(exerciseCurrentPage + 1)" 
-                  :disabled="exerciseCurrentPage === totalExercisePages"
-                  class="pagination-btn"
-                  type="button"
-                >
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- Empty State -->
-            <div v-else class="empty-students">
-              <i class="fas fa-search empty-icon"></i>
-              <p>Nenhum exercício encontrado</p>
-            </div>
-          </div>
-
-          <!-- Exercícios Adicionados à Divisão -->
-          <div class="exercises-container">
-            <div class="exercises-header">
-              <h4>Exercícios Adicionados - {{ formData.divisions[activeDivision].name }}</h4>
-              <span class="exercise-count">{{ formData.divisions[activeDivision].exercises.length }} exercícios</span>
-            </div>
-
-            <div v-if="formData.divisions[activeDivision].exercises.length === 0" class="empty-exercises">
-              <i class="fas fa-clipboard-list empty-icon"></i>
-              <p>Nenhum exercício adicionado ainda</p>
-              <p class="empty-hint">Selecione exercícios do catálogo acima</p>
-            </div>
-
-            <div class="exercises-list">
-              <div 
-                v-for="(exercise, exIndex) in formData.divisions[activeDivision].exercises"
-                :key="exIndex"
-                class="exercise-card"
-              >
-                <div class="exercise-header">
-                  <div class="exercise-number">
-                    <i class="fas fa-grip-vertical"></i>
-                    <span>{{ exIndex + 1 }}</span>
-                  </div>
-                  <button @click="removeExercise(activeDivision, exIndex)" class="btn-remove-exercise" type="button" title="Remover exercício">
-                    <i class="fas fa-trash-alt"></i>
+                <!-- Paginação Compacta -->
+                <div class="pagination-compact">
+                  <button 
+                    @click="changeExercisePage(exerciseCurrentPage - 1)" 
+                    :disabled="exerciseCurrentPage === 1"
+                    class="pagination-btn-compact"
+                    type="button"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                  </button>
+                  <span class="pagination-text">{{ exerciseCurrentPage }} / {{ totalExercisePages }}</span>
+                  <button 
+                    @click="changeExercisePage(exerciseCurrentPage + 1)" 
+                    :disabled="exerciseCurrentPage === totalExercisePages"
+                    class="pagination-btn-compact"
+                    type="button"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
                   </button>
                 </div>
+              </div>
 
-                <div class="form-grid-exercise">
-                  <div class="form-group full-width">
-                    <label class="form-label">Nome do Exercício *</label>
-                    <input
-                      v-model="exercise.name"
-                      type="text"
-                      class="form-input"
-                      placeholder="Ex: Supino Reto, Agachamento Livre..."
-                      required
-                    />
-                  </div>
+              <!-- Empty State -->
+              <div v-else class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <p>Nenhum exercício encontrado</p>
+              </div>
+            </div>
 
-                  <div class="form-group">
-                    <label class="form-label">Séries *</label>
-                    <input
-                      v-model.number="exercise.sets"
-                      type="number"
-                      class="form-input"
-                      min="1"
-                      placeholder="3"
-                      required
-                    />
-                  </div>
+            <!-- COLUNA DIREITA: Exercícios Adicionados -->
+            <div class="added-column">
+              <h4 class="added-column-title">
+                Exercícios Adicionados
+                <span class="exercise-count-badge">{{ formData.divisions[activeDivision].exercises.length }}</span>
+              </h4>
 
-                  <div class="form-group">
-                    <label class="form-label">Repetições *</label>
-                    <input
-                      v-model.number="exercise.reps"
-                      type="number"
-                      class="form-input"
-                      min="1"
-                      placeholder="12"
-                      required
-                    />
-                  </div>
+              <div v-if="formData.divisions[activeDivision].exercises.length === 0" class="empty-added">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <p>Nenhum exercício adicionado</p>
+                <small>Clique nos exercícios ao lado para adicionar</small>
+              </div>
 
-                  <div class="form-group">
-                    <label class="form-label">
-                      <i class="fas fa-weight-hanging"></i>
-                      Carga (kg) *
-                    </label>
-                    <div class="weight-input-group">
-                      <input
-                        v-model.number="exercise.idealWeight"
-                        type="number"
-                        class="form-input"
-                        :min="exercise.isBodyweight ? 0 : 0"
-                        step="0.5"
-                        placeholder="20"
-                        :disabled="exercise.isBodyweight"
-                        required
-                      />
-                      <label class="bodyweight-toggle">
-                        <input
-                          type="checkbox"
-                          v-model="exercise.isBodyweight"
-                          @change="handleBodyweightChange(activeDivision, exIndex)"
-                        />
-                        <span class="bodyweight-label">
-                          <i class="fas fa-user"></i>
-                          Peso Corporal
-                        </span>
-                      </label>
+              <div v-else class="added-exercises-list">
+                <div 
+                  v-for="(exercise, exIndex) in formData.divisions[activeDivision].exercises"
+                  :key="exIndex"
+                  class="added-exercise-card"
+                >
+                  <div class="exercise-card-header">
+                    <div class="exercise-number">{{ exIndex + 1 }}</div>
+                    <h5>{{ exercise.name }}</h5>
+                    <div class="exercise-actions">
+                      <button @click="editExerciseInList(activeDivision, exIndex)" class="btn-icon-small" type="button" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button @click="removeExercise(activeDivision, exIndex)" class="btn-icon-small btn-delete" type="button" title="Remover">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
-
-                  <div class="form-group">
-                    <label class="form-label">
-                      <i class="fas fa-clock"></i>
-                      Descanso (seg) *
-                    </label>
-                    <input
-                      v-model.number="exercise.restTime"
-                      type="number"
-                      class="form-input"
-                      min="0"
-                      step="5"
-                      placeholder="60"
-                      required
-                    />
+                  <div class="exercise-card-details">
+                    <div class="detail-item">
+                      <span class="detail-label">Séries:</span>
+                      <span class="detail-value">{{ exercise.sets }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Reps:</span>
+                      <span class="detail-value">{{ exercise.reps }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Carga:</span>
+                      <span class="detail-value">{{ exercise.isBodyweight ? 'Corporal' : exercise.idealWeight + 'kg' }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Descanso:</span>
+                      <span class="detail-value">{{ exercise.restTime }}s</span>
+                    </div>
                   </div>
-
-                  <div class="form-group checkbox-group">
-                    <label class="form-checkbox modern-checkbox">
-                      <input
-                        type="checkbox"
-                        v-model="exercise.toFailure"
-                      />
-                      <span class="checkbox-content">
-                        <i class="fas fa-fire"></i>
-                        <div>
-                          <strong>Ir até a falha</strong>
-                          <small>Executar até não conseguir mais</small>
-                        </div>
-                      </span>
-                    </label>
-                  </div>
-
-                  <div class="form-group full-width">
-                    <label class="form-label">Observações</label>
-                    <textarea
-                      v-model="exercise.notes"
-                      class="form-textarea-small"
-                      placeholder="Ex: Manter cotovelos próximos ao corpo, descer controlado..."
-                      rows="2"
-                    ></textarea>
+                  <div v-if="exercise.toFailure || exercise.notes" class="exercise-card-footer">
+                    <span v-if="exercise.toFailure" class="tag-failure">Até a Falha</span>
+                    <span v-if="exercise.notes" class="exercise-notes">{{ exercise.notes }}</span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Configuração de Exercício -->
+        <div v-if="showExerciseModal" class="exercise-modal-overlay" @click.self="closeExerciseModal">
+          <div class="exercise-modal">
+            <div class="exercise-modal-header">
+              <h3>{{ editingExerciseIndex !== null ? 'Editar Exercício' : 'Configurar Exercício' }}</h3>
+              <button @click="closeExerciseModal" class="modal-close-btn" type="button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="exercise-modal-body">
+              <div class="exercise-modal-preview">
+                <img v-if="tempExercise.image" :src="getImageUrl(tempExercise.image)" :alt="tempExercise.name" />
+                <div v-else class="preview-placeholder">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="exercise-modal-form">
+                <div class="form-group-modal">
+                  <label>Nome do Exercício</label>
+                  <input
+                    v-model="tempExercise.name"
+                    type="text"
+                    class="form-input-modal"
+                    placeholder="Nome do exercício"
+                    readonly
+                  />
+                </div>
+
+                <div class="form-row-modal">
+                  <div class="form-group-modal">
+                    <label>Séries</label>
+                    <input
+                      v-model.number="tempExercise.sets"
+                      type="number"
+                      class="form-input-modal"
+                      min="1"
+                      placeholder="3"
+                    />
+                  </div>
+                  <div class="form-group-modal">
+                    <label>Repetições</label>
+                    <input
+                      v-model.number="tempExercise.reps"
+                      type="number"
+                      class="form-input-modal"
+                      min="1"
+                      placeholder="12"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group-modal">
+                  <label>Carga (kg)</label>
+                  <input
+                    v-model.number="tempExercise.idealWeight"
+                    type="number"
+                    class="form-input-modal"
+                    min="0"
+                    step="0.5"
+                    placeholder="20"
+                    :disabled="tempExercise.isBodyweight"
+                  />
+                </div>
+
+                <div class="form-group-modal">
+                  <label class="checkbox-label-modal">
+                    <input
+                      type="checkbox"
+                      v-model="tempExercise.isBodyweight"
+                      @change="handleTempBodyweightChange"
+                    />
+                    <span class="checkbox-text">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      Peso Corporal
+                    </span>
+                  </label>
+                </div>
+
+                <div class="form-group-modal">
+                  <label>Descanso (segundos)</label>
+                  <input
+                    v-model.number="tempExercise.restTime"
+                    type="number"
+                    class="form-input-modal"
+                    min="0"
+                    step="5"
+                    placeholder="60"
+                  />
+                </div>
+
+                <div class="form-group-modal">
+                  <label class="checkbox-label-modal">
+                    <input
+                      type="checkbox"
+                      v-model="tempExercise.toFailure"
+                    />
+                    <span class="checkbox-text">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/>
+                      </svg>
+                      Ir até a falha
+                    </span>
+                  </label>
+                </div>
+
+                <div class="form-group-modal">
+                  <label>Observações</label>
+                  <textarea
+                    v-model="tempExercise.notes"
+                    class="form-textarea-modal"
+                    placeholder="Observações sobre execução, técnica, etc..."
+                    rows="3"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="exercise-modal-footer">
+              <button @click="closeExerciseModal" class="btn-modal-cancel" type="button">
+                Cancelar
+              </button>
+              <button @click="saveExerciseFromModal" class="btn-modal-save" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ editingExerciseIndex !== null ? 'Salvar Alterações' : 'Adicionar Exercício' }}
+              </button>
             </div>
           </div>
         </div>
@@ -694,6 +896,7 @@ export default {
     return {
       currentStep: 1,
       activeDivision: 0,
+      currentDivisionIndex: 0, // Novo: controla qual divisão está sendo exibida no carrossel
       numberOfDivisions: 0,
       studentSearch: '',
       selectedStudents: [],
@@ -703,8 +906,24 @@ export default {
       availableExercises: [],
       loadingExercises: false,
       exerciseCurrentPage: 1,
-      exercisesPerPage: 3,
+      exercisesPerPage: 6,
       isSaving: false,
+      
+      // Modal de exercício
+      showExerciseModal: false,
+      editingExerciseIndex: null,
+      tempExercise: {
+        exerciseId: null,
+        name: '',
+        sets: 3,
+        reps: 12,
+        idealWeight: 0,
+        isBodyweight: false,
+        restTime: 60,
+        toFailure: false,
+        notes: '',
+        image: null
+      },
       
       notification: {
         visible: false,
@@ -748,7 +967,10 @@ export default {
         divisions: []
       },
 
-      initialSelectedStudents: []
+      initialSelectedStudents: [],
+      
+      // Controle do dropdown de divisões
+      divisionDropdownOpen: false
     }
   },
 
@@ -806,6 +1028,15 @@ export default {
       }
       if (this.currentStep === 3) {
         return this.formData.divisions.every(d => d.exercises.length > 0);
+      }
+      return true;
+    },
+
+    canProceedFromCurrentDivision() {
+      // Valida apenas a divisão atual
+      if (this.currentStep === 2 && this.formData.divisions[this.currentDivisionIndex]) {
+        const currentDivision = this.formData.divisions[this.currentDivisionIndex];
+        return currentDivision.name.trim() !== '' && currentDivision.muscleGroups.length > 0;
       }
       return true;
     },
@@ -881,6 +1112,16 @@ export default {
         this.fetchStudents();
       }
     }
+  },
+
+  mounted() {
+    // Adicionar listener para navegação por teclado
+    document.addEventListener('keydown', this.handleKeyboardNavigation);
+  },
+
+  beforeUnmount() {
+    // Remover listener para evitar memory leaks
+    document.removeEventListener('keydown', this.handleKeyboardNavigation);
   },
 
   methods: {
@@ -968,15 +1209,71 @@ export default {
           exercises: []
         });
       }
+      // Resetar o carrossel para a primeira divisão
+      this.currentDivisionIndex = 0;
     },
 
     getDivisionLetter(index) {
       return String.fromCharCode(65 + index); // A, B, C, D...
     },
 
+    getMuscleGroupIcon(muscle) {
+      const icons = {
+        'Peito': 'fas fa-male',
+        'Costas': 'fas fa-user-friends',
+        'Ombro': 'fas fa-expand-arrows-alt',
+        'Bíceps': 'fas fa-fist-raised',
+        'Tríceps': 'fas fa-hand-paper',
+        'Antebraço': 'fas fa-hand-rock',
+        'Quadríceps': 'fas fa-running',
+        'Posterior': 'fas fa-walking',
+        'Glúteo': 'fas fa-chair',
+        'Panturrilha': 'fas fa-shoe-prints',
+        'Abdômen': 'fas fa-crosshairs',
+        'Core': 'fas fa-circle-notch',
+        'Trapézio': 'fas fa-mountain'
+      };
+      return icons[muscle] || 'fas fa-dumbbell';
+    },
+
     removeMuscleGroup(divisionIndex, muscle) {
       const division = this.formData.divisions[divisionIndex];
       division.muscleGroups = division.muscleGroups.filter(m => m !== muscle);
+    },
+
+    clearAllMuscleGroups(divisionIndex) {
+      this.formData.divisions[divisionIndex].muscleGroups = [];
+    },
+
+    // Métodos do carrossel de divisões
+    goToDivision(index) {
+      this.currentDivisionIndex = index;
+    },
+
+    nextDivision() {
+      if (this.currentDivisionIndex < this.formData.divisions.length - 1) {
+        this.currentDivisionIndex++;
+      }
+    },
+
+    previousDivision() {
+      if (this.currentDivisionIndex > 0) {
+        this.currentDivisionIndex--;
+      }
+    },
+
+    // Navegação por teclado
+    handleKeyboardNavigation(event) {
+      // Só navegar se estivermos na etapa 2 (divisões)
+      if (this.currentStep !== 2) return;
+      
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        this.previousDivision();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        this.nextDivision();
+      }
     },
 
     addExerciseToDivision(divisionIndex, exerciseData = null) {
@@ -1005,6 +1302,86 @@ export default {
           toFailure: false,
           notes: ''
         });
+      }
+    },
+
+    openExerciseModal(exerciseData) {
+      this.tempExercise = {
+        exerciseId: exerciseData._id,
+        name: exerciseData.name,
+        sets: 3,
+        reps: 12,
+        idealWeight: 0,
+        isBodyweight: false,
+        restTime: 60,
+        toFailure: false,
+        notes: '',
+        image: exerciseData.image || null
+      };
+      this.editingExerciseIndex = null;
+      this.showExerciseModal = true;
+    },
+
+    editExerciseInList(divisionIndex, exerciseIndex) {
+      const exercise = this.formData.divisions[divisionIndex].exercises[exerciseIndex];
+      this.tempExercise = { ...exercise };
+      this.editingExerciseIndex = exerciseIndex;
+      this.showExerciseModal = true;
+    },
+
+    closeExerciseModal() {
+      this.showExerciseModal = false;
+      this.editingExerciseIndex = null;
+      this.tempExercise = {
+        exerciseId: null,
+        name: '',
+        sets: 3,
+        reps: 12,
+        idealWeight: 0,
+        isBodyweight: false,
+        restTime: 60,
+        toFailure: false,
+        notes: '',
+        image: null
+      };
+    },
+
+    saveExerciseFromModal() {
+      if (this.editingExerciseIndex !== null) {
+        // Editando exercício existente
+        const exerciseData = {
+          exerciseId: this.tempExercise.exerciseId,
+          name: this.tempExercise.name,
+          sets: this.tempExercise.sets,
+          reps: this.tempExercise.reps,
+          idealWeight: this.tempExercise.idealWeight,
+          isBodyweight: this.tempExercise.isBodyweight,
+          restTime: this.tempExercise.restTime,
+          toFailure: this.tempExercise.toFailure,
+          notes: this.tempExercise.notes
+        };
+        this.formData.divisions[this.activeDivision].exercises[this.editingExerciseIndex] = exerciseData;
+      } else {
+        // Adicionando novo exercício
+        const exerciseData = {
+          exerciseId: this.tempExercise.exerciseId,
+          name: this.tempExercise.name,
+          sets: this.tempExercise.sets,
+          reps: this.tempExercise.reps,
+          idealWeight: this.tempExercise.idealWeight,
+          isBodyweight: this.tempExercise.isBodyweight,
+          restTime: this.tempExercise.restTime,
+          toFailure: this.tempExercise.toFailure,
+          notes: this.tempExercise.notes
+        };
+        this.formData.divisions[this.activeDivision].exercises.push(exerciseData);
+      }
+      this.closeExerciseModal();
+    },
+
+    handleTempBodyweightChange() {
+      if (this.tempExercise.isBodyweight) {
+        this.tempExercise.idealWeight = 0;
       }
     },
 
@@ -1093,6 +1470,15 @@ export default {
       this.exerciseCurrentPage = 1; // Reset para primeira página ao buscar
     },
 
+    toggleDivisionDropdown() {
+      this.divisionDropdownOpen = !this.divisionDropdownOpen;
+    },
+
+    selectDivisionFromDropdown(index) {
+      this.activeDivision = index;
+      this.divisionDropdownOpen = false;
+    },
+
     async fetchStudents() {
       this.loadingStudents = true;
       
@@ -1167,8 +1553,43 @@ export default {
         .toUpperCase();
     },
 
+    handleDivisionNextButton() {
+      console.log('🔘 Botão clicado!');
+      console.log('Step atual:', this.currentStep);
+      console.log('Divisão atual:', this.currentDivisionIndex);
+      console.log('Total de divisões:', this.numberOfDivisions);
+      console.log('canProceedFromCurrentDivision:', this.canProceedFromCurrentDivision);
+      
+      // Verifica se a divisão atual está válida
+      if (!this.canProceedFromCurrentDivision) {
+        console.log('❌ Divisão atual não está completa');
+        return;
+      }
+      
+      // Se não for a última divisão, avança para próxima divisão
+      if (this.currentDivisionIndex < this.numberOfDivisions - 1) {
+        console.log('➡️ Avançando para próxima divisão');
+        this.nextDivision();
+      } 
+      // Se for a última divisão e todas as divisões estão completas, avança para próxima etapa
+      else if (this.canProceedToNextStep) {
+        console.log('⏭️ Avançando para próxima etapa');
+        this.currentStep++;
+        if (this.currentStep === 3) {
+          this.activeDivision = 0;
+        }
+      } else {
+        console.log('⚠️ Ainda há divisões incompletas. Complete todas antes de avançar.');
+      }
+    },
+
     nextStep() {
-      if (this.canProceedToNextStep && this.currentStep < 4) {
+      // Se estivermos na etapa 2 (divisões) e não for a última divisão
+      if (this.currentStep === 2 && this.currentDivisionIndex < this.numberOfDivisions - 1) {
+        this.nextDivision();
+      } 
+      // Se estivermos na etapa 2 e for a última divisão, ou qualquer outra etapa
+      else if (this.canProceedToNextStep && this.currentStep < 4) {
         this.currentStep++;
         if (this.currentStep === 3) {
           this.activeDivision = 0;
@@ -1373,48 +1794,69 @@ export default {
 
 .modal-close {
   background: white;
-  border: 1px solid #e2e8f0;
+  border: none;
   cursor: pointer;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  color: #64748b;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-dark .modal-close {
+  background: #334155;
+}
+
+.modal-close svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
 .modal-close:hover {
-  background: #fee2e2;
-  border-color: #ef4444;
-  color: #ef4444;
-  transform: scale(1.05);
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== BARRA DE PROGRESSO ========== */
-.progress-bar-container {
-  position: relative;
+.dashboard-dark .modal-close:hover {
+  background: #475569;
+}
+
+.modal-close:hover svg {
+  transform: scale(1.1);
+}
+
+/* ========== PROGRESS STEPPER ========== */
+.progress-stepper {
   display: flex;
   justify-content: space-between;
-  padding: 32px 48px;
+  align-items: center;
+  margin-bottom: 3rem;
+  padding: 2rem 3rem;
+  position: relative;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.progress-step {
+.step-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  flex: 1;
   position: relative;
-  z-index: 2;
+  flex: 1;
 }
 
 .step-circle {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: white;
   border: 3px solid #cbd5e1;
@@ -1422,48 +1864,57 @@ export default {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 1.1rem;
   color: #94a3b8;
   transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
 }
 
-.progress-step.active .step-circle {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  border-color: #2563eb;
+.step-item.active .step-circle {
+  background: #3b82f6;
+  border-color: #3b82f6;
   color: white;
-  transform: scale(1.1);
-  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
-.progress-step.completed .step-circle {
+.step-item.completed .step-circle {
   background: #10b981;
   border-color: #10b981;
   color: white;
 }
 
 .step-label {
-  font-size: 12px;
-  font-weight: 600;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: #64748b;
   text-align: center;
+  transition: all 0.3s ease;
 }
 
-.progress-step.active .step-label {
-  color: #2563eb;
+.step-item.active .step-label {
+  color: #3b82f6;
+  font-weight: 600;
 }
 
-.progress-step.completed .step-label {
+.step-item.completed .step-label {
   color: #10b981;
 }
 
-.progress-bar-fill {
+.step-line {
   position: absolute;
-  top: 56px;
-  left: 48px;
-  right: 48px;
+  top: 25px;
+  left: 50%;
+  width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, #2563eb, #10b981);
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #cbd5e1;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.step-item.completed .step-line {
+  background: #10b981;
   z-index: 1;
 }
 
@@ -1652,90 +2103,1463 @@ export default {
   color: #ea580c;
 }
 
-/* ========== DIVISÕES ========== */
-.divisions-list {
+/* ========== DIVISÕES APRIMORADAS ========== */
+.divisions-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
-.division-card {
-  background: #f8fafc;
+.division-card-enhanced {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px;
-  transition: all 0.3s ease;
+  border-radius: 20px;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.division-card:hover {
+.division-card-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.division-card-enhanced:hover {
   border-color: #3b82f6;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
 }
 
-.division-header {
+.division-card-enhanced:hover::before {
+  opacity: 1;
+}
+
+.division-card-enhanced.filled {
+  border-color: #10b981;
+  background: linear-gradient(145deg, #f0fdf4, #ecfdf5);
+}
+
+.division-card-enhanced.filled::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+  opacity: 1;
+}
+
+.division-header-enhanced {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 16px;
+  padding: 24px 24px 0 24px;
+  margin-bottom: 24px;
 }
 
-.division-number {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+.division-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.division-letter {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.division-card-enhanced.filled .division-letter {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+}
+
+.division-status {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s ease;
+}
+
+.division-card-enhanced.filled .division-status {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.division-title-section {
+  flex: 1;
+}
+
+.division-title-section h4 {
+  margin: 0 0 4px 0;
   font-size: 20px;
   font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.division-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.division-content {
+  padding: 0 24px 24px 24px;
+}
+
+.division-content-footer {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  position: relative;
+  z-index: 10;
+}
+
+.division-content-footer .btn-save {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.form-row {
+  margin-bottom: 24px;
+}
+
+.form-group-enhanced {
+  width: 100%;
+}
+
+.form-label-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-label-enhanced svg {
+  color: #6b7280;
+}
+
+.required-indicator {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.optional-indicator {
+  color: #6b7280;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.form-input-enhanced,
+.form-textarea-enhanced {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.form-input-enhanced:focus,
+.form-textarea-enhanced:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea-enhanced {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+/* ========== GRUPOS MUSCULARES APRIMORADOS ========== */
+.muscle-groups-section {
+  margin-top: 8px;
+}
+
+.muscle-groups-label {
+  margin-bottom: 16px !important;
+}
+
+.muscle-groups-selector-enhanced {
+  margin-top: 8px;
+}
+
+.muscle-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.muscle-checkbox-enhanced {
+  position: relative;
+  cursor: pointer;
+  display: block;
+}
+
+.muscle-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.muscle-checkbox-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.muscle-checkbox-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.muscle-checkbox-enhanced:hover .muscle-checkbox-content {
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.muscle-checkbox-enhanced:hover .muscle-checkbox-content::before {
+  opacity: 1;
+}
+
+.muscle-checkbox-enhanced.selected .muscle-checkbox-content {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.muscle-checkbox-enhanced.selected .muscle-checkbox-content::before {
+  opacity: 1;
+}
+
+.muscle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #6b7280;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.muscle-checkbox-enhanced:hover .muscle-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.muscle-checkbox-enhanced.selected .muscle-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.checkbox-indicator {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.muscle-checkbox-enhanced.selected .checkbox-indicator {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-color: #3b82f6;
+  color: white;
+}
+
+.checkbox-indicator svg {
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s ease;
+}
+
+.muscle-checkbox-enhanced.selected .checkbox-indicator svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.muscle-checkbox-enhanced .muscle-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.muscle-checkbox-enhanced.selected .muscle-name {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* ========== ETAPA 3: EXERCÍCIOS - NOVO LAYOUT ========== */
+.step-exercises {
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+
+.exercises-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  height: 500px;
+}
+
+/* COLUNA ESQUERDA: Catálogo */
+.catalog-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+/* ========== DROPDOWN MODERNO DE DIVISÕES ========== */
+.division-dropdown-modern {
+  position: relative;
+  z-index: 10;
+}
+
+.dropdown-header {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+}
+
+.dropdown-header:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+  transform: translateY(-1px);
+}
+
+.dropdown-header.open {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.dropdown-current {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.current-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   flex-shrink: 0;
 }
 
-.division-header h4 {
+.current-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.current-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.current-meta {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.current-meta svg {
+  flex-shrink: 0;
+}
+
+.dropdown-arrow {
+  color: #94a3b8;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.dropdown-header.open .dropdown-arrow {
+  transform: rotate(180deg);
+  color: #3b82f6;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-top: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  max-height: 360px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.dropdown-item.active {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
+  border-left: 3px solid #3b82f6;
+  padding-left: 13px;
+}
+
+.item-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item.active .item-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-item svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.item-check {
+  color: #3b82f6;
+  flex-shrink: 0;
+  animation: checkAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes checkAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animação do dropdown */
+.dropdown-fade-enter-active {
+  animation: dropdownSlideDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-fade-leave-active {
+  animation: dropdownSlideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dropdownSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Remove estilos antigos dos tabs */
+.division-tabs-compact {
+  display: none;
+}
+
+.search-box-compact {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.search-box-compact .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-box-compact .search-input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.search-box-compact .search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.catalog-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.catalog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.catalog-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.catalog-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.catalog-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.exercise-catalog-grid-new {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.exercise-catalog-card-new {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.exercise-catalog-card-new:hover {
+  border-color: #3b82f6;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.2);
+}
+
+.exercise-image-new {
+  width: 100%;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+}
+
+.exercise-image-new img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.exercise-catalog-card-new:hover .exercise-image-new img {
+  transform: scale(1.1);
+}
+
+.no-image-placeholder-new {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.add-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+}
+
+.exercise-catalog-card-new:hover .add-overlay {
+  opacity: 1;
+}
+
+.exercise-info-new {
+  padding: 12px;
+}
+
+.exercise-info-new h5 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.muscle-badge-new {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.pagination-compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0 0 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pagination-btn-compact {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+  padding: 0;
+}
+
+.pagination-btn-compact svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke-width: 2.5;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn-compact:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.pagination-btn-compact:hover:not(:disabled) svg {
+  transform: scale(1.1);
+}
+
+.pagination-btn-compact:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.loading-state,
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #94a3b8;
+}
+
+.loading-state .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state svg {
+  color: #cbd5e1;
+}
+
+.empty-state p {
   margin: 0;
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* COLUNA DIREITA: Exercícios Adicionados */
+.added-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.added-column-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.exercise-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  }
+}
+
+.empty-added {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 30px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  color: #94a3b8;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-added::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.empty-added svg {
+  color: #cbd5e1;
+  opacity: 0.8;
+}
+
+.empty-added p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #64748b;
+  position: relative;
+}
+
+.empty-added small {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+  position: relative;
+}
+
+.added-exercises-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+  padding-right: 4px;
+}
+
+.added-exercises-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.added-exercises-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.added-exercises-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  border-radius: 4px;
+}
+
+.added-exercises-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+
+.added-exercise-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.added-exercise-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+  transform-origin: top;
+}
+
+.added-exercise-card:hover::before {
+  transform: scaleY(1);
+}
+
+.added-exercise-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.exercise-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.exercise-number {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.exercise-number::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 3s infinite;
+}
+
+.exercise-card-header h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  flex: 1;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.exercise-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-icon-small {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #64748b;
+  padding: 0;
+}
+
+.btn-icon-small svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke-width: 2.5;
+  transition: all 0.2s ease;
+}
+
+.btn-icon-small:hover {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-icon-small:hover svg {
+  stroke-width: 2.5;
+  transform: scale(1.1);
+}
+
+.btn-icon-small.btn-delete:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.exercise-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 2px solid #f1f5f9;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.detail-label {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.detail-value {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.exercise-card-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tag-failure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.08));
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.tag-failure::before {
+  content: '🔥';
+  font-size: 14px;
+}
+
+.exercise-notes {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  font-weight: 500;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+/* ========== MODAL DE EXERCÍCIO ========== */
+.exercise-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.exercise-modal {
+  background: white;
+  border-radius: 20px;
+  width: 600px;
+  max-width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.exercise-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+}
+
+.exercise-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
   font-weight: 700;
   color: #1e293b;
 }
 
-/* ========== GRUPOS MUSCULARES ========== */
-.muscle-groups-selector {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.muscle-checkbox {
+.modal-close-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 13px;
-  font-weight: 500;
+  color: #64748b;
 }
 
-.muscle-checkbox:hover {
+.modal-close-btn:hover {
+  background: #ef4444;
+  color: white;
+  transform: rotate(90deg);
+}
+
+.exercise-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.exercise-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.exercise-modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.exercise-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.exercise-modal-preview {
+  width: 100%;
+  height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-modal-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-placeholder {
+  color: #94a3b8;
+}
+
+.exercise-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group-modal label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-input-modal,
+.form-textarea-modal {
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background: white;
+}
+
+.form-input-modal:focus,
+.form-textarea-modal:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input-modal:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.form-textarea-modal {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row-modal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.checkbox-label-modal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.checkbox-label-modal:hover {
   border-color: #3b82f6;
   background: rgba(59, 130, 246, 0.05);
 }
 
-.muscle-checkbox input {
+.checkbox-label-modal input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
   cursor: pointer;
+  accent-color: #3b82f6;
 }
 
-.muscle-checkbox input:checked + span {
-  color: #2563eb;
+.checkbox-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
+  color: #374151;
 }
 
+.checkbox-text svg {
+  color: #3b82f6;
+}
+
+.exercise-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 24px;
+  border-top: 2px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.btn-modal-cancel,
+.btn-modal-save {
+  flex: 1;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+}
+
+.btn-modal-cancel {
+  background: white;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-modal-cancel:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.btn-modal-save {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.btn-modal-save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+
+/* ========== MÚSCULOS SELECIONADOS (VERSÃO ORIGINAL) ========== */
 .selected-muscles {
   display: flex;
   flex-wrap: wrap;
@@ -1774,6 +3598,106 @@ export default {
 
 .muscle-tag button:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========== CARROSSEL DE DIVISÕES ========== */
+.division-indicator {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  max-width: 140px;
+  text-align: center;
+}
+
+.division-card-enhanced.filled .division-indicator {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.divisions-carousel {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.carousel-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+}
+
+.carousel-slide .division-card-enhanced {
+  margin: 0;
+  width: 100%;
+  position: relative;
+}
+
+/* Controles de navegação do carrossel */
+.carousel-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.carousel-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.carousel-nav-btn:hover:not(:disabled) {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.carousel-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.carousel-nav-btn svg {
+  flex-shrink: 0;
 }
 
 /* ========== CATÁLOGO DE EXERCÍCIOS ========== */
@@ -2576,6 +4500,52 @@ export default {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  /* Músculos selecionados responsivos */
+  .selected-muscles {
+    gap: 6px;
+  }
+
+  .muscle-tag {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  /* Estilos responsivos para divisões aprimoradas */
+  .muscle-groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .division-header-enhanced {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: center;
+  }
+
+  /* Estilos responsivos para carrossel */
+  .division-indicator {
+    top: 12px;
+    right: 12px;
+    font-size: 10px;
+    padding: 6px 10px;
+    max-width: 120px;
+  }
+
+  .division-badge {
+    align-self: center;
+  }
+
+  .division-title-section {
+    text-align: center;
+    width: 100%;
+  }
+
+  .selected-muscles-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
   .division-tabs {
     flex-direction: column;
   }
@@ -2585,12 +4555,24 @@ export default {
     grid-template-columns: 1fr;
   }
 
-  .progress-bar-container {
-    padding: 24px 16px;
+  .progress-stepper {
+    padding: 1.5rem 1rem;
   }
-
+  
   .step-label {
-    font-size: 10px;
+    font-size: 0.7rem;
+  }
+  
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .step-label {
+    display: none;
   }
 }
 
@@ -2772,6 +4754,58 @@ export default {
 
   .confirmation-actions {
     flex-direction: column;
+  }
+
+  /* Estilos móveis para divisões aprimoradas */
+  .divisions-container {
+    gap: 20px;
+  }
+
+  .division-card-enhanced {
+    border-radius: 16px;
+  }
+
+  .division-header-enhanced {
+    padding: 16px 16px 0 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Estilos móveis para carrossel */
+  .division-indicator {
+    top: 10px;
+    right: 10px;
+    font-size: 9px;
+    padding: 4px 8px;
+    max-width: 100px;
+  }
+
+  .division-content {
+    padding: 0 16px 16px 16px;
+  }
+
+  .division-letter {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .muscle-tags-grid {
+    gap: 6px;
+  }
+
+  .muscle-tag-enhanced {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .muscle-checkbox-content {
+    padding: 12px;
+  }
+
+  .form-input-enhanced,
+  .form-textarea-enhanced {
+    padding: 10px 12px;
+    font-size: 16px; /* Previne zoom no iOS */
   }
 }
 </style>
