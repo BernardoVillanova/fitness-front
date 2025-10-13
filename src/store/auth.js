@@ -60,6 +60,18 @@ export const useAuthStore = defineStore('auth', {
     },
     isStudent: (state) => state.userRole === 'student',
     isInstructor: (state) => state.userRole === 'instructor' || state.userRole === 'personal',
+    instructorId: (state) => {
+      if (state.token) {
+        try {
+          const decodedToken = jwtDecode(state.token);
+          return decodedToken.instructorId || decodedToken.userId || null;
+        } catch (error) {
+          console.error('Error decoding token:', error);
+          return null;
+        }
+      }
+      return null;
+    },
   },
   actions: {
     setToken(token) {
