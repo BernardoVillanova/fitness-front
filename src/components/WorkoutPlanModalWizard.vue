@@ -2003,7 +2003,7 @@ export default {
 }
 
 .form-label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #334155;
   display: flex;
@@ -2262,7 +2262,7 @@ export default {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #374151;
 }
