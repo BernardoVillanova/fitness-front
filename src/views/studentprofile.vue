@@ -3,6 +3,13 @@
   <div :class="['student-profile', { 'dark-mode': isDarkMode }]">
     <StudentNavBar />
     
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+    
     <div class="main-content">
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
@@ -280,10 +287,28 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import StudentNavBar from '@/components/StudentNavBar.vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 import api from '@/api';
 
 const themeStore = useThemeStore();
 const { isDarkMode } = storeToRefs(themeStore);
+
+// Notification system
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+});
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  };
+};
 
 const loading = ref(false);
 const saving = ref(false);
@@ -474,7 +499,7 @@ const useFallbackData = () => {
 
 const saveProfile = async () => {
   if (!studentId.value) {
-    alert('Erro: ID do aluno não encontrado');
+    showNotification('error', 'Erro!', 'ID do aluno não encontrado');
     return;
   }
 
@@ -543,11 +568,11 @@ const saveProfile = async () => {
     // Atualizar dados originais
     originalData.value = { ...studentData };
     
-    alert('✅ Perfil atualizado com sucesso!');
+    showNotification('success', 'Sucesso!', 'Perfil atualizado com sucesso!');
   } catch (error) {
     console.error('Erro ao salvar perfil:', error);
     console.error('Detalhes do erro:', error.response?.data);
-    alert(`❌ Erro ao salvar perfil: ${error.response?.data?.message || 'Tente novamente.'}`);
+    showNotification('error', 'Erro ao Salvar', `Erro ao salvar perfil: ${error.response?.data?.message || 'Tente novamente.'}`);
   } finally {
     saving.value = false;
   }
@@ -559,20 +584,20 @@ const handleAvatarUpload = async (event) => {
 
   // Validar tipo de arquivo
   if (!file.type.startsWith('image/')) {
-    alert('❌ Por favor, selecione uma imagem válida.');
+    showNotification('error', 'Arquivo Inválido', 'Por favor, selecione uma imagem válida.');
     return;
   }
 
   // Validar tamanho (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
-    alert('❌ A imagem deve ter no máximo 5MB.');
+    showNotification('error', 'Arquivo Muito Grande', 'A imagem deve ter no máximo 5MB.');
     return;
   }
 
   try {
     const storedUser = sessionStorage.getItem('user');
     if (!storedUser) {
-      alert('❌ Erro: Usuário não encontrado.');
+      showNotification('error', 'Erro!', 'Usuário não encontrado.');
       return;
     }
     
@@ -595,11 +620,11 @@ const handleAvatarUpload = async (event) => {
       studentData.avatar = response.data.avatarUrl;
       userData.avatar = response.data.avatarUrl;
       sessionStorage.setItem('user', JSON.stringify(userData));
-      alert('✅ Foto de perfil atualizada com sucesso!');
+      showNotification('success', 'Sucesso!', 'Foto de perfil atualizada com sucesso!');
     }
   } catch (error) {
     console.error('Erro ao fazer upload do avatar:', error);
-    alert(`❌ Erro ao atualizar foto: ${error.response?.data?.message || 'Tente novamente.'}`);
+    showNotification('error', 'Erro ao Atualizar Foto', `Erro ao atualizar foto: ${error.response?.data?.message || 'Tente novamente.'}`);
   }
 };
 

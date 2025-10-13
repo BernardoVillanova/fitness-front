@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div :class="isDarkMode ? 'dark' : 'light'" class="gym-home">
     <DashboardNavBar />
     <div class="dashboard-container">
@@ -182,6 +182,16 @@
                       </svg>
                       Editar
                     </a>
+
+                    <a href="#" class="dropdown-item" @click.prevent="openStudentManagement(gym)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                      Gerenciar Alunos
+                    </a>
                     
                     <div class="divider"></div>
                     
@@ -249,13 +259,12 @@
 
               <!-- Gym Actions -->
               <div class="gym-actions">
-                <button class="action-button secondary-action" @click="handleEdit(gym)">
+                <button class="action-button secondary-action" @click="openStudentManagement(gym)">
                   <div class="button-shine"></div>
                   <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                   </svg>
-                  <span class="button-text">Ver Detalhes</span>
+                  <span class="button-text">Alunos</span>
                 </button>
                 <button class="action-button primary-action" @click="handleEdit(gym)">
                   <div class="button-shine"></div>
@@ -291,23 +300,46 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+
+    <!-- Student Management Modal -->
+    <StudentManagementModal
+      v-if="showStudentModal"
+      :gym="selectedGymForStudents"
+      :show="showStudentModal"
+      @close="closeStudentManagement"
+      @updated="handleStudentUpdated"
+      @notification="showNotification"
+    />
 </template>
 
 <script>
 import { ref, computed } from 'vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import { getAllGyms, createGym, updateGym, deleteGym } from '@/api';
 import DashboardNavBar from "@/components/DashboardNavBar.vue";
 import GymForm from '@/components/GymForm.vue';
+import StudentManagementModal from '@/components/StudentManagementModal.vue';
 
 export default {
   name: 'GymHome',
   components: {
+    NotificationModal,
     GymForm,
     DashboardNavBar,
+    StudentManagementModal,
   },
   setup() {
+    const notification = ref({ visible: false, type: 'info', title: '', message: '' });
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
     
@@ -403,6 +435,8 @@ export default {
     const selectedGym = ref(null);
     const showForm = ref(false);
     const searchQuery = ref('');
+    const showStudentModal = ref(false);
+    const selectedGymForStudents = ref(null);
 
     const totalStudents = computed(() => {
       return gyms.value.reduce((total, gym) => total + (gym.students?.length || 0), 0);
@@ -422,8 +456,19 @@ export default {
       );
     });
 
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    };
+
     return {
       isDarkMode,
+      notification,
+      showNotification,
       gyms,
       loading,
       selectedGym,
@@ -431,7 +476,9 @@ export default {
       searchQuery,
       filteredGyms,
       totalStudents,
-      totalEquipments
+      totalEquipments,
+      showStudentModal,
+      selectedGymForStudents
     };
   },
   methods: {
@@ -498,17 +545,17 @@ export default {
         
         if (this.selectedGym) {
           await updateGym(this.selectedGym._id, formData);
-          alert('✅ Academia atualizada com sucesso!');
+          this.showNotification('success', 'Sucesso', '✅ Academia atualizada com sucesso!');
         } else {
           await createGym(formData);
-          alert('✅ Academia cadastrada com sucesso!');
+          this.showNotification('success', 'Sucesso', '✅ Academia cadastrada com sucesso!');
         }
         
         await this.fetchGyms();
         this.handleCancel();
       } catch (error) {
         console.error('Error saving gym:', error);
-        alert(`❌ Erro: ${error.response?.data?.message || error.message || 'Erro ao salvar academia'}`);
+        this.showNotification('error', 'Erro', `${error.response?.data?.message || error.message || 'Erro ao salvar academia'}`);
       }
     },
     handleEdit(gym) {
@@ -535,16 +582,34 @@ export default {
     async handleDelete(gymId) {
       try {
         await deleteGym(gymId);
-        alert('✅ Academia excluída com sucesso!');
+        this.showNotification('success', 'Sucesso', '✅ Academia excluída com sucesso!');
         await this.fetchGyms();
       } catch (error) {
         console.error('Error deleting gym:', error);
-        alert('❌ Erro ao excluir academia. Tente novamente.');
+        this.showNotification('info', 'Informacao', '❌ Erro ao excluir academia. Tente novamente.');
       }
     },
     handleCancel() {
       this.selectedGym = null;
       this.showForm = false;
+    },
+    openStudentManagement(gym) {
+      // Fecha todos os dropdowns
+      this.gyms = this.gyms.map(g => ({
+        ...g,
+        showMenu: false
+      }));
+      
+      this.selectedGymForStudents = gym;
+      this.showStudentModal = true;
+    },
+    closeStudentManagement() {
+      this.showStudentModal = false;
+      this.selectedGymForStudents = null;
+    },
+    handleStudentUpdated() {
+      // Recarrega os dados das academias quando alunos são atualizados
+      this.fetchGyms();
     },
   },
   mounted() {
@@ -1820,3 +1885,4 @@ body:has(.navbar-collapsed) .dashboard-container,
   opacity: 0;
 }
 </style>
+

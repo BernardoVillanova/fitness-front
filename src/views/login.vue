@@ -1,5 +1,11 @@
 <template>
   <NavBar />
+  <NotificationModal 
+    v-model:visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+  />
   <div :class="isDarkMode ? 'full-screen dark' : 'full-screen light'">
     <div class="card-container">
       <div class="image-section">
@@ -45,15 +51,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Notification Modal -->
-  <NotificationModal
-    :visible="notification.visible"
-    :type="notification.type"
-    :title="notification.title"
-    :message="notification.message"
-    @close="closeNotification"
-  />
 </template>
 
 <script>
@@ -63,6 +60,7 @@ import NotificationModal from "@/components/NotificationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { jwtDecode } from "jwt-decode";
 import { storeToRefs } from "pinia";
+import { ref } from "vue";
 
 export default {
   name: "LoginPage",
@@ -70,32 +68,32 @@ export default {
   setup() {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
-    return { isDarkMode };
-  },
-  data() {
-    return {
-      email: "",
-      password: "",
-      notification: {
-        visible: false,
-        type: 'info',
-        title: '',
-        message: ''
-      }
-    };
-  },
-  methods: {
-    showNotification(type, title, message) {
-      this.notification = {
+    
+    const notification = ref({
+      visible: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+      notification.value = {
         visible: true,
         type,
         title,
         message
       };
-    },
-    closeNotification() {
-      this.notification.visible = false;
-    },
+    };
+
+    return { isDarkMode, notification, showNotification };
+  },
+  data() {
+    return {
+      email: "",
+      password: ""
+    };
+  },
+  methods: {
     async login() {
       try {
         const response = await api.post("/auth/login", {
@@ -199,21 +197,15 @@ export default {
 
         sessionStorage.setItem("user", JSON.stringify(userData));
 
-        // Exibir notificação de sucesso antes do redirecionamento
-        this.showNotification('success', 'Sucesso', 'Login realizado com sucesso!');
-
-        // Aguardar um pouco antes de redirecionar para que a notificação seja visível
-        setTimeout(() => {
-          if (userData.role === "personal") {
-            this.$router.push("/dashboard");
-          } else if (userData.role === "aluno") {
-            this.$router.push("/student-dashboard");
-          } else {
-            console.error('❌ Role desconhecida:', userData.role);
-            this.showNotification('error', 'Erro', 'Tipo de usuário desconhecido');
-            return;
-          }
-        }, 1500);
+        if (userData.role === "personal") {
+          this.$router.push("/dashboard");
+        } else if (userData.role === "aluno") {
+          this.$router.push("/student-dashboard");
+        } else {
+          console.error('❌ Role desconhecida:', userData.role);
+          this.showNotification('error', 'Erro', 'Tipo de usuário desconhecido');
+          return;
+        }
       } catch (error) {
         console.error("Erro no login:", error);
         this.showNotification('error', 'Erro no Login', 'Erro no login. Verifique suas credenciais.');

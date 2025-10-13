@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <NavBar />
   <div :class="isDarkMode ? 'full-screen dark' : 'full-screen light'">
     <div class="register-container">
@@ -174,18 +174,27 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
 import NavBar from "@/components/NavBar.vue";
 import { useThemeStore } from "@/store/theme";
+import NotificationModal from '@/components/NotificationModal.vue';
 import axios from "axios";
 import { storeToRefs } from "pinia";
 import { mask } from "vue-the-mask";
-
 export default {
   name: "RegisterPage",
   components: {
+    NotificationModal,
     NavBar,
   },
   directives: { mask },
@@ -196,6 +205,7 @@ export default {
   },
   data() {
     return {
+      notification: { visible: false, type: 'info', title: '', message: '' },
       name: "",
       cpf: "",
       email: "",
@@ -226,6 +236,14 @@ export default {
     },
   },
   methods: {
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    },
     validatePassword() {
       this.errors.password = "";
       if (this.password.length < 6) {
@@ -264,7 +282,7 @@ export default {
       // Validações
       if (!this.validateCPF(this.cpf)) {
         this.errors.cpf = "CPF inválido";
-        alert("Por favor, corrija os erros no formulário");
+        this.showNotification('info', 'Informacao', 'Por favor, corrija os erros no formulário');
         return;
       }
       
@@ -274,12 +292,12 @@ export default {
       
       // Verifica se há erros
       if (Object.values(this.errors).some(error => error !== "")) {
-        alert("Por favor, corrija os erros no formulário");
+        this.showNotification('info', 'Informacao', 'Por favor, corrija os erros no formulário');
         return;
       }
       
       if (!this.role) {
-        alert("Selecione o tipo de usuário: Aluno ou Instrutor.");
+        this.showNotification('warning', 'Atencao', 'Selecione o tipo de usuário: Aluno ou Instrutor.');
         return;
       }
 
@@ -322,7 +340,7 @@ export default {
       } catch (error) {
         console.error("Erro ao registrar:", error.response?.data);
         const errorMessage = error.response?.data?.message || "Erro ao realizar cadastro";
-        alert(errorMessage);
+        this.showNotification('error', 'Erro', errorMessage);
       }
     },
 
@@ -942,3 +960,4 @@ export default {
   }
 }
 </style>
+

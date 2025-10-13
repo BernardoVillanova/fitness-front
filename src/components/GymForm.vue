@@ -5,6 +5,25 @@
     :class="[isDarkMode ? 'dashboard-dark' : 'dashboard-light']" 
     @click.self="resetForm"
   >
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+    
+    <ConfirmationModal
+      :show="showConfirmation"
+      :title="confirmationConfig.title"
+      :message="confirmationConfig.message"
+      :icon-type="confirmationConfig.iconType"
+      :confirm-text="confirmationConfig.confirmText"
+      :cancel-text="confirmationConfig.cancelText"
+      :button-class="confirmationConfig.buttonClass"
+      @confirm="confirmationConfig.onConfirm"
+      @close="showConfirmation = false"
+    />
+    
     <div class="modal-container-large">
       <div class="modal-header">
         <div class="modal-header-content">
@@ -167,15 +186,35 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
                   CEP
+                  <span v-if="isValidatingCep" class="cep-loading">Validando...</span>
                 </label>
-                <input 
-                  v-model="formData.location.zipCode" 
-                  type="text" 
-                  class="form-input"
-                  placeholder="00000-000"
-                  v-mask="'#####-###'"
-                  required
-                />
+                <div class="cep-input-container">
+                  <input 
+                    v-model="formData.location.zipCode" 
+                    type="text" 
+                    class="form-input"
+                    :class="{ 'cep-loading': isValidatingCep, 'cep-valid': cepValidated }"
+                    placeholder="00000-000"
+                    v-mask="'#####-###'"
+                    @blur="validateCep"
+                    @input="onCepInput"
+                    required
+                  />
+                  <div v-if="isValidatingCep" class="cep-spinner">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" values="0 12 12;360 12 12"/>
+                      </path>
+                    </svg>
+                  </div>
+                  <div v-else-if="cepValidated" class="cep-check">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div v-if="cepError" class="cep-error">{{ cepError }}</div>
               </div>
 
               <!-- Telefone e Email -->
@@ -238,7 +277,7 @@
                 <div 
                   v-else
                   class="upload-area-modern upload-dashed"
-                  :class="{ 'drag-over': isDragging }"
+                  :class="{ 'drag-over': isDragging, 'uploading': isUploadingImage }"
                   @dragover.prevent="handleDragOver"
                   @dragleave.prevent="handleDragLeave"
                   @drop.prevent="handleDrop"
@@ -254,9 +293,10 @@
                     class="file-input"
                     @change="handleFileSelect"
                     style="display: none;"
+                    :disabled="isUploadingImage"
                   />
                   
-                  <div class="upload-content-modern">
+                  <div class="upload-content-modern" v-if="!isUploadingImage">
                     <!-- Ícone Animado -->
                     <div class="upload-icon-container">
                       <div class="icon-circle-outer">
@@ -297,6 +337,22 @@
                       <span class="format-badge">PNG</span>
                       <span class="format-badge">JPG</span>
                       <span class="format-badge">WEBP</span>
+                    </div>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div class="upload-loading-state" v-else>
+                    <div class="loading-spinner">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" values="0 12 12;360 12 12"/>
+                        </path>
+                      </svg>
+                    </div>
+                    <div class="loading-text">
+                      <h4>Processando Imagem...</h4>
+                      <p>Comprimindo e otimizando a imagem</p>
                     </div>
                   </div>
                 </div>
@@ -388,9 +444,9 @@
               <div class="equipment-cards-grid">
                 <div 
                   v-for="equipment in filteredEquipments" 
-                  :key="equipment.id"
+                  :key="equipment._id"
                   class="equipment-card-searchable"
-                  :class="{ 'added': isEquipmentAdded(equipment.id) }"
+                  :class="{ 'added': isEquipmentAdded(equipment._id) }"
                 >
                   <div class="equipment-card-icon">
                     <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,12 +459,12 @@
                     <span class="equipment-card-category">{{ equipment.category }}</span>
                   </div>
                   <div class="equipment-card-actions">
-                    <div v-if="!isEquipmentAdded(equipment.id)" class="quantity-selector">
+                    <div v-if="!isEquipmentAdded(equipment._id)" class="quantity-selector">
                       <button 
                         type="button" 
                         class="qty-btn" 
-                        @click="decrementQuantity(equipment.id)"
-                        :disabled="getEquipmentQuantityInput(equipment.id) <= 1"
+                        @click="decrementQuantity(equipment._id)"
+                        :disabled="getEquipmentQuantityInput(equipment._id) <= 1"
                       >
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4"></path>
@@ -417,15 +473,15 @@
                       <input 
                         type="number" 
                         class="qty-input" 
-                        :value="getEquipmentQuantityInput(equipment.id)"
-                        @input="updateQuantityInput(equipment.id, $event.target.value)"
+                        :value="getEquipmentQuantityInput(equipment._id)"
+                        @input="updateQuantityInput(equipment._id, $event.target.value)"
                         min="1"
                         max="999"
                       />
                       <button 
                         type="button" 
                         class="qty-btn" 
-                        @click="incrementQuantity(equipment.id)"
+                        @click="incrementQuantity(equipment._id)"
                       >
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path>
@@ -433,7 +489,7 @@
                       </button>
                     </div>
                     <button 
-                      v-if="!isEquipmentAdded(equipment.id)"
+                      v-if="!isEquipmentAdded(equipment._id)"
                       type="button" 
                       class="btn-add-to-list"
                       @click="addEquipmentFromSearch(equipment)"
@@ -462,7 +518,7 @@
                 </svg>
               </div>
               <h4 class="no-results-title">Nenhum aparelho encontrado</h4>
-              <p class="no-results-text">Tente outro termo ou cadastre um aparelho personalizado abaixo</p>
+              <p class="no-results-text">Tente outro termo de busca</p>
             </div>
 
             <!-- Estado: Inicial - Aparelhos em Destaque -->
@@ -483,9 +539,9 @@
               <div class="exercises-grid-featured">
                 <div 
                   v-for="equipment in paginatedFeaturedEquipments" 
-                  :key="equipment.id"
+                  :key="equipment._id || equipment.id"
                   class="exercise-card-featured"
-                  :class="{ 'is-added': isEquipmentAdded(equipment.id) }"
+                  :class="{ 'is-added': isEquipmentAdded(equipment._id || equipment.id) }"
                 >
                   <div class="card-glow"></div>
                   
@@ -493,7 +549,7 @@
                   <div class="exercise-header">
                     <div class="exercise-image">
                       <div v-if="equipment.image" class="image-container">
-                        <img :src="equipment.image" :alt="equipment.name" />
+                        <img :src="getImageUrl(equipment.image)" :alt="equipment.name" />
                       </div>
                       <div v-else class="image-placeholder">
                         <div class="placeholder-icon">
@@ -511,9 +567,9 @@
                     <div class="info-top">
                       <div class="badge">
                         <span class="badge-dot"></span>
-                        <span class="badge-text">{{ equipment.category.toUpperCase() }}</span>
+                        <span class="badge-text">{{ (equipment.category || 'GERAL').toUpperCase() }}</span>
                       </div>
-                      <span class="difficulty-indicator disponível" v-if="!isEquipmentAdded(equipment.id)">
+                      <span class="difficulty-indicator disponível" v-if="!isEquipmentAdded(equipment._id || equipment.id)">
                         <span class="difficulty-dot"></span>
                         Disponível
                       </span>
@@ -530,7 +586,7 @@
                     <p class="description">{{ equipment.description }}</p>
 
                     <!-- Quantidade -->
-                    <div class="quantity-section" v-if="!isEquipmentAdded(equipment.id)">
+                    <div class="quantity-section" v-if="!isEquipmentAdded(equipment._id)">
                       <div class="quantity-label">
                         <span class="hashtag">#</span>
                         <span class="label-text">QUANTIDADE</span>
@@ -539,14 +595,14 @@
                       <div class="quantity-control">
                         <button 
                           type="button"
-                          @click="decrementQuantity(equipment.id)" 
+                          @click="decrementQuantity(equipment._id)" 
                           class="btn-control"
-                          :disabled="getEquipmentQuantityInput(equipment.id) <= 1"
+                          :disabled="getEquipmentQuantityInput(equipment._id) <= 1"
                         >−</button>
-                        <span class="quantity-value">{{ getEquipmentQuantityInput(equipment.id) }}</span>
+                        <span class="quantity-value">{{ getEquipmentQuantityInput(equipment._id) }}</span>
                         <button 
                           type="button"
-                          @click="incrementQuantity(equipment.id)" 
+                          @click="incrementQuantity(equipment._id)" 
                           class="btn-control"
                         >+</button>
                       </div>
@@ -554,7 +610,7 @@
 
                     <!-- Botão Adicionar -->
                     <button 
-                      v-if="!isEquipmentAdded(equipment.id)"
+                      v-if="!isEquipmentAdded(equipment._id)"
                       type="button"
                       class="btn-adicionar"
                       @click="addEquipmentFromSearch(equipment)"
@@ -610,107 +666,6 @@
             </div>
           </div>
 
-          <!-- Divisor -->
-          <div class="section-divider">
-            <span class="divider-text">OU</span>
-          </div>
-
-          <!-- PARTE 2: Cadastro de Aparelho Personalizado -->
-          <div class="custom-equipment-section">
-            <!-- Header do Formulário -->
-            <div class="custom-form-header">
-              <div class="header-icon-wrapper">
-                <div class="header-icon">
-                  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                </div>
-              </div>
-              <div class="header-content">
-                <h3 class="custom-form-title">Aparelho Personalizado</h3>
-                <p class="custom-form-subtitle">Cadastre um aparelho customizado que não está na lista acima</p>
-              </div>
-            </div>
-
-            <!-- Formulário de Equipamento Personalizado -->
-            <div class="equipment-form-modern">
-              <div class="form-fields-wrapper">
-                <div class="form-field-modern">
-                  <label class="field-label-modern">
-                    <div class="label-icon">
-                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                      </svg>
-                    </div>
-                    <span class="label-text-modern">Nome do Equipamento</span>
-                  </label>
-                  <div class="input-wrapper-modern">
-                    <input 
-                      v-model="equipmentForm.name" 
-                      type="text" 
-                      class="input-modern"
-                      placeholder="Ex: Esteira Ergométrica Pro"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-field-modern">
-                  <label class="field-label-modern">
-                    <div class="label-icon">
-                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
-                      </svg>
-                    </div>
-                    <span class="label-text-modern">Quantidade</span>
-                  </label>
-                  <div class="input-wrapper-modern">
-                    <input 
-                      v-model.number="equipmentForm.quantity" 
-                      type="number" 
-                      min="1"
-                      class="input-modern"
-                      placeholder="Ex: 5"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-field-modern full-width-field">
-                  <label class="field-label-modern">
-                    <div class="label-icon">
-                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
-                      </svg>
-                    </div>
-                    <span class="label-text-modern">Descrição (Opcional)</span>
-                  </label>
-                  <div class="input-wrapper-modern">
-                    <textarea 
-                      v-model="equipmentForm.description" 
-                      class="textarea-modern"
-                      placeholder="Descreva as características do equipamento..."
-                      rows="3"
-                    ></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-actions-modern">
-                <button type="button" class="btn-clear-modern" @click="cancelEquipmentForm">
-                  <svg width="15" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                  Limpar Campos
-                </button>
-                <button type="button" class="btn-add-modern" @click="saveEquipment">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  {{ editingEquipmentIndex !== null ? 'Salvar Alterações' : 'Adicionar Equipamento' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
           <!-- Lista de Aparelhos Adicionados -->
           <div v-if="equipmentsList.length > 0" class="added-equipments-section">
             <div class="added-header">
@@ -744,11 +699,6 @@
                 </div>
               </div>
               <div class="equipment-actions">
-                <button type="button" class="btn-icon-edit" @click="editEquipment(index)" title="Editar">
-                  <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                  </svg>
-                </button>
                 <button type="button" class="btn-icon-delete" @click="removeEquipment(index)" title="Remover">
                   <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -781,14 +731,21 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { mask } from 'vue-the-mask';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
+import NotificationModal from '@/components/NotificationModal.vue';
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
+import api from '@/api';
 
 export default {
   name: 'GymForm',
   directives: { mask },
+  components: {
+    NotificationModal,
+    ConfirmationModal
+  },
   props: {
     gym: {
       type: Object,
@@ -804,6 +761,35 @@ export default {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
     
+    // Notification system
+    const notification = ref({
+      visible: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    };
+
+    // Confirmation system
+    const showConfirmation = ref(false);
+    const confirmationConfig = ref({
+      title: '',
+      message: '',
+      iconType: 'warning',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+      buttonClass: 'btn-danger',
+      onConfirm: () => {}
+    });
+    
     const fileInput = ref(null);
     const imagePreview = ref(null);
     const isDragging = ref(false);
@@ -814,13 +800,6 @@ export default {
     
     // Controle de Equipamentos
     const equipmentsList = ref([]);
-    const showEquipmentForm = ref(false);
-    const editingEquipmentIndex = ref(null);
-    const equipmentForm = ref({
-      name: '',
-      quantity: 1,
-      description: ''
-    });
     
     // Busca de Equipamentos
     const searchQuery = ref('');
@@ -832,92 +811,39 @@ export default {
     const currentFeaturedPage = ref(1);
     const itemsPerPage = 3;
     
-    // Base de dados mockada de equipamentos
-    const equipmentsDatabase = [
-      // Musculação - Membros Inferiores
-      { id: 1, name: 'Leg Press 45°', description: 'Aparelho para exercício de leg press com inclinação de 45 graus', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&h=300&fit=crop' },
-      { id: 2, name: 'Leg Press Horizontal', description: 'Aparelho para leg press horizontal', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 3, name: 'Cadeira Extensora', description: 'Aparelho para exercício de extensão de pernas (quadríceps)', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 4, name: 'Mesa Flexora', description: 'Aparelho para exercício de flexão de pernas (posterior de coxa)', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1584466977773-e625c37cdd50?w=400&h=300&fit=crop' },
-      { id: 5, name: 'Cadeira Adutora', description: 'Aparelho para exercício de adução de pernas', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop' },
-      { id: 6, name: 'Cadeira Abdutora', description: 'Aparelho para exercício de abdução de pernas', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&h=300&fit=crop' },
-      { id: 7, name: 'Agachamento Livre (Rack)', description: 'Estrutura para agachamento livre com barra', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 8, name: 'Hack Machine', description: 'Aparelho para hack squat (agachamento)', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=400&h=300&fit=crop' },
-      { id: 9, name: 'Panturrilha em Pé', description: 'Aparelho para exercício de panturrilha em pé', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=400&h=300&fit=crop' },
-      { id: 10, name: 'Panturrilha Sentado', description: 'Aparelho para exercício de panturrilha sentado', category: 'Membros Inferiores', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      
-      // Musculação - Peito
-      { id: 11, name: 'Supino Reto', description: 'Banco para supino reto com suporte para barra', category: 'Peito', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 12, name: 'Supino Inclinado', description: 'Banco para supino inclinado com suporte para barra', category: 'Peito', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 13, name: 'Supino Declinado', description: 'Banco para supino declinado com suporte para barra', category: 'Peito', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 14, name: 'Cross Over', description: 'Aparelho de roldanas para exercícios de peitoral e outros grupos musculares', category: 'Peito', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 15, name: 'Peck Deck (Voador)', description: 'Aparelho para exercício de crucifixo (voador)', category: 'Peito', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 16, name: 'Supino Articulado', description: 'Aparelho articulado para supino', category: 'Peito', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      
-      // Musculação - Costas
-      { id: 17, name: 'Puxada Alta (Pulley Alto)', description: 'Aparelho para exercício de puxada frontal ou posterior', category: 'Costas', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 18, name: 'Remada Baixa', description: 'Aparelho para exercício de remada baixa', category: 'Costas', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 19, name: 'Remada Cavalinho', description: 'Aparelho para exercício de remada cavalinho (serrote)', category: 'Costas', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 20, name: 'Remada Articulada', description: 'Aparelho articulado para remada', category: 'Costas', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 21, name: 'Pull Down', description: 'Aparelho para puxada com pegada neutra', category: 'Costas', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 22, name: 'Barra Fixa Graviton', description: 'Aparelho assistido para barra fixa e paralelas', category: 'Costas', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      
-      // Musculação - Ombros
-      { id: 23, name: 'Desenvolvimento (Ombro)', description: 'Aparelho para desenvolvimento de ombros', category: 'Ombros', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 24, name: 'Elevação Lateral', description: 'Aparelho para elevação lateral de ombros', category: 'Ombros', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 25, name: 'Remada Alta', description: 'Aparelho ou roldana para remada alta (trapézio)', category: 'Ombros', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 26, name: 'Encolhimento (Smith)', description: 'Aparelho Smith Machine para encolhimento', category: 'Ombros', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      
-      // Musculação - Braços
-      { id: 27, name: 'Rosca Scott', description: 'Banco Scott para rosca de bíceps', category: 'Braços', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 28, name: 'Rosca Direta (Pulley)', description: 'Roldana para rosca direta de bíceps', category: 'Braços', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 29, name: 'Tríceps Testa', description: 'Banco para tríceps testa', category: 'Braços', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 30, name: 'Tríceps Pulley', description: 'Aparelho de roldana para tríceps', category: 'Braços', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 31, name: 'Paralelas', description: 'Barras paralelas para fundos (tríceps e peito)', category: 'Braços', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      
-      // Cardio
-      { id: 32, name: 'Esteira Ergométrica', description: 'Esteira motorizada para corrida e caminhada', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&h=300&fit=crop' },
-      { id: 33, name: 'Bicicleta Ergométrica', description: 'Bicicleta estacionária para exercício cardiovascular', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 34, name: 'Elíptico', description: 'Aparelho elíptico para treino cardiovascular de baixo impacto', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 35, name: 'Transport', description: 'Aparelho de movimento elíptico vertical', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 36, name: 'Remo Ergométrico', description: 'Aparelho para simulação de remada (remo indoor)', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 37, name: 'Spinning Bike', description: 'Bicicleta profissional para aulas de spinning', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 38, name: 'Escada (Step)', description: 'Aparelho simulador de escada', category: 'Aeróbico', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      
-      // Core e Funcional
-      { id: 39, name: 'Abdominal Infra', description: 'Aparelho para exercício abdominal infra', category: 'Core', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 40, name: 'Abdominal Supra', description: 'Aparelho para exercício abdominal supra', category: 'Core', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 41, name: 'Prancha Abdominal', description: 'Banco para prancha e exercícios isométricos', category: 'Core', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 42, name: 'Lombar (Hiperextensão)', description: 'Banco para extensão lombar', category: 'Core', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-      { id: 43, name: 'Smith Machine', description: 'Aparelho Smith para diversos exercícios guiados', category: 'Multifuncional', image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=300&fit=crop' },
-      { id: 44, name: 'Banco Regulável', description: 'Banco ajustável para diversos exercícios', category: 'Multifuncional', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop' },
-      { id: 45, name: 'Power Rack', description: 'Estrutura para treino livre com segurança', category: 'Multifuncional', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=300&fit=crop' },
-    ];
+    // Equipamentos carregados do backend
+    const featuredEquipmentsData = ref([]);
+    const isLoadingEquipments = ref(false);
+
+    // Validação de CEP
+    const isValidatingCep = ref(false);
+    const cepValidated = ref(false);
+    const cepError = ref('');
+    let cepTimeout = null;
+
+    // Upload de imagem
+    const isUploadingImage = ref(false);
 
     // Aparelhos em destaque (mais populares)
     const featuredEquipments = computed(() => {
-      return [
-        equipmentsDatabase.find(e => e.id === 1), // Leg Press 45°
-        equipmentsDatabase.find(e => e.id === 11), // Supino Reto
-        equipmentsDatabase.find(e => e.id === 32), // Esteira Ergométrica
-        equipmentsDatabase.find(e => e.id === 33), // Bicicleta Ergométrica
-        equipmentsDatabase.find(e => e.id === 17), // Puxada Alta
-        equipmentsDatabase.find(e => e.id === 14), // Cross Over
-        equipmentsDatabase.find(e => e.id === 34), // Elíptico
-        equipmentsDatabase.find(e => e.id === 3), // Cadeira Extensora
-      ].filter(Boolean);
+      console.log('🔢 Computed featuredEquipments chamado, valor:', featuredEquipmentsData.value);
+      return featuredEquipmentsData.value;
     });
 
     // Total de páginas
     const totalFeaturedPages = computed(() => {
-      return Math.ceil(featuredEquipments.value.length / itemsPerPage);
+      const total = Math.ceil(featuredEquipments.value.length / itemsPerPage);
+      console.log('📄 Total de páginas calculado:', total);
+      return total;
     });
 
     // Aparelhos paginados
     const paginatedFeaturedEquipments = computed(() => {
       const start = (currentFeaturedPage.value - 1) * itemsPerPage;
       const end = start + itemsPerPage;
-      return featuredEquipments.value.slice(start, end);
+      const paginated = featuredEquipments.value.slice(start, end);
+      console.log('📑 Equipamentos paginados:', paginated);
+      return paginated;
     });
 
     const defaultFormData = {
@@ -965,17 +891,19 @@ export default {
       // Validar tipo de arquivo
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        alert('❌ Tipo de arquivo inválido. Use PNG, JPG, GIF ou WEBP.');
+        showNotification('error', 'Arquivo Inválido', 'Tipo de arquivo inválido. Use PNG, JPG, GIF ou WEBP.');
         return;
       }
 
       // Validar tamanho (10MB)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
-        alert('❌ Arquivo muito grande. O tamanho máximo é 10MB.');
+        showNotification('error', 'Arquivo Muito Grande', 'Arquivo muito grande. O tamanho máximo é 10MB.');
         return;
       }
 
+      // Mostrar loading
+      isUploadingImage.value = true;
       formData.value.image = file;
       
       // Comprimir a imagem antes de converter para base64
@@ -983,45 +911,103 @@ export default {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          // Criar canvas para redimensionar
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Redimensionar se for muito grande (máximo 1200px)
-          const maxSize = 1200;
-          if (width > maxSize || height > maxSize) {
-            if (width > height) {
-              height = (height * maxSize) / width;
-              width = maxSize;
-            } else {
-              width = (width * maxSize) / height;
-              height = maxSize;
+          try {
+            // Criar canvas para redimensionar
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // Redimensionar se for muito grande (máximo 1920px para manter qualidade boa)
+            const maxSize = 1920;
+            if (width > maxSize || height > maxSize) {
+              if (width > height) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              } else {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
             }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Aplicar filtros para melhorar a qualidade
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Preencher fundo branco para PNGs com transparência
+            if (file.type === 'image/png') {
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, width, height);
+            }
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Converter para base64 com qualidade otimizada
+            let quality = 0.8; // Qualidade inicial
+            let compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            
+            // Se ainda estiver muito grande, reduzir qualidade gradualmente
+            while (compressedBase64.length > 500000 && quality > 0.3) { // ~500KB limite
+              quality -= 0.1;
+              compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            }
+            
+            // Verificar tamanho final
+            const finalSizeInBytes = (compressedBase64.length * 3) / 4;
+            const finalSizeInMB = finalSizeInBytes / (1024 * 1024);
+            
+            if (finalSizeInMB > 2) { // Limite de 2MB para o base64
+              showNotification('error', 'Imagem Muito Grande', 
+                `A imagem ainda está muito grande (${finalSizeInMB.toFixed(1)}MB). Tente uma imagem menor ou com menor resolução.`);
+              resetImageState();
+              return;
+            }
+            
+            // Sucesso
+            imagePreview.value = compressedBase64;
+            formData.value.imageBase64 = compressedBase64;
+            
+            showNotification('success', 'Imagem Carregada!', 
+              `Imagem processada com sucesso (${finalSizeInMB.toFixed(1)}MB, ${width}x${height}px)`);
+              
+          } catch (error) {
+            console.error('Erro ao processar imagem:', error);
+            showNotification('error', 'Erro no Processamento', 'Erro ao processar a imagem. Tente novamente.');
+            resetImageState();
+          } finally {
+            isUploadingImage.value = false; // Remove loading
           }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Converter para base64 com qualidade reduzida
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          
-          // Verificar tamanho após compressão
-          const sizeInBytes = (compressedBase64.length * 3) / 4;
-          if (sizeInBytes > 10 * 1024 * 1024) { // 10MB após compressão
-            alert('❌ A imagem ainda está muito grande. Tente uma imagem menor.');
-            return;
-          }
-          
-          imagePreview.value = compressedBase64;
-          formData.value.imageBase64 = compressedBase64;
         };
+        
+        img.onerror = () => {
+          showNotification('error', 'Imagem Corrompida', 'Não foi possível carregar a imagem. Arquivo pode estar corrompido.');
+          resetImageState();
+          isUploadingImage.value = false;
+        };
+        
         img.src = e.target.result;
       };
+      
+      reader.onerror = () => {
+        showNotification('error', 'Erro de Leitura', 'Erro ao ler o arquivo. Tente novamente.');
+        resetImageState();
+        isUploadingImage.value = false;
+      };
+      
       reader.readAsDataURL(file);
+    };
+
+    const resetImageState = () => {
+      imagePreview.value = null;
+      formData.value.image = null;
+      formData.value.imageBase64 = '';
+      if (fileInput.value) {
+        fileInput.value.value = '';
+      }
     };
 
     const handleDragOver = () => {
@@ -1041,31 +1027,159 @@ export default {
     };
 
     const removeImage = () => {
-      imagePreview.value = null;
-      formData.value.image = null;
-      formData.value.imageBase64 = ''; // Remove também o base64
-      if (fileInput.value) {
-        fileInput.value.value = '';
+      resetImageState();
+    };
+
+    // Funções de validação de CEP
+    const validateCep = async () => {
+      const cep = formData.value.location.zipCode?.replace(/\D/g, '');
+      
+      if (!cep || cep.length !== 8) {
+        cepError.value = '';
+        cepValidated.value = false;
+        return;
+      }
+
+      isValidatingCep.value = true;
+      cepError.value = '';
+      cepValidated.value = false;
+
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+
+        if (data.erro) {
+          cepError.value = 'CEP não encontrado';
+          cepValidated.value = false;
+        } else {
+          // Preenche automaticamente os campos de endereço
+          formData.value.location.address = data.logradouro || formData.value.location.address;
+          formData.value.location.city = data.localidade || formData.value.location.city;
+          formData.value.location.state = data.uf || formData.value.location.state;
+          
+          cepValidated.value = true;
+          cepError.value = '';
+          
+          showNotification('success', 'CEP Validado!', 
+            `Endereço encontrado: ${data.logradouro ? data.logradouro + ', ' : ''}${data.localidade} - ${data.uf}`);
+        }
+      } catch (error) {
+        console.error('Erro ao validar CEP:', error);
+        cepError.value = 'Erro ao validar CEP. Verifique sua conexão.';
+        cepValidated.value = false;
+      } finally {
+        isValidatingCep.value = false;
       }
     };
 
+    const onCepInput = () => {
+      cepValidated.value = false;
+      cepError.value = '';
+      
+      // Debounce para validação automática
+      if (cepTimeout) {
+        clearTimeout(cepTimeout);
+      }
+      
+      cepTimeout = setTimeout(() => {
+        const cep = formData.value.location.zipCode?.replace(/\D/g, '');
+        if (cep && cep.length === 8) {
+          validateCep();
+        }
+      }, 1000); // Valida automaticamente após 1 segundo de inatividade
+    };
+
     const resetForm = () => {
+      console.log('🔄 Resetando formulário completo');
+      
+      // Reset dos dados do formulário
       formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
-      formData.value.imageBase64 = ''; // Limpa também o base64
-      imagePreview.value = null;
+      formData.value.imageBase64 = '';
+      
+      // Reset da imagem
+      resetImageState();
+      
+      // Reset dos estados
       isDragging.value = false;
       showModal.value = false;
       currentStep.value = 1;
+      
+      // Reset dos equipamentos
       equipmentsList.value = [];
-      showEquipmentForm.value = false;
-      editingEquipmentIndex.value = null;
       searchQuery.value = '';
       filteredEquipments.value = [];
       quantityInputs.value = {};
-      resetEquipmentForm();
+      
+      // Reset da validação de CEP
+      isValidatingCep.value = false;
+      cepValidated.value = false;
+      cepError.value = '';
+      
+      // Clear timeout do CEP se existir
+      if (cepTimeout) {
+        clearTimeout(cepTimeout);
+        cepTimeout = null;
+      }
+      
+      // Reset da paginação
+      currentFeaturedPage.value = 1;
+      
       emit('cancel');
+      console.log('✅ Formulário resetado');
     };
     
+    // Equipamentos carregados do backend
+    const allEquipments = ref([]);
+    
+    // Buscar equipamentos do backend - IGUAL AO MACHINES.VUE
+    const loadAllEquipments = async () => {
+      try {
+        isLoadingEquipments.value = true;
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+        // USAR O INSTRUCTORID CORRETO DO USUÁRIO
+        const instructorId = user.instructorId || user.id || user._id;
+        
+        console.log('🔍 Carregando equipamentos...');
+        console.log('👤 Usuário:', user);
+        console.log('🆔 Instrutor ID:', instructorId);
+        
+        if (!instructorId) {
+          console.warn('Instrutor não identificado');
+          return;
+        }
+        
+        // EXATAMENTE COMO NO MACHINES.VUE
+        const response = await api.get(`/equipments/instructor/${instructorId}`);
+        allEquipments.value = response.data.equipments;
+        console.log('📦 Equipamentos carregados:', allEquipments.value);
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar equipamentos:', error);
+        allEquipments.value = [];
+        showNotification('error', 'Erro', 'Erro ao carregar equipamentos.');
+      } finally {
+        isLoadingEquipments.value = false;
+      }
+    };
+
+    // Função para construir URL completa das imagens
+    const getImageUrl = (imagePath) => {
+      if (!imagePath) return null;
+      
+      // Se já é uma URL completa, retorna como está
+      if (imagePath.startsWith('http')) {
+        return imagePath;
+      }
+      
+      // Se começa com /, constrói URL completa
+      if (imagePath.startsWith('/')) {
+        return `http://localhost:3000${imagePath}`;
+      }
+      
+      // Caso contrário, adiciona o prefixo padrão
+      return `http://localhost:3000/uploads/equipments/${imagePath}`;
+    };
+
     // Funções de Busca de Equipamentos
     const filterEquipments = () => {
       if (!searchQuery.value.trim()) {
@@ -1074,16 +1188,36 @@ export default {
       }
       
       const query = searchQuery.value.toLowerCase().trim();
-      filteredEquipments.value = equipmentsDatabase.filter(eq => 
+      filteredEquipments.value = allEquipments.value.filter(eq => 
         eq.name.toLowerCase().includes(query) ||
-        eq.description.toLowerCase().includes(query) ||
-        eq.category.toLowerCase().includes(query)
+        (eq.description && eq.description.toLowerCase().includes(query)) ||
+        (eq.category && eq.category.toLowerCase().includes(query)) ||
+        (eq.muscleGroups && eq.muscleGroups.some(mg => mg.toLowerCase().includes(query)))
       );
-            
+      
       // Inicializa quantidades para os resultados
       filteredEquipments.value.forEach(eq => {
-        if (!quantityInputs.value[eq.id]) {
-          quantityInputs.value[eq.id] = 1;
+        if (!quantityInputs.value[eq._id]) {
+          quantityInputs.value[eq._id] = 1;
+        }
+      });
+    };
+
+    // Carregar equipamentos em destaque (usa os primeiros equipamentos carregados)
+    const loadFeaturedEquipments = () => {
+      console.log('⭐ Carregando equipamentos em destaque...');
+      console.log('📊 Total de equipamentos disponíveis:', allEquipments.value.length);
+      
+      // Usa os primeiros equipamentos como em destaque (máximo 8)
+      featuredEquipmentsData.value = allEquipments.value.slice(0, 8);
+      console.log('✨ Equipamentos em destaque carregados:', featuredEquipmentsData.value.length);
+      console.log('📋 Lista de equipamentos em destaque:', featuredEquipmentsData.value);
+      
+      // Inicializa quantidades para os equipamentos em destaque
+      featuredEquipmentsData.value.forEach(eq => {
+        const equipmentId = eq._id || eq.id;
+        if (!quantityInputs.value[equipmentId]) {
+          quantityInputs.value[equipmentId] = 1;
         }
       });
     };
@@ -1117,121 +1251,175 @@ export default {
     };
     
     const addEquipmentFromSearch = (equipment) => {
-      const quantity = quantityInputs.value[equipment.id] || 1;
+      const equipmentId = equipment._id || equipment.id;
+      const quantity = quantityInputs.value[equipmentId] || 1;
       
-      equipmentsList.value.push({
-        sourceId: equipment.id, // ID do equipamento da base de dados
-        name: equipment.name,
-        description: equipment.description,
-        quantity: quantity,
-        category: equipment.category,
+      // Validações
+      if (!equipment.name?.trim()) {
+        showNotification('warning', 'Equipamento Inválido', 'Nome do equipamento é obrigatório.');
+        return;
+      }
+      
+      if (quantity < 1 || quantity > 999) {
+        showNotification('warning', 'Quantidade Inválida', 'Quantidade deve estar entre 1 e 999.');
+        return;
+      }
+      
+      // Verifica se já foi adicionado
+      if (isEquipmentAdded(equipmentId)) {
+        showNotification('warning', 'Equipamento Duplicado', 'Este equipamento já foi adicionado.');
+        return;
+      }
+      
+      // Adiciona o equipamento
+      const newEquipment = {
+        sourceId: equipmentId, // ID do equipamento da base de dados
+        name: equipment.name.trim(),
+        description: (equipment.description || '').trim(),
+        quantity: parseInt(quantity),
+        category: equipment.category || 'Geral',
         isCustom: false
-      });
+      };
+      
+      equipmentsList.value.push(newEquipment);
       
       // Reseta a quantidade desse equipamento
-      quantityInputs.value[equipment.id] = 1;
+      quantityInputs.value[equipmentId] = 1;
+      
+      // Feedback de sucesso
+      showNotification('success', 'Equipamento Adicionado!', 
+        `${equipment.name} (${quantity}x) foi adicionado à academia.`);
+      
+      console.log('⚙️ Equipamento adicionado:', newEquipment);
+      console.log('📋 Lista atual de equipamentos:', equipmentsList.value);
     };
+
+    // Funções para gerenciar equipamentos adicionados
+    const removeEquipment = (index) => {
+      if (index >= 0 && index < equipmentsList.value.length) {
+        const removedEquipment = equipmentsList.value[index];
+        equipmentsList.value.splice(index, 1);
+        
+        showNotification('info', 'Equipamento Removido', 
+          `${removedEquipment.name} foi removido da lista.`);
+        
+        console.log('🗑️ Equipamento removido:', removedEquipment);
+      }
+    };
+
+    const updateEquipmentQuantity = (index, newQuantity) => {
+      if (index >= 0 && index < equipmentsList.value.length) {
+        const quantity = parseInt(newQuantity) || 1;
+        if (quantity >= 1 && quantity <= 999) {
+          equipmentsList.value[index].quantity = quantity;
+          console.log(`🔢 Quantidade atualizada: ${equipmentsList.value[index].name} = ${quantity}`);
+        }
+      }
+    };
+
+    const canRemoveEquipments = computed(() => {
+      return equipmentsList.value.length > 0;
+    });
     
     // Navegação entre Etapas
     const goToStep2 = () => {
       // Validação básica
-      if (!formData.value.name || !formData.value.email || !formData.value.phone) {
-        alert('⚠️ Por favor, preencha todos os campos obrigatórios (Nome, Email e Telefone).');
+      if (!formData.value.name?.trim()) {
+        showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
         return;
       }
       
-      if (!formData.value.location.address || !formData.value.location.city || 
-          !formData.value.location.state || !formData.value.location.zipCode) {
-        alert('⚠️ Por favor, preencha todos os campos de endereço.');
+      if (!formData.value.phone?.trim()) {
+        showNotification('warning', 'Campo Obrigatório', 'Telefone é obrigatório.');
+        return;
+      }
+      
+      if (!formData.value.location.address?.trim() || !formData.value.location.city?.trim() || 
+          !formData.value.location.state?.trim() || !formData.value.location.zipCode?.trim()) {
+        showNotification('warning', 'Endereço Incompleto', 'Por favor, preencha todos os campos de endereço.');
         return;
       }
       
       // Validar formato do estado (2 letras)
-      if (formData.value.location.state.length !== 2) {
-        alert('⚠️ Estado deve ter 2 letras (UF).');
+      if (formData.value.location.state.trim().length !== 2) {
+        showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
+        return;
+      }
+      
+      // Validar CEP
+      const cepNumbers = formData.value.location.zipCode.replace(/\D/g, '');
+      if (cepNumbers.length !== 8) {
+        showNotification('warning', 'CEP Inválido', 'CEP deve ter 8 dígitos. Use o formato: 00000-000');
+        return;
+      }
+      
+      // Se CEP não foi validado ainda, tenta validar
+      if (!cepValidated.value && !isValidatingCep.value) {
+        showNotification('info', 'Validando CEP...', 'Verificando o CEP informado...');
+        validateCep().then(() => {
+          if (cepValidated.value) {
+            currentStep.value = 2;
+          }
+        });
+        return;
+      }
+      
+      // Se CEP tem erro, bloqueia
+      if (cepError.value) {
+        showNotification('warning', 'CEP Inválido', 'Por favor, corrija o CEP antes de continuar.');
         return;
       }
       
       currentStep.value = 2;
+      console.log('➡️ Avançando para Etapa 2 - Equipamentos');
     };
     
     const backToStep1 = () => {
       currentStep.value = 1;
     };
-    
-    // Gestão de Equipamentos
-    const openEquipmentForm = () => {
-      showEquipmentForm.value = true;
-      editingEquipmentIndex.value = null;
-      resetEquipmentForm();
-    };
-    
-    const cancelEquipmentForm = () => {
-      showEquipmentForm.value = false;
-      editingEquipmentIndex.value = null;
-      resetEquipmentForm();
-    };
-    
-    const resetEquipmentForm = () => {
-      equipmentForm.value = {
-        name: '',
-        quantity: 1,
-        description: ''
-      };
-    };
-    
-    const saveEquipment = () => {
-      if (!equipmentForm.value.name || !equipmentForm.value.quantity) {
-        alert('⚠️ Por favor, preencha o nome e quantidade do equipamento.');
-        return;
-      }
-      
-      if (editingEquipmentIndex.value !== null) {
-        // Editando equipamento existente
-        equipmentsList.value[editingEquipmentIndex.value] = { 
-          ...equipmentsList.value[editingEquipmentIndex.value],
-          ...equipmentForm.value 
-        };
-      } else {
-        // Adicionando novo equipamento personalizado
-        equipmentsList.value.push({ 
-          ...equipmentForm.value,
-          isCustom: true // Marca como personalizado
-        });
-      }
-      
-      cancelEquipmentForm();
-    };
-    
-    const editEquipment = (index) => {
-      editingEquipmentIndex.value = index;
-      equipmentForm.value = { ...equipmentsList.value[index] };
-      showEquipmentForm.value = true;
-    };
-    
-    const removeEquipment = (index) => {
-      if (confirm('⚠️ Tem certeza que deseja remover este equipamento?')) {
-        equipmentsList.value.splice(index, 1);
-      }
-    };
 
     const handleSubmit = async () => {
       try {
-        // Validações básicas da etapa 1 (caso volte e altere)
-        if (!formData.value.name || !formData.value.phone || 
-            !formData.value.location.address || !formData.value.location.city || 
-            !formData.value.location.state || !formData.value.location.zipCode) {
-          alert('⚠️ Por favor, preencha todos os campos obrigatórios.');
+        console.log('📤 Iniciando submissão do formulário');
+        
+        // Validações básicas da etapa 1
+        if (!formData.value.name?.trim()) {
+          showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
+          currentStep.value = 1;
+          return;
+        }
+        
+        if (!formData.value.phone?.trim()) {
+          showNotification('warning', 'Campo Obrigatório', 'Telefone é obrigatório.');
+          currentStep.value = 1;
+          return;
+        }
+        
+        if (!formData.value.location.address?.trim() || 
+            !formData.value.location.city?.trim() || 
+            !formData.value.location.state?.trim() || 
+            !formData.value.location.zipCode?.trim()) {
+          showNotification('warning', 'Endereço Incompleto', 'Por favor, preencha todos os campos de endereço.');
+          currentStep.value = 1;
           return;
         }
         
         // Validar formato do estado (2 letras)
-        if (formData.value.location.state.length !== 2) {
-          alert('⚠️ Estado deve ter 2 letras (UF).');
+        if (formData.value.location.state.trim().length !== 2) {
+          showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
+          currentStep.value = 1;
           return;
         }
 
-        // Criamos o objeto de dados estruturado
+        // Validar CEP (deve ter 8 dígitos)
+        const cepNumbers = formData.value.location.zipCode.replace(/\D/g, '');
+        if (cepNumbers.length !== 8) {
+          showNotification('warning', 'CEP Inválido', 'CEP deve ter 8 dígitos.');
+          currentStep.value = 1;
+          return;
+        }
+
+        // Prepara os dados da academia
         const gymData = {
           name: formData.value.name.trim(),
           description: (formData.value.description || '').trim(),
@@ -1242,24 +1430,66 @@ export default {
             city: formData.value.location.city.trim(),
             state: formData.value.location.state.trim().toUpperCase(),
             zipCode: formData.value.location.zipCode.trim()
-          },
-          equipments: equipmentsList.value // Adiciona os equipamentos
+          }
         };
 
-        // Se houver imagem base64, adiciona ao payload
+        // Adiciona imagem se houver
         if (formData.value.imageBase64) {
           gymData.imageBase64 = formData.value.imageBase64;
-        }
-        // Se houver imagem (fallback para compatibilidade)
-        else if (formData.value.image) {
+          console.log('🖼️ Imagem base64 adicionada ao payload');
+        } else if (formData.value.image) {
+          // Fallback para compatibilidade
           gymData.image = formData.value.image;
+          console.log('🖼️ Imagem file adicionada ao payload');
         }
-        
+
+        // Processa e valida equipamentos
+        if (equipmentsList.value && equipmentsList.value.length > 0) {
+          gymData.equipments = equipmentsList.value.map(eq => {
+            const equipment = {
+              name: eq.name?.trim() || '',
+              description: eq.description?.trim() || '',
+              quantity: parseInt(eq.quantity) || 1,
+              category: eq.category?.trim() || 'Geral',
+              isCustom: Boolean(eq.isCustom)
+            };
+
+            // Se não é customizado, inclui o sourceId
+            if (!eq.isCustom && eq.sourceId) {
+              equipment.sourceId = eq.sourceId;
+            }
+
+            return equipment;
+          }).filter(eq => eq.name); // Remove equipamentos sem nome
+
+          console.log(`⚙️ ${gymData.equipments.length} equipamentos processados:`, gymData.equipments);
+        } else {
+          gymData.equipments = [];
+          console.log('⚙️ Nenhum equipamento para salvar');
+        }
+
+        // Log dos dados finais
+        console.log('📋 Dados finais para envio:', {
+          ...gymData,
+          imageBase64: gymData.imageBase64 ? `[BASE64 - ${(gymData.imageBase64.length / 1024).toFixed(1)}KB]` : null
+        });
+
+        // Emite os dados para o componente pai
         emit('submit', { data: gymData });
-        resetForm();
+        
+        // Feedback de sucesso
+        showNotification('success', 'Dados Preparados!', 
+          `Academia "${gymData.name}" está pronta para ${editMode.value ? 'atualização' : 'criação'}.`);
+        
+        // Reset após sucesso
+        setTimeout(() => {
+          resetForm();
+        }, 1500);
+        
       } catch (error) {
-        console.error('Erro ao preparar dados do formulário:', error);
-        alert(`❌ Erro: ${error.message}`);
+        console.error('❌ Erro ao preparar dados do formulário:', error);
+        showNotification('error', 'Erro no Formulário!', 
+          `Erro ao processar dados: ${error.message || 'Erro desconhecido'}`);
       }
     };
 
@@ -1268,18 +1498,28 @@ export default {
       showModal.value = newVal;
     });
     
-    // Watch para mudanças no searchQuery
+    // Watch para mudanças no searchQuery com debounce
+    let searchTimeout;
     watch(searchQuery, () => {
-      filterEquipments();
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        filterEquipments();
+      }, 300); // Debounce de 300ms
     });
 
     // Watch para mudanças no prop gym
     watch(() => props.gym, (newVal) => {
+      console.log('🏢 Academia recebida para edição:', newVal);
+      
       if (newVal) {
+        // Reset dos estados de validação
+        cepValidated.value = false;
+        cepError.value = '';
+        
         formData.value = {
           name: newVal.name || '',
           description: newVal.description || '',
-          image: newVal.image || null,
+          image: null, // Sempre null para evitar conflitos
           imageBase64: '', // Limpa o base64 ao carregar academia existente
           location: {
             address: newVal.location?.address || '',
@@ -1290,22 +1530,87 @@ export default {
           phone: newVal.phone || '',
           email: newVal.email || '',
         };
-        // Se a academia tem imagem, converte o caminho para URL completa
+        
+        // Carrega a imagem existente
         if (newVal.image) {
-          imagePreview.value = `http://localhost:3000${newVal.image}`;
+          // Se é um caminho de imagem do servidor
+          if (typeof newVal.image === 'string') {
+            // Constroi URL completa se necessário
+            const imageUrl = newVal.image.startsWith('http') 
+              ? newVal.image 
+              : newVal.image.startsWith('/') 
+                ? `http://localhost:3000${newVal.image}`
+                : `http://localhost:3000/uploads/gyms/${newVal.image}`;
+            
+            imagePreview.value = imageUrl;
+            console.log('🖼️ Imagem carregada:', imageUrl);
+          }
+        } else if (newVal.imageUrl) {
+          // Fallback para imageUrl
+          imagePreview.value = newVal.imageUrl;
+          console.log('🖼️ ImageUrl carregada:', newVal.imageUrl);
         } else {
-          imagePreview.value = newVal.imageUrl || null;
+          imagePreview.value = null;
+          console.log('📷 Nenhuma imagem encontrada');
         }
-        equipmentsList.value = newVal.equipments || [];
+        
+        // Carrega equipamentos se existirem
+        if (newVal.equipments && Array.isArray(newVal.equipments)) {
+          equipmentsList.value = newVal.equipments.map(eq => ({
+            sourceId: eq.sourceId || eq._id || eq.id,
+            name: eq.name || '',
+            description: eq.description || '',
+            quantity: eq.quantity || 1,
+            category: eq.category || 'Geral',
+            isCustom: eq.isCustom || false
+          }));
+          console.log('⚙️ Equipamentos carregados:', equipmentsList.value.length);
+        } else {
+          equipmentsList.value = [];
+          console.log('⚙️ Nenhum equipamento encontrado');
+        }
+        
+        // Se tem CEP válido, marca como validado
+        if (formData.value.location.zipCode && formData.value.location.zipCode.length >= 8) {
+          cepValidated.value = true;
+        }
+        
+        console.log('✅ Dados da academia carregados com sucesso');
       } else {
+        // Reset completo quando não há academia
+        console.log('🔄 Resetando formulário');
         formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
         imagePreview.value = null;
         equipmentsList.value = [];
+        cepValidated.value = false;
+        cepError.value = '';
       }
     }, { immediate: true, deep: true });
 
+    // Inicialização dos equipamentos
+    const initializeEquipments = async () => {
+      await loadAllEquipments();
+      loadFeaturedEquipments();
+    };
+
+    // Inicializar equipamentos quando o componente for montado
+    onMounted(() => {
+      initializeEquipments();
+    });
+
+    // Reinicializar quando o modal for aberto
+    watch(() => props.show, (newVal) => {
+      if (newVal) {
+        initializeEquipments();
+      }
+    });
+
     return {
       isDarkMode,
+      notification,
+      showNotification,
+      showConfirmation,
+      confirmationConfig,
       fileInput,
       imagePreview,
       isDragging,
@@ -1315,9 +1620,6 @@ export default {
       getStepSubtitle,
       currentStep,
       equipmentsList,
-      showEquipmentForm,
-      editingEquipmentIndex,
-      equipmentForm,
       searchQuery,
       filteredEquipments,
       featuredEquipments,
@@ -1325,28 +1627,41 @@ export default {
       totalFeaturedPages,
       paginatedFeaturedEquipments,
       popularSearchTerms,
+      allEquipments,
+      // Validação de CEP
+      isValidatingCep,
+      cepValidated,
+      cepError,
+      validateCep,
+      onCepInput,
+      // Upload de imagem
+      isUploadingImage,
+      // Funções existentes
+      loadAllEquipments,
+      getImageUrl,
       triggerFileInput,
       handleFileSelect,
       handleDragOver,
       handleDragLeave,
       handleDrop,
       removeImage,
+      resetImageState,
       resetForm,
       goToStep2,
       backToStep1,
-      openEquipmentForm,
-      cancelEquipmentForm,
-      saveEquipment,
-      editEquipment,
-      removeEquipment,
       filterEquipments,
       clearSearch,
+      loadFeaturedEquipments,
       isEquipmentAdded,
       getEquipmentQuantityInput,
       updateQuantityInput,
       incrementQuantity,
       decrementQuantity,
       addEquipmentFromSearch,
+      removeEquipment,
+      updateEquipmentQuantity,
+      canRemoveEquipments,
+      isLoadingEquipments,
       handleSubmit,
     };
   },
@@ -1929,6 +2244,46 @@ export default {
     0 0 0 15px rgba(59, 130, 246, 0.08);
 }
 
+/* Loading state para upload */
+.upload-area-modern.uploading {
+  cursor: not-allowed;
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(251, 191, 36, 0.05) 100%);
+}
+
+.upload-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  z-index: 3;
+  position: relative;
+}
+
+.loading-spinner {
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  text-align: center;
+}
+
+.loading-text h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.loading-text p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 .upload-content-modern {
   position: relative;
   z-index: 3;
@@ -2251,6 +2606,70 @@ export default {
 /* Hidden file input */
 .file-input {
   display: none;
+}
+
+/* Validação de CEP */
+.cep-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cep-loading {
+  font-size: 0.875rem;
+  color: #f59e0b;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.form-input.cep-loading {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.form-input.cep-valid {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.cep-spinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.cep-check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.cep-error {
+  font-size: 0.875rem;
+  color: #ef4444;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cep-error::before {
+  content: '⚠️';
+  font-size: 14px;
 }
 
 /* Modal Actions */
@@ -2825,7 +3244,9 @@ export default {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  min-height: 580px;
+  height: 600px;
+  min-height: 600px;
+  max-height: 600px;
 }
 
 .exercise-card-featured:hover {
@@ -2981,6 +3402,8 @@ export default {
   display: flex;
   flex-direction: column;
   flex: 1;
+  height: 100%;
+  justify-content: space-between;
 }
 
 .exercise-card-featured .info-top {
@@ -3059,7 +3482,13 @@ export default {
   padding: 0;
   line-height: 1.4;
   margin-bottom: 12px;
-   text-align: left;
+  text-align: left;
+  height: 40px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .exercise-card-featured .description {
@@ -3069,9 +3498,10 @@ export default {
   padding: 0;
   line-height: 1.4;
   margin-bottom: 20px;
+  height: 60px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -3083,6 +3513,10 @@ export default {
   margin-bottom: 20px;
   border: none;
   box-shadow: none;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .exercise-card-featured .quantity-label {
@@ -3115,9 +3549,11 @@ export default {
   align-items: center;
   justify-content: space-between;
   background-color: #f9fafb;
-  padding: 2px 16px;
+  padding: 8px 16px;
   border-radius: 12px;
   max-width: 100%;
+  height: 48px;
+  min-height: 48px;
 }
 
 .dashboard-dark .exercise-card-featured .quantity-control {
@@ -3171,6 +3607,7 @@ export default {
 
 .exercise-card-featured .btn-adicionar {
   width: 100%;
+  height: 48px;
   padding: 14px 20px;
   background-color: #2563eb;
   color: white;
@@ -3181,6 +3618,10 @@ export default {
   cursor: pointer;
   transition: all 0.3s;
   letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
 }
 
 .exercise-card-featured .btn-adicionar:hover {

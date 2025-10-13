@@ -414,6 +414,14 @@
       @save="saveNewExercise"
     />
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script>
@@ -422,12 +430,14 @@ import ExerciseModal from "@/components/ExerciseModal.vue";
 import EditExerciseModal from "@/components/EditExerciseModal.vue";
 import CategoryFilter from "@/components/CategoryFilter.vue";
 import { useThemeStore } from "@/store/theme";
+import NotificationModal from '@/components/NotificationModal.vue';
 import { storeToRefs } from "pinia";
 import api from "@/api";
 
 export default {
   name: "ExercisesPage",
-  components: { 
+  components: {
+    NotificationModal, 
     DashboardNavBar,
     ExerciseModal,
     EditExerciseModal,
@@ -440,6 +450,7 @@ export default {
   },
   data() {
     return {
+      notification: { visible: false, type: 'info', title: '', message: '' },
       searchQuery: '',
       activeCategory: 'todos',
       imageError: {},
@@ -544,6 +555,14 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    showNotification(type, title, message) {
+      this.notification = {
+        visible: true,
+        type: type,
+        title: title,
+        message: message
+      };
+    },
     async fetchInstructorId() {
       try {
         let userId = localStorage.getItem('userId');
@@ -650,7 +669,7 @@ export default {
         this.applyFilters();
       } catch (error) {
         console.error('❌ Erro ao deletar exercício:', error);
-        alert('Erro ao excluir exercício');
+        this.showNotification('error', 'Erro', 'Erro ao excluir exercício');
       }
     },
 
@@ -696,7 +715,7 @@ export default {
         console.log('🔄 Exercícios após atualização:', this.exercises.length);
       } catch (error) {
         console.error('❌ Erro ao atualizar exercício:', error);
-        alert('Erro ao salvar exercício');
+        this.showNotification('error', 'Erro', 'Erro ao salvar exercício');
       }
     },
 
@@ -817,7 +836,7 @@ export default {
     nextStep() {
       if (this.currentStep === 1) {
         if (!this.newExercise.name || !this.newExercise.howToPerform) {
-          alert('Nome e instruções de execução são obrigatórios');
+          this.showNotification('info', 'Informacao', 'Nome e instruções de execução são obrigatórios');
           return;
         }
       }
@@ -875,11 +894,11 @@ export default {
         this.closeCreateModal();
         this.applyFilters();
         
-        alert('Exercício criado com sucesso!');
+        this.showNotification('success', 'Sucesso', 'Exercício criado com sucesso!');
       } catch (error) {
         console.error('❌ Erro ao criar exercício:', error);
         console.error('❌ Detalhes:', error.response?.data);
-        alert('Erro ao criar exercício: ' + (error.response?.data?.message || error.message));
+        this.showNotification('error', 'Erro', 'Erro ao criar exercício: ' + (error.response?.data?.message || error.message));
       }
     },
 
@@ -940,13 +959,13 @@ export default {
     processCreateFile(file) {
       // Valida o tamanho do arquivo (10MB)
       if (file.size > 10 * 1024 * 1024) {
-        alert('A imagem deve ter no máximo 10MB');
+        this.showNotification('warning', 'Atencao', 'A imagem deve ter no máximo 10MB');
         return;
       }
 
       // Valida o tipo do arquivo
       if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecione apenas arquivos de imagem');
+        this.showNotification('warning', 'Atencao', 'Por favor, selecione apenas arquivos de imagem');
         return;
       }
 
@@ -4464,3 +4483,4 @@ body:has(.navbar-collapsed) .floating-header,
   }
 }
 </style>
+

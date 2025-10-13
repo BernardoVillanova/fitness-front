@@ -1,4 +1,10 @@
 <template>
+  <NotificationModal 
+    v-model:visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+  />
   <div class="modal-overlay" @click.self="close">
     <div :class="['modal-container', { 'dark-mode': isDarkMode }]">
       <div class="modal-header">
@@ -134,11 +140,29 @@ import { ref, onMounted, defineEmits } from 'vue'
 import { useThemeStore } from '@/store/theme'
 import { storeToRefs } from 'pinia'
 import api from '@/api'
+import NotificationModal from './NotificationModal.vue'
 
 const emit = defineEmits(['close', 'linked'])
 
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
+
+// Notification state
+const notification = ref({
+  visible: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
+
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type,
+    title,
+    message
+  }
+}
 
 // State
 const searchQuery = ref('')
@@ -217,7 +241,7 @@ const linkStudent = async () => {
     )
     
     if (!currentInstructor) {
-      alert('Instrutor não encontrado')
+      showNotification('error', 'Erro', 'Instrutor não encontrado')
       return
     }
 
@@ -234,7 +258,7 @@ const linkStudent = async () => {
     close()
   } catch (error) {
     console.error('Erro ao vincular aluno:', error)
-    alert(error.response?.data?.message || 'Erro ao vincular aluno')
+    showNotification('error', 'Erro ao Vincular', error.response?.data?.message || 'Erro ao vincular aluno')
   } finally {
     isLinking.value = false
   }

@@ -44,6 +44,11 @@ export const createGym = (gymData) => api.post("/gyms", gymData);
 export const updateGym = (id, gymData) => api.put(`/gyms/${id}`, gymData);
 export const deleteGym = (id) => api.delete(`/gyms/${id}`);
 
+// Gerenciamento de Alunos nas Academias
+export const addStudentToGym = (gymId, studentData) => api.post(`/gyms/${gymId}/students`, studentData);
+export const removeStudentFromGym = (gymId, studentId) => api.delete(`/gyms/${gymId}/students/${studentId}`);
+export const getGymStudents = (gymId) => api.get(`/gyms/${gymId}/students`);
+
 // API de Alunos
 export const getStudents = (params = {}) => api.get("/students", { params });
 export const getStudentById = (id) => api.get(`/students/${id}`);

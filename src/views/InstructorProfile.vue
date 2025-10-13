@@ -1,4 +1,4 @@
-<!-- eslint-disable vue/multi-word-component-names -->
+﻿<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div :class="['instructor-profile', { 'dark-mode': isDarkMode }]">
     <DashboardNavBar />
@@ -173,10 +173,19 @@
       </div>
     </div>
   </div>
+
+    <!-- Notification Modal -->
+    <NotificationModal
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import NotificationModal from '@/components/NotificationModal.vue';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import DashboardNavBar from '@/components/DashboardNavBar.vue';
@@ -185,6 +194,7 @@ import api from '@/api';
 const themeStore = useThemeStore();
 const { isDarkMode } = storeToRefs(themeStore);
 
+const notification = ref({ visible: false, type: 'info', title: '', message: '' });
 const loading = ref(false);
 const saving = ref(false);
 const instructorId = ref(null);
@@ -210,7 +220,7 @@ const fetchProfile = async () => {
   try {
     const storedUser = sessionStorage.getItem('user');
     if (!storedUser) {
-      alert('Usuário não encontrado. Faça login novamente.');
+      showNotification('info', 'Informacao', 'Usuário não encontrado. Faça login novamente.');
       return;
     }
 
@@ -264,7 +274,7 @@ const fetchProfile = async () => {
     
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
-    alert('Erro ao carregar perfil. Tente novamente.');
+    showNotification('error', 'Erro', 'Erro ao carregar perfil. Tente novamente.');
   } finally {
     loading.value = false;
   }
@@ -303,7 +313,7 @@ const saveProfile = async () => {
         }
       } catch (avatarError) {
         console.error('Erro ao fazer upload do avatar:', avatarError);
-        alert('❌ Erro ao salvar a foto de perfil. Outras alterações serão salvas.');
+        showNotification('info', 'Informacao', '❌ Erro ao salvar a foto de perfil. Outras alterações serão salvas.');
       }
       
       // Limpar arquivo pendente após upload
@@ -331,13 +341,23 @@ const saveProfile = async () => {
     userData.email = instructorData.email;
     sessionStorage.setItem('user', JSON.stringify(userData));
 
-    alert('✅ Perfil atualizado com sucesso!');
+    showNotification('success', 'Sucesso', '✅ Perfil atualizado com sucesso!');
   } catch (error) {
     console.error('Erro ao salvar perfil:', error);
-    alert('❌ Erro ao salvar perfil. Tente novamente.');
+    showNotification('info', 'Informacao', '❌ Erro ao salvar perfil. Tente novamente.');
   } finally {
     saving.value = false;
   }
+};
+
+// Função para mostrar notificações
+const showNotification = (type, title, message) => {
+  notification.value = {
+    visible: true,
+    type: type,
+    title: title,
+    message: message
+  };
 };
 
 // Handle avatar upload - apenas preview, não salva ainda
@@ -347,13 +367,13 @@ const handleAvatarUpload = (event) => {
 
   // Validação
   if (file.size > 5 * 1024 * 1024) {
-    alert('❌ Arquivo muito grande! Tamanho máximo: 5MB');
+    showNotification('info', 'Informacao', '❌ Arquivo muito grande! Tamanho máximo: 5MB');
     event.target.value = '';
     return;
   }
 
   if (!file.type.startsWith('image/')) {
-    alert('❌ Por favor, selecione uma imagem válida');
+    showNotification('warning', 'Atencao', '❌ Por favor, selecione uma imagem válida');
     event.target.value = '';
     return;
   }
@@ -954,3 +974,4 @@ textarea::placeholder {
   }
 }
 </style>
+

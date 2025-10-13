@@ -1,5 +1,12 @@
 <template>
   <div class="container">
+    <NotificationModal 
+      v-model:visible="notification.visible"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+    />
+    
     <aside class="sidebar">
       <h2 class="sidebar-title">Cadastro de Aluno</h2>
       <ul class="sidebar-steps">
@@ -198,9 +205,33 @@
 
 <script>
 import axios from 'axios';
+import NotificationModal from '@/components/NotificationModal.vue';
+import { ref } from 'vue';
 
 export default {
   name: 'StudentRegister',
+  components: {
+    NotificationModal
+  },
+  setup() {
+    const notification = ref({
+      visible: false,
+      type: 'info',
+      title: '',
+      message: ''
+    });
+
+    const showNotification = (type, title, message) => {
+      notification.value = {
+        visible: true,
+        type,
+        title,
+        message
+      };
+    };
+
+    return { notification, showNotification };
+  },
   data() {
     return {
       step: 1,
@@ -296,7 +327,7 @@ export default {
         try {
           const userId = this.$route.query.userId;
           if (!userId) {
-            alert('ID do usuário não encontrado.');
+            this.showNotification('error', 'Erro!', 'ID do usuário não encontrado.');
             return;
           }
 
@@ -394,7 +425,7 @@ export default {
           }, 2000);
         } catch (err) {
           console.error('❌ Erro ao cadastrar:', err.response?.data || err);
-          alert(`Erro ao cadastrar aluno: ${err.response?.data?.message || err.message}`);
+          this.showNotification('error', 'Erro ao Cadastrar', `Erro ao cadastrar aluno: ${err.response?.data?.message || err.message}`);
         } finally {
           this.isSubmitting = false;
         }
@@ -408,22 +439,22 @@ export default {
       const { currentHeight, currentWeight, trainingExperience, address } = this.form.personalInfo;
       
       if (!name || !email || !cpf || !phone || !birthDate) {
-        alert('Preencha todos os campos obrigatórios marcados com *');
+        this.showNotification('warning', 'Campos Obrigatórios', 'Preencha todos os campos obrigatórios marcados com *');
         return false;
       }
       
       if (!currentHeight || !currentWeight || !trainingExperience) {
-        alert('Preencha altura, peso e experiência de treino');
+        this.showNotification('warning', 'Informações Faltando', 'Preencha altura, peso e experiência de treino');
         return false;
       }
       
       if (!address.cep || !address.street || !address.number) {
-        alert('Preencha o endereço completo');
+        this.showNotification('warning', 'Endereço Incompleto', 'Preencha o endereço completo');
         return false;
       }
       
       if (this.cepError) {
-        alert('CEP inválido');
+        this.showNotification('error', 'CEP Inválido', 'CEP inválido');
         return false;
       }
       
