@@ -186,15 +186,35 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
                   CEP
+                  <span v-if="isValidatingCep" class="cep-loading">Validando...</span>
                 </label>
-                <input 
-                  v-model="formData.location.zipCode" 
-                  type="text" 
-                  class="form-input"
-                  placeholder="00000-000"
-                  v-mask="'#####-###'"
-                  required
-                />
+                <div class="cep-input-container">
+                  <input 
+                    v-model="formData.location.zipCode" 
+                    type="text" 
+                    class="form-input"
+                    :class="{ 'cep-loading': isValidatingCep, 'cep-valid': cepValidated }"
+                    placeholder="00000-000"
+                    v-mask="'#####-###'"
+                    @blur="validateCep"
+                    @input="onCepInput"
+                    required
+                  />
+                  <div v-if="isValidatingCep" class="cep-spinner">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" values="0 12 12;360 12 12"/>
+                      </path>
+                    </svg>
+                  </div>
+                  <div v-else-if="cepValidated" class="cep-check">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div v-if="cepError" class="cep-error">{{ cepError }}</div>
               </div>
 
               <!-- Telefone e Email -->
@@ -257,7 +277,7 @@
                 <div 
                   v-else
                   class="upload-area-modern upload-dashed"
-                  :class="{ 'drag-over': isDragging }"
+                  :class="{ 'drag-over': isDragging, 'uploading': isUploadingImage }"
                   @dragover.prevent="handleDragOver"
                   @dragleave.prevent="handleDragLeave"
                   @drop.prevent="handleDrop"
@@ -273,9 +293,10 @@
                     class="file-input"
                     @change="handleFileSelect"
                     style="display: none;"
+                    :disabled="isUploadingImage"
                   />
                   
-                  <div class="upload-content-modern">
+                  <div class="upload-content-modern" v-if="!isUploadingImage">
                     <!-- Ícone Animado -->
                     <div class="upload-icon-container">
                       <div class="icon-circle-outer">
@@ -316,6 +337,22 @@
                       <span class="format-badge">PNG</span>
                       <span class="format-badge">JPG</span>
                       <span class="format-badge">WEBP</span>
+                    </div>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div class="upload-loading-state" v-else>
+                    <div class="loading-spinner">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" values="0 12 12;360 12 12"/>
+                        </path>
+                      </svg>
+                    </div>
+                    <div class="loading-text">
+                      <h4>Processando Imagem...</h4>
+                      <p>Comprimindo e otimizando a imagem</p>
                     </div>
                   </div>
                 </div>
@@ -778,6 +815,15 @@ export default {
     const featuredEquipmentsData = ref([]);
     const isLoadingEquipments = ref(false);
 
+    // Validação de CEP
+    const isValidatingCep = ref(false);
+    const cepValidated = ref(false);
+    const cepError = ref('');
+    let cepTimeout = null;
+
+    // Upload de imagem
+    const isUploadingImage = ref(false);
+
     // Aparelhos em destaque (mais populares)
     const featuredEquipments = computed(() => {
       console.log('🔢 Computed featuredEquipments chamado, valor:', featuredEquipmentsData.value);
@@ -856,6 +902,8 @@ export default {
         return;
       }
 
+      // Mostrar loading
+      isUploadingImage.value = true;
       formData.value.image = file;
       
       // Comprimir a imagem antes de converter para base64
@@ -863,45 +911,103 @@ export default {
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          // Criar canvas para redimensionar
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Redimensionar se for muito grande (máximo 1200px)
-          const maxSize = 1200;
-          if (width > maxSize || height > maxSize) {
-            if (width > height) {
-              height = (height * maxSize) / width;
-              width = maxSize;
-            } else {
-              width = (width * maxSize) / height;
-              height = maxSize;
+          try {
+            // Criar canvas para redimensionar
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // Redimensionar se for muito grande (máximo 1920px para manter qualidade boa)
+            const maxSize = 1920;
+            if (width > maxSize || height > maxSize) {
+              if (width > height) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              } else {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
             }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Aplicar filtros para melhorar a qualidade
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Preencher fundo branco para PNGs com transparência
+            if (file.type === 'image/png') {
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, width, height);
+            }
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Converter para base64 com qualidade otimizada
+            let quality = 0.8; // Qualidade inicial
+            let compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            
+            // Se ainda estiver muito grande, reduzir qualidade gradualmente
+            while (compressedBase64.length > 500000 && quality > 0.3) { // ~500KB limite
+              quality -= 0.1;
+              compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            }
+            
+            // Verificar tamanho final
+            const finalSizeInBytes = (compressedBase64.length * 3) / 4;
+            const finalSizeInMB = finalSizeInBytes / (1024 * 1024);
+            
+            if (finalSizeInMB > 2) { // Limite de 2MB para o base64
+              showNotification('error', 'Imagem Muito Grande', 
+                `A imagem ainda está muito grande (${finalSizeInMB.toFixed(1)}MB). Tente uma imagem menor ou com menor resolução.`);
+              resetImageState();
+              return;
+            }
+            
+            // Sucesso
+            imagePreview.value = compressedBase64;
+            formData.value.imageBase64 = compressedBase64;
+            
+            showNotification('success', 'Imagem Carregada!', 
+              `Imagem processada com sucesso (${finalSizeInMB.toFixed(1)}MB, ${width}x${height}px)`);
+              
+          } catch (error) {
+            console.error('Erro ao processar imagem:', error);
+            showNotification('error', 'Erro no Processamento', 'Erro ao processar a imagem. Tente novamente.');
+            resetImageState();
+          } finally {
+            isUploadingImage.value = false; // Remove loading
           }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Converter para base64 com qualidade reduzida
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          
-          // Verificar tamanho após compressão
-          const sizeInBytes = (compressedBase64.length * 3) / 4;
-          if (sizeInBytes > 10 * 1024 * 1024) { // 10MB após compressão
-            showNotification('error', 'Imagem Muito Grande', 'A imagem ainda está muito grande. Tente uma imagem menor.');
-            return;
-          }
-          
-          imagePreview.value = compressedBase64;
-          formData.value.imageBase64 = compressedBase64;
         };
+        
+        img.onerror = () => {
+          showNotification('error', 'Imagem Corrompida', 'Não foi possível carregar a imagem. Arquivo pode estar corrompido.');
+          resetImageState();
+          isUploadingImage.value = false;
+        };
+        
         img.src = e.target.result;
       };
+      
+      reader.onerror = () => {
+        showNotification('error', 'Erro de Leitura', 'Erro ao ler o arquivo. Tente novamente.');
+        resetImageState();
+        isUploadingImage.value = false;
+      };
+      
       reader.readAsDataURL(file);
+    };
+
+    const resetImageState = () => {
+      imagePreview.value = null;
+      formData.value.image = null;
+      formData.value.imageBase64 = '';
+      if (fileInput.value) {
+        fileInput.value.value = '';
+      }
     };
 
     const handleDragOver = () => {
@@ -921,26 +1027,105 @@ export default {
     };
 
     const removeImage = () => {
-      imagePreview.value = null;
-      formData.value.image = null;
-      formData.value.imageBase64 = ''; // Remove também o base64
-      if (fileInput.value) {
-        fileInput.value.value = '';
+      resetImageState();
+    };
+
+    // Funções de validação de CEP
+    const validateCep = async () => {
+      const cep = formData.value.location.zipCode?.replace(/\D/g, '');
+      
+      if (!cep || cep.length !== 8) {
+        cepError.value = '';
+        cepValidated.value = false;
+        return;
+      }
+
+      isValidatingCep.value = true;
+      cepError.value = '';
+      cepValidated.value = false;
+
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+
+        if (data.erro) {
+          cepError.value = 'CEP não encontrado';
+          cepValidated.value = false;
+        } else {
+          // Preenche automaticamente os campos de endereço
+          formData.value.location.address = data.logradouro || formData.value.location.address;
+          formData.value.location.city = data.localidade || formData.value.location.city;
+          formData.value.location.state = data.uf || formData.value.location.state;
+          
+          cepValidated.value = true;
+          cepError.value = '';
+          
+          showNotification('success', 'CEP Validado!', 
+            `Endereço encontrado: ${data.logradouro ? data.logradouro + ', ' : ''}${data.localidade} - ${data.uf}`);
+        }
+      } catch (error) {
+        console.error('Erro ao validar CEP:', error);
+        cepError.value = 'Erro ao validar CEP. Verifique sua conexão.';
+        cepValidated.value = false;
+      } finally {
+        isValidatingCep.value = false;
       }
     };
 
+    const onCepInput = () => {
+      cepValidated.value = false;
+      cepError.value = '';
+      
+      // Debounce para validação automática
+      if (cepTimeout) {
+        clearTimeout(cepTimeout);
+      }
+      
+      cepTimeout = setTimeout(() => {
+        const cep = formData.value.location.zipCode?.replace(/\D/g, '');
+        if (cep && cep.length === 8) {
+          validateCep();
+        }
+      }, 1000); // Valida automaticamente após 1 segundo de inatividade
+    };
+
     const resetForm = () => {
+      console.log('🔄 Resetando formulário completo');
+      
+      // Reset dos dados do formulário
       formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
-      formData.value.imageBase64 = ''; // Limpa também o base64
-      imagePreview.value = null;
+      formData.value.imageBase64 = '';
+      
+      // Reset da imagem
+      resetImageState();
+      
+      // Reset dos estados
       isDragging.value = false;
       showModal.value = false;
       currentStep.value = 1;
+      
+      // Reset dos equipamentos
       equipmentsList.value = [];
       searchQuery.value = '';
       filteredEquipments.value = [];
       quantityInputs.value = {};
+      
+      // Reset da validação de CEP
+      isValidatingCep.value = false;
+      cepValidated.value = false;
+      cepError.value = '';
+      
+      // Clear timeout do CEP se existir
+      if (cepTimeout) {
+        clearTimeout(cepTimeout);
+        cepTimeout = null;
+      }
+      
+      // Reset da paginação
+      currentFeaturedPage.value = 1;
+      
       emit('cancel');
+      console.log('✅ Formulário resetado');
     };
     
     // Equipamentos carregados do backend
@@ -1069,45 +1254,124 @@ export default {
       const equipmentId = equipment._id || equipment.id;
       const quantity = quantityInputs.value[equipmentId] || 1;
       
-      equipmentsList.value.push({
+      // Validações
+      if (!equipment.name?.trim()) {
+        showNotification('warning', 'Equipamento Inválido', 'Nome do equipamento é obrigatório.');
+        return;
+      }
+      
+      if (quantity < 1 || quantity > 999) {
+        showNotification('warning', 'Quantidade Inválida', 'Quantidade deve estar entre 1 e 999.');
+        return;
+      }
+      
+      // Verifica se já foi adicionado
+      if (isEquipmentAdded(equipmentId)) {
+        showNotification('warning', 'Equipamento Duplicado', 'Este equipamento já foi adicionado.');
+        return;
+      }
+      
+      // Adiciona o equipamento
+      const newEquipment = {
         sourceId: equipmentId, // ID do equipamento da base de dados
-        name: equipment.name,
-        description: equipment.description || '',
-        quantity: quantity,
-        category: equipment.category,
+        name: equipment.name.trim(),
+        description: (equipment.description || '').trim(),
+        quantity: parseInt(quantity),
+        category: equipment.category || 'Geral',
         isCustom: false
-      });
+      };
+      
+      equipmentsList.value.push(newEquipment);
       
       // Reseta a quantidade desse equipamento
       quantityInputs.value[equipmentId] = 1;
       
-      // Inicializa quantidade para os aparelhos em destaque se necessário
-      if (!quantityInputs.value[equipmentId]) {
-        quantityInputs.value[equipmentId] = 1;
+      // Feedback de sucesso
+      showNotification('success', 'Equipamento Adicionado!', 
+        `${equipment.name} (${quantity}x) foi adicionado à academia.`);
+      
+      console.log('⚙️ Equipamento adicionado:', newEquipment);
+      console.log('📋 Lista atual de equipamentos:', equipmentsList.value);
+    };
+
+    // Funções para gerenciar equipamentos adicionados
+    const removeEquipment = (index) => {
+      if (index >= 0 && index < equipmentsList.value.length) {
+        const removedEquipment = equipmentsList.value[index];
+        equipmentsList.value.splice(index, 1);
+        
+        showNotification('info', 'Equipamento Removido', 
+          `${removedEquipment.name} foi removido da lista.`);
+        
+        console.log('🗑️ Equipamento removido:', removedEquipment);
       }
     };
+
+    const updateEquipmentQuantity = (index, newQuantity) => {
+      if (index >= 0 && index < equipmentsList.value.length) {
+        const quantity = parseInt(newQuantity) || 1;
+        if (quantity >= 1 && quantity <= 999) {
+          equipmentsList.value[index].quantity = quantity;
+          console.log(`🔢 Quantidade atualizada: ${equipmentsList.value[index].name} = ${quantity}`);
+        }
+      }
+    };
+
+    const canRemoveEquipments = computed(() => {
+      return equipmentsList.value.length > 0;
+    });
     
     // Navegação entre Etapas
     const goToStep2 = () => {
       // Validação básica
-      if (!formData.value.name || !formData.value.email || !formData.value.phone) {
-        showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios (Nome, Email e Telefone).');
+      if (!formData.value.name?.trim()) {
+        showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
         return;
       }
       
-      if (!formData.value.location.address || !formData.value.location.city || 
-          !formData.value.location.state || !formData.value.location.zipCode) {
+      if (!formData.value.phone?.trim()) {
+        showNotification('warning', 'Campo Obrigatório', 'Telefone é obrigatório.');
+        return;
+      }
+      
+      if (!formData.value.location.address?.trim() || !formData.value.location.city?.trim() || 
+          !formData.value.location.state?.trim() || !formData.value.location.zipCode?.trim()) {
         showNotification('warning', 'Endereço Incompleto', 'Por favor, preencha todos os campos de endereço.');
         return;
       }
       
       // Validar formato do estado (2 letras)
-      if (formData.value.location.state.length !== 2) {
+      if (formData.value.location.state.trim().length !== 2) {
         showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
         return;
       }
       
+      // Validar CEP
+      const cepNumbers = formData.value.location.zipCode.replace(/\D/g, '');
+      if (cepNumbers.length !== 8) {
+        showNotification('warning', 'CEP Inválido', 'CEP deve ter 8 dígitos. Use o formato: 00000-000');
+        return;
+      }
+      
+      // Se CEP não foi validado ainda, tenta validar
+      if (!cepValidated.value && !isValidatingCep.value) {
+        showNotification('info', 'Validando CEP...', 'Verificando o CEP informado...');
+        validateCep().then(() => {
+          if (cepValidated.value) {
+            currentStep.value = 2;
+          }
+        });
+        return;
+      }
+      
+      // Se CEP tem erro, bloqueia
+      if (cepError.value) {
+        showNotification('warning', 'CEP Inválido', 'Por favor, corrija o CEP antes de continuar.');
+        return;
+      }
+      
       currentStep.value = 2;
+      console.log('➡️ Avançando para Etapa 2 - Equipamentos');
     };
     
     const backToStep1 = () => {
@@ -1116,21 +1380,46 @@ export default {
 
     const handleSubmit = async () => {
       try {
-        // Validações básicas da etapa 1 (caso volte e altere)
-        if (!formData.value.name || !formData.value.phone || 
-            !formData.value.location.address || !formData.value.location.city || 
-            !formData.value.location.state || !formData.value.location.zipCode) {
-          showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios.');
+        console.log('📤 Iniciando submissão do formulário');
+        
+        // Validações básicas da etapa 1
+        if (!formData.value.name?.trim()) {
+          showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
+          currentStep.value = 1;
+          return;
+        }
+        
+        if (!formData.value.phone?.trim()) {
+          showNotification('warning', 'Campo Obrigatório', 'Telefone é obrigatório.');
+          currentStep.value = 1;
+          return;
+        }
+        
+        if (!formData.value.location.address?.trim() || 
+            !formData.value.location.city?.trim() || 
+            !formData.value.location.state?.trim() || 
+            !formData.value.location.zipCode?.trim()) {
+          showNotification('warning', 'Endereço Incompleto', 'Por favor, preencha todos os campos de endereço.');
+          currentStep.value = 1;
           return;
         }
         
         // Validar formato do estado (2 letras)
-        if (formData.value.location.state.length !== 2) {
+        if (formData.value.location.state.trim().length !== 2) {
           showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
+          currentStep.value = 1;
           return;
         }
 
-        // Criamos o objeto de dados estruturado
+        // Validar CEP (deve ter 8 dígitos)
+        const cepNumbers = formData.value.location.zipCode.replace(/\D/g, '');
+        if (cepNumbers.length !== 8) {
+          showNotification('warning', 'CEP Inválido', 'CEP deve ter 8 dígitos.');
+          currentStep.value = 1;
+          return;
+        }
+
+        // Prepara os dados da academia
         const gymData = {
           name: formData.value.name.trim(),
           description: (formData.value.description || '').trim(),
@@ -1141,24 +1430,66 @@ export default {
             city: formData.value.location.city.trim(),
             state: formData.value.location.state.trim().toUpperCase(),
             zipCode: formData.value.location.zipCode.trim()
-          },
-          equipments: equipmentsList.value // Adiciona os equipamentos
+          }
         };
 
-        // Se houver imagem base64, adiciona ao payload
+        // Adiciona imagem se houver
         if (formData.value.imageBase64) {
           gymData.imageBase64 = formData.value.imageBase64;
-        }
-        // Se houver imagem (fallback para compatibilidade)
-        else if (formData.value.image) {
+          console.log('🖼️ Imagem base64 adicionada ao payload');
+        } else if (formData.value.image) {
+          // Fallback para compatibilidade
           gymData.image = formData.value.image;
+          console.log('🖼️ Imagem file adicionada ao payload');
         }
-        
+
+        // Processa e valida equipamentos
+        if (equipmentsList.value && equipmentsList.value.length > 0) {
+          gymData.equipments = equipmentsList.value.map(eq => {
+            const equipment = {
+              name: eq.name?.trim() || '',
+              description: eq.description?.trim() || '',
+              quantity: parseInt(eq.quantity) || 1,
+              category: eq.category?.trim() || 'Geral',
+              isCustom: Boolean(eq.isCustom)
+            };
+
+            // Se não é customizado, inclui o sourceId
+            if (!eq.isCustom && eq.sourceId) {
+              equipment.sourceId = eq.sourceId;
+            }
+
+            return equipment;
+          }).filter(eq => eq.name); // Remove equipamentos sem nome
+
+          console.log(`⚙️ ${gymData.equipments.length} equipamentos processados:`, gymData.equipments);
+        } else {
+          gymData.equipments = [];
+          console.log('⚙️ Nenhum equipamento para salvar');
+        }
+
+        // Log dos dados finais
+        console.log('📋 Dados finais para envio:', {
+          ...gymData,
+          imageBase64: gymData.imageBase64 ? `[BASE64 - ${(gymData.imageBase64.length / 1024).toFixed(1)}KB]` : null
+        });
+
+        // Emite os dados para o componente pai
         emit('submit', { data: gymData });
-        resetForm();
+        
+        // Feedback de sucesso
+        showNotification('success', 'Dados Preparados!', 
+          `Academia "${gymData.name}" está pronta para ${editMode.value ? 'atualização' : 'criação'}.`);
+        
+        // Reset após sucesso
+        setTimeout(() => {
+          resetForm();
+        }, 1500);
+        
       } catch (error) {
-        console.error('Erro ao preparar dados do formulário:', error);
-        showNotification('error', 'Erro!', `Erro: ${error.message}`);
+        console.error('❌ Erro ao preparar dados do formulário:', error);
+        showNotification('error', 'Erro no Formulário!', 
+          `Erro ao processar dados: ${error.message || 'Erro desconhecido'}`);
       }
     };
 
@@ -1178,11 +1509,17 @@ export default {
 
     // Watch para mudanças no prop gym
     watch(() => props.gym, (newVal) => {
+      console.log('🏢 Academia recebida para edição:', newVal);
+      
       if (newVal) {
+        // Reset dos estados de validação
+        cepValidated.value = false;
+        cepError.value = '';
+        
         formData.value = {
           name: newVal.name || '',
           description: newVal.description || '',
-          image: newVal.image || null,
+          image: null, // Sempre null para evitar conflitos
           imageBase64: '', // Limpa o base64 ao carregar academia existente
           location: {
             address: newVal.location?.address || '',
@@ -1193,17 +1530,60 @@ export default {
           phone: newVal.phone || '',
           email: newVal.email || '',
         };
-        // Se a academia tem imagem, converte o caminho para URL completa
+        
+        // Carrega a imagem existente
         if (newVal.image) {
-          imagePreview.value = `http://localhost:3000${newVal.image}`;
+          // Se é um caminho de imagem do servidor
+          if (typeof newVal.image === 'string') {
+            // Constroi URL completa se necessário
+            const imageUrl = newVal.image.startsWith('http') 
+              ? newVal.image 
+              : newVal.image.startsWith('/') 
+                ? `http://localhost:3000${newVal.image}`
+                : `http://localhost:3000/uploads/gyms/${newVal.image}`;
+            
+            imagePreview.value = imageUrl;
+            console.log('🖼️ Imagem carregada:', imageUrl);
+          }
+        } else if (newVal.imageUrl) {
+          // Fallback para imageUrl
+          imagePreview.value = newVal.imageUrl;
+          console.log('🖼️ ImageUrl carregada:', newVal.imageUrl);
         } else {
-          imagePreview.value = newVal.imageUrl || null;
+          imagePreview.value = null;
+          console.log('📷 Nenhuma imagem encontrada');
         }
-        equipmentsList.value = newVal.equipments || [];
+        
+        // Carrega equipamentos se existirem
+        if (newVal.equipments && Array.isArray(newVal.equipments)) {
+          equipmentsList.value = newVal.equipments.map(eq => ({
+            sourceId: eq.sourceId || eq._id || eq.id,
+            name: eq.name || '',
+            description: eq.description || '',
+            quantity: eq.quantity || 1,
+            category: eq.category || 'Geral',
+            isCustom: eq.isCustom || false
+          }));
+          console.log('⚙️ Equipamentos carregados:', equipmentsList.value.length);
+        } else {
+          equipmentsList.value = [];
+          console.log('⚙️ Nenhum equipamento encontrado');
+        }
+        
+        // Se tem CEP válido, marca como validado
+        if (formData.value.location.zipCode && formData.value.location.zipCode.length >= 8) {
+          cepValidated.value = true;
+        }
+        
+        console.log('✅ Dados da academia carregados com sucesso');
       } else {
+        // Reset completo quando não há academia
+        console.log('🔄 Resetando formulário');
         formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
         imagePreview.value = null;
         equipmentsList.value = [];
+        cepValidated.value = false;
+        cepError.value = '';
       }
     }, { immediate: true, deep: true });
 
@@ -1248,6 +1628,15 @@ export default {
       paginatedFeaturedEquipments,
       popularSearchTerms,
       allEquipments,
+      // Validação de CEP
+      isValidatingCep,
+      cepValidated,
+      cepError,
+      validateCep,
+      onCepInput,
+      // Upload de imagem
+      isUploadingImage,
+      // Funções existentes
       loadAllEquipments,
       getImageUrl,
       triggerFileInput,
@@ -1256,6 +1645,7 @@ export default {
       handleDragLeave,
       handleDrop,
       removeImage,
+      resetImageState,
       resetForm,
       goToStep2,
       backToStep1,
@@ -1268,6 +1658,9 @@ export default {
       incrementQuantity,
       decrementQuantity,
       addEquipmentFromSearch,
+      removeEquipment,
+      updateEquipmentQuantity,
+      canRemoveEquipments,
       isLoadingEquipments,
       handleSubmit,
     };
@@ -1851,6 +2244,46 @@ export default {
     0 0 0 15px rgba(59, 130, 246, 0.08);
 }
 
+/* Loading state para upload */
+.upload-area-modern.uploading {
+  cursor: not-allowed;
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(251, 191, 36, 0.05) 100%);
+}
+
+.upload-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  z-index: 3;
+  position: relative;
+}
+
+.loading-spinner {
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  text-align: center;
+}
+
+.loading-text h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.loading-text p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 .upload-content-modern {
   position: relative;
   z-index: 3;
@@ -2173,6 +2606,70 @@ export default {
 /* Hidden file input */
 .file-input {
   display: none;
+}
+
+/* Validação de CEP */
+.cep-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cep-loading {
+  font-size: 0.875rem;
+  color: #f59e0b;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.form-input.cep-loading {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.form-input.cep-valid {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.cep-spinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.cep-check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.cep-error {
+  font-size: 0.875rem;
+  color: #ef4444;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cep-error::before {
+  content: '⚠️';
+  font-size: 14px;
 }
 
 /* Modal Actions */
