@@ -306,8 +306,8 @@
             <h2 class="modal-title">{{ selectedMachine.name }}</h2>
           </div>
           <button class="modal-close" @click="closeDetailModal">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
@@ -330,7 +330,10 @@
             </div>
             <div class="detail-info-item">
               <span class="detail-label">Dificuldade</span>
-              <span class="detail-value">{{ getDifficultyLabel(selectedMachine.difficulty) }}</span>
+              <span :class="['details-tag', 'difficulty-tag', selectedMachine.difficulty]">
+                <span class="difficulty-dot"></span>
+                {{ getDifficultyLabel(selectedMachine.difficulty) }}
+              </span>
             </div>
           </div>
 
@@ -401,8 +404,8 @@
             <h2 class="modal-title">Editar Aparelho</h2>
           </div>
           <button class="modal-close" @click="closeEditModal">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
@@ -2613,29 +2616,45 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .modal-close {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: transparent;
-  border: 2px solid var(--border-primary);
-  color: var(--text-secondary);
+  background: white;
+  border: none;
   cursor: pointer;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.modal-close:hover {
-  background: var(--error);
-  border-color: var(--error);
-  color: white;
-  transform: rotate(90deg);
+.dashboard-dark .modal-close {
+  background: #334155;
 }
 
 .modal-close svg {
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-dark .modal-close:hover {
+  background: #475569;
+}
+
+.modal-close:hover svg {
+  transform: scale(1.1);
 }
 
 .modal-body {
@@ -2735,6 +2754,95 @@ body:has(.navbar-collapsed) .dashboard-main,
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+/* Tags dentro do detail-info-item */
+.detail-info-item .details-tag {
+  display: inline-flex;
+  margin-top: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 24px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.details-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.details-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.details-tag:hover::before {
+  left: 100%;
+}
+
+.difficulty-tag {
+  backdrop-filter: blur(10px);
+}
+
+.difficulty-tag.iniciante,
+.difficulty-tag.Iniciante {
+  color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.difficulty-tag.intermediário,
+.difficulty-tag.Intermediário,
+.difficulty-tag.intermediario {
+  color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.difficulty-tag.avançado,
+.difficulty-tag.Avançado,
+.difficulty-tag.avancado {
+  color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.difficulty-tag:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.difficulty-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .detail-text {
@@ -2984,6 +3092,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   padding: 14px 24px;
   border-radius: 12px;
   font-size: 1rem;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -3007,14 +3116,41 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .btn-save {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-save:hover::before {
+  left: 100%;
 }
 
 .btn-save:hover {
-  background: #4f46e5;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-save:active {
+  transform: translateY(0);
 }
 
 .btn-cancel svg,

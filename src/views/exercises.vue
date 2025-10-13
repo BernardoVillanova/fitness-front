@@ -281,101 +281,90 @@
       </div>
     </main>
 
-    <!-- Modal de Visualização de Detalhes -->
-    <div v-if="showDetailModal && selectedExercise" class="modal-overlay" @click.self="closeDetailModal">
-      <div class="details-modal-container">
-        <!-- Header com Imagem -->
-        <div class="details-hero">
-          <button class="details-close" @click="closeDetailModal">
-            <i class="fas fa-times"></i>
-          </button>
-          
-          <div v-if="selectedExercise.image" class="details-image-wrapper">
-            <img :src="getImageUrl(selectedExercise.image)" :key="selectedExercise.image" :alt="selectedExercise.name" class="details-hero-image">
+    <!-- Modal de Visualização -->
+    <div class="modal-overlay" v-if="showDetailModal && selectedExercise" @click="closeDetailModal">
+      <div class="modal-container-large" @click.stop>
+        <div class="modal-header">
+          <div class="modal-title-section">
+            <i class="fas fa-dumbbell modal-icon"></i>
+            <h2 class="modal-title">{{ selectedExercise.name }}</h2>
           </div>
-          <div v-else class="details-no-image">
-            <svg width="64" height="64" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+          <button class="modal-close" @click="closeDetailModal">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
             </svg>
-          </div>
+          </button>
         </div>
 
-        <!-- Content -->
-        <div class="details-content">
-          <!-- Title and Tags -->
-          <div class="details-header">
-            <div class="details-tags">
-              <span class="details-tag category-tag">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
-                </svg>
-                {{ selectedExercise.category }}
-              </span>
+        <div class="modal-body">
+          <!-- Imagem do exercício -->
+          <div class="detail-image-container" v-if="selectedExercise.image">
+            <img :src="getImageUrl(selectedExercise.image)" :alt="selectedExercise.name" class="detail-image">
+          </div>
+
+          <!-- Informações Principais -->
+          <div class="detail-info-grid">
+            <div class="detail-info-item">
+              <span class="detail-label">Nome</span>
+              <span class="detail-value">{{ selectedExercise.name }}</span>
+            </div>
+            <div class="detail-info-item">
+              <span class="detail-label">Categoria</span>
+              <span class="detail-value">{{ selectedExercise.category }}</span>
+            </div>
+            <div class="detail-info-item">
+              <span class="detail-label">Dificuldade</span>
               <span :class="['details-tag', 'difficulty-tag', selectedExercise.difficulty.toLowerCase()]">
                 <span class="difficulty-dot"></span>
                 {{ selectedExercise.difficulty }}
               </span>
             </div>
-            
-            <h2 class="details-title">{{ selectedExercise.name }}</h2>
           </div>
 
-          <!-- Description -->
-          <div v-if="selectedExercise.description" class="details-section description-section">
-            <h3 class="details-section-title">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
-              </svg>
+          <!-- Descrição -->
+          <div class="detail-section description-section" v-if="selectedExercise.description">
+            <h3 class="detail-section-title">
+              <i class="fas fa-file-alt"></i>
               Descrição
             </h3>
-            <p class="details-text">{{ selectedExercise.description }}</p>
+            <p class="detail-text">{{ selectedExercise.description }}</p>
           </div>
 
-          <!-- How to Perform -->
-          <div v-if="selectedExercise.howToPerform" class="details-section howto-section">
-            <h3 class="details-section-title">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-              </svg>
+          <!-- Como Executar -->
+          <div class="detail-section howto-section" v-if="selectedExercise.howToPerform">
+            <h3 class="detail-section-title">
+              <i class="fas fa-info-circle"></i>
               Como Executar
             </h3>
-            <p class="details-text">{{ selectedExercise.howToPerform }}</p>
+            <p class="detail-text">{{ selectedExercise.howToPerform }}</p>
           </div>
 
-          <!-- Muscle Groups -->
-          <div v-if="selectedExercise.muscleGroups && selectedExercise.muscleGroups.length > 0" class="details-section muscles-section">
-            <h3 class="details-section-title">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
-              </svg>
+          <!-- Dicas de Segurança -->
+          <div class="detail-section warning-section safety-section">
+            <h3 class="detail-section-title">
+              <i class="fas fa-shield-alt"></i>
+              Dicas de Segurança
+            </h3>
+            <p class="detail-text warning-text">{{ selectedExercise.safetyTips || 'Mantenha sempre a postura correta durante a execução do exercício. Em caso de dor ou desconforto, pare imediatamente e consulte um profissional.' }}</p>
+          </div>
+
+          <!-- Grupos Musculares -->
+          <div class="detail-section" v-if="selectedExercise.muscleGroups && selectedExercise.muscleGroups.length > 0">
+            <h3 class="detail-section-title">
+              <i class="fas fa-bullseye"></i>
               Grupos Musculares
             </h3>
-            <div class="details-muscles">
-              <span v-for="muscle in selectedExercise.muscleGroups" :key="muscle" class="muscle-badge">
-                {{ muscle }}
+            <div>
+              <span v-for="group in selectedExercise.muscleGroups" :key="group" class="muscle-tag-large">
+                {{ group }}
               </span>
             </div>
           </div>
 
-          <!-- Safety Tips -->
-          <div v-if="selectedExercise.safetyTips || true" class="details-section warning-section safety-section">
-            <h3 class="details-section-title">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-              </svg>
-              Dicas de Segurança
-            </h3>
-            <p class="details-text warning-text">
-              {{ selectedExercise.safetyTips || 'Mantenha sempre a postura correta durante a execução do exercício. Em caso de dor ou desconforto, pare imediatamente e consulte um profissional.' }}
-            </p>
-          </div>
-
-          <!-- Video URL -->
-          <div v-if="selectedExercise.videoUrl" class="details-section">
-            <h3 class="details-section-title">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
-              </svg>
+          <!-- Vídeo Demonstrativo -->
+          <div class="detail-section" v-if="selectedExercise.videoUrl">
+            <h3 class="detail-section-title">
+              <i class="fas fa-video"></i>
               Vídeo Demonstrativo
             </h3>
             <a :href="selectedExercise.videoUrl" target="_blank" class="video-link">
@@ -388,14 +377,16 @@
           </div>
         </div>
 
-        <!-- Footer Actions -->
-        <div class="details-footer">
-          <button class="details-btn details-btn-secondary" @click="closeDetailModal">
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="closeDetailModal">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
             Fechar
           </button>
-          <button class="details-btn details-btn-primary" @click="editExercise(selectedExercise); closeDetailModal()">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+          <button class="btn-save" @click="editExercise(selectedExercise); closeDetailModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
             Editar Exercício
           </button>
@@ -3069,6 +3060,10 @@ body:has(.navbar-collapsed) .floating-header,
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.dashboard-dark .modal-close {
+  background: #334155;
+}
+
 .modal-close svg {
   width: 12px;
   height: 12px;
@@ -3079,6 +3074,10 @@ body:has(.navbar-collapsed) .floating-header,
 .modal-close:hover {
   background: #f3f4f6;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-dark .modal-close:hover {
+  background: #475569;
 }
 
 .modal-close:hover svg {
@@ -3818,29 +3817,24 @@ body:has(.navbar-collapsed) .floating-header,
    MODAL DE DETALHES DO EXERCÍCIO - MODERN REDESIGN
    ======================================== */
 
-.details-modal-container {
-  position: relative;
-  width: 90%;
+/* Estilos do Modal de Visualização (igual ao machines.vue) */
+.modal-container-large {
+  background: var(--bg-tertiary);
+  border-radius: 24px;
   max-width: 900px;
+  width: 100%;
   max-height: 90vh;
-  background: var(--bg-secondary);
-  backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid var(--border-primary);
-  border-radius: 32px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 
-    var(--shadow-xl),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 50px 100px -20px rgba(0, 0, 0, 0.5);
-  animation: modalSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-primary);
+  animation: slideUp 0.3s ease;
 }
 
-@keyframes modalSlideUp {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(60px) scale(0.9);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -3848,170 +3842,131 @@ body:has(.navbar-collapsed) .floating-header,
   }
 }
 
-/* Hero Image Section */
-.details-hero {
-  position: relative;
-  height: 320px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-  overflow: hidden;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 48px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  border-radius: 24px 24px 0 0;
+  flex-shrink: 0;
 }
 
-.details-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 60px,
-      rgba(255, 255, 255, 0.05) 60px,
-      rgba(255, 255, 255, 0.05) 120px
-    ),
-    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
-  z-index: 1;
-}
-
-.dashboard-dark .details-hero {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%);
-}
-
-.dashboard-dark .details-hero::before {
-  background: 
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 60px,
-      rgba(255, 255, 255, 0.02) 60px,
-      rgba(255, 255, 255, 0.02) 120px
-    ),
-    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
-}
-
-.details-close {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-  cursor: pointer;
+.modal-title-section {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10;
-  font-size: 20px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-}
-
-.details-close i {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.details-close:hover {
-  background: rgba(239, 68, 68, 0.9);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: scale(1.1);
-  box-shadow: 
-    0 12px 40px rgba(239, 68, 68, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-}
-
-.details-close:hover i {
-  transform: rotate(90deg);
-}
-
-.details-close:active {
-  transform: scale(0.95);
-}
-
-.details-image-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-}
-
-.details-hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  position: relative;
-  z-index: 2;
-  filter: brightness(0.95) contrast(1.05);
-  transition: transform 0.6s ease;
-}
-
-.details-modal-container:hover .details-hero-image {
-  transform: scale(1.02);
-}
-
-.details-no-image {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 16px;
-  color: rgba(255, 255, 255, 0.7);
-  position: relative;
-  z-index: 2;
 }
 
-.details-no-image svg {
-  opacity: 0.5;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+.modal-container-large .modal-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  display: inline;
 }
 
-/* Content Section */
-.details-content {
+.modal-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modal-close {
+  background: white;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-dark .modal-close {
+  background: #334155;
+}
+
+.modal-close svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-dark .modal-close:hover {
+  background: #475569;
+}
+
+.modal-close:hover svg {
+  transform: scale(1.1);
+}
+
+.modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 40px;
-  background: var(--bg-primary);
-  position: relative;
+  padding: 48px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--bg-secondary);
 }
 
-.details-content::-webkit-scrollbar {
+.modal-body::-webkit-scrollbar {
   width: 8px;
 }
 
-.details-content::-webkit-scrollbar-track {
+.modal-body::-webkit-scrollbar-track {
   background: var(--bg-secondary);
-}
-
-.details-content::-webkit-scrollbar-thumb {
-  background: var(--border-color);
   border-radius: 4px;
 }
 
-.details-content::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
 }
 
-/* Header */
-.details-header {
-  margin-bottom: 40px;
-  animation: fadeInUp 0.6s ease 0.2s both;
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
 }
 
+/* Estilos para Modal de Visualização */
+.detail-image-container {
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  margin-bottom: 32px;
+}
+
+.detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Tags de Categoria e Dificuldade (estilo da versão anterior) */
 .details-tags {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
 }
 
@@ -4063,33 +4018,26 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .difficulty-tag {
-  border: 2px solid currentColor;
   backdrop-filter: blur(10px);
 }
 
 .difficulty-tag.iniciante,
 .difficulty-tag.Iniciante {
-  background: rgba(59, 130, 246, 0.15);
   color: #3b82f6;
-  border-color: #3b82f6;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .difficulty-tag.intermediário,
 .difficulty-tag.Intermediário,
 .difficulty-tag.intermediario {
-  background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
-  border-color: #f59e0b;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
 }
 
 .difficulty-tag.avançado,
 .difficulty-tag.Avançado,
 .difficulty-tag.avancado {
-  background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
-  border-color: #ef4444;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
@@ -4098,154 +4046,164 @@ body:has(.navbar-collapsed) .floating-header,
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-.details-title {
-  font-size: 2.25rem;
-  font-weight: 900;
-  color: var(--text-primary);
-  line-height: 1.2;
-  margin: 0;
-  letter-spacing: -0.02em;
+.difficulty-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
 }
 
-/* Sections */
-.details-section {
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.detail-section {
   margin-bottom: 32px;
   animation: fadeInUp 0.6s ease both;
 }
 
-.details-section:nth-child(1) { animation-delay: 0.3s; }
-.details-section:nth-child(2) { animation-delay: 0.4s; }
-.details-section:nth-child(3) { animation-delay: 0.5s; }
-.details-section:nth-child(4) { animation-delay: 0.6s; }
+.detail-section:nth-child(1) { animation-delay: 0.1s; }
+.detail-section:nth-child(2) { animation-delay: 0.2s; }
+.detail-section:nth-child(3) { animation-delay: 0.3s; }
+.detail-section:nth-child(4) { animation-delay: 0.4s; }
+.detail-section:nth-child(5) { animation-delay: 0.5s; }
 
 /* Specific animation delays for each section */
 .description-section {
-  animation-delay: 0.3s !important;
+  animation-delay: 0.2s !important;
 }
 
 .howto-section {
-  animation-delay: 0.4s !important;
-}
-
-.muscles-section {
-  animation-delay: 0.5s !important;
+  animation-delay: 0.3s !important;
 }
 
 .safety-section {
-  animation-delay: 0.6s !important;
+  animation-delay: 0.4s !important;
 }
 
-.details-section-title {
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.875rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--border-primary);
-  position: relative;
-}
-
-.details-section-title::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 60px;
-  height: 2px;
-  background: var(--gradient-primary);
-  border-radius: 2px;
-}
-
-.details-section-title svg {
-  width: 20px;
-  height: 20px;
-  opacity: 0.7;
-  color: var(--text-secondary);
-}
-
-.details-text {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: var(--text-secondary);
-  padding: 20px 24px;
-  background: var(--bg-secondary);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid var(--border-primary);
-  border-left: 4px solid var(--border-accent);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
-}
-
-.details-text:hover {
-  border-left-color: var(--text-primary);
-  box-shadow: var(--shadow-md);
-  transform: translateX(4px);
-}
-
-.warning-section .details-section-title {
-  color: #f59e0b;
-}
-
-.warning-section .details-section-title::after {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.warning-text {
-  border-left-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.2);
-}
-
-/* Muscle Badges */
-.details-muscles {
-  display: flex;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
-.muscle-badge {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-  color: white;
-  border-radius: 24px;
+.detail-section-title i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+/* Estilo especial para seção de Dicas de Segurança (versão anterior) */
+.warning-section .detail-section-title {
+  color: #f59e0b;
+}
+
+.warning-section .detail-section-title i {
+  color: #f59e0b;
+}
+
+.warning-text {
+  border-left-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.detail-info-item {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+  transition: all 0.2s ease;
+}
+
+.detail-info-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.detail-label {
   font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.detail-value {
+  font-size: 1.125rem;
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  color: var(--text-primary);
 }
 
-.muscle-badge::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s ease;
+/* Tags dentro do detail-info-item */
+.detail-info-item .details-tag {
+  display: inline-flex;
+  margin-top: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 24px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.muscle-badge:hover::before {
-  left: 100%;
+.detail-text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
 }
 
-.muscle-badge:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: var(--shadow-lg);
+.muscle-tag-large {
+  display: inline-block;
+  padding: 10px 16px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 4px;
+  transition: all 0.2s ease;
 }
 
-.dashboard-dark .muscle-badge {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+.muscle-tag-large:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
 }
 
 /* Video Link */
@@ -4296,151 +4254,13 @@ body:has(.navbar-collapsed) .floating-header,
   transform: translateX(4px);
 }
 
-/* Footer */
-.details-footer {
-  display: flex;
-  gap: 16px;
-  padding: 24px 40px;
-  background: var(--bg-secondary);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid var(--border-primary);
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
-}
-
-.details-btn {
-  flex: 1;
-  padding: 16px 28px;
-  border: none;
-  border-radius: 16px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.details-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.details-btn:hover::before {
-  left: 100%;
-}
-
-.details-btn-secondary {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 2px solid var(--border-primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.details-btn-secondary:hover {
-  background: var(--bg-secondary);
-  border-color: var(--border-accent);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.details-btn-secondary:active {
-  transform: translateY(0);
-}
-
-.details-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
-}
-
-.dashboard-dark .details-btn-primary {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
-}
-
-.details-btn-primary:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: var(--shadow-xl);
-}
-
-.details-btn-primary:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
-.details-btn-primary svg {
-  transition: transform 0.3s ease;
-}
-
-.details-btn-primary:hover svg {
-  transform: scale(1.1) rotate(-5deg);
-}
-
-@media (max-width: 768px) {
-  .details-modal-container {
-    width: 95%;
-    max-height: 95vh;
-    border-radius: 24px;
-  }
-
-  .details-hero {
-    height: 240px;
-  }
-
-  .details-close {
-    width: 44px;
-    height: 44px;
-    top: 20px;
-    right: 20px;
-    font-size: 18px;
-  }
-
-  .details-content {
-    padding: 28px 24px;
-  }
-
-  .details-title {
-    font-size: 1.75rem;
-  }
-
-  .details-section-title {
-    font-size: 0.8rem;
-  }
-
-  .details-text {
-    padding: 16px 20px;
-    font-size: 0.95rem;
-  }
-
-  .details-footer {
-    flex-direction: column;
-    padding: 20px 24px;
-    gap: 12px;
-  }
-
-  .details-btn {
-    padding: 14px 24px;
-  }
-}
-
 .modal-actions {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 24px 48px;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-tertiary);
-  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
   border-radius: 0 0 24px 24px;
   flex-shrink: 0;
 }
@@ -4454,6 +4274,7 @@ body:has(.navbar-collapsed) .floating-header,
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
@@ -4464,61 +4285,58 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .btn-cancel {
-  background: var(--button-secondary-bg);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--border-primary);
 }
 
 .btn-cancel:hover {
-  background: var(--button-secondary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--bg-secondary);
+  border-color: var(--error);
+  color: var(--error);
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: var(--primary-color);
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .btn-save:hover {
+  background: #4f46e5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
 }
 
+.btn-cancel svg,
 .btn-save svg {
   width: 20px;
   height: 20px;
 }
 
-.dashboard-dark .modal-container-large {
-  --card-background: #1e1e2e;
-  --text-primary: #e5e5f0;
-  --text-secondary: #a0a0b8;
-  --border-color: #2d2d44;
-  --hover-background: #2d2d44;
-  --input-background: #151521;
-  --button-secondary-bg: #2d2d44;
-  --button-secondary-hover: #383852;
-  --header-gradient: linear-gradient(135deg, rgba(30, 30, 46, 0.8) 0%, rgba(30, 30, 46, 1) 100%);
-  --upload-background: #151521;
-  --upload-hover: rgba(99, 102, 241, 0.05);
-  --info-background: rgba(99, 102, 241, 0.1);
-}
-
-.dashboard-light .modal-container-large {
-  --card-background: #ffffff;
-  --text-primary: #1a1a2e;
-  --text-secondary: #6b7280;
-  --border-color: #e5e7eb;
-  --hover-background: #f3f4f6;
-  --input-background: #f9fafb;
-  --button-secondary-bg: #f3f4f6;
-  --button-secondary-hover: #e5e7eb;
-  --header-gradient: linear-gradient(135deg, rgba(249, 250, 251, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
-  --upload-background: #f9fafb;
-  --upload-hover: rgba(99, 102, 241, 0.03);
-  --info-background: rgba(99, 102, 241, 0.05);
+@media (max-width: 768px) {
+  .modal-container-large {
+    max-width: 100%;
+    margin: 20px;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-actions {
+    padding: 24px;
+  }
+  
+  .detail-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-save {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 768px) {

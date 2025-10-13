@@ -865,7 +865,7 @@ i[class*=" fa-"] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-color);
 }
