@@ -109,21 +109,53 @@
             <h2 class="section-title">Análise Individual de Alunos</h2>
             <p class="section-subtitle">Acompanhamento detalhado do progresso de cada estudante</p>
           </div>
-          <div class="section-actions">
-            <button class="filter-btn">
-              <i class="fas fa-filter"></i>
-              Filtros
-            </button>
-            <button class="export-btn">
-              <i class="fas fa-download"></i>
-              Exportar
-            </button>
+        </div>
+
+        <div class="summary-stats">
+          <div class="summary-card">
+            <div class="summary-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ studentsData.length }}</span>
+              <span class="summary-label">Alunos Ativos</span>
+            </div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="summary-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ calculateAverageProgress() }}%</span>
+              <span class="summary-label">Progresso Médio</span>
+            </div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="summary-icon">
+              <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ calculateAverageAdherence() }}%</span>
+              <span class="summary-label">Adesão Média</span>
+            </div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="summary-icon">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <div class="summary-content">
+              <span class="summary-value">{{ getPositiveTrends() }}</span>
+              <span class="summary-label">Tendências Positivas</span>
+            </div>
           </div>
         </div>
         
-        <div class="students-grid">
+        <div class="students-grid" :data-items="paginatedStudentsData.length">
           <div 
-            v-for="student in studentsData" 
+            v-for="student in paginatedStudentsData" 
             :key="student.id" 
             class="student-card"
             @click="viewStudentDetails(student.id)"
@@ -227,48 +259,37 @@
           </div>
         </div>
 
-        <!-- Summary Stats -->
-        <div class="summary-stats">
-          <div class="summary-card">
-            <div class="summary-icon">
-              <i class="fas fa-users"></i>
-            </div>
-            <div class="summary-content">
-              <span class="summary-value">{{ studentsData.length }}</span>
-              <span class="summary-label">Alunos Ativos</span>
-            </div>
+        <!-- Controles de Paginação -->
+        <div v-if="totalPages > 1" class="pagination-controls">
+          <button 
+            @click="previousPage" 
+            :disabled="currentPage === 1"
+            class="pagination-btn pagination-prev"
+          >
+            <i class="fas fa-chevron-left"></i>
+            Anterior
+          </button>
+          
+          <div class="pagination-info">
+            <span class="page-indicator">
+              Página {{ currentPage }} de {{ totalPages }}
+            </span>
+            <span class="items-indicator">
+              ({{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, studentsData.length) }} de {{ studentsData.length }} alunos)
+            </span>
           </div>
           
-          <div class="summary-card">
-            <div class="summary-icon">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="summary-content">
-              <span class="summary-value">{{ calculateAverageProgress() }}%</span>
-              <span class="summary-label">Progresso Médio</span>
-            </div>
-          </div>
-          
-          <div class="summary-card">
-            <div class="summary-icon">
-              <i class="fas fa-dumbbell"></i>
-            </div>
-            <div class="summary-content">
-              <span class="summary-value">{{ calculateAverageAdherence() }}%</span>
-              <span class="summary-label">Adesão Média</span>
-            </div>
-          </div>
-          
-          <div class="summary-card">
-            <div class="summary-icon">
-              <i class="fas fa-trophy"></i>
-            </div>
-            <div class="summary-content">
-              <span class="summary-value">{{ getPositiveTrends() }}</span>
-              <span class="summary-label">Tendências Positivas</span>
-            </div>
-          </div>
+          <button 
+            @click="nextPage" 
+            :disabled="currentPage === totalPages"
+            class="pagination-btn pagination-next"
+          >
+            Próximo
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
+
+        <!-- Summary Stats -->
       </section>
 
       <!-- Calendar and Weekly Stats Section -->
@@ -403,6 +424,9 @@ export default {
       workoutSessions: [],
       loading: true,
       error: null,
+      // Paginação para análise individual de alunos
+      currentPage: 1,
+      itemsPerPage: 3,
       progressData: [
         {
           name: "Média de Peso",
@@ -525,6 +549,18 @@ export default {
           };
         }
       });
+    },
+
+    // Dados paginados para a seção de análise individual
+    paginatedStudentsData() {
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      return this.studentsData.slice(startIndex, endIndex);
+    },
+
+    // Total de páginas
+    totalPages() {
+      return Math.ceil(this.studentsData.length / this.itemsPerPage);
     },
 
     performanceMetrics() {
@@ -882,6 +918,25 @@ export default {
   },
 
   methods: {
+    // ========= MÉTODOS DE PAGINAÇÃO =========
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    },
+
     // ========= MÉTODOS DE CARREGAMENTO DE DADOS =========
     async loadDashboardData() {
       try {
@@ -2153,46 +2208,37 @@ body:has(.navbar-collapsed) .dashboard-main,
   align-items: center;
 }
 
-.filter-btn,
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
-  color: var(--text-color);
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.dashboard-light .filter-btn:hover,
-.dashboard-light .export-btn:hover {
-  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
-  color: white;
-  border-color: #2563eb;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-}
-
-.dashboard-dark .filter-btn:hover,
-.dashboard-dark .export-btn:hover {
-  background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 100%);
-  color: white;
-  border-color: #8b5cf6;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-}
-
 /* Students Grid - Melhorado e Alinhado */
 .students-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(475px, 1fr));
   gap: 2rem;
   margin-bottom: 3rem;
+  justify-content: start;
+}
+
+/* Quando há poucos cards (1-3), usa tamanho fixo */
+.students-grid:has(.student-card:nth-child(-n+3):last-child) {
+  grid-template-columns: repeat(auto-fill, 475px);
+  justify-content: start;
+}
+
+/* Fallback para navegadores que não suportam :has() */
+@supports not (selector(:has(*))) {
+  .students-grid[data-items="1"] {
+    grid-template-columns: 475px;
+    justify-content: start;
+  }
+  
+  .students-grid[data-items="2"] {
+    grid-template-columns: repeat(2, 475px);
+    justify-content: start;
+  }
+  
+  .students-grid[data-items="3"] {
+    grid-template-columns: repeat(3, 475px);
+    justify-content: start;
+  }
 }
 
 .student-card {
@@ -2844,6 +2890,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
+  margin-bottom: 2rem;
   padding: 2rem;
   border-radius: 20px;
   border: 1px solid var(--border-color);
@@ -2923,6 +2970,74 @@ body:has(.navbar-collapsed) .dashboard-main,
   font-size: 0.875rem;
   color: var(--text-muted);
   font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-color);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 500px;
+  justify-content: center;
+}
+
+.pagination-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-light .pagination-btn:not(:disabled):hover {
+  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.dashboard-dark .pagination-btn:not(:disabled):hover {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.pagination-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.page-indicator {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.items-indicator {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.pagination-btn i {
+  font-size: 0.875rem;
 }
 
 /* Bottom Section */
@@ -3159,6 +3274,20 @@ body:has(.navbar-collapsed) .dashboard-main,
   }
 }
 
+/* Media query para tablets */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .students-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)) !important;
+    justify-content: start;
+  }
+  
+  .students-grid[data-items="1"],
+  .students-grid[data-items="2"] {
+    grid-template-columns: repeat(auto-fill, 350px) !important;
+    justify-content: start;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-main {
     margin-left: 0;
@@ -3193,14 +3322,17 @@ body:has(.navbar-collapsed) .dashboard-main,
     width: 100%;
   }
 
-  .filter-btn,
-  .export-btn {
-    flex: 1;
+  .students-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
+    justify-content: stretch !important;
   }
 
-  .students-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+  /* Força o comportamento responsivo, ignorando as regras de tamanho fixo */
+  .students-grid[data-items="1"],
+  .students-grid[data-items="2"],
+  .students-grid[data-items="3"] {
+    grid-template-columns: 1fr !important;
   }
 
   .student-card {
@@ -3368,8 +3500,6 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 /* Focus States */
 .nav-btn:focus,
-.filter-btn:focus,
-.export-btn:focus,
 .btn-view-details:focus,
 .menu-btn:focus {
   outline: 2px solid var(--primary-color);
@@ -3479,8 +3609,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   }
   
   .nav-btn,
-  .filter-btn,
-  .export-btn,
   .btn-view-details,
   .menu-btn {
     display: none;
