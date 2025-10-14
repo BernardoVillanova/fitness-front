@@ -399,6 +399,7 @@ import NotificationModal from "@/components/NotificationModal.vue";
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
+import api from "@/api.js";
 
 export default {
   name: "WorkoutPlans",
@@ -546,10 +547,12 @@ export default {
   },
   methods: {
     async fetchWorkoutPlans() {
+      console.log('🔍 [DEBUG] Iniciando fetchWorkoutPlans...');
       this.loading = true;
       this.error = null;
       try {
         const token = sessionStorage.getItem('token');
+        console.log('🔍 [DEBUG] Fazendo requisição para workout-plans-detailed...');
         const response = await fetch('http://localhost:3000/api/workout/workout-plans-detailed', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -559,7 +562,10 @@ export default {
         if (!response.ok) {
           throw new Error(`Erro ao carregar planos: ${response.status}`);
         }
-        this.workoutPlans = await response.json();
+        const plans = await response.json();
+        console.log('✅ [DEBUG] Planos recebidos:', plans.length);
+        console.log('🔍 [DEBUG] Primeiro plano:', plans[0]);
+        this.workoutPlans = plans;
       } catch (error) {
         console.error('Erro ao carregar planos:', error);
         this.error = error.message;
@@ -810,22 +816,69 @@ export default {
       this.editPlan(plan);
     },
 
+
+
     async fetchStudents() {
       try {
+        console.log('🔍 [DEBUG] Iniciando fetchStudents com API axios...');
         const token = sessionStorage.getItem('token');
-        const response = await fetch('/api/students', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (response.ok) {
-          this.students = await response.json();
-        } else {
-          console.error('❌ Error fetching students:', response.status);
+        console.log('🔍 [DEBUG] Token encontrado:', token ? 'Sim' : 'Não');
+        console.log('🔍 [DEBUG] Token value:', token?.substring(0, 20) + '...');
+        
+        console.log('🔍 [DEBUG] Base URL da API:', api.defaults.baseURL);
+        console.log('🔍 [DEBUG] Fazendo requisição para: /students');
+        
+        // Teste de conectividade
+        console.log('🔍 [DEBUG] Testando conectividade com o backend...');
+        try {
+          const healthCheck = await fetch('http://localhost:3000/api/docs');
+          console.log('🔍 [DEBUG] Backend health check status:', healthCheck.status);
+        } catch (healthError) {
+          console.error('❌ [DEBUG] Backend não está acessível:', healthError);
         }
+        
+        const response = await api.get('/students');
+        
+        console.log('✅ [DEBUG] Students data received:', response.data);
+        this.students = response.data;
+        
       } catch (error) {
-        console.error('❌ Error fetching students:', error);
+        console.error('❌ [DEBUG] Axios error fetching students:', error);
+        console.error('❌ [DEBUG] Error type:', error.constructor.name);
+        console.error('❌ [DEBUG] Error message:', error.message);
+        console.error('❌ [DEBUG] Error response:', error.response);
+        
+        if (error.response) {
+          console.error('❌ [DEBUG] Response status:', error.response.status);
+          console.error('❌ [DEBUG] Response data:', error.response.data);
+          console.error('❌ [DEBUG] Response headers:', error.response.headers);
+        }
+        
+        if (error.request) {
+          console.error('❌ [DEBUG] Request data:', error.request);
+        }
+        
+        // Tentar com fetch direto para comparar
+        try {
+          console.log('🔍 [DEBUG] Tentando fetch direto como fallback...');
+          const directResponse = await fetch('http://localhost:3000/api/students', {
+            headers: {
+              'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          console.log('🔍 [DEBUG] Direct fetch status:', directResponse.status);
+          if (directResponse.ok) {
+            const directData = await directResponse.json();
+            console.log('✅ [DEBUG] Direct fetch data:', directData);
+            this.students = directData;
+          } else {
+            const errorText = await directResponse.text();
+            console.error('❌ [DEBUG] Direct fetch error body:', errorText);
+          }
+        } catch (directError) {
+          console.error('❌ [DEBUG] Direct fetch also failed:', directError);
+        }
       }
     },
 
