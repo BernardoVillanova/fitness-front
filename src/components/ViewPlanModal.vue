@@ -12,49 +12,6 @@
             <i class="fas fa-times"></i>
           </button>
         </div>
-        
-        <!-- Plan Statistics -->
-        <div class="plan-stats">
-          <div class="stat-card">
-            <div class="stat-icon divisions">
-              <i class="fas fa-th-large"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-number">{{ plan?.divisions?.length || 0 }}</span>
-              <span class="stat-label">Divisões</span>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon exercises">
-              <i class="fas fa-dumbbell"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-number">{{ getTotalExercises() }}</span>
-              <span class="stat-label">Exercícios</span>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon sets">
-              <i class="fas fa-repeat"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-number">{{ getTotalSets() }}</span>
-              <span class="stat-label">Séries Totais</span>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon time">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-number">~{{ getEstimatedTotalDuration() }}</span>
-              <span class="stat-label">min estimados</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Body -->
