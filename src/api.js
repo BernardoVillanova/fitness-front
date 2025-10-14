@@ -20,10 +20,23 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   response => {
+    console.log('[API DEBUG] Resposta bem-sucedida:', {
+      url: response.config.url,
+      method: response.config.method,
+      status: response.status,
+      data: response.data
+    });
     return response;
   },
   error => {
-    console.error('API Error:', error.response);
+    console.error('[API ERROR] Erro na requisição:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
     
     // Se receber 401, pode limpar o token e redirecionar para login
     if (error.response && error.response.status === 401) {

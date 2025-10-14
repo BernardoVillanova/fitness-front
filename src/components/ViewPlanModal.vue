@@ -1,140 +1,266 @@
 ﻿<template>
-  <div v-if="show" class="modal-overlay" @click="closeModal">
+  <div v-if="show && !showDivisionModal" class="modal-overlay" @click="closeModal">
     <div class="modal-container" @click.stop>
+      <!-- Header -->
       <div class="modal-header">
-        <div class="header-info">
-          <h2 class="modal-title">{{ plan?.name || 'Ficha de Treino' }}</h2>
-          <p class="modal-subtitle">Visualização completa do plano de exercícios</p>
+        <div class="header-content">
+          <div class="header-info">
+            <h2 class="plan-title">{{ plan?.name || 'Ficha de Treino' }}</h2>
+            <p class="plan-subtitle">{{ plan?.description || 'Visualização completa do plano de exercícios' }}</p>
+            <div class="plan-meta">
+              <span class="meta-chip">
+                <i class="fas fa-user"></i>
+                {{ plan?.assignedStudents?.length || 0 }} alunos
+              </span>
+              <span class="meta-chip">
+                <i class="fas fa-calendar-plus"></i>
+                {{ formatDate(plan?.createdAt) }}
+              </span>
+              <span v-if="plan?.goal" class="meta-chip goal">
+                <i class="fas fa-target"></i>
+                {{ plan.goal }}
+              </span>
+            </div>
+          </div>
+          <button @click="closeModal" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <button @click="closeModal" class="close-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        
+        <!-- Plan Statistics -->
+        <div class="plan-stats">
+          <div class="stat-card">
+            <div class="stat-icon divisions">
+              <i class="fas fa-th-large"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ plan?.divisions?.length || 0 }}</span>
+              <span class="stat-label">Divisões</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon exercises">
+              <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ getTotalExercises() }}</span>
+              <span class="stat-label">Exercícios</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon sets">
+              <i class="fas fa-repeat"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ getTotalSets() }}</span>
+              <span class="stat-label">Séries Totais</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon time">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">~{{ getEstimatedTotalDuration() }}</span>
+              <span class="stat-label">min estimados</span>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <!-- Body -->
       <div class="modal-body">
-        <!-- Informações gerais do plano -->
-        <div class="plan-overview">
+        <!-- Quick Overview -->
+        <div class="quick-overview">
+          <h3 class="section-title">
+            <i class="fas fa-chart-line"></i>
+            Resumo do Plano
+          </h3>
           <div class="overview-grid">
-            <div class="overview-item">
-              <div class="overview-icon">📊</div>
-              <div>
-                <h4>Total de Divisões</h4>
-                <p>{{ plan?.divisions?.length || 0 }}</p>
+            <div class="overview-card">
+              <div class="overview-header">
+                <i class="fas fa-muscle"></i>
+                <span>Grupos Musculares</span>
+              </div>
+              <div class="muscle-groups">
+                <span 
+                  v-for="group in getAllMuscleGroups()" 
+                  :key="group"
+                  class="muscle-tag"
+                >
+                  {{ group }}
+                </span>
               </div>
             </div>
-            <div class="overview-item">
-              <div class="overview-icon">💪</div>
-              <div>
-                <h4>Total de Exercícios</h4>
-                <p>{{ getTotalExercises() }}</p>
+            
+            <div class="overview-card">
+              <div class="overview-header">
+                <i class="fas fa-weight-hanging"></i>
+                <span>Equipamentos</span>
               </div>
-            </div>
-            <div class="overview-item">
-              <div class="overview-icon">📅</div>
-              <div>
-                <h4>Data de Criação</h4>
-                <p>{{ formatDate(plan?.createdAt) }}</p>
+              <div class="equipment-list">
+                <span 
+                  v-for="equipment in getUniqueEquipments()" 
+                  :key="equipment"
+                  class="equipment-tag"
+                >
+                  {{ equipment }}
+                </span>
+                <span v-if="getUniqueEquipments().length === 0" class="no-data">
+                  Nenhum equipamento específico
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Lista de divisões -->
-        <div class="divisions-container">
-          <h3 class="section-title">Divisões do Treino</h3>
-          <div class="divisions-list">
+        <!-- Divisions List -->
+        <div class="divisions-section">
+          <h3 class="section-title">
+            <i class="fas fa-th-large"></i>
+            Divisões de Treino ({{ plan?.divisions?.length || 0 }})
+          </h3>
+          
+          <div class="divisions-grid">
             <div 
               v-for="(division, index) in plan?.divisions" 
               :key="division._id || index"
               class="division-card"
+              @click="openDivisionModal(division, index)"
             >
+              <!-- Division Header -->
               <div class="division-header">
-                <h4 class="division-title">{{ division.name }}</h4>
-                <div class="division-badge">{{ division.exercises?.length || 0 }} exercícios</div>
+                <div class="division-indicator">
+                  <span class="division-letter">{{ String.fromCharCode(65 + index) }}</span>
+                </div>
+                <div class="division-info">
+                  <h4 class="division-name">{{ division.name }}</h4>
+                  <p class="division-description">{{ division.description || 'Sem descrição' }}</p>
+                </div>
+                <div class="division-arrow">
+                  <i class="fas fa-chevron-right"></i>
+                </div>
               </div>
               
-              <div class="exercises-list">
-                <div 
-                  v-for="(exercise, exerciseIndex) in division.exercises" 
-                  :key="`${division._id}-${exerciseIndex}`"
-                  class="exercise-card"
-                >
-                  <div class="exercise-main">
-                    <div class="exercise-info">
-                      <h5 class="exercise-name">{{ exercise.name }}</h5>
-                      <p v-if="exercise.description" class="exercise-description">
-                        {{ exercise.description }}
-                      </p>
-                    </div>
-                    <div class="exercise-image" v-if="exercise.image">
-                      <img :src="exercise.image" :alt="exercise.name" />
+              <!-- Division Preview -->
+              <div class="division-preview">
+                <div class="preview-stats">
+                  <div class="preview-stat">
+                    <i class="fas fa-dumbbell"></i>
+                    <span>{{ division.exercises?.length || 0 }} exercícios</span>
+                  </div>
+                  <div class="preview-stat">
+                    <i class="fas fa-clock"></i>
+                    <span>~{{ getDivisionDuration(division) }} min</span>
+                  </div>
+                  <div class="preview-stat">
+                    <i class="fas fa-repeat"></i>
+                    <span>{{ getDivisionSets(division) }} séries</span>
+                  </div>
+                </div>
+                
+                <!-- Muscle Groups Preview -->
+                <div v-if="division.muscleGroups && division.muscleGroups.length > 0" class="muscle-preview">
+                  <span 
+                    v-for="muscle in division.muscleGroups.slice(0, 3)" 
+                    :key="muscle"
+                    class="muscle-chip"
+                  >
+                    {{ muscle }}
+                  </span>
+                  <span v-if="division.muscleGroups.length > 3" class="muscle-chip more">
+                    +{{ division.muscleGroups.length - 3 }}
+                  </span>
+                </div>
+                
+                <!-- Exercise Preview -->
+                <div class="exercises-preview">
+                  <div class="preview-exercises">
+                    <div 
+                      v-for="(exercise, exerciseIndex) in division.exercises?.slice(0, 3)" 
+                      :key="`preview-${exerciseIndex}`"
+                      class="preview-exercise"
+                    >
+                      <div class="exercise-thumb">
+                        <img 
+                          v-if="exercise.image" 
+                          :src="getImageUrl(exercise.image)" 
+                          :alt="exercise.name"
+                          @error="onImageError"
+                          @load="onImageLoad"
+                          style="display: block;"
+                        />
+                        <div class="exercise-placeholder" :style="{ display: exercise.image ? 'none' : 'flex' }">
+                          <i class="fas fa-dumbbell"></i>
+                        </div>
+                      </div>
+                      <span class="exercise-preview-name">{{ exercise.name }}</span>
                     </div>
                   </div>
                   
-                  <div class="exercise-details">
-                    <div class="detail-item">
-                      <span class="detail-label">Séries:</span>
-                      <span class="detail-value">{{ exercise.sets || '-' }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Repetições:</span>
-                      <span class="detail-value">{{ exercise.reps || '-' }}</span>
-                    </div>
-                    <div class="detail-item" v-if="exercise.idealWeight">
-                      <span class="detail-label">Peso Ideal:</span>
-                      <span class="detail-value">{{ exercise.idealWeight }}kg</span>
+                  <div v-if="division.exercises && division.exercises.length > 3" class="more-exercises">
+                    <div class="more-indicator">
+                      <i class="fas fa-plus"></i>
+                      <span>{{ division.exercises.length - 3 }} mais</span>
                     </div>
                   </div>
                 </div>
               </div>
+              
+
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Footer -->
       <div class="modal-footer">
-        <button @click="printPlan" class="action-btn print-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6,9 6,2 18,2 18,9"></polyline>
-            <path d="M6,18L4,18a2,2,0,0,1-2-2V11a2,2,0,0,1,2-2H20a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18"></path>
-            <polyline points="6,14 18,14"></polyline>
-          </svg>
-          Imprimir
-        </button>
+        <div class="footer-info">
+          <div class="info-item">
+            <i class="fas fa-info-circle"></i>
+            <span>Clique em uma divisão para visualizar os detalhes dos exercícios</span>
+          </div>
+        </div>
         
-        <button @click="exportPDF" class="action-btn export-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14,2H6A2,2,0,0,0,4,4V20a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V8Z"></path>
-            <polyline points="14,2 14,8 20,8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10,9 9,9 8,9"></polyline>
-          </svg>
-          Exportar PDF
-        </button>
-        
-        <button @click="closeModal" class="action-btn close-btn-footer">
-          Fechar
-        </button>
+        <div class="footer-actions">
+          <button @click="closeModal" class="action-btn primary">
+            Fechar
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-    <!-- Notification Modal -->
-    <NotificationModal
-      v-model:visible="notification.visible"
-      :type="notification.type"
-      :title="notification.title"
-      :message="notification.message"
-    />
+  <!-- Division Detail Modal -->
+  <ViewDivisionModal
+    :show="showDivisionModal"
+    :division="selectedDivision"
+    @close="closeDivisionModal"
+    @back="closeDivisionModal"
+  />
+
+  <!-- Notification Modal -->
+  <NotificationModal
+    v-model:visible="notification.visible"
+    :type="notification.type"
+    :title="notification.title"
+    :message="notification.message"
+  />
 </template>
 
 <script>
+import NotificationModal from './NotificationModal.vue';
+import ViewDivisionModal from './ViewDivisionModal.vue';
+
 export default {
   name: 'ViewPlanModal',
+  components: {
+    NotificationModal,
+    ViewDivisionModal
+  },
   props: {
     show: {
       type: Boolean,
@@ -144,6 +270,19 @@ export default {
       type: Object,
       default: () => ({})
     }
+  },
+  data() {
+    return {
+      showDivisionModal: false,
+      selectedDivision: null,
+      selectedDivisionIndex: null,
+      notification: {
+        visible: false,
+        type: '',
+        title: '',
+        message: ''
+      }
+    };
   },
   emits: ['close'],
   methods: {
@@ -155,9 +294,31 @@ export default {
         message: message
       };
     },
+    
     closeModal() {
+      this.showDivisionModal = false;
+      this.selectedDivision = null;
+      this.selectedDivisionIndex = null;
       this.$emit('close');
     },
+    
+    openDivisionModal(division, index) {
+      this.selectedDivision = division;
+      this.selectedDivisionIndex = index;
+      this.showDivisionModal = true;
+    },
+    
+    closeDivisionModal() {
+      this.showDivisionModal = false;
+      this.selectedDivision = null;
+      this.selectedDivisionIndex = null;
+    },
+    
+    viewDivisionDetails(division, index) {
+      this.openDivisionModal(division, index);
+    },
+    
+
     
     getTotalExercises() {
       if (!this.plan?.divisions) return 0;
@@ -166,34 +327,119 @@ export default {
       }, 0);
     },
     
+    getTotalSets() {
+      if (!this.plan?.divisions) return 0;
+      return this.plan.divisions.reduce((total, division) => {
+        const divisionSets = division.exercises?.reduce((divTotal, exercise) => {
+          return divTotal + (exercise.sets || 0);
+        }, 0) || 0;
+        return total + divisionSets;
+      }, 0);
+    },
+    
+    getEstimatedTotalDuration() {
+      if (!this.plan?.divisions) return 0;
+      
+      let totalTime = 0;
+      this.plan.divisions.forEach(division => {
+        division.exercises?.forEach(exercise => {
+          const executionTime = (exercise.sets || 0) * 30; // 30s por série
+          const restTime = (exercise.sets || 0) * (exercise.restTime || 60); // tempo de descanso
+          totalTime += executionTime + restTime;
+        });
+      });
+      
+      return Math.round(totalTime / 60); // converter para minutos
+    },
+    
+    getDivisionDuration(division) {
+      if (!division?.exercises) return 0;
+      
+      let totalTime = 0;
+      division.exercises.forEach(exercise => {
+        const executionTime = (exercise.sets || 0) * 30;
+        const restTime = (exercise.sets || 0) * (exercise.restTime || 60);
+        totalTime += executionTime + restTime;
+      });
+      
+      return Math.round(totalTime / 60);
+    },
+    
+    getDivisionSets(division) {
+      if (!division?.exercises) return 0;
+      return division.exercises.reduce((total, exercise) => {
+        return total + (exercise.sets || 0);
+      }, 0);
+    },
+    
+    getAllMuscleGroups() {
+      if (!this.plan?.divisions) return [];
+      
+      const allGroups = new Set();
+      this.plan.divisions.forEach(division => {
+        if (division.muscleGroups) {
+          division.muscleGroups.forEach(group => allGroups.add(group));
+        }
+      });
+      
+      return Array.from(allGroups).slice(0, 8); // Limitar a 8 grupos
+    },
+    
+    getUniqueEquipments() {
+      if (!this.plan?.divisions) return [];
+      
+      const equipments = new Set();
+      this.plan.divisions.forEach(division => {
+        division.exercises?.forEach(exercise => {
+          if (exercise.equipmentId || exercise.equipment) {
+            equipments.add(exercise.equipment || 'Equipamento');
+          }
+        });
+      });
+      
+      return Array.from(equipments).slice(0, 6); // Limitar a 6 equipamentos
+    },
+    
+    getImageUrl(imagePath) {
+      if (!imagePath) return null;
+      if (imagePath.startsWith('http')) return imagePath;
+      
+      // Se o caminho não começar com /, adicionar
+      const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      const baseUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
+      
+      return `${baseUrl}${path}`;
+    },
+
+    onImageError(event) {
+      console.warn('Erro ao carregar imagem:', event.target.src);
+      // Substituir a imagem por um placeholder
+      event.target.style.display = 'none';
+      const placeholder = event.target.nextElementSibling || event.target.parentElement.querySelector('.exercise-placeholder');
+      if (placeholder) {
+        placeholder.style.display = 'flex';
+      }
+    },
+
+    onImageLoad(event) {
+      console.log('Imagem carregada com sucesso:', event.target.src);
+      // Esconder placeholder se existir
+      const placeholder = event.target.nextElementSibling || event.target.parentElement.querySelector('.exercise-placeholder');
+      if (placeholder) {
+        placeholder.style.display = 'none';
+      }
+    },
+    
     formatDate(dateString) {
       if (!dateString) return '-';
       return new Date(dateString).toLocaleDateString('pt-BR', {
         year: 'numeric',
-        month: 'long',
+        month: 'short',
         day: 'numeric'
       });
     },
     
-    printPlan() {
-      window.print();
-    },
-    
-    exportPDF() {
-      // Implementar funcionalidade de exportar PDF
-      this.showNotification('info', 'Informacao', 'Funcionalidade de exportar PDF será implementada em breve!');
-    }
-  },
-  mounted() {
-    // Prevenir scroll do body quando modal estiver aberto
-    if (this.show) {
-      document.body.style.overflow = 'hidden';
-    }
-  },
-  
-  beforeUnmount() {
-    // Restaurar scroll do body
-    document.body.style.overflow = '';
+
   },
   
   watch: {
@@ -202,55 +448,87 @@ export default {
         document.body.style.overflow = 'hidden';
       } else {
         document.body.style.overflow = '';
+        this.closeDivisionModal();
       }
     }
+  },
+  
+  beforeUnmount() {
+    document.body.style.overflow = '';
   }
 }
 </script>
 
 <style scoped>
+/* CSS Variables */
+:root {
+  /* Light mode */
+  --card-bg: #ffffff;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --bg-secondary: #f8fafc;
+}
+
+[data-theme="dark"] {
+  /* Dark mode */
+  --card-bg: #1e1e2d;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-secondary: #6b7280;
+  --border-color: #2d2d3f;
+  --bg-secondary: #171723;
+}
+
+/* Base Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   padding: 20px;
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
+  from { 
+    opacity: 0; 
+    backdrop-filter: blur(0px);
   }
-  to {
-    opacity: 1;
+  to { 
+    opacity: 1; 
+    backdrop-filter: blur(12px);
   }
 }
 
 .modal-container {
-  background: #ffffff;
-  border-radius: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 28px;
   width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
+  max-width: 1200px;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  animation: slideIn 0.3s ease-out;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--border-color);
+  animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(50px) scale(0.95);
+    transform: translateY(40px) scale(0.92);
   }
   to {
     opacity: 1;
@@ -258,268 +536,470 @@ export default {
   }
 }
 
+/* Header Styles */
 .modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 32px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 32px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 28px;
 }
 
 .header-info {
   flex: 1;
 }
 
-.modal-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  line-height: 1.2;
+.plan-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  line-height: 1.1;
+  color: var(--text-color);
 }
 
-.modal-subtitle {
-  font-size: 1.1rem;
-  margin: 0;
-  opacity: 0.9;
+.plan-subtitle {
+  font-size: 1.15rem;
+  margin: 0 0 16px 0;
+  color: var(--text-muted);
   font-weight: 400;
+  line-height: 1.4;
+}
+
+.plan-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.meta-chip:hover {
+  background: var(--card-bg);
+  transform: translateY(-2px);
+}
+
+.meta-chip.goal {
+  background: #fbbf24;
+  color: #ffffff;
+  border-color: #f59e0b;
 }
 
 .close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-color);
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  font-size: 1.3rem;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  background: var(--card-bg);
+  border-color: var(--text-muted);
+  transform: scale(1.08);
 }
 
+/* Plan Statistics */
+.plan-stats {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.divisions { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+.stat-icon.exercises { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+.stat-icon.sets { background: linear-gradient(135deg, #45b7d1, #96c93d); }
+.stat-icon.time { background: linear-gradient(135deg, #f093fb, #f5576c); }
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-color);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Modal Body */
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 32px;
+  padding: 0;
 }
 
-/* Plan Overview */
-.plan-overview {
-  margin-bottom: 32px;
+/* Quick Overview */
+.quick-overview {
+  padding: 32px 40px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 24px 0;
+}
+
+.section-title i {
+  color: #3b82f6;
 }
 
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
 }
 
-.overview-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 16px;
-  transition: transform 0.2s ease;
+.overview-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.3s ease;
 }
 
-.overview-item:hover {
+.overview-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
   transform: translateY(-2px);
 }
 
-.overview-icon {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
+.overview-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.overview-item h4 {
-  margin: 0 0 4px 0;
-  font-size: 0.9rem;
-  color: #6c757d;
-  font-weight: 600;
-}
-
-.overview-item p {
-  margin: 0;
-  font-size: 1.5rem;
+  gap: 10px;
+  margin-bottom: 16px;
   font-weight: 700;
-  color: #495057;
+  color: var(--text-color);
 }
 
-/* Sections */
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #495057;
-  margin: 0 0 24px 0;
-  padding-bottom: 12px;
-  border-bottom: 3px solid #e9ecef;
+.overview-header i {
+  color: #3b82f6;
+  font-size: 1.2rem;
 }
 
-/* Divisions */
-.divisions-list {
+.muscle-groups, .equipment-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.muscle-tag, .equipment-tag {
+  background: #3b82f6;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.muscle-tag:hover, .equipment-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.no-data {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Divisions Section */
+.divisions-section {
+  padding: 32px 40px;
+  background: var(--card-bg);
+}
+
+.divisions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 24px;
 }
 
 .division-card {
-  background: #ffffff;
-  border: 2px solid #e9ecef;
-  border-radius: 20px;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 24px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
 }
 
 .division-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 12px 35px rgba(59, 130, 246, 0.15);
+  transform: translateY(-4px);
 }
 
+.division-card:hover .division-arrow {
+  transform: translateX(4px);
+}
+
+/* Division Header */
 .division-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 20px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.division-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #495057;
-  margin: 0;
-}
-
-.division-badge {
-  background: #667eea;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-/* Exercises */
-.exercises-list {
   padding: 24px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 16px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.exercise-card {
-  background: #f8f9fa;
+.division-indicator {
+  width: 50px;
+  height: 50px;
+  background: #3b82f6;
   border-radius: 16px;
-  padding: 20px;
-  transition: all 0.2s ease;
-}
-
-.exercise-card:hover {
-  background: #e9ecef;
-  transform: translateX(8px);
-}
-
-.exercise-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.exercise-info {
-  flex: 1;
-}
-
-.exercise-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #495057;
-  margin: 0 0 8px 0;
-}
-
-.exercise-description {
-  font-size: 0.95rem;
-  color: #6c757d;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.exercise-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #dee2e6;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 16px;
+  flex-shrink: 0;
 }
 
-.exercise-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.division-letter {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
 }
 
-.exercise-details {
+.division-info {
+  flex: 1;
+}
+
+.division-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 6px 0;
+}
+
+.division-description {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.division-arrow {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+/* Division Preview */
+.division-preview {
+  padding: 20px 24px;
+}
+
+.preview-stats {
   display: flex;
   gap: 20px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-.detail-item {
+.preview-stat {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: white;
-  border-radius: 8px;
-  min-width: 120px;
-}
-
-.detail-label {
+  gap: 6px;
+  color: var(--text-muted);
   font-size: 0.9rem;
-  color: #6c757d;
   font-weight: 600;
 }
 
-.detail-value {
-  font-size: 0.95rem;
-  color: #495057;
-  font-weight: 700;
+.preview-stat i {
+  color: #3b82f6;
 }
 
-/* Modal Footer */
-.modal-footer {
-  background: #f8f9fa;
-  padding: 24px 32px;
+.muscle-preview {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.muscle-chip {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.muscle-chip.more {
+  background: var(--border-color);
+  color: var(--text-muted);
+}
+
+/* Exercise Preview */
+.exercises-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-exercises {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+}
+
+.preview-exercise {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 60px;
+}
+
+.exercise-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.exercise-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.exercise-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--border-color);
+}
+
+.exercise-placeholder i {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+
+.exercise-preview-name {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.more-exercises {
+  display: flex;
+  align-items: center;
+}
+
+.more-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.more-indicator i {
+  font-size: 1.2rem;
+  color: #3b82f6;
+}
+
+/* Division Actions */
+.division-actions {
+  padding: 16px 24px;
+  background: #f8f9fa;
+  display: flex;
+  gap: 12px;
   border-top: 1px solid #e9ecef;
 }
 
 .action-btn {
-  padding: 12px 20px;
-  border-radius: 10px;
+  padding: 10px 16px;
+  border-radius: 12px;
   border: none;
   font-weight: 600;
   cursor: pointer;
@@ -527,113 +1007,175 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
-  justify-content: center;
+  font-size: 0.9rem;
 }
 
-.print-btn {
-  background: #28a745;
+.action-btn.small {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
+.action-btn.primary {
+  background: #3b82f6;
   color: white;
 }
 
-.print-btn:hover {
-  background: #218838;
-  transform: translateY(-2px);
+.action-btn.primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
-.export-btn {
-  background: #17a2b8;
+.action-btn.secondary {
+  background: var(--text-muted);
   color: white;
 }
 
-.export-btn:hover {
-  background: #138496;
-  transform: translateY(-2px);
+.action-btn.secondary:hover {
+  background: var(--text-secondary);
+  transform: translateY(-1px);
 }
 
-.close-btn-footer {
-  background: #6c757d;
-  color: white;
+.action-btn.ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 2px solid var(--border-color);
 }
 
-.close-btn-footer:hover {
-  background: #5a6268;
-  transform: translateY(-2px);
+.action-btn.ghost:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-muted);
 }
 
-/* Responsividade */
+/* Modal Footer */
+.modal-footer {
+  background: var(--bg-secondary);
+  padding: 24px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.info-item i {
+  color: #3b82f6;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .divisions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 10px;
+    padding: 12px;
   }
   
   .modal-container {
     max-height: 95vh;
+    border-radius: 24px;
   }
   
   .modal-header {
-    padding: 24px;
+    padding: 24px 28px;
+  }
+  
+  .plan-title {
+    font-size: 2rem;
+  }
+  
+  .plan-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .quick-overview,
+  .divisions-section {
+    padding: 24px 28px;
+  }
+  
+  .divisions-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .modal-footer {
+    padding: 20px 28px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .footer-actions {
+    justify-content: stretch;
+  }
+  
+  .action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-container {
+    border-radius: 20px;
+  }
+  
+  .plan-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
     flex-direction: column;
     gap: 16px;
     text-align: center;
   }
   
-  .modal-title {
-    font-size: 1.5rem;
+  .plan-meta {
+    justify-content: center;
   }
   
-  .modal-body {
-    padding: 24px;
+  .preview-stats {
+    justify-content: center;
   }
   
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .exercise-main {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .exercise-image {
-    margin-left: 0;
-    align-self: flex-start;
-  }
-  
-  .exercise-details {
-    justify-content: space-between;
-  }
-  
-  .detail-item {
-    flex: 1;
-    min-width: auto;
-    justify-content: space-between;
-  }
-  
-  .modal-footer {
-    padding: 20px;
+  .division-actions {
     flex-direction: column;
   }
   
   .action-btn {
-    width: 100%;
+    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
-  .division-header {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-  
-  .exercise-details {
-    flex-direction: column;
-    gap: 8px;
-  }
-}
-
-/* Print styles */
+/* Print Styles */
 @media print {
   .modal-overlay {
     background: white;
@@ -651,8 +1193,28 @@ export default {
   }
   
   .close-btn,
-  .modal-footer {
+  .modal-footer,
+  .division-actions {
     display: none;
   }
+}
+
+/* Scrollbar Styles */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>
