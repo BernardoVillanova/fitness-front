@@ -74,7 +74,7 @@
       </div>
 
       <!-- Body -->
-      <div class="modal-body">
+      <div class="modal-body">        
         <!-- Exercise List -->
         <div class="exercises-container">
           <div 
@@ -107,21 +107,6 @@
               </div>
               
               <div class="exercise-actions">
-                <div class="exercise-thumbnail">
-                  <img 
-                    v-if="exercise.image" 
-                    :src="getImageUrl(exercise.image)" 
-                    :alt="exercise.name"
-                    @error="onImageError"
-                    @load="onImageLoad"
-                  />
-                  <div 
-                    v-if="!exercise.image" 
-                    class="exercise-placeholder"
-                  >
-                    <i class="fas fa-dumbbell"></i>
-                  </div>
-                </div>
                 <button class="expand-btn" :class="{ active: expandedExercise === index }">
                   <i class="fas fa-chevron-down"></i>
                 </button>
@@ -143,27 +128,28 @@
                       @load="onImageLoad"
                     />
                     <div 
-                      v-if="!exercise.image" 
-                      class="exercise-placeholder"
+                      v-else
+                      class="exercise-placeholder large"
                     >
                       <i class="fas fa-dumbbell"></i>
-                      <span>Sem imagem disponível</span>
+                      <span>Imagem não disponível</span>
+                      <small>{{ exercise.name }}</small>
                     </div>
                   </div>
                 </div>
                 
                 <!-- Details Section -->
                 <div class="exercise-details-section">
-                  <!-- Description -->
-                  <div v-if="exercise.description" class="detail-block">
-                    <h5 class="detail-title">
-                      <i class="fas fa-info-circle"></i>
-                      Descrição
-                    </h5>
-                    <p class="detail-text">{{ exercise.description }}</p>
-                  </div>
-                  
-                  <!-- Exercise Parameters -->
+                <!-- Description -->
+                <div class="detail-block">
+                  <h5 class="detail-title">
+                    <i class="fas fa-info-circle"></i>
+                    Descrição
+                  </h5>
+                  <p class="detail-text">
+                    {{ getExerciseDescription(exercise) }}
+                  </p>
+                </div>                  <!-- Exercise Parameters -->
                   <div class="detail-block">
                     <h5 class="detail-title">
                       <i class="fas fa-cogs"></i>
@@ -298,6 +284,48 @@ export default {
       return this.division.muscleGroups;
     },
     
+    // Dados padrão para exercícios comuns
+    getExerciseDefaults(exerciseName) {
+      const defaults = {
+        'Flexão Padrão': {
+          description: 'Exercício clássico para desenvolvimento do peitoral, tríceps e ombros. Mantenha o corpo reto e desça até o peito quase tocar o chão.',
+          image: null, // Será usado placeholder
+          muscleGroups: ['Peitoral', 'Tríceps', 'Ombros']
+        },
+        'Agachamento': {
+          description: 'Exercício fundamental para desenvolvimento dos membros inferiores. Desça mantendo os joelhos alinhados com os pés.',
+          image: null,
+          muscleGroups: ['Quadríceps', 'Glúteos', 'Core']
+        },
+        'Abdominal': {
+          description: 'Exercício para fortalecimento do core. Contraia o abdômen e evite puxar o pescoço.',
+          image: null,
+          muscleGroups: ['Abdômen', 'Core']
+        },
+        'Flexão de Braços': {
+          description: 'Variação da flexão tradicional focada no desenvolvimento da força dos braços e peitoral.',
+          image: null,
+          muscleGroups: ['Peitoral', 'Tríceps', 'Ombros']
+        }
+      };
+      
+      return defaults[exerciseName] || {
+        description: 'Exercício para desenvolvimento muscular. Execute com técnica adequada e cargas progressivas.',
+        image: null,
+        muscleGroups: []
+      };
+    },
+    
+    // Método melhorado para pegar descrição com fallback
+    getExerciseDescription(exercise) {
+      if (exercise.description) {
+        return exercise.description;
+      }
+      
+      const defaults = this.getExerciseDefaults(exercise.name);
+      return defaults.description;
+    },
+    
     getTotalSets() {
       if (!this.division?.exercises) return 0;
       return this.division.exercises.reduce((total, exercise) => {
@@ -327,7 +355,9 @@ export default {
     },
     
     getImageUrl(imagePath, stateKey = null) {
-      if (!imagePath) return null;
+      if (!imagePath) {
+        return null;
+      }
       
       // Se temos uma URL que sabemos que funciona, usar ela
       if (stateKey && this.imageStates[stateKey]?.workingUrl) {
@@ -339,7 +369,9 @@ export default {
         return `${baseUrl}${path}`;
       }
       
-      if (imagePath.startsWith('http')) return imagePath;
+      if (imagePath.startsWith('http')) {
+        return imagePath;
+      }
       
       // Construir URL correta para as imagens
       const baseUrl = 'http://localhost:3000';
@@ -350,7 +382,8 @@ export default {
         path = `/uploads/exercises/${path}`;
       }
       
-      return `${baseUrl}${path}`;
+      const finalUrl = `${baseUrl}${path}`;
+      return finalUrl;
     },
 
 
@@ -550,69 +583,136 @@ export default {
 /* Division Stats */
 .division-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  border-radius: 18px;
+  padding: 24px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
+  gap: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
 }
 
 .stat-card:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .stat-icon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.15));
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .stat-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .stat-number {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-label {
-  font-size: 0.85rem;
-  opacity: 0.9;
-  font-weight: 500;
+  font-size: 0.9rem;
+  opacity: 0.85;
+  font-weight: 600;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Muscle Groups */
 .muscle-groups {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.muscle-groups::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  pointer-events: none;
 }
 
 .muscle-tag {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  backdrop-filter: blur(15px);
+  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.muscle-tag:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25));
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Modal Body */
@@ -620,6 +720,18 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 0;
+}
+
+/* Debug Info */
+.debug-info {
+  padding: 20px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  margin: 20px;
+  color: #856404;
+  text-align: center;
+  font-weight: 600;
 }
 
 .exercises-container {
@@ -715,37 +827,6 @@ export default {
   gap: 12px;
 }
 
-.exercise-thumbnail {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.exercise-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.exercise-thumbnail .exercise-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 1rem;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-}
-
 .expand-btn {
   background: #f8f9fa;
   border: 2px solid #e9ecef;
@@ -819,10 +900,34 @@ export default {
   margin-bottom: 16px;
 }
 
+.exercise-placeholder.large {
+  height: 300px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px dashed #dee2e6;
+}
+
 .exercise-placeholder i {
   font-size: 2.5rem;
   margin-bottom: 8px;
   opacity: 0.5;
+}
+
+.exercise-placeholder.large i {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  color: #adb5bd;
+}
+
+.exercise-placeholder span {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.exercise-placeholder small {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-top: 4px;
+  text-align: center;
 }
 
 .exercise-details-section {
@@ -1004,6 +1109,33 @@ export default {
   
   .division-stats {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .stat-card {
+    padding: 20px 16px;
+    gap: 12px;
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+  
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  
+  .muscle-groups {
+    padding: 16px;
+    gap: 10px;
+  }
+  
+  .muscle-tag {
+    padding: 10px 16px;
+    font-size: 0.85rem;
   }
   
   .exercise-grid {
@@ -1038,6 +1170,32 @@ export default {
 @media (max-width: 480px) {
   .division-stats {
     grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 18px 14px;
+  }
+  
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+  
+  .stat-number {
+    font-size: 1.4rem;
+  }
+  
+  .muscle-groups {
+    padding: 14px;
+    gap: 8px;
+  }
+  
+  .muscle-tag {
+    padding: 8px 14px;
+    font-size: 0.8rem;
   }
   
   .exercise-meta {
@@ -1159,10 +1317,6 @@ export default {
 }
 
 /* Image States */
-.exercise-thumbnail {
-  position: relative;
-}
-
 .exercise-image-container {
   position: relative;
 }
@@ -1188,13 +1342,11 @@ export default {
 }
 
 /* Fade in animation for loaded images */
-.exercise-image,
-.exercise-thumbnail img {
+.exercise-image {
   transition: opacity 0.3s ease;
 }
 
-.exercise-image[style*="display: block"],
-.exercise-thumbnail img[style*="display: block"] {
+.exercise-image[style*="display: block"] {
   animation: fadeInImage 0.5s ease-out;
 }
 

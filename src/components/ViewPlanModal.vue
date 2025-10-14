@@ -7,20 +7,6 @@
           <div class="header-info">
             <h2 class="plan-title">{{ plan?.name || 'Ficha de Treino' }}</h2>
             <p class="plan-subtitle">{{ plan?.description || 'Visualização completa do plano de exercícios' }}</p>
-            <div class="plan-meta">
-              <span class="meta-chip">
-                <i class="fas fa-user"></i>
-                {{ plan?.assignedStudents?.length || 0 }} alunos
-              </span>
-              <span class="meta-chip">
-                <i class="fas fa-calendar-plus"></i>
-                {{ formatDate(plan?.createdAt) }}
-              </span>
-              <span v-if="plan?.goal" class="meta-chip goal">
-                <i class="fas fa-target"></i>
-                {{ plan.goal }}
-              </span>
-            </div>
           </div>
           <button @click="closeModal" class="close-btn">
             <i class="fas fa-times"></i>
@@ -387,44 +373,54 @@ export default {
     
     getUniqueEquipments() {
       if (!this.plan?.divisions) return [];
-      
       const equipments = new Set();
       this.plan.divisions.forEach(division => {
         division.exercises?.forEach(exercise => {
-          if (exercise.equipmentId || exercise.equipment) {
-            equipments.add(exercise.equipment || 'Equipamento');
+          // Tenta pegar o nome do equipamento de diferentes formas
+          let equipmentName = '';
+          if (exercise.equipment && typeof exercise.equipment === 'object') {
+            equipmentName = exercise.equipment.name || exercise.equipment.label || 'Equipamento';
+          } else if (typeof exercise.equipment === 'string') {
+            equipmentName = exercise.equipment;
+          } else if (exercise.equipmentName) {
+            equipmentName = exercise.equipmentName;
+          } else {
+            equipmentName = 'Equipamento';
+          }
+          // Só adiciona se não for vazio
+          if (equipmentName && equipmentName !== 'undefined') {
+            equipments.add(equipmentName);
           }
         });
       });
-      
       return Array.from(equipments).slice(0, 6); // Limitar a 6 equipamentos
     },
     
     getImageUrl(imagePath) {
       if (!imagePath) return null;
+      if (typeof imagePath !== 'string') return null;
       if (imagePath.startsWith('http')) return imagePath;
-      
-      // Se o caminho não começar com /, adicionar
-      const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      // Se o caminho não começar com /uploads, adicionar
+      let path = imagePath;
+      if (!imagePath.startsWith('/uploads')) {
+        path = `/uploads/${imagePath.replace(/^\/*/, '')}`;
+      }
       const baseUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
-      
       return `${baseUrl}${path}`;
     },
 
     onImageError(event) {
-      console.warn('Erro ao carregar imagem:', event.target.src);
-      // Substituir a imagem por um placeholder
+      // Esconde a imagem e mostra o placeholder
       event.target.style.display = 'none';
-      const placeholder = event.target.nextElementSibling || event.target.parentElement.querySelector('.exercise-placeholder');
+      const placeholder = event.target.parentElement.querySelector('.exercise-placeholder');
       if (placeholder) {
         placeholder.style.display = 'flex';
       }
     },
 
     onImageLoad(event) {
-      console.log('Imagem carregada com sucesso:', event.target.src);
-      // Esconder placeholder se existir
-      const placeholder = event.target.nextElementSibling || event.target.parentElement.querySelector('.exercise-placeholder');
+      // Esconde o placeholder se a imagem carregar
+      const placeholder = event.target.parentElement.querySelector('.exercise-placeholder');
       if (placeholder) {
         placeholder.style.display = 'none';
       }
@@ -518,9 +514,7 @@ export default {
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.25),
-    0 0 0 1px var(--border-color);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border-color);
   animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
