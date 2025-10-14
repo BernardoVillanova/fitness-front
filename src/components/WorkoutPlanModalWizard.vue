@@ -305,6 +305,17 @@
                 <!-- Botão para avançar etapa -->
                 <div class="division-content-footer">
                   <button 
+                    v-if="currentDivisionIndex > 0"
+                    @click.stop="previousDivision" 
+                    class="btn-back"
+                    type="button"
+                  >
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                    </svg>
+                    Voltar
+                  </button>
+                  <button 
                     @click.stop="handleDivisionNextButton" 
                     class="btn-save"
                     :disabled="!canProceedFromCurrentDivision"
@@ -2240,13 +2251,45 @@ export default {
   border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
+  gap: 16px;
   position: relative;
   z-index: 10;
+}
+
+.division-content-footer:has(.btn-back) {
+  justify-content: space-between;
 }
 
 .division-content-footer .btn-save {
   pointer-events: auto;
   cursor: pointer;
+}
+
+.division-content-footer .btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  flex: 1;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid var(--border-color);
+  font-family: inherit;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  pointer-events: auto;
+}
+
+.division-content-footer .btn-back:hover {
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .form-row {
