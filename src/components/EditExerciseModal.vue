@@ -336,6 +336,17 @@
           <!-- Navigation Buttons -->
           <div class="modal-footer">
             <button 
+              type="button" 
+              class="btn-cancel" 
+              @click="closeModal"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Cancelar
+            </button>
+
+            <button 
               v-if="currentStep > 1" 
               type="button" 
               class="nav-button secondary" 
@@ -348,7 +359,7 @@
             <button 
               v-if="currentStep < 2" 
               type="button" 
-              class="nav-button primary" 
+              class="btn-save" 
               @click="nextStep"
             >
               Próximo
@@ -884,7 +895,7 @@ i[class*=" fa-"] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-color);
 }
@@ -1378,6 +1389,101 @@ select.form-input {
 .nav-button.primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(var(--primary-color-rgb), 0.5);
+}
+
+.btn-cancel {
+  flex: 1;
+  max-width: 280px;
+  min-height: 56px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-primary);
+}
+
+.btn-cancel:hover {
+  background: var(--bg-secondary);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.btn-cancel svg {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  font-family: inherit;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-save:hover::before {
+  left: 100%;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-save:active {
+  transform: translateY(0);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-save svg {
+  width: 20px;
+  height: 20px;
 }
 
 .submit-button {

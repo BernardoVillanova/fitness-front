@@ -140,32 +140,6 @@
                     </div>
                     <span class="placeholder-text">Sem imagem</span>
                   </div>
-                  
-                  <!-- Overlay with Actions -->
-                  <div class="image-overlay">
-                    <div class="overlay-actions">
-                      <button class="modern-overlay-btn preview-btn" @click="previewMachine(machine)">
-                        <div class="btn-glow-effect"></div>
-                        <div class="btn-icon-wrapper">
-                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                          </svg>
-                        </div>
-                        <span class="btn-tooltip">Visualizar</span>
-                      </button>
-                      
-                      <button class="modern-overlay-btn edit-btn" @click="editMachine(machine)">
-                        <div class="btn-glow-effect"></div>
-                        <div class="btn-icon-wrapper">
-                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                          </svg>
-                        </div>
-                        <span class="btn-tooltip">Editar</span>
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -1704,7 +1678,6 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .exercise-card:hover {
-  transform: translateY(-8px);
   border-color: var(--primary-color);
   box-shadow: var(--shadow-lg);
 }
@@ -1722,7 +1695,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .exercise-card:hover .card-glow {
-  opacity: 1;
+  opacity: 0;
 }
 
 .exercise-header {
@@ -1739,17 +1712,38 @@ body:has(.navbar-collapsed) .dashboard-main,
 .image-container {
   width: 100%;
   height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.exercise-card:hover .image-container::before {
+  opacity: 1;
 }
 
 .image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center center;
 }
 
 .exercise-card:hover .image-container img {
-  transform: scale(1.05);
+  transform: scale(1.10);
 }
 
 .image-placeholder {
@@ -1809,7 +1803,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3020,7 +3013,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(239, 68, 68, 0.9);
+  background-color: transparent;
   border: none;
   color: white;
   cursor: pointer;
@@ -3032,7 +3025,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 .remove-image-btn:hover {
   background: #dc2626;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .remove-image-btn svg {
