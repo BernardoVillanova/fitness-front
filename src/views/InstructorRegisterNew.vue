@@ -1011,7 +1011,6 @@ export default {
 
 .list-item svg,
 .list-item i {
-  color: var(--primary-color);
   flex-shrink: 0;
   width: 16px;
   height: 16px;
