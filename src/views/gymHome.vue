@@ -638,6 +638,14 @@ export default {
   --border-color: rgba(226, 232, 240, 0.8);
   --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
   --shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.15);
+  
+  /* Variáveis adicionais para dropdown e componentes */
+  --bg-primary: #ffffff;
+  --bg-secondary: rgba(248, 250, 252, 0.9);
+  --bg-tertiary: rgba(255, 255, 255, 0.95);
+  --bg-accent: rgba(37, 99, 235, 0.08);
+  --text-primary: #1e293b;
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .dark {
@@ -653,6 +661,14 @@ export default {
   --border-color: rgba(255, 255, 255, 0.1);
   --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   --shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.7);
+  
+  /* Variáveis adicionais para dropdown e componentes */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: rgba(15, 16, 23, 0.8);
+  --bg-tertiary: rgba(26, 32, 44, 0.9);
+  --bg-accent: rgba(139, 92, 246, 0.08);
+  --text-primary: #f8fafc;
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
 }
 
 .gym-home {
@@ -1043,29 +1059,12 @@ body:has(.navbar-collapsed) .dashboard-container,
 }
 
 .gym-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-hover);
   border-color: var(--primary-color);
-}
-
-.dark .gym-card:hover {
-  background: rgba(42, 42, 42, 0.9);
-  box-shadow: 0 35px 60px -12px rgba(139, 92, 246, 0.3);
+  box-shadow: var(--shadow-hover);
 }
 
 .card-glow {
-  position: absolute;
-  inset: -2px;
-  background: var(--primary-gradient);
-  border-radius: 24px;
-  opacity: 0;
-  z-index: -1;
-  filter: blur(20px);
-  transition: opacity 0.4s ease;
-}
-
-.gym-card:hover .card-glow {
-  opacity: 0.5;
+  display: none;
 }
 
 @keyframes rotate {
@@ -1087,18 +1086,38 @@ body:has(.navbar-collapsed) .dashboard-container,
 .image-container {
   width: 100%;
   height: 100%;
+  position: relative;
   overflow: hidden;
+}
+
+.image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gym-card:hover .image-container::before {
+  opacity: 1;
 }
 
 .image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center center;
 }
 
 .gym-card:hover .image-container img {
-  transform: scale(1.1);
+  transform: scale(1.10);
 }
 
 .image-placeholder {
@@ -1136,11 +1155,6 @@ body:has(.navbar-collapsed) .dashboard-container,
   opacity: 0.5;
 }
 
-.gym-card:hover .placeholder-icon {
-  opacity: 0.7;
-  transform: scale(1.1);
-}
-
 .image-gradient {
   position: absolute;
   bottom: 0;
@@ -1155,7 +1169,6 @@ body:has(.navbar-collapsed) .dashboard-container,
   );
   pointer-events: none;
   opacity: 0.8;
-  transition: opacity 0.3s ease;
 }
 
 .dark .image-gradient {
@@ -1167,24 +1180,8 @@ body:has(.navbar-collapsed) .dashboard-container,
   );
 }
 
-.gym-card:hover .image-gradient {
-  opacity: 1;
-}
-
 .image-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.gym-card:hover .image-overlay {
-  opacity: 1;
+  display: none;
 }
 
 .overlay-actions {
@@ -1375,92 +1372,67 @@ body:has(.navbar-collapsed) .dashboard-container,
 
 .dropdown-menu {
   position: absolute;
-  top: 48px;
+  top: 100%;
   right: 0;
-  width: 14rem;
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-  padding: 0.25rem 0;
-  z-index: 1001;
-}
-
-.dark .dropdown-menu {
-  background: rgba(30, 41, 59, 0.95);
+  min-width: 180px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(20px);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+  margin-top: 8px;
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  color: #374151;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--text-primary);
   text-decoration: none;
-  transition: background-color 0.15s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
   cursor: pointer;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-}
-
-.dark .dropdown-item {
-  color: #f8fafc;
 }
 
 .dropdown-item:hover {
-  background-color: #f9fafb;
-}
-
-.dark .dropdown-item:hover {
-  background-color: rgba(139, 92, 246, 0.1);
+  color: var(--primary-color);
 }
 
 .dropdown-item.logout {
-  color: #dc2626;
+  color: #ef4444;
 }
 
 .dropdown-item.logout:hover {
-  background-color: #fef2f2;
-}
-
-.dark .dropdown-item.logout:hover {
-  background-color: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
 }
 
 .divider {
-  border-top: 1px solid #e5e7eb;
-  margin: 0.25rem 0;
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
 }
 
-.dark .divider {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Animações Vue Transition */
 .dropdown-enter-active {
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  transition: all 0.2s ease;
 }
 
 .dropdown-leave-active {
-  transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+  transition: all 0.2s ease;
 }
 
-.dropdown-enter-from,
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
 .dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
-}
-
-.dropdown-enter-to,
-.dropdown-leave-from {
-  opacity: 1;
-  transform: translateY(0);
+  transform: translateY(-10px) scale(0.95);
 }
 
 .gym-info {
@@ -1623,23 +1595,31 @@ body:has(.navbar-collapsed) .dashboard-container,
   border: none;
   border-radius: 12px;
   font-size: 0.9rem;
-  font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
 }
 
 .action-button svg {
+  width: 18px;
+  height: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
 
 .button-text {
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
   white-space: nowrap;
+  font-family: "Inter", sans-serif;
 }
 
 .button-shine {
@@ -1666,42 +1646,56 @@ body:has(.navbar-collapsed) .dashboard-container,
 .primary-action {
   background: var(--primary-gradient);
   color: white;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-  border: 1px solid transparent;
+  box-shadow: 
+    0 4px 20px rgba(37, 99, 235, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
 }
 
 .dark .primary-action {
-  background: var(--primary-gradient);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(139, 92, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .button-particles {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
-  background-size: 20px 20px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
   opacity: 0;
-  animation: particleFloat 3s ease-in-out infinite;
+  transition: opacity 0.4s ease;
+  z-index: 1;
 }
 
 .primary-action:hover .button-particles {
-  opacity: 0.5;
-  animation: particleFloat 2s ease-in-out infinite;
+  opacity: 1;
+  animation: particleFloat 3s ease-in-out infinite;
 }
 
 @keyframes particleFloat {
   0%, 100% {
-    transform: translateY(0);
+    background-position: 0% 50%;
   }
   50% {
-    transform: translateY(-10px);
+    background-position: 100% 50%;
   }
 }
 
 .button-arrow {
+  display: flex;
+  align-items: center;
   opacity: 0;
   transform: translateX(-10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: absolute;
+  right: 20px;
 }
 
 .primary-action:hover .button-arrow {
@@ -1710,20 +1704,26 @@ body:has(.navbar-collapsed) .dashboard-container,
 }
 
 .primary-action:hover .button-text {
-  transform: translateX(-4px);
+  transform: translateX(-8px);
 }
 
 .primary-action:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 12px 35px rgba(37, 99, 235, 0.4),
+    0 6px 20px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .dark .primary-action:hover {
-  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.5);
+  box-shadow: 
+    0 12px 35px rgba(139, 92, 246, 0.5),
+    0 6px 20px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .primary-action:active {
-  transform: translateY(0);
+  transform: translateY(-1px) scale(1.01);
 }
 
 /* Secondary Action - Glass Morphism */

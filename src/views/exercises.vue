@@ -120,30 +120,6 @@
                     />
                     <div class="image-gradient"></div>
                   </div>
-                  
-                  <div class="image-overlay">
-                    <div class="overlay-actions">
-                      <button class="modern-overlay-btn preview-btn" @click="previewExercise(exercise)" title="Visualizar">
-                        <div class="btn-glow-effect"></div>
-                        <div class="btn-icon-wrapper">
-                          <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-                          </svg>
-                        </div>
-                        <span class="btn-tooltip">Visualizar</span>
-                      </button>
-                      <button class="modern-overlay-btn edit-btn" @click="editExercise(exercise)" title="Editar">
-                        <div class="btn-glow-effect"></div>
-                        <div class="btn-icon-wrapper">
-                          <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                          </svg>
-                        </div>
-                        <span class="btn-tooltip">Editar</span>
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -1665,7 +1641,6 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .exercise-card:hover {
-  transform: translateY(-8px);
   border-color: var(--primary-color);
   box-shadow: var(--shadow-lg);
 }
@@ -1683,7 +1658,7 @@ body:has(.navbar-collapsed) .floating-header,
 }
 
 .exercise-card:hover .card-glow {
-  opacity: 1;
+  opacity: 0;
 }
 
 .exercise-header {
@@ -1700,17 +1675,38 @@ body:has(.navbar-collapsed) .floating-header,
 .image-container {
   width: 100%;
   height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.exercise-card:hover .image-container::before {
+  opacity: 1;
 }
 
 .image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center center;
 }
 
 .exercise-card:hover .image-container img {
-  transform: scale(1.05);
+  transform: scale(1.10);
 }
 
 .image-placeholder {
@@ -1770,7 +1766,6 @@ body:has(.navbar-collapsed) .floating-header,
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3077,6 +3072,7 @@ body:has(.navbar-collapsed) .floating-header,
   justify-content: center;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
 }
 
 .dashboard-dark .modal-close {
@@ -3789,7 +3785,7 @@ body:has(.navbar-collapsed) .floating-header,
   min-height: 44px;
   padding: 0;
   border-radius: 12px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, 0%, #dc2626 100%);
   border: none;
   cursor: pointer;
   display: flex;
@@ -4311,8 +4307,8 @@ body:has(.navbar-collapsed) .floating-header,
 
 .btn-cancel:hover {
   background: var(--bg-secondary);
-  border-color: var(--error);
-  color: var(--error);
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .btn-save {
