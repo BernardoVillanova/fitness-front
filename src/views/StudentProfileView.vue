@@ -51,17 +51,9 @@
             </div>
           </div>
           <div class="header-actions">
-            <button @click="openAssignPlanModal" class="action-btn active">
-              <i class="fas fa-dumbbell"></i>
-              <span>Atribuir Plano</span>
-            </button>
             <button @click="showProgressModal = true" class="action-btn">
               <i class="fas fa-plus"></i>
               <span>Adicionar Progresso</span>
-            </button>
-            <button @click="exportData" class="action-btn">
-              <i class="fas fa-download"></i>
-              <span>Exportar</span>
             </button>
           </div>
         </div>
