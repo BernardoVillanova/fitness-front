@@ -930,6 +930,7 @@ body:has(.navbar-collapsed) .main-content {
 .action-btn.primary {
   background: var(--primary-color);
   color: white;
+  font-family: "Inter", sans-serif;
 }
 
 .action-btn.primary:hover:not(:disabled) {

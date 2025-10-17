@@ -176,10 +176,10 @@
               <!-- Série Atual (Sistema de Etapas) -->
               <div class="current-set-container">
                 <div class="set-progress-header">
-                  <h3>
+                  <div class="set-header-title">
                     <i class="fas fa-dumbbell"></i>
-                    Série {{ currentSetIndex + 1 }} de {{ totalSetsInExercise }}
-                  </h3>
+                    <h3>Série {{ currentSetIndex + 1 }} de {{ totalSetsInExercise }}</h3>
+                  </div>
                   <div class="set-progress-visual">
                     <div 
                       v-for="(set, index) in currentExercise.sets" 
@@ -189,6 +189,7 @@
                         active: index === currentSetIndex,
                         pending: index > currentSetIndex
                       }]"
+                      :title="`Série ${index + 1}`"
                     >
                       <i v-if="set.completed" class="fas fa-check"></i>
                       <span v-else>{{ index + 1 }}</span>
@@ -197,99 +198,114 @@
                 </div>
 
                 <div v-if="currentSet" class="current-set-card">
-                  <div class="set-header">
-                    <div class="set-title">
-                      <span class="set-number">{{ currentSet.setNumber }}</span>
-                      <span class="set-label">Série {{ currentSetIndex + 1 }}</span>
-                    </div>
-                    <div v-if="currentSet.completed" class="completed-badge">
+                  <!-- Status Badge -->
+                  <div v-if="currentSet.completed && !isEditingCompletedSet" class="set-status-banner completed">
+                    <div class="status-icon">
                       <i class="fas fa-check-circle"></i>
-                      Concluída
+                    </div>
+                    <div class="status-info">
+                      <span class="status-label">Série Concluída</span>
+                      <span class="status-time">{{ new Date(currentSet.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }}</span>
+                    </div>
+                    <button @click="editCompletedSet" class="btn-edit-compact">
+                      <i class="fas fa-edit"></i>
+                      Editar
+                    </button>
+                  </div>
+                  
+                  <div v-else-if="isEditingCompletedSet" class="set-status-banner editing">
+                    <div class="status-icon">
+                      <i class="fas fa-pen"></i>
+                    </div>
+                    <div class="status-info">
+                      <span class="status-label">Editando Série</span>
+                      <span class="status-time">Faça suas alterações abaixo</span>
                     </div>
                   </div>
 
-                  <div class="set-inputs-container">
-                    <div class="input-group">
-                      <label>
+                  <!-- Inputs Grid -->
+                  <div class="set-inputs-grid">
+                    <div class="input-card">
+                      <div class="input-header">
                         <i class="fas fa-redo"></i>
-                        Repetições
-                      </label>
+                        <label>Repetições</label>
+                      </div>
                       <input 
                         type="number" 
                         v-model.number="currentSet.reps"
                         :disabled="currentSet.completed && !isEditingCompletedSet"
-                        placeholder="Ex: 12"
+                        placeholder="12"
                         min="1"
-                        class="reps-input"
+                        class="input-field"
                       />
+                      <div class="input-helper">Número de repetições</div>
                     </div>
 
-                    <div class="input-group">
-                      <label>
+                    <div class="input-card">
+                      <div class="input-header">
                         <i class="fas fa-weight-hanging"></i>
-                        Peso (kg)
-                        <span v-if="isBodyWeightExercise" class="body-weight-indicator">
-                          (Peso corporal)
+                        <label>Peso (kg)</label>
+                        <span v-if="isBodyWeightExercise" class="body-weight-tag">
+                          <i class="fas fa-user"></i> Corporal
                         </span>
-                      </label>
-                      <div class="weight-input-container">
+                      </div>
+                      <div class="weight-input-wrapper">
                         <input 
                           v-if="!isBodyWeightExercise"
                           type="number" 
                           v-model.number="currentSet.weight"
                           step="0.5"
                           :disabled="currentSet.completed && !isEditingCompletedSet"
-                          placeholder="Ex: 25.0"
+                          placeholder="25.0"
                           min="0"
-                          class="weight-input"
+                          class="input-field"
                         />
-                        <div v-else-if="userWeight" class="body-weight-display">
+                        <div v-else-if="userWeight" class="body-weight-display-modern">
                           <span class="weight-value">{{ userWeight }} kg</span>
-                          <button @click="showWeightInput = true" class="btn-edit-weight">
+                          <button @click="showWeightInput = true" class="btn-edit-weight-mini">
                             <i class="fas fa-edit"></i>
                           </button>
                         </div>
-                        <button v-else @click="showWeightInput = true" class="btn-set-weight">
-                          <i class="fas fa-plus"></i>
+                        <button v-else @click="showWeightInput = true" class="btn-set-weight-modern">
+                          <i class="fas fa-plus-circle"></i>
                           Definir peso
                         </button>
+                      </div>
+                      <div class="input-helper">
+                        <span v-if="isBodyWeightExercise">Peso corporal do aluno</span>
+                        <span v-else>Carga utilizada</span>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="!currentSet.completed || isEditingCompletedSet" class="set-actions">
-                    <button v-if="!currentSet.completed" @click="completeCurrentSet" class="btn-complete-set">
-                      <i class="fas fa-check"></i>
-                      Concluir Série
-                    </button>
-                    <div v-else-if="isEditingCompletedSet" class="edit-actions">
-                      <button @click="saveEditedSet" class="btn-save-edit">
-                        <i class="fas fa-check"></i>
-                        Salvar Alterações
-                      </button>
-                      <button @click="cancelEditSet" class="btn-cancel-edit">
-                        <i class="fas fa-times"></i>
-                        Cancelar
-                      </button>
-                    </div>
+                  <!-- Difficulty Feedback (se série completa) -->
+                  <div v-if="currentSet.completed && currentSet.difficulty" class="difficulty-indicator">
+                    <span class="difficulty-icon">
+                      <i v-if="currentSet.difficulty === 'easy'" class="fas fa-smile"></i>
+                      <i v-else-if="currentSet.difficulty === 'medium'" class="fas fa-meh"></i>
+                      <i v-else class="fas fa-tired"></i>
+                    </span>
+                    <span class="difficulty-label">Dificuldade:</span>
+                    <span class="difficulty-value" :class="`difficulty-${currentSet.difficulty}`">
+                      {{ getDifficultyText(currentSet.difficulty) }}
+                    </span>
                   </div>
-                  
-                  <div v-else class="set-completed-info">
-                    <div class="completion-header">
-                      <div class="completion-time">
-                        <i class="fas fa-clock"></i>
-                        Concluída às {{ new Date(currentSet.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }}
-                      </div>
-                      <button @click="editCompletedSet" class="btn-edit-completed">
-                        <i class="fas fa-edit"></i>
-                        Editar
+
+                  <!-- Actions -->
+                  <div class="set-actions-modern">
+                    <button v-if="!currentSet.completed" @click="completeCurrentSet" class="btn-complete-modern">
+                      <i class="fas fa-check-circle"></i>
+                      <span>Concluir Série</span>
+                    </button>
+                    <div v-else-if="isEditingCompletedSet" class="edit-actions-modern">
+                      <button @click="cancelEditSet" class="btn-cancel-modern">
+                        <i class="fas fa-times"></i>
+                        <span>Cancelar</span>
                       </button>
-                    </div>
-                    <div v-if="currentSet.difficulty" class="difficulty-feedback">
-                      <span class="difficulty-label">Dificuldade:</span>
-                      <span class="difficulty-text" :class="`difficulty-${currentSet.difficulty}`">
-                        {{ getDifficultyText(currentSet.difficulty) }}
-                      </span>
+                      <button @click="saveEditedSet" class="btn-save-modern">
+                        <i class="fas fa-check"></i>
+                        <span>Salvar Alterações</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1881,6 +1897,7 @@ const getDifficultyText = (difficulty) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0;
 }
 
 .btn-close-new:hover {
@@ -2154,6 +2171,7 @@ const getDifficultyText = (difficulty) => {
   border: 1px solid var(--border-color);
   border-radius: 10px;
   color: var(--text-color);
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -2190,7 +2208,7 @@ const getDifficultyText = (difficulty) => {
 .exercise-image-container {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 380px;
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 2rem;
@@ -2227,18 +2245,42 @@ const getDifficultyText = (difficulty) => {
   font-size: 2rem;
 }
 
-/* Séries */
+/* Séries - Layout Moderno */
 .current-set-container {
+  background: linear-gradient(145deg, var(--card-bg) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 1.75rem;
+  margin-top: 1.5rem;
   margin-bottom: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 .set-progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
   border-bottom: 2px solid var(--border-color);
+}
+
+.set-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.set-header-title i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.set-header-title h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
 }
 
 .set-progress-header h3 {
@@ -2257,49 +2299,159 @@ const getDifficultyText = (difficulty) => {
 
 .set-progress-visual {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  align-items: center;
 }
 
 .progress-dot {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  border: 2px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
 }
 
-.progress-dot.completed {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  color: white;
+.progress-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.progress-dot.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
-  transform: scale(1.1);
+.progress-dot:hover::before {
+  opacity: 1;
 }
 
 .progress-dot.pending {
   background: var(--bg-secondary);
-  border-color: var(--border-color);
+  border: 2px solid var(--border-color);
   color: var(--text-muted);
+}
+
+.progress-dot.pending:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.progress-dot.active {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #2563eb 100%);
+  border: 2px solid var(--primary-color);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: scale(1.15);
+}
+
+.progress-dot.active::before {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+}
+
+.progress-dot.completed {
+  background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+  border: 2px solid var(--success-color);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.progress-dot.completed:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .current-set-card {
   background: var(--card-bg);
-  border: 2px solid var(--border-color);
   border-radius: 16px;
-  padding: 1.25rem;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
+}
+
+/* Status Banner */
+.set-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.set-status-banner.completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-bottom-color: rgba(16, 185, 129, 0.2);
+}
+
+.set-status-banner.editing {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-bottom-color: rgba(59, 130, 246, 0.2);
+}
+
+.status-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.set-status-banner.completed .status-icon {
+  background: var(--success-color);
+  color: white;
+}
+
+.set-status-banner.editing .status-icon {
+  background: var(--primary-color);
+  color: white;
+}
+
+.status-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.status-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.status-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.btn-edit-compact {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-edit-compact:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .set-header {
@@ -2351,36 +2503,223 @@ const getDifficultyText = (difficulty) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
-  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.25rem;
+  align-items: start;
+}
+
+/* Inputs Grid Moderno */
+.set-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  padding: 1.5rem 1.25rem;
+  align-items: start;
+}
+
+.input-card {
+  display: grid;
+  grid-template-rows: 32px 48px auto;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.input-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  min-height: 32px;
+  height: 32px;
+  max-height: 32px;
+}
+
+.input-header i {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.input-header label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.body-weight-tag {
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.input-field {
+  padding: 0.875rem 1.125rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 1.125rem;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  height: 48px;
+  margin: 0;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+.input-field:disabled {
+  background: var(--bg-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input-helper {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 500;
+  min-height: 18px;
+  line-height: 18px;
+}
+
+.weight-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  height: 48px;
+  justify-content: center;
+}
+
+.weight-input-wrapper .input-field,
+.body-weight-display-modern,
+.btn-set-weight-modern {
+  margin: 0;
+  height: 48px;
+}
+
+.body-weight-display-modern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.125rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--card-bg) 100%);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  gap: 0.75rem;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.body-weight-display-modern .weight-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color);
+  flex: 1;
+  text-align: center;
+}
+
+.btn-edit-weight-mini {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-edit-weight-mini:hover {
+  background: var(--primary-hover);
+  transform: scale(1.1);
+}
+
+.btn-set-weight-modern {
+  padding: 0.875rem 1.125rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.btn-set-weight-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
 .input-group {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 24px 1fr;
   gap: 0.75rem;
+  align-items: start;
+  align-self: start;
 }
 
 .input-group label {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-color);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: block;
+  flex-shrink: 0;
+  height: 24px;
+  line-height: 24px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .input-group label i {
   color: var(--primary-color);
+  margin-right: 0.5rem;
 }
 
 .body-weight-indicator {
   font-size: 0.8rem;
   color: var(--text-muted);
   font-weight: 400;
+  margin-left: 0.25rem;
 }
 
 .weight-input-container {
   position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .reps-input,
@@ -2395,6 +2734,10 @@ const getDifficultyText = (difficulty) => {
   font-weight: 600;
   transition: all 0.2s ease;
   width: 100%;
+  box-sizing: border-box;
+  display: block;
+  height: 48px;
+  margin: 0;
 }
 
 .reps-input:focus,
@@ -2419,12 +2762,17 @@ const getDifficultyText = (difficulty) => {
   background: rgba(16, 185, 129, 0.1);
   border: 2px solid var(--success-color);
   border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  height: 48px;
+  margin: 0;
 }
 
 .weight-value {
   font-size: 1rem;
   font-weight: 600;
   color: var(--success-color);
+  flex-grow: 1;
 }
 
 .btn-edit-weight {
@@ -2449,13 +2797,13 @@ const getDifficultyText = (difficulty) => {
 }
 
 .btn-set-weight {
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
   background: var(--primary-color);
-  border: none;
-  border-radius: 10px;
+  border: 2px solid transparent;
+  border-radius: 12px;
   color: white;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.90rem;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -2463,6 +2811,9 @@ const getDifficultyText = (difficulty) => {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 .btn-set-weight:hover {
@@ -2473,6 +2824,7 @@ const getDifficultyText = (difficulty) => {
 .set-actions {
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .btn-complete-set {
@@ -2481,12 +2833,14 @@ const getDifficultyText = (difficulty) => {
   border: none;
   border-radius: 10px;
   color: white;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 }
 
@@ -2502,6 +2856,14 @@ const getDifficultyText = (difficulty) => {
   border-radius: 12px;
 }
 
+.completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
 .completion-time {
   display: flex;
   align-items: center;
@@ -2509,11 +2871,140 @@ const getDifficultyText = (difficulty) => {
   gap: 0.5rem;
   color: var(--text-secondary);
   font-size: 0.9rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .completion-time i {
   color: var(--success-color);
+}
+
+/* Difficulty Indicator */
+.difficulty-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.difficulty-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.difficulty-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.difficulty-value {
+  padding: 0.375rem 0.875rem;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.difficulty-value.difficulty-easy,
+.difficulty-value.difficulty-facil {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.difficulty-value.difficulty-medium,
+.difficulty-value.difficulty-medio {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.difficulty-value.difficulty-hard,
+.difficulty-value.difficulty-dificil {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Actions Modernas */
+.set-actions-modern {
+  padding: 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.btn-complete-modern {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-complete-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.btn-complete-modern:active {
+  transform: translateY(0);
+}
+
+.edit-actions-modern {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-cancel-modern,
+.btn-save-modern {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-cancel-modern {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel-modern:hover {
+  background: var(--border-color);
+  transform: translateY(-1px);
+}
+
+.btn-save-modern {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.btn-save-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
 .difficulty-feedback {
@@ -2562,21 +3053,25 @@ const getDifficultyText = (difficulty) => {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
+  gap: 1rem;
 }
 
 .btn-nav-set {
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 2rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-color);
+  font-family: "Inter", sans-serif;
   font-weight: 500;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  width: 180px;
 }
 
 .btn-nav-set:hover:not(:disabled) {
@@ -2591,13 +3086,12 @@ const getDifficultyText = (difficulty) => {
 
 .set-counter {
   padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
+  color: #0f172a;
   border-radius: 16px;
   font-weight: 600;
   font-size: 0.85rem;
-  width: 62px;
-  margin: 5px;
+  min-width: 70px;
+  text-align: center;
 }
 
 /* Observações */
@@ -2711,56 +3205,90 @@ const getDifficultyText = (difficulty) => {
 .workout-footer-new {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  background: var(--card-bg);
+  gap: 16px;
+  padding: 2rem;
+  padding-top: 32px;
+  margin-top: 32px;
   border-top: 1px solid var(--border-color);
 }
 
 .btn-save-new,
 .btn-finish-new {
-  flex: 1;
-  padding: 0.875rem 1.25rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 10px;
+  padding: 14px 24px;
+  max-width: 280px;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  font-family: inherit;
 }
 
 .btn-save-new {
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
   color: var(--text-color);
+  border: 2px solid var(--border-color);
 }
 
 .btn-save-new:hover {
-  background: var(--border-color);
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-finish-new {
-  background: var(--primary-color);
-  border: none;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.btn-finish-new::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-finish-new:hover::before {
+  left: 100%;
 }
 
 .btn-finish-new:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-  background: var(--primary-hover);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
-.dark-mode .btn-finish-new:hover:not(:disabled) {
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+.btn-finish-new:active {
+  transform: translateY(0);
 }
 
 .btn-finish-new:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+}
+
+.btn-finish-new:disabled::before {
+  display: none;
 }
 
 /* Modal de Informações do Exercício */
@@ -3309,7 +3837,7 @@ const getDifficultyText = (difficulty) => {
 .video-thumbnail {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 380px;
   overflow: hidden;
 }
 
@@ -3586,6 +4114,14 @@ const getDifficultyText = (difficulty) => {
 
   .workout-footer-new {
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-save-new,
+  .btn-finish-new {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    min-height: 48px;
   }
 
   /* Info Modal Responsive */
