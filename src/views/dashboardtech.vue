@@ -53,14 +53,61 @@
             />
           </div>
           
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-dot primary"></div>
-              <span>Média de Peso (kg)</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot secondary"></div>
-              <span>Treinos Concluídos</span>
+          <!-- Enhanced Legend with Stats -->
+          <div class="enhanced-chart-legend">
+            <div class="legend-stats-row">
+              <div class="legend-stat-card">
+                <div class="legend-stat-header">
+                  <div class="legend-indicator primary-indicator">
+                    <div class="indicator-dot"></div>
+                    <span class="indicator-line"></span>
+                  </div>
+                  <span class="legend-stat-label">Alunos Ativos</span>
+                </div>
+                <div class="legend-stat-value">
+                  <span class="stat-number">{{ getTotalActiveStudents() }}</span>
+                  <span class="stat-unit">alunos</span>
+                </div>
+                <div class="legend-stat-trend" :class="getActiveStudentsTrendClass()">
+                  <i class="fas" :class="getActiveStudentsTrendIcon()"></i>
+                  <span>{{ getActiveStudentsTrendText() }}</span>
+                </div>
+              </div>
+
+              <div class="legend-stat-card">
+                <div class="legend-stat-header">
+                  <div class="legend-indicator secondary-indicator">
+                    <div class="indicator-dot"></div>
+                    <span class="indicator-line"></span>
+                  </div>
+                  <span class="legend-stat-label">Treinos Concluídos</span>
+                </div>
+                <div class="legend-stat-value">
+                  <span class="stat-number">{{ getTotalCompletedWorkouts() }}</span>
+                  <span class="stat-unit">sessões</span>
+                </div>
+                <div class="legend-stat-trend success">
+                  <i class="fas fa-chart-line"></i>
+                  <span>{{ getWorkoutsPeriodText() }}</span>
+                </div>
+              </div>
+
+              <div class="legend-stat-card highlight-card">
+                <div class="legend-stat-header">
+                  <div class="legend-indicator accent-indicator">
+                    <i class="fas fa-percentage"></i>
+                  </div>
+                  <span class="legend-stat-label">Adesão Média</span>
+                </div>
+                <div class="legend-stat-value">
+                  <span class="stat-number">{{ getAverageAdherence() }}</span>
+                  <span class="stat-unit">%</span>
+                </div>
+                <div class="legend-stat-trend" :class="getAdherenceTrendClass()">
+                  <i class="fas" :class="getAdherenceTrendIcon()"></i>
+                  <span>{{ getAdherenceTrendText() }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -184,11 +231,6 @@
               </div>
               <div class="student-basic-info">
                 <h3 class="student-name">{{ student.name }}</h3>
-              </div>
-              <div class="student-menu">
-                <button class="menu-btn">
-                  <i class="fas fa-ellipsis-v"></i>
-                </button>
               </div>
             </div>
 
@@ -1187,7 +1229,7 @@ export default {
     },
     
     handleClickOutside(event) {
-      // Fechar dropdown se clicar fora dele
+      // Fechar dropdown do período se clicar fora dele
       if (!event.target.closest('.dropdown-container')) {
         this.showPeriodDropdown = false;
       }
@@ -2222,9 +2264,98 @@ export default {
       return this.studentsData.filter(student => student.trend === 'positive').length;
     },
 
+    // ========= MÉTODOS PARA LEGENDA APRIMORADA (100% DADOS REAIS) =========
+    
+    // Total de alunos ativos (que tem pelo menos 1 treino)
+    getTotalActiveStudents() {
+      if (!this.students || this.students.length === 0) {
+        return 0;
+      }
+      return this.students.length;
+    },
+
+    // Trend de alunos ativos
+    getActiveStudentsTrendIcon() {
+      const total = this.getTotalActiveStudents();
+      if (total === 0) return 'fa-minus';
+      if (total >= 10) return 'fa-arrow-up';
+      if (total >= 5) return 'fa-check';
+      return 'fa-arrow-down';
+    },
+
+    getActiveStudentsTrendText() {
+      const total = this.getTotalActiveStudents();
+      if (total === 0) return 'Nenhum aluno cadastrado';
+      if (total >= 10) return 'Base de alunos crescendo';
+      if (total >= 5) return 'Boa quantidade de alunos';
+      return 'Expandindo base de alunos';
+    },
+
+    getActiveStudentsTrendClass() {
+      const total = this.getTotalActiveStudents();
+      if (total >= 10) return 'success';
+      if (total >= 5) return '';
+      return 'warning';
+    },
+
+    // Total de treinos completados (DADOS REAIS do banco)
+    getTotalCompletedWorkouts() {
+      if (!this.workoutSessions || this.workoutSessions.length === 0) {
+        return 0;
+      }
+      const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
+      return completedSessions.length;
+    },
+
+    // Texto do período de treinos
+    getWorkoutsPeriodText() {
+      const total = this.getTotalCompletedWorkouts();
+      if (total === 0) return 'Nenhum treino concluído';
+      return `${this.selectedPeriod.toLowerCase()}`;
+    },
+
+    // Adesão média REAL calculada dos alunos
+    getAverageAdherence() {
+      if (!this.studentsData || this.studentsData.length === 0) {
+        return 0;
+      }
+      
+      const totalAdherence = this.studentsData.reduce((sum, student) => {
+        return sum + (student.adherence || 0);
+      }, 0);
+      
+      const avg = totalAdherence / this.studentsData.length;
+      return Math.round(avg);
+    },
+
+    // Trend de adesão
+    getAdherenceTrendIcon() {
+      const avg = this.getAverageAdherence();
+      if (avg >= 80) return 'fa-arrow-up';
+      if (avg >= 60) return 'fa-check';
+      if (avg >= 40) return 'fa-minus';
+      return 'fa-arrow-down';
+    },
+
+    getAdherenceTrendText() {
+      const avg = this.getAverageAdherence();
+      if (avg >= 80) return 'Excelente adesão';
+      if (avg >= 60) return 'Boa adesão';
+      if (avg >= 40) return 'Adesão regular';
+      return 'Necessita atenção';
+    },
+
+    getAdherenceTrendClass() {
+      const avg = this.getAverageAdherence();
+      if (avg >= 80) return 'success';
+      if (avg >= 60) return 'success';
+      if (avg >= 40) return '';
+      return 'warning';
+    },
+
     viewStudentDetails(studentId) {
       console.log('Viewing details for student:', studentId);
-      // TODO: Implementar navegação para detalhes do aluno
+      this.$router.push(`/student/${studentId}/profile`);
     }
   }
 };
@@ -2635,6 +2766,243 @@ body:has(.navbar-collapsed) .dashboard-main,
 .legend-dot.primary { background-color: #6c5ce7; }
 .legend-dot.secondary { background-color: #a29bfe; }
 
+/* ========= ENHANCED CHART LEGEND ========= */
+.enhanced-chart-legend {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.dashboard-dark .enhanced-chart-legend {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.legend-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.legend-stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.legend-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6c5ce7 0%, #a29bfe 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.legend-stat-card:hover::before {
+  opacity: 1;
+}
+
+.legend-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(108, 92, 231, 0.15);
+  border-color: rgba(108, 92, 231, 0.3);
+}
+
+.dashboard-dark .legend-stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-dark .legend-stat-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+.highlight-card {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.05) 0%, rgba(162, 155, 254, 0.05) 100%);
+  border-color: rgba(108, 92, 231, 0.2);
+}
+
+.dashboard-dark .highlight-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(167, 139, 250, 0.08) 100%);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.legend-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.legend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  position: relative;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.indicator-line {
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.primary-indicator .indicator-dot {
+  background: #6c5ce7;
+  box-shadow: 0 0 12px rgba(108, 92, 231, 0.4);
+}
+
+.primary-indicator .indicator-line {
+  background: linear-gradient(90deg, #6c5ce7 0%, transparent 100%);
+}
+
+.secondary-indicator .indicator-dot {
+  background: #a29bfe;
+  box-shadow: 0 0 12px rgba(162, 155, 254, 0.4);
+}
+
+.secondary-indicator .indicator-line {
+  background: linear-gradient(90deg, #a29bfe 0%, transparent 100%);
+}
+
+.accent-indicator {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+}
+
+.legend-stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.legend-stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.stat-unit {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.legend-stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.legend-stat-trend i {
+  font-size: 0.875rem;
+}
+
+.legend-stat-trend.success {
+  color: #10b981;
+}
+
+.legend-stat-trend.success i {
+  color: #10b981;
+}
+
+.legend-stat-trend.warning {
+  color: #f59e0b;
+}
+
+.legend-stat-trend.warning i {
+  color: #f59e0b;
+}
+
+.legend-stat-trend .fa-arrow-up {
+  color: #10b981;
+}
+
+.legend-stat-trend .fa-arrow-down {
+  color: #ef4444;
+}
+
+.legend-stat-trend .fa-minus {
+  color: #f59e0b;
+}
+
+.legend-stat-trend .fa-check {
+  color: #10b981;
+}
+
+/* Responsive adjustments for legend */
+@media (max-width: 1200px) {
+  .legend-stats-row {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .stat-number {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .enhanced-chart-legend {
+    padding: 1rem;
+  }
+  
+  .legend-stats-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .legend-stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+}
+
 /* ========= SEÇÃO INDIVIDUAL ANALYSIS - MELHORADA COM CORES DO NAVBAR ========= */
 .individual-analysis-section {
   margin-bottom: 2rem;
@@ -2704,35 +3072,32 @@ body:has(.navbar-collapsed) .dashboard-main,
   align-items: center;
 }
 
-/* Students Grid - Melhorado e Alinhado */
 .students-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(475px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(470px, 1fr));
   gap: 2rem;
   margin-bottom: 3rem;
   justify-content: start;
 }
 
-/* Quando há poucos cards (1-3), usa tamanho fixo */
 .students-grid:has(.student-card:nth-child(-n+3):last-child) {
-  grid-template-columns: repeat(auto-fill, 475px);
+  grid-template-columns: repeat(auto-fill, 470px);
   justify-content: start;
 }
 
-/* Fallback para navegadores que não suportam :has() */
 @supports not (selector(:has(*))) {
   .students-grid[data-items="1"] {
-    grid-template-columns: 475px;
+    grid-template-columns: 470px;
     justify-content: start;
   }
   
   .students-grid[data-items="2"] {
-    grid-template-columns: repeat(2, 475px);
+    grid-template-columns: repeat(2, 470px);
     justify-content: start;
   }
   
   .students-grid[data-items="3"] {
-    grid-template-columns: repeat(3, 475px);
+    grid-template-columns: repeat(3, 470px);
     justify-content: start;
   }
 }
@@ -2861,42 +3226,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.student-menu {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  flex-shrink: 0;
-}
-
-.student-card:hover .student-menu {
-  opacity: 1;
-}
-
-.menu-btn {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: none;
-  background: var(--hover-bg);
-  color: var(--text-muted);
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.dashboard-light .menu-btn:hover {
-  background: #2563eb;
-  color: white;
-  transform: rotate(90deg);
-}
-
-.dashboard-dark .menu-btn:hover {
-  background: #8b5cf6;
-  color: white;
-  transform: rotate(90deg);
 }
 
 .progress-stats {
@@ -3846,11 +4175,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   .student-basic-info {
     order: 2;
     flex: 1;
-  }
-
-  .student-menu {
-    order: 3;
-    opacity: 1;
   }
 
   .card-footer {

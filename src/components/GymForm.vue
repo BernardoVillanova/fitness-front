@@ -78,10 +78,8 @@
           </div>
         </div>
 
-        <button class="modal-close" @click="resetForm">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+        <button class="modal-close" @click="resetForm" title="Fechar">
+          <i class="fas fa-times"></i>
         </button>
       </div>
       
@@ -266,10 +264,8 @@
                 <!-- Preview da Imagem -->
                 <div v-if="imagePreview" class="image-preview-container">
                   <img :src="imagePreview" alt="Preview" class="image-preview" />
-                  <button type="button" class="remove-image-btn" @click="removeImage">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M1 1L11 11M11 1L1 11" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                  <button type="button" class="remove-image-btn" @click="removeImage" title="Remover imagem">
+                    <i class="fas fa-times"></i>
                   </button>
                 </div>
 
@@ -669,44 +665,127 @@
           <!-- Lista de Aparelhos Adicionados -->
           <div v-if="equipmentsList.length > 0" class="added-equipments-section">
             <div class="added-header">
-              <h3 class="added-title">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                </svg>
-                Aparelhos Adicionados ({{ equipmentsList.length }})
-              </h3>
-            </div>
-            
-          <div class="equipments-list">
-            <div 
-              v-for="(equipment, index) in equipmentsList" 
-              :key="index"
-              class="equipment-card"
-            >
-              <div class="equipment-icon">
-                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                </svg>
-              </div>
-              <div class="equipment-info">
-                <h4 class="equipment-name">{{ equipment.name }}</h4>
-                <p class="equipment-description">{{ equipment.description || 'Sem descrição' }}</p>
-                <div class="equipment-quantity">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+              <div class="header-left">
+                <div class="header-icon">
+                  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                   </svg>
-                  Quantidade: <strong>{{ equipment.quantity }}</strong>
+                </div>
+                <div class="header-text">
+                  <h3 class="added-title">Aparelhos da Academia</h3>
+                  <p class="added-subtitle">{{ equipmentsList.length }} {{ equipmentsList.length === 1 ? 'aparelho adicionado' : 'aparelhos adicionados' }}</p>
                 </div>
               </div>
-              <div class="equipment-actions">
-                <button type="button" class="btn-icon-delete" @click="removeEquipment(index)" title="Remover">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
+              <div class="total-equipments-badge">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                </svg>
+                <span>Total: {{ equipmentsList.reduce((sum, eq) => sum + (eq.quantity || 1), 0) }} unidades</span>
               </div>
             </div>
-          </div>
+            
+            <div class="equipments-added-grid">
+              <div 
+                v-for="(equipment, index) in equipmentsList" 
+                :key="index"
+                class="equipment-added-card"
+              >
+                <!-- Imagem do Aparelho -->
+                <div class="equipment-image-section">
+                  <div v-if="equipment.image && !hasImageError(equipment.sourceId || equipment._id || index)" class="equipment-image-wrapper">
+                    <img 
+                      :src="getImageUrl(equipment.image)" 
+                      :alt="equipment.name"
+                      @error="handleImageError(equipment.sourceId || equipment._id || index)"
+                      class="equipment-image"
+                    />
+                  </div>
+                  <div v-else class="equipment-image-placeholder">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                  </div>
+                  
+                  <!-- Badge de Categoria -->
+                  <div class="equipment-category-badge" v-if="equipment.category">
+                    <span class="badge-dot"></span>
+                    {{ equipment.category.toUpperCase() }}
+                  </div>
+                </div>
+
+                <!-- Informações do Aparelho -->
+                <div class="equipment-content">
+                  <div class="equipment-header-info">
+                    <h4 class="equipment-title">{{ equipment.name }}</h4>
+                    <button 
+                      type="button" 
+                      class="btn-remove-equipment" 
+                      @click="removeEquipment(index)" 
+                      title="Remover aparelho"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+
+                  <p class="equipment-desc" v-if="equipment.description">
+                    {{ equipment.description }}
+                  </p>
+                  <p class="equipment-desc no-description" v-else>
+                    Sem descrição disponível
+                  </p>
+
+                  <!-- Informações Adicionais -->
+                  <div class="equipment-meta">
+                    <div class="meta-item quantity-item-control">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                      </svg>
+                      <span class="meta-label">Quantidade:</span>
+                      <div class="quantity-controls-inline">
+                        <button 
+                          type="button" 
+                          class="btn-qty-control" 
+                          @click="decrementEquipmentQuantity(index)"
+                          :disabled="equipment.quantity <= 1"
+                          title="Diminuir quantidade"
+                        >
+                          <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="quantity-display">{{ equipment.quantity || 1 }}</span>
+                        <button 
+                          type="button" 
+                          class="btn-qty-control" 
+                          @click="incrementEquipmentQuantity(index)"
+                          :disabled="equipment.quantity >= 99"
+                          title="Aumentar quantidade"
+                        >
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="meta-item" v-if="equipment.muscleGroups && equipment.muscleGroups.length > 0">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                      </svg>
+                      <span class="meta-label">Grupos:</span>
+                      <div class="muscle-groups-mini">
+                        <span 
+                          v-for="(group, idx) in equipment.muscleGroups.slice(0, 2)" 
+                          :key="idx"
+                          class="muscle-badge-mini"
+                        >
+                          {{ group }}
+                        </span>
+                        <span v-if="equipment.muscleGroups.length > 2" class="more-badge">
+                          +{{ equipment.muscleGroups.length - 2 }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Ações Finais -->
@@ -801,6 +880,9 @@ export default {
     // Controle de Equipamentos
     const equipmentsList = ref([]);
     
+    // Rastreamento de erros de imagem
+    const imageErrors = ref(new Set());
+    
     // Busca de Equipamentos
     const searchQuery = ref('');
     const filteredEquipments = ref([]);
@@ -824,26 +906,52 @@ export default {
     // Upload de imagem
     const isUploadingImage = ref(false);
 
+    // Watch equipmentsList para debug
+    watch(equipmentsList, () => {
+      // Lista atualizada
+    }, { deep: true });
+
+    // Debug computed para verificar renderização
+    const equipmentsDebug = computed(() => {
+      return equipmentsList.value.map((eq, index) => {
+        const id = eq.sourceId || eq._id || index;
+        const hasError = hasImageError(id);
+        const hasImage = !!eq.image;
+        const willShowImage = hasImage && !hasError;
+        
+        return {
+          index,
+          name: eq.name,
+          hasImage,
+          imagePath: eq.image,
+          id,
+          hasError,
+          willShowImage,
+          imageUrl: hasImage ? getImageUrl(eq.image) : null
+        };
+      });
+    });
+
+    // Watch para logar o debug
+    watch(equipmentsDebug, () => {
+      // Debug atualizado
+    }, { immediate: true, deep: true });
+
     // Aparelhos em destaque (mais populares)
     const featuredEquipments = computed(() => {
-      console.log('🔢 Computed featuredEquipments chamado, valor:', featuredEquipmentsData.value);
       return featuredEquipmentsData.value;
     });
 
     // Total de páginas
     const totalFeaturedPages = computed(() => {
-      const total = Math.ceil(featuredEquipments.value.length / itemsPerPage);
-      console.log('📄 Total de páginas calculado:', total);
-      return total;
+      return Math.ceil(featuredEquipments.value.length / itemsPerPage);
     });
 
     // Aparelhos paginados
     const paginatedFeaturedEquipments = computed(() => {
       const start = (currentFeaturedPage.value - 1) * itemsPerPage;
       const end = start + itemsPerPage;
-      const paginated = featuredEquipments.value.slice(start, end);
-      console.log('📑 Equipamentos paginados:', paginated);
-      return paginated;
+      return featuredEquipments.value.slice(start, end);
     });
 
     const defaultFormData = {
@@ -1125,7 +1233,6 @@ export default {
       currentFeaturedPage.value = 1;
       
       emit('cancel');
-      console.log('✅ Formulário resetado');
     };
     
     // Equipamentos carregados do backend
@@ -1139,19 +1246,14 @@ export default {
         // USAR O INSTRUCTORID CORRETO DO USUÁRIO
         const instructorId = user.instructorId || user.id || user._id;
         
-        console.log('🔍 Carregando equipamentos...');
-        console.log('👤 Usuário:', user);
-        console.log('🆔 Instrutor ID:', instructorId);
-        
         if (!instructorId) {
-          console.warn('Instrutor não identificado');
+          console.warn('⚠️ Instrutor não identificado');
           return;
         }
         
         // EXATAMENTE COMO NO MACHINES.VUE
         const response = await api.get(`/equipments/instructor/${instructorId}`);
         allEquipments.value = response.data.equipments;
-        console.log('📦 Equipamentos carregados:', allEquipments.value);
         
       } catch (error) {
         console.error('❌ Erro ao carregar equipamentos:', error);
@@ -1164,7 +1266,9 @@ export default {
 
     // Função para construir URL completa das imagens
     const getImageUrl = (imagePath) => {
-      if (!imagePath) return null;
+      if (!imagePath) {
+        return null;
+      }
       
       // Se já é uma URL completa, retorna como está
       if (imagePath.startsWith('http')) {
@@ -1178,6 +1282,16 @@ export default {
       
       // Caso contrário, adiciona o prefixo padrão
       return `http://localhost:3000/uploads/equipments/${imagePath}`;
+    };
+
+    // Handler de erro de imagem
+    const handleImageError = (equipmentId) => {
+      imageErrors.value.add(equipmentId);
+    };
+
+    // Verificar se a imagem teve erro
+    const hasImageError = (equipmentId) => {
+      return imageErrors.value.has(equipmentId);
     };
 
     // Funções de Busca de Equipamentos
@@ -1205,13 +1319,8 @@ export default {
 
     // Carregar equipamentos em destaque (usa os primeiros equipamentos carregados)
     const loadFeaturedEquipments = () => {
-      console.log('⭐ Carregando equipamentos em destaque...');
-      console.log('📊 Total de equipamentos disponíveis:', allEquipments.value.length);
-      
       // Usa os primeiros equipamentos como em destaque (máximo 8)
       featuredEquipmentsData.value = allEquipments.value.slice(0, 8);
-      console.log('✨ Equipamentos em destaque carregados:', featuredEquipmentsData.value.length);
-      console.log('📋 Lista de equipamentos em destaque:', featuredEquipmentsData.value);
       
       // Inicializa quantidades para os equipamentos em destaque
       featuredEquipmentsData.value.forEach(eq => {
@@ -1273,11 +1382,13 @@ export default {
       
       // Adiciona o equipamento
       const newEquipment = {
-        sourceId: equipmentId, // ID do equipamento da base de dados
+        sourceId: equipmentId,
         name: equipment.name.trim(),
         description: (equipment.description || '').trim(),
         quantity: parseInt(quantity),
         category: equipment.category || 'Geral',
+        muscleGroups: equipment.muscleGroups || [],
+        image: equipment.image || null,
         isCustom: false
       };
       
@@ -1289,9 +1400,6 @@ export default {
       // Feedback de sucesso
       showNotification('success', 'Equipamento Adicionado!', 
         `${equipment.name} (${quantity}x) foi adicionado à academia.`);
-      
-      console.log('⚙️ Equipamento adicionado:', newEquipment);
-      console.log('📋 Lista atual de equipamentos:', equipmentsList.value);
     };
 
     // Funções para gerenciar equipamentos adicionados
@@ -1302,8 +1410,6 @@ export default {
         
         showNotification('info', 'Equipamento Removido', 
           `${removedEquipment.name} foi removido da lista.`);
-        
-        console.log('🗑️ Equipamento removido:', removedEquipment);
       }
     };
 
@@ -1312,8 +1418,23 @@ export default {
         const quantity = parseInt(newQuantity) || 1;
         if (quantity >= 1 && quantity <= 999) {
           equipmentsList.value[index].quantity = quantity;
-          console.log(`🔢 Quantidade atualizada: ${equipmentsList.value[index].name} = ${quantity}`);
         }
+      }
+    };
+
+    const incrementEquipmentQuantity = (index) => {
+      if (index >= 0 && index < equipmentsList.value.length) {
+        const equipment = equipmentsList.value[index];
+        const newQuantity = Math.min((equipment.quantity || 1) + 1, 99);
+        updateEquipmentQuantity(index, newQuantity);
+      }
+    };
+
+    const decrementEquipmentQuantity = (index) => {
+      if (index >= 0 && index < equipmentsList.value.length) {
+        const equipment = equipmentsList.value[index];
+        const newQuantity = Math.max((equipment.quantity || 1) - 1, 1);
+        updateEquipmentQuantity(index, newQuantity);
       }
     };
 
@@ -1371,7 +1492,6 @@ export default {
       }
       
       currentStep.value = 2;
-      console.log('➡️ Avançando para Etapa 2 - Equipamentos');
     };
     
     const backToStep1 = () => {
@@ -1380,8 +1500,6 @@ export default {
 
     const handleSubmit = async () => {
       try {
-        console.log('📤 Iniciando submissão do formulário');
-        
         // Validações básicas da etapa 1
         if (!formData.value.name?.trim()) {
           showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
@@ -1436,43 +1554,30 @@ export default {
         // Adiciona imagem se houver
         if (formData.value.imageBase64) {
           gymData.imageBase64 = formData.value.imageBase64;
-          console.log('🖼️ Imagem base64 adicionada ao payload');
         } else if (formData.value.image) {
           // Fallback para compatibilidade
           gymData.image = formData.value.image;
-          console.log('🖼️ Imagem file adicionada ao payload');
         }
 
         // Processa e valida equipamentos
         if (equipmentsList.value && equipmentsList.value.length > 0) {
           gymData.equipments = equipmentsList.value.map(eq => {
             const equipment = {
+              sourceId: eq.sourceId || null,
               name: eq.name?.trim() || '',
               description: eq.description?.trim() || '',
               quantity: parseInt(eq.quantity) || 1,
               category: eq.category?.trim() || 'Geral',
+              muscleGroups: eq.muscleGroups || [],
+              image: eq.image || null,
               isCustom: Boolean(eq.isCustom)
             };
 
-            // Se não é customizado, inclui o sourceId
-            if (!eq.isCustom && eq.sourceId) {
-              equipment.sourceId = eq.sourceId;
-            }
-
             return equipment;
           }).filter(eq => eq.name); // Remove equipamentos sem nome
-
-          console.log(`⚙️ ${gymData.equipments.length} equipamentos processados:`, gymData.equipments);
         } else {
           gymData.equipments = [];
-          console.log('⚙️ Nenhum equipamento para salvar');
         }
-
-        // Log dos dados finais
-        console.log('📋 Dados finais para envio:', {
-          ...gymData,
-          imageBase64: gymData.imageBase64 ? `[BASE64 - ${(gymData.imageBase64.length / 1024).toFixed(1)}KB]` : null
-        });
 
         // Emite os dados para o componente pai
         emit('submit', { data: gymData });
@@ -1509,8 +1614,6 @@ export default {
 
     // Watch para mudanças no prop gym
     watch(() => props.gym, (newVal) => {
-      console.log('🏢 Academia recebida para edição:', newVal);
-      
       if (newVal) {
         // Reset dos estados de validação
         cepValidated.value = false;
@@ -1543,15 +1646,12 @@ export default {
                 : `http://localhost:3000/uploads/gyms/${newVal.image}`;
             
             imagePreview.value = imageUrl;
-            console.log('🖼️ Imagem carregada:', imageUrl);
           }
         } else if (newVal.imageUrl) {
           // Fallback para imageUrl
           imagePreview.value = newVal.imageUrl;
-          console.log('🖼️ ImageUrl carregada:', newVal.imageUrl);
         } else {
           imagePreview.value = null;
-          console.log('📷 Nenhuma imagem encontrada');
         }
         
         // Carrega equipamentos se existirem
@@ -1562,23 +1662,20 @@ export default {
             description: eq.description || '',
             quantity: eq.quantity || 1,
             category: eq.category || 'Geral',
+            muscleGroups: eq.muscleGroups || [],
+            image: eq.image || null,
             isCustom: eq.isCustom || false
           }));
-          console.log('⚙️ Equipamentos carregados:', equipmentsList.value.length);
         } else {
           equipmentsList.value = [];
-          console.log('⚙️ Nenhum equipamento encontrado');
         }
         
         // Se tem CEP válido, marca como validado
         if (formData.value.location.zipCode && formData.value.location.zipCode.length >= 8) {
           cepValidated.value = true;
         }
-        
-        console.log('✅ Dados da academia carregados com sucesso');
       } else {
         // Reset completo quando não há academia
-        console.log('🔄 Resetando formulário');
         formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
         imagePreview.value = null;
         equipmentsList.value = [];
@@ -1639,6 +1736,8 @@ export default {
       // Funções existentes
       loadAllEquipments,
       getImageUrl,
+      handleImageError,
+      hasImageError,
       triggerFileInput,
       handleFileSelect,
       handleDragOver,
@@ -1660,6 +1759,8 @@ export default {
       addEquipmentFromSearch,
       removeEquipment,
       updateEquipmentQuantity,
+      incrementEquipmentQuantity,
+      decrementEquipmentQuantity,
       canRemoveEquipments,
       isLoadingEquipments,
       handleSubmit,
@@ -1938,44 +2039,56 @@ export default {
 
 .modal-close {
   background: white;
-  border: none;
+  border: 2px solid var(--border-color);
   cursor: pointer;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .dashboard-dark .modal-close {
   background: #334155;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.modal-close svg {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
+.modal-close i {
+  font-size: 18px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.dashboard-dark .modal-close i {
+  color: #94a3b8;
 }
 
 .modal-close:hover {
-  background: #f3f4f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .dashboard-dark .modal-close:hover {
-  background: #475569;
+  background: #7f1d1d;
+  border-color: #dc2626;
 }
 
-.modal-close:hover svg {
-  transform: scale(1.1);
+.modal-close:hover i {
+  transform: rotate(90deg);
+  color: #dc2626;
+}
+
+.dashboard-dark .modal-close:hover i {
+  color: #fca5a5;
 }
 
 .modal-body {
@@ -2099,25 +2212,36 @@ export default {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: rgba(239, 68, 68, 0.95);
   backdrop-filter: blur(8px);
-  border: none;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
   z-index: 10;
+}
+
+.remove-image-btn i {
+  font-size: 18px;
+  color: white;
+  transition: all 0.3s ease;
 }
 
 .remove-image-btn:hover {
   background: rgba(220, 38, 38, 1);
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.remove-image-btn:hover i {
+  transform: rotate(90deg);
 }
 
 /* ========== ÁREA DE UPLOAD MELHORADA ========== */
@@ -4160,21 +4284,386 @@ export default {
 }
 
 .added-header {
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .added-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   font-size: 1.375rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
-.added-title svg {
+.added-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.total-equipments-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.total-equipments-badge svg {
   color: #10b981;
+}
+
+/* Grid de Aparelhos Adicionados */
+.equipments-added-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.equipment-added-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card-background);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.equipment-added-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Seção de Imagem */
+.equipment-image-section {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%);
+  overflow: hidden;
+}
+
+.equipment-image-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.equipment-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.equipment-added-card:hover .equipment-image {
+  transform: scale(1.05);
+}
+
+.equipment-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1) 0%, rgba(75, 85, 99, 0.1) 100%);
+  color: var(--text-muted);
+}
+
+.equipment-image-placeholder svg {
+  opacity: 0.4;
+}
+
+.equipment-category-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-dark .equipment-category-badge {
+  background: rgba(0, 0, 0, 0.7);
+  color: #34d399;
+}
+
+.equipment-category-badge .badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Conteúdo do Card */
+.equipment-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.equipment-header-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.equipment-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.btn-remove-equipment {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 2px solid rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-equipment i {
+  font-size: 16px;
+  color: #ef4444;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-equipment:hover {
+  background: #ef4444;
+  border-color: #dc2626;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-remove-equipment:hover i {
+  color: white;
+  transform: rotate(90deg);
+}
+
+.equipment-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.equipment-desc.no-description {
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* Meta Informações */
+.equipment-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.meta-item svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.meta-item.quantity-item {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.meta-item.quantity-item-control {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.meta-item.quantity-item svg {
+  color: #10b981;
+}
+
+.quantity-controls-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-qty-control {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.btn-qty-control:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  transform: scale(1.05);
+}
+
+.btn-qty-control:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn-qty-control:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-qty-control i {
+  font-size: 11px;
+}
+
+.quantity-display {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.meta-label {
+  font-weight: 500;
+}
+
+.meta-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.muscle-groups-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.muscle-badge-mini {
+  padding: 4px 10px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dashboard-dark .muscle-badge-mini {
+  background: rgba(129, 140, 248, 0.15);
+  color: #a5b4fc;
+}
+
+.more-badge {
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Animação do badge dot */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
 }
 
 .equipments-header {
@@ -4280,23 +4769,41 @@ export default {
 }
 
 .btn-close-form {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  color: var(--text-secondary);
+}
+
+.btn-close-form svg {
+  stroke: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .btn-close-form:hover {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  transform: rotate(90deg);
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: scale(1.05) rotate(90deg);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.dashboard-dark .btn-close-form:hover {
+  background: #7f1d1d;
+  border-color: #dc2626;
+}
+
+.btn-close-form:hover svg {
+  stroke: #dc2626;
+}
+
+.dashboard-dark .btn-close-form:hover svg {
+  stroke: #fca5a5;
 }
 
 .equipment-form-grid {
@@ -4580,6 +5087,10 @@ export default {
   .exercises-grid-featured {
     grid-template-columns: 1fr;
   }
+  
+  .equipments-added-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -4733,6 +5244,25 @@ export default {
     padding: 12px 28px;
     font-size: 0.9375rem;
   }
+  
+  .equipments-added-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .added-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .total-equipments-badge {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .equipment-image-section {
+    height: 180px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -4760,6 +5290,18 @@ export default {
   .form-textarea {
     padding: 12px 16px;
     font-size: 0.9375rem;
+  }
+  
+  .equipment-image-section {
+    height: 160px;
+  }
+  
+  .added-title {
+    font-size: 1.125rem;
+  }
+  
+  .equipment-title {
+    font-size: 1rem;
   }
 }
 </style>
