@@ -721,6 +721,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
   border-radius: 12px;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;

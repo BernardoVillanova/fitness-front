@@ -39,24 +39,35 @@
         <form @submit.prevent="saveProfile" id="profile-form" class="profile-grid">
           
           <!-- Card de Perfil Principal -->
-          <div class="card card-profile-main">
-            <div class="card-body profile-header-body">
-              <div class="avatar-wrapper">
-                <img :src="studentData.avatar" :alt="studentData.name" class="avatar" />
-                <label for="avatar-upload" class="avatar-badge">
-                  <i class="fas fa-camera"></i>
-                  <input 
-                    type="file" 
-                    id="avatar-upload" 
-                    accept="image/*" 
-                    @change="handleAvatarUpload" 
-                    style="display: none;"
-                  />
-                </label>
-              </div>
-              <div class="profile-info">
-                <h2>{{ studentData.name || 'Usuário' }}</h2>
-                <p class="profile-email">{{ studentData.email }}</p>
+          <div class="card-profile-main">
+            <div class="profile-header">
+              <div class="header-content">
+                <div class="avatar-wrapper">
+                  <div class="avatar">
+                    <img :src="studentData.avatar" :alt="studentData.name" />
+                  </div>
+                  <label for="avatar-upload" class="avatar-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                      <circle cx="12" cy="13" r="3" />
+                    </svg>
+                    <input 
+                      type="file" 
+                      id="avatar-upload" 
+                      accept="image/*" 
+                      @change="handleAvatarUpload" 
+                      style="display: none;"
+                    />
+                  </label>
+                </div>
+                <div class="header-info">
+                  <div class="name-section">
+                    <h1>{{ studentData.name || 'Usuário' }}</h1>
+                    <span class="badge">Aluno</span>
+                  </div>
+                  <p class="email">{{ studentData.email }}</p>
+                  <p class="subtitle">Gerencie suas informações e acompanhe seu progresso</p>
+                </div>
               </div>
             </div>
           </div>
@@ -111,7 +122,7 @@
               <div class="stats-display">
                 <div class="stat-item">
                   <div class="stat-icon">
-                    <i class="fas fa-ruler-vertical"></i>
+                    <IconRuler :size="20" :stroke-width="2.5" />
                   </div>
                   <div class="stat-details">
                     <label>Altura (cm)</label>
@@ -120,7 +131,7 @@
                 </div>
                 <div class="stat-item">
                   <div class="stat-icon">
-                    <i class="fas fa-weight-scale"></i>
+                    <IconWeight :size="20" :stroke-width="2.5" />
                   </div>
                   <div class="stat-details">
                     <label>Peso (kg)</label>
@@ -208,62 +219,90 @@
                 <p>Adicione metas para acompanhar seu progresso e manter-se motivado</p>
               </div>
 
-              <div v-else class="goals-list">
-                <div v-for="(goal, index) in goals" :key="index" class="goal-item">
-                  <div class="goal-number-badge">
-                    Meta {{ index + 1 }}
-                  </div>
-                  
-                  <div class="goal-content">
-                    <div class="goal-main-info">
-                      <div class="input-group">
-                        <label>Descrição da Meta *</label>
-                        <textarea 
-                          v-model="goal.description" 
-                          rows="2"
-                          placeholder="Ex: Ter shape em V, Conseguir fazer 10 flexões, Melhorar postura..."
-                        ></textarea>
-                      </div>
+              <div v-else class="goals-carousel-container">
+                <button 
+                  type="button" 
+                  @click="previousGoal" 
+                  class="carousel-btn carousel-btn-prev"
+                  :disabled="currentGoalIndex === 0"
+                  v-if="goals.length > 1"
+                >
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <div class="goals-list">
+                  <div class="goal-item" v-show="index === currentGoalIndex" v-for="(goal, index) in goals" :key="index" :class="{ 'slide-in': index === currentGoalIndex }">
+                    <div class="goal-number-badge">
+                      Meta {{ index + 1 }}
                     </div>
                     
-                    <div class="goal-metadata">
-                      <div class="input-group">
-                        <label>Categoria</label>
-                        <select v-model="goal.category">
-                          <option value="">Selecione...</option>
-                          <option value="estetica">Estética</option>
-                          <option value="saude">Saúde</option>
-                          <option value="desempenho">Desempenho</option>
-                          <option value="habito">Hábito</option>
-                          <option value="geral">Geral</option>
-                        </select>
+                    <div class="goal-content">
+                      <div class="goal-main-info">
+                        <div class="input-group">
+                          <label>Descrição da Meta *</label>
+                          <textarea 
+                            v-model="goal.description" 
+                            rows="2"
+                            placeholder="Ex: Ter shape em V, Conseguir fazer 10 flexões, Melhorar postura..."
+                          ></textarea>
+                        </div>
                       </div>
                       
-                      <div class="input-group">
-                        <label>Prioridade</label>
-                        <select v-model="goal.priority">
-                          <option value="">Selecione...</option>
-                          <option value="alta">Alta</option>
-                          <option value="media">Média</option>
-                          <option value="baixa">Baixa</option>
-                        </select>
-                      </div>
-                      
-                      <div class="input-group">
-                        <label>Status</label>
-                        <select v-model="goal.status">
-                          <option value="active">Ativa</option>
-                          <option value="completed">Concluída</option>
-                        </select>
+                      <div class="goal-metadata">
+                        <div class="input-group">
+                          <label>Categoria</label>
+                          <select v-model="goal.category">
+                            <option value="">Selecione...</option>
+                            <option value="estetica">Estética</option>
+                            <option value="saude">Saúde</option>
+                            <option value="desempenho">Desempenho</option>
+                            <option value="habito">Hábito</option>
+                            <option value="geral">Geral</option>
+                          </select>
+                        </div>
+                        
+                        <div class="input-group">
+                          <label>Prioridade</label>
+                          <select v-model="goal.priority">
+                            <option value="">Selecione...</option>
+                            <option value="alta">Alta</option>
+                            <option value="media">Média</option>
+                            <option value="baixa">Baixa</option>
+                          </select>
+                        </div>
+                        
+                        <div class="input-group">
+                          <label>Status</label>
+                          <select v-model="goal.status">
+                            <option value="active">Ativa</option>
+                            <option value="completed">Concluída</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <button type="button" @click="removeGoal(index)" class="btn-remove-goal">
-                    <i class="fas fa-trash-alt"></i>
-                    Remover
-                  </button>
+                    <button type="button" @click="removeGoal(index)" class="action-button secondary-action btn-remove-goal">
+                      <div class="button-shine"></div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                      <span class="button-text">Remover</span>
+                    </button>
+                  </div>
                 </div>
+
+                <button 
+                  type="button" 
+                  @click="nextGoal" 
+                  class="carousel-btn carousel-btn-next"
+                  :disabled="currentGoalIndex === goals.length - 1"
+                  v-if="goals.length > 1"
+                >
+                  <i class="fas fa-chevron-right"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -272,7 +311,7 @@
           <div class="save-section">
             <button type="submit" class="btn-save" :disabled="saving">
               <i :class="saving ? 'fas fa-spinner fa-spin' : 'fas fa-check-circle'"></i>
-              {{ saving ? 'Salvando alterações...' : 'Salvar Todas as Alterações' }}
+              {{ saving ? 'Salvando alterações...' : 'Salvar Alterações' }}
             </button>
           </div>
 
@@ -316,6 +355,7 @@ const studentId = ref(null);
 
 // Goals state
 const goals = ref([]);
+const currentGoalIndex = ref(0);
 
 // Function to add a new goal to the form
 const addGoal = () => {
@@ -325,11 +365,30 @@ const addGoal = () => {
     priority: '',
     status: 'active'
   });
+  // Navegar para a nova meta adicionada
+  currentGoalIndex.value = goals.value.length - 1;
 };
 
 // Function to remove a goal from the form
 const removeGoal = (index) => {
   goals.value.splice(index, 1);
+  // Ajustar o índice atual se necessário
+  if (currentGoalIndex.value >= goals.value.length && currentGoalIndex.value > 0) {
+    currentGoalIndex.value = goals.value.length - 1;
+  }
+};
+
+// Carousel navigation functions
+const nextGoal = () => {
+  if (currentGoalIndex.value < goals.value.length - 1) {
+    currentGoalIndex.value++;
+  }
+};
+
+const previousGoal = () => {
+  if (currentGoalIndex.value > 0) {
+    currentGoalIndex.value--;
+  }
 };
 
 const studentData = reactive({
@@ -461,7 +520,7 @@ const fetchProfile = async () => {
                    : '',
       
       // Avatar
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=667eea&color=fff&size=120`
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=2563eb&color=fff&size=120`
     });
 
     originalData.value = { ...studentData };
@@ -489,7 +548,7 @@ const useFallbackData = () => {
       activityLevel: 'moderate',
       medicalConditions: '',
       medications: '',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=667eea&color=fff&size=120`
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=2563eb&color=fff&size=120`
     });
     originalData.value = { ...studentData };
   }
@@ -672,10 +731,14 @@ const fetchGoals = async () => {
   font-family: "Inter", sans-serif;
   background: var(--bg-secondary);
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
 }
 
 .dark-mode.student-profile {
   background: var(--bg-secondary);
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
 }
 
 body:has(.navbar-collapsed) .student-profile {
@@ -848,6 +911,7 @@ body:has(.navbar-collapsed) .student-profile {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-color);
+  line-height: 1.5;
 }
 
 .card-header-left {
@@ -855,6 +919,22 @@ body:has(.navbar-collapsed) .student-profile {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
+}
+
+.card-header-left h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Alinhamento específico para o card de metas */
+.card-span-full .card-header {
+  align-items: flex-start;
+}
+
+.card-span-full .card-header .btn-icon-add {
+  margin-top: 0;
 }
 
 .card-body {
@@ -864,13 +944,41 @@ body:has(.navbar-collapsed) .student-profile {
 /* === CARD DE PERFIL PRINCIPAL === */
 .card-profile-main {
   grid-column: span 2;
+  margin-bottom: 32px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.profile-header-body {
+.card-profile-main:hover {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.dark-mode .card-profile-main:hover {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* === PROFILE HEADER === */
+.profile-header {
+  margin-bottom: 0;
+}
+
+.header-content {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 2rem !important;
+  flex-direction: column;
+  gap: 24px;
+  padding: 2rem;
+}
+
+@media (min-width: 640px) {
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .avatar-wrapper {
@@ -879,61 +987,98 @@ body:has(.navbar-collapsed) .student-profile {
 }
 
 .avatar {
-  width: 100px;
-  height: 100px;
+  position: relative;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
+  border: 4px solid var(--bg-primary);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border: 4px solid #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
-.dark-mode .avatar {
-  border-color: #7c3aed;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-}
-
-.avatar-badge {
+.avatar-button {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 36px;
-  height: 36px;
-  background: #3b82f6;
-  color: white;
-  border: 3px solid var(--card-bg);
+  bottom: -8px;
+  right: -8px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #111827;
+  border: 3px solid var(--bg-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  font-size: 0.875rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dark-mode .avatar-badge {
-  background: #7c3aed;
+.dark-mode .avatar-button {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  color: #f9fafb;
+  border-color: var(--bg-primary);
 }
 
-.avatar-badge:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.avatar-button:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.profile-info {
+.dark-mode .avatar-button:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.header-info {
   flex: 1;
 }
 
-.profile-info h2 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
+.name-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.profile-email {
+.header-info h1 {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-color);
   margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.email {
+  font-size: 16px;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  margin: 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 4px 0;
 }
 
 /* === INPUTS === */
@@ -945,14 +1090,29 @@ body:has(.navbar-collapsed) .student-profile {
 
 .health-info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 1.5rem;
+}
+
+.health-info-grid .input-group {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.health-info-grid textarea {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.card-body > .input-group + .input-group {
+  margin-top: 1.25rem;
 }
 
 .input-group label {
@@ -1081,9 +1241,9 @@ body:has(.navbar-collapsed) .student-profile {
 .stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
-  background: #3b82f6;
-  color: white;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1092,7 +1252,8 @@ body:has(.navbar-collapsed) .student-profile {
 }
 
 .dark-mode .stat-icon {
-  background: #7c3aed;
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
 }
 
 .stat-details {
@@ -1144,20 +1305,41 @@ body:has(.navbar-collapsed) .student-profile {
 
 /* === BOTÕES === */
 .btn-icon-add {
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1.125rem;
   background: #3b82f6;
-  color: white;
+  color: white !important;
   border: none;
   border-radius: 8px;
-  font-size: 0.8125rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
   white-space: nowrap;
+  flex-shrink: 0;
+  width: auto;
+  margin-left: auto;
+  line-height: 1;
+}
+
+.btn-icon-add i {
+  color: white !important;
+  font-size: 0.775rem !important;
+  font-style: normal !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  line-height: 1 !important;
+}
+
+.btn-icon-add i::before {
+  display: inline-block !important;
+  vertical-align: middle;
 }
 
 .dark-mode .btn-icon-add {
@@ -1175,35 +1357,57 @@ body:has(.navbar-collapsed) .student-profile {
 }
 
 .btn-save {
-  width: 100%;
-  padding: 1rem 2rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 10px;
+  padding: 14px 24px;
+  width: auto;
+  max-width: none;
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  font-family: inherit;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.dark-mode .btn-save {
-  background: #7c3aed;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-save:hover::before {
+  left: 100%;
 }
 
 .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
-.dark-mode .btn-save:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+.btn-save:active {
+  transform: translateY(0);
 }
 
 .btn-save:disabled {
@@ -1211,9 +1415,21 @@ body:has(.navbar-collapsed) .student-profile {
   cursor: not-allowed;
 }
 
+.dark-mode .btn-save {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.dark-mode .btn-save:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
 .save-section {
   grid-column: 1 / -1;
   margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* === EMPTY STATE === */
@@ -1242,29 +1458,97 @@ body:has(.navbar-collapsed) .student-profile {
 }
 
 /* === GOALS LIST === */
-.goals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.goals-carousel-container {
+  position: relative;
+  width: 100%;
 }
 
-.goal-item {
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.goals-list {
+  width: 100%;
+  min-height: 450px;
   position: relative;
 }
 
-.goal-item:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+.goal-item {
+  background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg-secondary) 100%);
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dark-mode .goal-item:hover {
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dark-mode .goal-item {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(124, 58, 237, 0.05) 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* === CAROUSEL BUTTONS === */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
+  color: #3b82f6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .carousel-btn {
+  color: #7c3aed;
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .carousel-btn:hover:not(:disabled) {
+  background: #7c3aed;
   border-color: #7c3aed;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.carousel-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: var(--bg-secondary);
+}
+
+.carousel-btn-prev {
+  left: -24px;
+}
+
+.carousel-btn-next {
+  right: -24px;
 }
 
 .goal-number-badge {
@@ -1278,6 +1562,8 @@ body:has(.navbar-collapsed) .student-profile {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 1rem;
+  align-self: flex-start;
+  width: auto;
 }
 
 .dark-mode .goal-number-badge {
@@ -1287,7 +1573,12 @@ body:has(.navbar-collapsed) .student-profile {
 .goal-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .goal-main-info {
@@ -1300,32 +1591,40 @@ body:has(.navbar-collapsed) .student-profile {
 
 .goal-main-info textarea {
   width: 100%;
-  padding: 0.875rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1.25rem;
   border: 2px solid var(--border-color);
-  border-radius: 10px;
-  background: var(--card-bg);
+  border-radius: 12px;
+  background: var(--bg-secondary);
   color: var(--text-color);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-family: "Inter", sans-serif;
   resize: vertical;
+  line-height: 1.6;
   transition: all 0.3s ease;
+  min-height: 80px;
 }
 
 .goal-main-info textarea:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 2px 8px rgba(59, 130, 246, 0.08);
+  transform: translateY(-2px);
 }
 
 .dark-mode .goal-main-info textarea:focus {
   border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15), 0 2px 8px rgba(124, 58, 237, 0.12);
 }
 
 .goal-metadata {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 1.25rem;
+  padding-top: 1rem;
+  border-top: 2px dashed var(--border-color);
 }
 
 .goal-metadata .input-group {
@@ -1334,51 +1633,141 @@ body:has(.navbar-collapsed) .student-profile {
 
 .goal-metadata select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.875rem 1rem;
   border: 2px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-secondary);
   color: var(--text-color);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9375rem;
+  font-weight: 600;
   cursor: pointer;
   appearance: none;
   transition: all 0.3s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233b82f6' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
 }
 
 .goal-metadata select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background-color: var(--card-bg);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 2px 8px rgba(59, 130, 246, 0.08);
+  transform: translateY(-2px);
+}
+
+.dark-mode .goal-metadata select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237c3aed' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
 }
 
 .dark-mode .goal-metadata select:focus {
   border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15), 0 2px 8px rgba(124, 58, 237, 0.12);
 }
 
-.btn-remove-goal {
-  margin-top: 1rem;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  border: 2px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
-  border-radius: 8px;
-  font-size: 0.875rem;
+/* Action Button Base */
+.action-button {
+  position: relative;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+  width: auto;
+}
+
+.action-button svg {
+  width: 18px;
+  height: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
   transition: all 0.3s ease;
-  align-self: flex-start;
+  white-space: nowrap;
+  font-family: "Inter", sans-serif;
+}
+
+.button-shine {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.action-button:hover .button-shine {
+  transform: translateX(100%);
+}
+
+/* Secondary Action - Glass Morphism for Delete Button */
+.btn-remove-goal {
+  margin-top: 1.5rem;
+  align-self: flex-end;
+  background: transparent;
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  box-shadow: 
+    0 2px 10px rgba(239, 68, 68, 0.08),
+    inset 0 1px 0 rgba(239, 68, 68, 0.1);
+}
+
+.dark-mode .btn-remove-goal {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
 .btn-remove-goal:hover {
-  background: #ef4444;
-  color: white;
+  transform: translateY(-3px) scale(1.02);
   border-color: #ef4444;
-  transform: translateX(4px);
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  box-shadow: 
+    0 8px 25px rgba(239, 68, 68, 0.2),
+    0 4px 15px rgba(239, 68, 68, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .btn-remove-goal:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  box-shadow: 
+    0 8px 25px rgba(239, 68, 68, 0.3),
+    0 4px 15px rgba(239, 68, 68, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-remove-goal:hover svg {
+  transform: scale(1.15);
+}
+
+.btn-remove-goal:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.btn-remove-goal:hover .button-shine {
+  transform: translateX(100%);
 }
 
 /* === RESPONSIVE === */
@@ -1414,10 +1803,9 @@ body:has(.navbar-collapsed) .student-profile {
     padding: 1rem;
   }
 
-  .profile-header-body {
-    flex-direction: column;
+  .header-content {
     text-align: center;
-    padding: 1.5rem !important;
+    padding: 1.5rem;
   }
 
   .card-body {
@@ -1436,6 +1824,32 @@ body:has(.navbar-collapsed) .student-profile {
 
   .goal-metadata {
     grid-template-columns: 1fr;
+  }
+
+  .carousel-btn {
+    position: static;
+    width: 100%;
+    border-radius: 12px;
+    height: 44px;
+    transform: none;
+    margin: 0;
+  }
+
+  .carousel-btn:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .carousel-btn-prev {
+    margin-bottom: 1rem;
+  }
+
+  .carousel-btn-next {
+    margin-top: 1rem;
+  }
+
+  .goals-carousel-container {
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>
