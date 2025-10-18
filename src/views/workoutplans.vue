@@ -43,22 +43,19 @@
             <div class="stat-card stat-primary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                       <polyline points="14,2 14,8 20,8"/>
                       <line x1="16" y1="13" x2="8" y2="13"/>
                       <line x1="16" y1="17" x2="8" y2="17"/>
                     </svg>
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">+12%</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ workoutPlans.length }}</span>
+                    <span class="stat-label">Total de Planos</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <div class="stat-number">{{ workoutPlans.length }}</div>
-                  <div class="stat-label">Total de Planos</div>
                 </div>
               </div>
             </div>
@@ -66,22 +63,19 @@
             <div class="stat-card stat-secondary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                       <circle cx="9" cy="7" r="4"/>
                       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                       <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">{{ students.length > 0 ? Math.round((totalStudentsWithPlans / students.length) * 100) : 0 }}%</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ totalStudentsWithPlans }}</span>
+                    <span class="stat-label">Alunos com Planos</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <div class="stat-number">{{ totalStudentsWithPlans }}</div>
-                  <div class="stat-label">Alunos com Planos</div>
                 </div>
               </div>
             </div>
@@ -89,21 +83,18 @@
             <div class="stat-card stat-tertiary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                       <path d="M2 17l10 5 10-5"/>
                       <path d="M2 12l10 5 10-5"/>
                     </svg>
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">{{ workoutPlans.length > 0 ? Math.round(totalExercisesCount / workoutPlans.length) : 0 }}/plano</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ totalExercisesCount }}</span>
+                    <span class="stat-label">Total Exercícios</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <div class="stat-number">{{ totalExercisesCount }}</div>
-                  <div class="stat-label">Total Exercícios</div>
                 </div>
               </div>
             </div>
@@ -949,7 +940,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .dashboard-content {
-  padding: 100px 40px 40px;
+  padding: 140px 40px 40px;
   max-width: 1600px;
   margin: 0 auto;
   display: flex;
@@ -1099,6 +1090,7 @@ body:has(.navbar-collapsed) .floating-header,
   background: var(--gradient-primary);
   color: white;
   font-size: 16px;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   overflow: hidden;
@@ -1205,13 +1197,14 @@ body:has(.navbar-collapsed) .floating-header,
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  justify-content: center;
+  height: 100%;
 }
 
-.stat-header {
+.stat-main {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 24px;
 }
 
 .stat-icon {
@@ -1221,47 +1214,57 @@ body:has(.navbar-collapsed) .floating-header,
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .stat-card.stat-primary .stat-icon {
-  background: var(--gradient-primary);
+  background: transparent;
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-primary .stat-icon {
+  background: transparent;
+  color: #8b5cf6;
 }
 
 .stat-card.stat-secondary .stat-icon {
-  background: var(--gradient-secondary);
+  background: transparent;
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-secondary .stat-icon {
+  background: transparent;
+  color: #8b5cf6;
 }
 
 .stat-card.stat-tertiary .stat-icon {
-  background: var(--gradient-tertiary);
+  background: transparent;
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-tertiary .stat-icon {
+  background: transparent;
+  color: #8b5cf6;
 }
 
 .stat-card:hover .stat-icon {
   transform: rotate(5deg) scale(1.1);
 }
 
-.stat-trend {
-  padding: 6px 12px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-}
-
-.trend-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #10b981;
+.stat-icon svg {
+  flex-shrink: 0;
 }
 
 .stat-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  flex: 1;
 }
 
 .stat-number {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;

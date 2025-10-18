@@ -12,14 +12,23 @@
 
       <!-- Content -->
       <div v-else class="profile-content">
-        <!-- Profile Header -->
-        <div class="profile-header">
-          <div class="header-content">
-            <div class="avatar-wrapper">
-              <div class="avatar">
-                <img :src="instructorData.avatar" :alt="instructorData.name" />
-              </div>
-              <label for="avatar-upload" class="avatar-button">
+        <!-- Page Title -->
+        <div class="page-title-section">
+          <div>
+            <h1 class="page-title">Meu Perfil</h1>
+            <p class="page-subtitle">Gerencie suas informações profissionais</p>
+          </div>
+        </div>
+
+        <!-- Card de Perfil Principal -->
+        <div class="card-profile-main">
+          <div class="profile-header">
+            <div class="header-content">
+              <div class="avatar-wrapper">
+                <div class="avatar">
+                  <img :src="instructorData.avatar" :alt="instructorData.name" />
+                </div>
+                <label for="avatar-upload" class="avatar-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
                   <circle cx="12" cy="13" r="3" />
@@ -43,6 +52,7 @@
               <p class="subtitle">Gerencie suas informações profissionais</p>
             </div>
           </div>
+        </div>
         </div>
 
         <form @submit.prevent="saveProfile" class="sections">
@@ -202,7 +212,7 @@ const originalAvatar = ref(''); // Armazena o avatar original
 const pendingAvatarFile = ref(null); // Armazena o arquivo pendente
 
 const instructorData = reactive({
-  avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=3b82f6&color=fff&size=200',
+  avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=2563eb&color=fff&size=200',
   name: '',
   email: '',
   phone: '',
@@ -493,15 +503,55 @@ body:has(.navbar-collapsed) .instructor-profile {
   font-size: 1rem;
 }
 
+/* === PAGE TITLE === */
+.page-title-section {
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* === CARD DE PERFIL PRINCIPAL === */
+.card-profile-main {
+  margin-bottom: 32px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-profile-main:hover {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.dark-mode .card-profile-main:hover {
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
 /* === PROFILE HEADER === */
 .profile-header {
-  margin-bottom: 32px;
+  margin-bottom: 0;
 }
 
 .header-content {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 2rem;
 }
 
 @media (min-width: 640px) {

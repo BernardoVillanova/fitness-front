@@ -1,189 +1,215 @@
 <template>
   <div class="student-instructor" :class="{ 'dark-mode': isDarkMode }">
     <StudentNavBar />
-    <main class="main-content">
-      <div class="page-header">
-        <h1 class="page-title">
-          <i class="fas fa-user-tie"></i>
-          Meu Instrutor
-        </h1>
-        <p class="page-subtitle">Informações sobre seu personal trainer</p>
+    
+    <div class="page-wrapper">
+      <!-- Mensagem quando não há instrutor -->
+      <div v-if="!instructor && !loading" class="empty-instructor-state">
+        <div class="container">
+          <i class="fas fa-user-slash"></i>
+          <h3>Nenhum instrutor atribuído</h3>
+          <p>Você ainda não possui um instrutor vinculado. Entre em contato com a recepção da academia para solicitar um acompanhamento personalizado.</p>
+        </div>
       </div>
 
-    <!-- Mensagem quando não há instrutor -->
-    <div v-if="!instructor && !loading" class="empty-instructor">
-      <i class="fas fa-user-slash"></i>
-      <h3>Nenhum instrutor atribuído</h3>
-      <p>Você ainda não possui um instrutor vinculado. Entre em contato com a recepção da academia para solicitar um acompanhamento personalizado.</p>
-    </div>
-
-    <!-- Instructor Profile -->
-    <div v-if="instructor" class="instructor-profile">
-      <div class="profile-card">
-        <div class="profile-header">
-          <div class="instructor-avatar">
-            <img :src="instructor.avatar" :alt="instructor.name" />
-          </div>
-          <div class="instructor-info">
-            <h2>{{ instructor.name }}</h2>
-            <p v-if="instructor.speciality" class="instructor-title">{{ instructor.speciality }}</p>
-            <p v-if="instructor.yearsOfExperience" class="instructor-experience">
-              <i class="fas fa-medal"></i>
-              {{ instructor.yearsOfExperience }} anos de experiência
-            </p>
-            <p v-if="instructor.cref" class="instructor-cref">
-              <i class="fas fa-id-card"></i>
-              CREF: {{ instructor.cref }}
-            </p>
-            <div v-if="instructor.rating && instructor.reviews" class="instructor-rating">
-              <div class="rating-stars">
-                <i v-for="n in 5" :key="n" :class="n <= instructor.rating ? 'fas fa-star' : 'far fa-star'"></i>
+      <!-- Hero Section -->
+      <div v-if="instructor" class="hero">
+        <div class="hero-content">
+          <div class="container">
+            <div class="hero-flex">
+              <!-- Avatar -->
+              <div class="avatar-wrapper">
+                <div class="avatar">
+                  <img v-if="instructor.avatar" :src="instructor.avatar" :alt="instructor.name" />
+                  <span v-else>{{ getInitials(instructor.name) }}</span>
+                </div>
               </div>
-              <span class="rating-text">{{ instructor.rating }}/5 ({{ instructor.reviews }} avaliações)</span>
+
+              <!-- Header Info -->
+              <div class="hero-info">
+                <h1 class="hero-title">{{ instructor.name }}</h1>
+                <p v-if="instructor.speciality" class="hero-subtitle">
+                  Personal Trainer especializado em {{ instructor.speciality }}
+                </p>
+
+                <div class="hero-meta">
+                  <div v-if="instructor.yearsOfExperience" class="hero-meta-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    <span>{{ instructor.yearsOfExperience }} anos de experiência</span>
+                  </div>
+                  <div v-if="instructor.cref" class="hero-meta-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <span>CREF: {{ instructor.cref }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CTA Buttons -->
+              <div class="hero-buttons">
+                <a v-if="instructor.phone" :href="`tel:${instructor.phone}`" class="btn btn-primary">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                  Ligar
+                </a>
+                <a v-if="instructor.email" :href="`mailto:${instructor.email}`" class="btn btn-secondary">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  Enviar Email
+                </a>
+              </div>
             </div>
-          </div>
-          <div class="contact-actions">
-            <a v-if="instructor.phone" :href="`tel:${instructor.phone}`" class="btn-primary">
-              <i class="fas fa-phone"></i>
-              Ligar
-            </a>
-            <a v-if="instructor.email" :href="`mailto:${instructor.email}`" class="btn-secondary">
-              <i class="fas fa-envelope"></i>
-              Enviar Email
-            </a>
           </div>
         </div>
+      </div>
 
-        <div class="profile-details">
-          <div v-if="instructor.bio" class="detail-section">
-            <h3>Sobre</h3>
-            <p>{{ instructor.bio }}</p>
-          </div>
-          
-          <div v-if="instructor.specialties && instructor.specialties.length > 0" class="detail-section">
-            <h3>Especialidades</h3>
-            <div class="specialties">
-              <span v-for="specialty in instructor.specialties" :key="specialty" class="specialty-tag">
-                {{ specialty }}
-              </span>
+      <!-- Main Content -->
+      <div v-if="instructor" class="main-content">
+        <div class="container">
+          <div class="grid">
+            <!-- Left Column -->
+            <div class="left-column">
+              <!-- About Section -->
+              <div v-if="instructor.bio" class="card">
+                <h2 class="card-title">Sobre</h2>
+                <p class="card-text">{{ instructor.bio }}</p>
+              </div>
+
+              <!-- Specialties Section -->
+              <div v-if="instructor.specialties && instructor.specialties.length > 0" class="card">
+                <h2 class="card-title">Especialidades</h2>
+                <div class="specialties">
+                  <span v-for="specialty in instructor.specialties" :key="specialty" class="badge">
+                    <i :class="getSpecialtyIcon(specialty)"></i>
+                    {{ specialty }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Contact Information -->
+              <div class="card">
+                <h2 class="card-title">Informações de Contato</h2>
+
+                <div class="contact-grid">
+                  <!-- Phone -->
+                  <div v-if="instructor.phone" class="contact-item">
+                    <div class="contact-icon">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                      </svg>
+                    </div>
+                    <div class="contact-info">
+                      <p class="contact-label">Telefone</p>
+                      <p class="contact-value">{{ instructor.phone }}</p>
+                      <a :href="`tel:${instructor.phone}`" class="contact-link">Ligar agora</a>
+                    </div>
+                  </div>
+
+                  <!-- Email -->
+                  <div v-if="instructor.email" class="contact-item">
+                    <div class="contact-icon">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                    <div class="contact-info">
+                      <p class="contact-label">Email</p>
+                      <p class="contact-value">{{ instructor.email }}</p>
+                      <a :href="`mailto:${instructor.email}`" class="contact-link">Enviar email</a>
+                    </div>
+                  </div>
+
+                  <!-- Hours -->
+                  <div v-if="instructor.availableHours" class="contact-item full">
+                    <div class="contact-icon">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </div>
+                    <div class="contact-info">
+                      <p class="contact-label">Horário de Atendimento</p>
+                      <p class="contact-value">{{ instructor.availableHours }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Location -->
+                  <div v-if="instructor.location" class="contact-item full">
+                    <div class="contact-icon">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                    </div>
+                    <div class="contact-info">
+                      <p class="contact-label">Localização</p>
+                      <p class="contact-value">{{ instructor.location }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div v-if="instructor.certifications && instructor.certifications.length > 0" class="detail-section">
-            <h3>Certificações</h3>
-            <ul class="certifications">
-              <li v-for="cert in instructor.certifications" :key="cert">{{ cert }}</li>
-            </ul>
+
+            <!-- Right Column -->
+            <div class="right-column">
+              <!-- Certifications -->
+              <div v-if="instructor.certifications && instructor.certifications.length > 0" class="card">
+                <h2 class="card-title">Certificações</h2>
+                <div class="cert-list">
+                  <div v-for="cert in instructor.certifications" :key="cert" class="cert-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>{{ cert }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sessions Card -->
+              <div class="sessions-card">
+                <div class="sessions-header">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <h2>Próximas Sessões</h2>
+                </div>
+
+                <div v-if="upcomingSessions.length === 0" class="sessions-empty">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <p>Nenhuma sessão agendada</p>
+                  <p class="small">
+                    Agende uma sessão com seu instrutor para acompanhamento personalizado
+                  </p>
+                </div>
+
+                <div v-else class="sessions-list-compact">
+                  <div v-for="session in upcomingSessions" :key="session.id" class="session-item-compact">
+                    <div class="session-date-small">
+                      <span class="day">{{ getDay(session.date) }}</span>
+                      <span class="month">{{ getMonth(session.date) }}</span>
+                    </div>
+                    <div class="session-info-small">
+                      <h4>{{ session.type }}</h4>
+                      <p>{{ session.time }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button @click="scheduleSession" class="btn btn-white">
+                  Agendar Nova Sessão
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Contact Information -->
-    <div v-if="instructor" class="contact-section">
-      <h2 class="section-title">
-        <i class="fas fa-address-book"></i>
-        Informações de Contato
-      </h2>
-      
-      <div class="contact-card">
-        <div class="contact-options">
-          <div v-if="instructor?.phone" class="contact-item">
-            <div class="contact-icon">
-              <i class="fas fa-phone"></i>
-            </div>
-            <div>
-              <strong>Telefone</strong>
-              <p>{{ instructor.phone }}</p>
-              <a :href="`tel:${instructor.phone}`" class="contact-link">
-                <i class="fas fa-phone-alt"></i> Ligar agora
-              </a>
-            </div>
-          </div>
-          <div v-if="instructor?.email" class="contact-item">
-            <div class="contact-icon">
-              <i class="fas fa-envelope"></i>
-            </div>
-            <div>
-              <strong>Email</strong>
-              <p>{{ instructor.email }}</p>
-              <a :href="`mailto:${instructor.email}`" class="contact-link">
-                <i class="fas fa-paper-plane"></i> Enviar email
-              </a>
-            </div>
-          </div>
-          <div v-if="instructor?.availableHours" class="contact-item">
-            <div class="contact-icon">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div>
-              <strong>Horário de Atendimento</strong>
-              <p>{{ instructor.availableHours }}</p>
-            </div>
-          </div>
-          <div v-if="instructor?.location" class="contact-item">
-            <div class="contact-icon">
-              <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <div>
-              <strong>Localização</strong>
-              <p>{{ instructor.location }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Schedule -->
-    <div v-if="instructor" class="schedule-section">
-      <h2 class="section-title">
-        <i class="fas fa-calendar-alt"></i>
-        Próximas Sessões
-      </h2>
-      
-      <div v-if="upcomingSessions.length === 0" class="empty-schedule">
-        <i class="fas fa-calendar-times"></i>
-        <h3>Nenhuma sessão agendada</h3>
-        <p>Agende uma sessão com seu instrutor para acompanhamento personalizado</p>
-        <button @click="scheduleSession" class="btn-primary">
-          <i class="fas fa-plus"></i>
-          Agendar Nova Sessão
-        </button>
-      </div>
-      
-      <div v-else class="sessions-list">
-        <div v-for="session in upcomingSessions" :key="session.id" class="session-card">
-          <div class="session-date">
-            <div class="date-display">
-              <span class="day">{{ getDay(session.date) }}</span>
-              <span class="month">{{ getMonth(session.date) }}</span>
-            </div>
-          </div>
-          <div class="session-details">
-            <h4>{{ session.type }}</h4>
-            <p class="session-time">
-              <i class="fas fa-clock"></i>
-              {{ session.time }}
-            </p>
-            <p class="session-location">
-              <i class="fas fa-map-marker-alt"></i>
-              {{ session.location }}
-            </p>
-          </div>
-          <div class="session-actions">
-            <button @click="rescheduleSession(session)" class="btn-text">
-              <i class="fas fa-edit"></i>
-              Reagendar
-            </button>
-            <button @click="cancelSession(session)" class="btn-text danger">
-              <i class="fas fa-times"></i>
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    </main>
   </div>
 </template>
 
@@ -271,7 +297,7 @@ const fetchInstructorData = async () => {
         speciality: instructorData.specialties && instructorData.specialties.length > 0 
           ? instructorData.specialties.join(', ') 
           : null,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorData.name)}&background=667eea&color=fff&size=120`,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorData.name)}&background=2563eb&color=fff&size=120`,
         rating: instructorData.rating || null,  // Null se não existir
         reviews: instructorData.reviews || null,  // Null se não existir
         bio: instructorData.bio,  // APENAS do banco
@@ -325,17 +351,6 @@ const scheduleSession = () => {
   // TODO: Implementar modal de agendamento
 }
 
-const rescheduleSession = () => {
-  // TODO: Implementar reagendamento
-}
-
-const cancelSession = (session) => {
-  if (confirm('Deseja realmente cancelar esta sessão?')) {
-    // TODO: Chamar API para cancelar
-    upcomingSessions.value = upcomingSessions.value.filter(s => s.id !== session.id)
-  }
-}
-
 const getDay = (dateStr) => {
   return new Date(dateStr).getDate().toString().padStart(2, '0')
 }
@@ -344,6 +359,64 @@ const getMonth = (dateStr) => {
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
                  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   return months[new Date(dateStr).getMonth()]
+}
+
+const getInitials = (name) => {
+  if (!name) return '?'
+  return name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2)
+}
+
+const getSpecialtyIcon = (specialty) => {
+  const specialtyLower = specialty.toLowerCase()
+  
+  // Mapeamento de especialidades para ícones Font Awesome
+  const iconMap = {
+    'musculação': 'fas fa-dumbbell',
+    'musculacao': 'fas fa-dumbbell',
+    'crossfit': 'fas fa-fire-flame-curved',
+    'yoga': 'fas fa-om',
+    'pilates': 'fas fa-person-yoga',
+    'funcional': 'fas fa-running',
+    'cardio': 'fas fa-heart-pulse',
+    'hiit': 'fas fa-bolt',
+    'boxe': 'fas fa-hand-back-fist',
+    'muay thai': 'fas fa-hand-back-fist',
+    'luta': 'fas fa-hand-back-fist',
+    'lutas': 'fas fa-hand-back-fist',
+    'natação': 'fas fa-person-swimming',
+    'natacao': 'fas fa-person-swimming',
+    'corrida': 'fas fa-person-running',
+    'emagrecimento': 'fas fa-fire',
+    'hipertrofia': 'fas fa-weight-hanging',
+    'alongamento': 'fas fa-hand-dots',
+    'mobilidade': 'fas fa-arrows-rotate',
+    'spinning': 'fas fa-bicycle',
+    'ciclismo': 'fas fa-bicycle',
+    'caminhada': 'fas fa-person-walking',
+    'dança': 'fas fa-music',
+    'danca': 'fas fa-music',
+    'artes marciais': 'fas fa-hand-back-fist',
+    'trx': 'fas fa-grip-lines',
+    'ginástica': 'fas fa-child-reaching',
+    'ginastica': 'fas fa-child-reaching',
+    'atleta': 'fas fa-medal',
+    'atletas': 'fas fa-medal'
+  }
+  
+  // Buscar correspondência exata ou parcial
+  for (const [key, value] of Object.entries(iconMap)) {
+    if (specialtyLower === key || specialtyLower.includes(key) || key.includes(specialtyLower)) {
+      return value
+    }
+  }
+  
+  // Ícone padrão
+  return 'fas fa-star'
 }
 
 // Lifecycle
@@ -355,615 +428,687 @@ onMounted(() => {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .student-instructor {
   display: flex;
   min-height: 100vh;
   font-family: "Inter", sans-serif;
-  background-color: var(--bg-secondary);
 }
 
-.main-content {
+.page-wrapper {
   flex: 1;
   margin-left: 280px;
-  padding: 2rem;
+  background: linear-gradient(to bottom right, #f8fafc, #dbeafe 50%, #f8fafc);
+  min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Detecta quando o navbar está colapsado globalmente */
-body:has(.navbar-collapsed) .main-content {
+/* Dark Mode Background */
+.dark-mode .page-wrapper {
+  background: linear-gradient(to bottom right, #0f172a, #1e293b 50%, #0f172a);
+}
+
+/* Detecta quando o navbar está colapsado */
+body:has(.navbar-collapsed) .page-wrapper {
   margin-left: 0 !important;
 }
 
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.page-title i {
-  color: var(--primary-color);
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  margin: 0;
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
 }
 
 /* Empty Instructor State */
-.empty-instructor {
+.empty-instructor-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
   text-align: center;
   padding: 4rem 2rem;
-  background: var(--card-bg);
-  border: 2px dashed var(--border-color);
-  border-radius: 16px;
-  margin-bottom: 2rem;
 }
 
-.empty-instructor i {
-  font-size: 4rem;
+.empty-instructor-state i {
+  font-size: 5rem;
   color: var(--text-muted);
   opacity: 0.3;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.empty-instructor h3 {
-  font-size: 1.5rem;
+.empty-instructor-state h3 {
+  font-size: 2rem;
   color: var(--text-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
 }
 
-.empty-instructor p {
-  font-size: 1rem;
+.empty-instructor-state p {
+  font-size: 1.1rem;
   color: var(--text-muted);
   max-width: 600px;
   margin: 0 auto;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
-/* Instructor Profile */
-.instructor-profile {
-  margin-bottom: 3rem;
+/* Hero Section */
+.hero {
+  background: linear-gradient(to bottom right, #eff6ff, #ffffff, #f8fafc);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.profile-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.dark-mode .hero {
+  background: linear-gradient(to bottom right, #1e293b, #334155, #1e293b);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.dark-mode .profile-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.hero-content {
+  padding: 64px 0;
+  position: relative;
 }
 
-.profile-header {
+.hero-flex {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  flex-direction: column;
+  gap: 32px;
   align-items: flex-start;
 }
 
-.instructor-avatar {
-  flex-shrink: 0;
+@media (min-width: 1024px) {
+  .hero-flex {
+    flex-direction: row;
+    align-items: center;
+    gap: 48px;
+  }
+  .hero-content {
+    padding: 96px 0;
+  }
 }
 
-.instructor-avatar img {
-  width: 120px;
-  height: 120px;
+/* Avatar */
+.avatar-wrapper {
+  position: relative;
+}
+
+.avatar {
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid var(--primary-color);
+  background: linear-gradient(to bottom right, #3b82f6, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
 }
 
-.instructor-info {
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 1024px) {
+  .avatar {
+    width: 160px;
+    height: 160px;
+    font-size: 64px;
+  }
+}
+
+.hero-info {
   flex: 1;
 }
 
-.instructor-info h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-color);
-  margin: 0 0 0.5rem 0;
+.hero-title {
+  font-size: 36px;
+  font-weight: bold;
+  color: #0f172a;
+  margin-bottom: 12px;
 }
 
-.instructor-title {
-  font-size: 1.1rem;
-  color: var(--primary-color);
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
+.dark-mode .hero-title {
+  color: white;
 }
 
-.instructor-experience,
-.instructor-cref {
-  font-size: 0.95rem;
-  color: var(--text-muted);
-  margin: 0.25rem 0;
+@media (min-width: 1024px) {
+  .hero-title {
+    font-size: 48px;
+  }
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  color: #475569;
+  line-height: 1.75;
+  margin-bottom: 16px;
+  max-width: 768px;
+}
+
+.dark-mode .hero-subtitle {
+  color: #cbd5e1;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.dark-mode .hero-meta {
+  color: #94a3b8;
+}
+
+.hero-meta-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
-.instructor-experience i,
-.instructor-cref i {
-  color: var(--primary-color);
-  font-size: 0.9rem;
-}
-
-.instructor-rating {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.rating-stars {
-  color: var(--warning-color);
-}
-
-.rating-text {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.contact-actions {
+.hero-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
+  width: 100%;
 }
 
-.profile-details {
+@media (min-width: 640px) {
+  .hero-buttons {
+    flex-direction: row;
+    width: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-buttons {
+    flex-direction: column;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  font-size: 16px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.dark-mode .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+/* Main Content */
+.main-content {
+  padding: 48px 0;
+}
+
+@media (min-width: 1024px) {
+  .main-content {
+    padding: 64px 0;
+  }
+}
+
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  gap: 32px;
 }
 
-.detail-section h3 {
-  font-size: 1.2rem;
-  color: var(--text-color);
-  margin: 0 0 1rem 0;
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 2fr 1fr;
+  }
 }
 
-.detail-section p {
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin: 0;
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.6);
 }
 
+.dark-mode .card {
+  background: #1e293b;
+  border-color: rgba(71, 85, 105, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.card-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.dark-mode .card-title {
+  color: white;
+}
+
+.card-text {
+  color: #475569;
+  line-height: 1.75;
+}
+
+.dark-mode .card-text {
+  color: #cbd5e1;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Specialties */
 .specialties {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
-.specialty-tag {
-  padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.certifications {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.certifications li {
-  padding: 0.5rem 0;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
+.badge {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
+  line-height: 1;
 }
 
-.certifications li:before {
-  content: '✓';
-  color: var(--success-color);
-  font-weight: bold;
+.badge i {
+  font-size: 14px;
+  line-height: 1;
 }
 
-.certifications li:last-child {
-  border-bottom: none;
+.badge:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
 }
 
-/* Contact Section */
-.contact-section {
-  margin-bottom: 3rem;
+.dark-mode .badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 1.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.dark-mode .badge:hover {
+  background: rgba(59, 130, 246, 0.3);
 }
 
-.section-title i {
-  color: var(--primary-color);
-}
-
-.contact-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.dark-mode .contact-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.empty-messages {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-secondary);
-}
-
-.empty-messages i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.messages-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.message-item {
-  padding: 1rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.message-time {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.message-content {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-
-.contact-options {
+/* Contact Info */
+.contact-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  gap: 24px;
+}
+
+@media (min-width: 640px) {
+  .contact-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .contact-item {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  gap: 16px;
 }
 
-.contact-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-
-.dark-mode .contact-item:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+.contact-item.full {
+  grid-column: 1 / -1;
 }
 
 .contact-icon {
+  flex-shrink: 0;
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--primary-color);
+  background: #eff6ff;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.dark-mode .contact-icon {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.contact-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #2563eb;
+}
+
+.dark-mode .contact-icon svg {
+  color: #93c5fd;
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.dark-mode .contact-label {
+  color: #94a3b8;
+}
+
+.contact-value {
+  color: #0f172a;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.dark-mode .contact-value {
   color: white;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.contact-item strong {
-  display: block;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-}
-
-.contact-item p {
-  margin: 0 0 0.75rem 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
 }
 
 .contact-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--primary-color);
+  font-size: 14px;
+  color: #2563eb;
+  font-weight: 500;
+  display: inline-block;
+  cursor: pointer;
+  transition: all 0.2s;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
 }
 
 .contact-link:hover {
-  color: var(--primary-hover);
-  gap: 0.75rem;
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
-/* Schedule Section */
-.schedule-section {
-  margin-bottom: 3rem;
+.dark-mode .contact-link {
+  color: #60a5fa;
 }
 
-.empty-schedule {
-  text-align: center;
-  padding: 3rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  color: var(--text-muted);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.dark-mode .contact-link:hover {
+  color: #93c5fd;
 }
 
-.dark-mode .empty-schedule {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.empty-schedule i {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.3;
-  color: var(--primary-color);
-}
-
-.empty-schedule h3 {
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-}
-
-.empty-schedule p {
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-}
-
-.sessions-list {
+/* Certifications */
+.cert-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 12px;
 }
 
-.session-card {
+.cert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cert-item svg {
+  width: 20px;
+  height: 20px;
+  color: #16a34a;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dark-mode .cert-item svg {
+  color: #4ade80;
+}
+
+.cert-item span {
+  color: #334155;
+  line-height: 1.75;
+}
+
+.dark-mode .cert-item span {
+  color: #cbd5e1;
+}
+
+/* Sessions Card */
+.sessions-card {
+  background: linear-gradient(to bottom right, #2563eb, #1d4ed8);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.dark-mode .sessions-card {
+  background: linear-gradient(to bottom right, #1e40af, #1e3a8a);
+}
+
+.sessions-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.dark-mode .session-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.sessions-header svg {
+  width: 24px;
+  height: 24px;
 }
 
-.session-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+.sessions-header h2 {
+  font-size: 20px;
+  font-weight: bold;
 }
 
-.dark-mode .session-card:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-}
-
-.session-date {
-  flex-shrink: 0;
-}
-
-.date-display {
-  width: 60px;
-  height: 60px;
-  background: var(--primary-color);
-  color: white;
+.sessions-empty {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.sessions-empty svg {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  opacity: 0.6;
+}
+
+.sessions-empty p {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.sessions-empty .small {
+  font-size: 14px;
+  color: #bfdbfe;
+  margin-bottom: 0;
+}
+
+.sessions-list-compact {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.session-item-compact {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.session-item-compact:last-child {
+  margin-bottom: 0;
+}
+
+.session-date-small {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.day {
-  font-size: 1.5rem;
+.session-date-small .day {
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;
 }
 
-.month {
-  font-size: 0.7rem;
+.session-date-small .month {
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
+  opacity: 0.8;
 }
 
-.session-details {
+.session-info-small {
   flex: 1;
 }
 
-.session-details h4 {
-  margin: 0 0 0.5rem 0;
-  color: var(--text-color);
-  font-size: 1.2rem;
-}
-
-.session-time,
-.session-location {
-  margin: 0.25rem 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.session-time i,
-.session-location i {
-  color: var(--primary-color);
-}
-
-.session-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* Buttons */
-.btn-primary,
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
+.session-info-small h4 {
+  font-size: 0.95rem;
+  margin: 0 0 4px 0;
   font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  text-align: center;
 }
 
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-  text-decoration: none;
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.dark-mode .btn-primary:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  text-decoration: none;
-}
-
-.btn-secondary:hover {
-  background: var(--bg-secondary);
-  border-color: var(--primary-color);
-}
-
-.btn-text {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+.session-info-small p {
   font-size: 0.85rem;
+  margin: 0;
+  opacity: 0.8;
 }
 
-.btn-text:hover {
-  background: var(--bg-secondary);
+.btn-white {
+  width: 100%;
+  background: white;
+  color: #2563eb;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
 }
 
-.btn-text.danger {
-  color: var(--danger-color);
+.btn-white:hover {
+  background: #eff6ff;
+}
+
+.dark-mode .btn-white {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.dark-mode .btn-white:hover {
+  background: white;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .main-content {
+  .page-wrapper {
     margin-left: 0;
-    padding: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
+  .container {
+    padding: 0 16px;
   }
 
-  .page-title {
-    font-size: 1.75rem;
+  .hero-content {
+    padding: 48px 0;
   }
 
-  .page-subtitle {
-    font-size: 0.9rem;
+  .hero-title {
+    font-size: 28px;
   }
 
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
+  .hero-subtitle {
+    font-size: 16px;
   }
 
-  .instructor-avatar {
-    margin: 0 auto;
+  .avatar {
+    width: 100px;
+    height: 100px;
+    font-size: 40px;
   }
 
-  .contact-actions {
-    flex-direction: column;
+  .card {
+    padding: 24px;
   }
 
-  .profile-details {
+  .card-title {
+    font-size: 20px;
+  }
+
+  .contact-grid {
     grid-template-columns: 1fr;
-  }
-
-  .contact-options {
-    grid-template-columns: 1fr;
-  }
-
-  .session-card {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .session-actions {
-    flex-direction: column;
   }
 }
 </style>
