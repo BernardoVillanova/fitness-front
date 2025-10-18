@@ -282,95 +282,156 @@
     />
 
     <!-- Modal de Visualização -->
-    <div class="modal-overlay" v-if="showDetailModal && selectedMachine" @click="closeDetailModal">
+    <div class="modal-overlay" v-if="showDetailModal && selectedMachine" @click="closeDetailModal" :class="[isDarkMode ? 'dashboard-dark' : 'dashboard-light']">
       <div class="modal-container-large" @click.stop>
         <div class="modal-header">
-          <div class="modal-title-section">
-            <i class="fas fa-cogs modal-icon"></i>
-            <h2 class="modal-title">{{ selectedMachine.name }}</h2>
+          <div class="modal-header-content">
+            <div class="modal-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 640 512">
+                <path d="M96 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32V224v64V448c0 17.7-14.3 32-32 32H128c-17.7 0-32-14.3-32-32V384H64c-17.7 0-32-14.3-32-32V288c-17.7 0-32-14.3-32-32s14.3-32 32-32V160c0-17.7 14.3-32 32-32H96V64zm448 0v64h32c17.7 0 32 14.3 32 32v64c17.7 0 32 14.3 32 32s-14.3 32-32 32v64c0 17.7-14.3 32-32 32H544v64c0 17.7-14.3 32-32 32H480c-17.7 0-32-14.3-32-32V288 224 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32zM416 224v64H224V224H416z"/>
+              </svg>
+            </div>
+            <div class="header-text-section">
+              <h2>{{ selectedMachine.name }}</h2>
+              <p class="modal-subtitle">Visualização completa do aparelho com todos os detalhes</p>
+            </div>
           </div>
           <button class="modal-close" @click="closeDetailModal">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
         <div class="modal-body">
-          <!-- Imagem do aparelho -->
-          <div class="detail-image-container" v-if="selectedMachine.image">
-            <img :src="getImageUrl(selectedMachine.image)" :alt="selectedMachine.name" class="detail-image">
-          </div>
+          <div class="equipment-form">
+            <div class="form-grid">
+              <!-- Coluna Esquerda -->
+              <div class="form-column">
+                <!-- Nome do Aparelho -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    Nome do Aparelho
+                  </label>
+                  <div class="view-value">{{ selectedMachine.name }}</div>
+                </div>
 
-          <!-- Informações Principais -->
-          <div class="detail-info-grid">
-            <div class="detail-info-item">
-              <span class="detail-label">Nome</span>
-              <span class="detail-value">{{ selectedMachine.name }}</span>
-            </div>
-            <div class="detail-info-item">
-              <span class="detail-label">Categoria</span>
-              <span class="detail-value">{{ getCategoryName(selectedMachine.category) }}</span>
-            </div>
-            <div class="detail-info-item">
-              <span class="detail-label">Dificuldade</span>
-              <span :class="['details-tag', 'difficulty-tag', selectedMachine.difficulty]">
-                <span class="difficulty-dot"></span>
-                {{ getDifficultyLabel(selectedMachine.difficulty) }}
-              </span>
-            </div>
-          </div>
+                <!-- Categoria -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    Categoria
+                  </label>
+                  <div class="view-value">{{ getCategoryName(selectedMachine.category) }}</div>
+                </div>
 
-          <!-- Descrição -->
-          <div class="detail-section" v-if="selectedMachine.description">
-            <h3 class="detail-section-title">
-              <i class="fas fa-file-alt"></i>
-              Descrição
-            </h3>
-            <p class="detail-text">{{ selectedMachine.description }}</p>
-          </div>
+                <!-- Nível de Dificuldade -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Nível de Dificuldade
+                  </label>
+                  <div class="view-value">
+                    <span :class="['details-tag', 'difficulty-tag', selectedMachine.difficulty]">
+                      <span class="difficulty-dot"></span>
+                      {{ getDifficultyLabel(selectedMachine.difficulty) }}
+                    </span>
+                  </div>
+                </div>
 
-          <!-- Como Usar -->
-          <div class="detail-section" v-if="selectedMachine.howToUse">
-            <h3 class="detail-section-title">
-              <i class="fas fa-info-circle"></i>
-              Como Usar
-            </h3>
-            <p class="detail-text">{{ selectedMachine.howToUse }}</p>
-          </div>
+                <!-- Grupos Musculares -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Grupos Musculares Trabalhados
+                  </label>
+                  <div class="muscle-groups-grid" v-if="selectedMachine.muscleGroups && selectedMachine.muscleGroups.length > 0">
+                    <span v-for="group in selectedMachine.muscleGroups" :key="group" class="muscle-badge">
+                      {{ getMuscleGroupLabel(group) }}
+                    </span>
+                  </div>
+                  <div v-else class="view-value" style="color: var(--text-secondary); font-style: italic;">
+                    Nenhum grupo muscular especificado
+                  </div>
+                </div>
+              </div>
 
-          <!-- Dicas de Segurança -->
-          <div class="detail-section">
-            <h3 class="detail-section-title">
-              <i class="fas fa-shield-alt"></i>
-              Dicas de Segurança
-            </h3>
-            <p class="detail-text">{{ selectedMachine.safetyTips || 'Não informado' }}</p>
-          </div>
+              <!-- Coluna Direita -->
+              <div class="form-column">
+                <!-- Imagem do Aparelho -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Foto do Aparelho
+                  </label>
+                  <div class="image-preview-view" v-if="selectedMachine.image">
+                    <img :src="getImageUrl(selectedMachine.image)" :alt="selectedMachine.name" />
+                  </div>
+                  <div v-else class="no-image-placeholder">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <p>Sem imagem</p>
+                  </div>
+                </div>
 
-          <!-- Grupos Musculares -->
-          <div class="detail-section" v-if="selectedMachine.muscleGroups && selectedMachine.muscleGroups.length > 0">
-            <h3 class="detail-section-title">
-              <i class="fas fa-bullseye"></i>
-              Grupos Musculares
-            </h3>
-            <div>
-              <span v-for="group in selectedMachine.muscleGroups" :key="group" class="muscle-tag-large">
-                {{ group }}
-              </span>
+                <!-- Descrição -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Descrição
+                  </label>
+                  <div class="view-textarea">{{ selectedMachine.description || 'Não informado' }}</div>
+                </div>
+
+                <!-- Como Usar -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    Instruções de Uso
+                  </label>
+                  <div class="view-textarea">{{ selectedMachine.howToUse || 'Não informado' }}</div>
+                </div>
+
+                <!-- Dicas de Segurança -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Dicas de Segurança
+                  </label>
+                  <div class="view-textarea">{{ selectedMachine.safetyTips || 'Não informado' }}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="modal-actions">
           <button class="btn-cancel" @click="closeDetailModal">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
             Fechar
           </button>
           <button class="btn-save" @click="openEditModal(selectedMachine)">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
             Editar Aparelho
@@ -380,145 +441,220 @@
     </div>
 
     <!-- Modal de Edição -->
-    <div class="modal-overlay" v-if="showEditModal && editingMachine" @click="closeEditModal">
+    <div class="modal-overlay" v-if="showEditModal && editingMachine" @click="closeEditModal" :class="[isDarkMode ? 'dashboard-dark' : 'dashboard-light']">
       <div class="modal-container-large" @click.stop>
         <div class="modal-header">
-          <div class="modal-title-section">
-            <i class="fas fa-edit modal-icon"></i>
-            <h2 class="modal-title">Editar Aparelho</h2>
+          <div class="modal-header-content">
+            <div class="modal-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 640 512">
+                <path d="M96 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32V224v64V448c0 17.7-14.3 32-32 32H128c-17.7 0-32-14.3-32-32V384H64c-17.7 0-32-14.3-32-32V288c-17.7 0-32-14.3-32-32s14.3-32 32-32V160c0-17.7 14.3-32 32-32H96V64zm448 0v64h32c17.7 0 32 14.3 32 32v64c17.7 0 32 14.3 32 32s-14.3 32-32 32v64c0 17.7-14.3 32-32 32H544v64c0 17.7-14.3 32-32 32H480c-17.7 0-32-14.3-32-32V288 224 64c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32zM416 224v64H224V224H416z"/>
+              </svg>
+            </div>
+            <div class="header-text-section">
+              <h2>Editar Aparelho</h2>
+              <p class="modal-subtitle">Atualize as informações e detalhes do aparelho</p>
+            </div>
           </div>
           <button class="modal-close" @click="closeEditModal">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1L11 11M11 1L1 11" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
         <div class="modal-body">
-          <!-- Imagem Atual/Nova -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-image"></i>
-              Imagem do Aparelho
-            </label>
-            <div class="image-upload-area">
-              <div class="image-preview-container" v-if="editingMachine.image">
-                <img :src="editingMachine.newImageBase64 || getImageUrl(editingMachine.image)" :alt="editingMachine.name" class="image-preview">
-                <button type="button" class="remove-image-btn" @click="editingMachine.image = null; editingMachine.newImageBase64 = null">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
+          <form @submit.prevent="saveEditedMachine" class="equipment-form">
+            <div class="form-grid">
+              <!-- Coluna Esquerda -->
+              <div class="form-column">
+                <!-- Nome do Aparelho -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    Nome do Aparelho
+                  </label>
+                  <input
+                    v-model="editingMachine.name"
+                    type="text"
+                    class="form-input"
+                    placeholder="Ex: Leg Press 45°"
+                    required
+                  />
+                </div>
+
+                <!-- Categoria -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    Categoria
+                  </label>
+                  <select v-model="editingMachine.category" class="form-input" required>
+                    <option value="" disabled>Selecione a categoria</option>
+                    <option value="cardio">Cardio</option>
+                    <option value="musculacao">Musculação</option>
+                    <option value="funcional">Funcional</option>
+                    <option value="crossfit">CrossFit</option>
+                    <option value="livre">Peso Livre</option>
+                    <option value="outros">Outros</option>
+                  </select>
+                </div>
+
+                <!-- Dificuldade -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Nível de Dificuldade
+                  </label>
+                  <select v-model="editingMachine.difficulty" class="form-input" required>
+                    <option value="" disabled>Selecione o nível</option>
+                    <option value="iniciante">Iniciante</option>
+                    <option value="intermediario">Intermediário</option>
+                    <option value="avancado">Avançado</option>
+                  </select>
+                </div>
+
+                <!-- Grupos Musculares -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Grupos Musculares
+                  </label>
+                  <div class="muscle-groups-grid">
+                    <label v-for="muscle in muscleGroupOptions" :key="muscle.value" class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        :value="muscle.value"
+                        v-model="editingMachine.muscleGroups"
+                        class="checkbox-input"
+                      />
+                      <span class="checkbox-text">{{ muscle.label }}</span>
+                    </label>
+                  </div>
+                  
+                  <div v-if="editingMachine.muscleGroups && editingMachine.muscleGroups.length > 0" style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+                    Selecionados: {{ editingMachine.muscleGroups.join(', ') }}
+                  </div>
+                </div>
               </div>
-              <div class="upload-placeholder" v-else>
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Clique para adicionar imagem</p>
+
+              <!-- Coluna Direita -->
+              <div class="form-column">
+                <!-- Upload de Imagem -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Foto do Aparelho
+                  </label>
+                  <div 
+                    class="image-upload-area"
+                    :class="{ 'has-image': editImagePreview || editingMachine.image }"
+                    @click="$refs.imageInputEdit.click()"
+                    @dragover.prevent
+                    @drop.prevent="handleDropEdit"
+                  >
+                    <input
+                      ref="imageInputEdit"
+                      type="file"
+                      accept="image/*"
+                      @change="handleImageEdit"
+                      style="display: none"
+                    />
+                    <div v-if="!editImagePreview && !editingMachine.image" class="upload-placeholder">
+                      <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <p>Arraste uma imagem ou clique para selecionar</p>
+                      <span class="upload-hint">PNG, JPG até 5MB</span>
+                    </div>
+                    <div v-else class="image-preview">
+                      <img :src="editImagePreview || getImageUrl(editingMachine.image)" alt="Preview" />
+                      <button type="button" @click.stop="removeEditImage" class="remove-image-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Descrição -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Descrição
+                  </label>
+                  <textarea
+                    v-model="editingMachine.description"
+                    class="form-textarea"
+                    placeholder="Descreva o aparelho, para que serve e seus benefícios..."
+                    rows="3"
+                    required
+                  ></textarea>
+                </div>
+
+                <!-- Como Usar -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    Instruções de Uso
+                  </label>
+                  <textarea
+                    v-model="editingMachine.howToUse"
+                    class="form-textarea"
+                    placeholder="Explique passo a passo como utilizar o aparelho corretamente..."
+                    rows="4"
+                    required
+                  ></textarea>
+                </div>
+
+                <!-- Dicas de Segurança -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Dicas de Segurança
+                  </label>
+                  <textarea
+                    v-model="editingMachine.safetyTips"
+                    class="form-textarea"
+                    placeholder="Dicas importantes de segurança..."
+                    rows="3"
+                  ></textarea>
+                </div>
               </div>
-              <input type="file" accept="image/*" @change="handleImageEdit" style="display: none" ref="imageInput">
-              <button type="button" class="upload-trigger-btn" @click="$refs.imageInput.click()">
-                <i class="fas fa-upload"></i>
-                {{ editingMachine.image ? 'Alterar Imagem' : 'Adicionar Imagem' }}
+            </div>
+
+            <!-- Ações do Modal -->
+            <div class="modal-actions">
+              <button type="button" class="btn-cancel" @click="closeEditModal">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Cancelar
+              </button>
+              <button type="submit" class="btn-save" :disabled="isSubmitting">
+                {{ isSubmitting ? 'Salvando...' : 'Salvar Alterações' }}
+                <svg v-if="!isSubmitting" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
               </button>
             </div>
-          </div>
-
-          <!-- Nome -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-tag"></i>
-              Nome do Aparelho
-            </label>
-            <input type="text" v-model="editingMachine.name" class="form-input" placeholder="Ex: Barra Fixa">
-          </div>
-
-          <!-- Descrição -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-file-alt"></i>
-              Descrição
-            </label>
-            <textarea v-model="editingMachine.description" class="form-textarea" rows="3" placeholder="Descreva o aparelho..."></textarea>
-          </div>
-
-          <!-- Categoria e Dificuldade -->
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">
-                <i class="fas fa-th-large"></i>
-                Categoria
-              </label>
-              <select v-model="editingMachine.category" class="form-select">
-                <option value="cardio">Cardio</option>
-                <option value="musculacao">Musculação</option>
-                <option value="funcional">Funcional</option>
-                <option value="crossfit">CrossFit</option>
-                <option value="outros">Outros</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">
-                <i class="fas fa-signal"></i>
-                Nível de Dificuldade
-              </label>
-              <select v-model="editingMachine.difficulty" class="form-select">
-                <option value="iniciante">Iniciante</option>
-                <option value="intermediario">Intermediário</option>
-                <option value="avancado">Avançado</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Como Usar -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-info-circle"></i>
-              Como Usar
-            </label>
-            <textarea v-model="editingMachine.howToUse" class="form-textarea" rows="4" placeholder="Descreva como usar este aparelho..."></textarea>
-          </div>
-
-          <!-- Dicas de Segurança -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-shield-alt"></i>
-              Dicas de Segurança
-            </label>
-            <textarea v-model="editingMachine.safetyTips" class="form-textarea" rows="3" placeholder="Instruções de segurança..."></textarea>
-          </div>
-
-          <!-- Grupos Musculares -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-bullseye"></i>
-              Grupos Musculares
-            </label>
-            <div class="muscle-groups-container">
-              <label v-for="muscle in muscleGroupOptions" :key="muscle.value" class="muscle-checkbox-label">
-                <input
-                  type="checkbox"
-                  :value="muscle.value"
-                  v-model="editingMachine.muscleGroups"
-                  class="muscle-checkbox-input"
-                />
-                <span class="muscle-checkbox-text">{{ muscle.label }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-cancel" @click="closeEditModal">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Cancelar
-          </button>
-          <button class="btn-save" @click="saveEditedMachine">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            Salvar Alterações
-          </button>
+          </form>
         </div>
       </div>
     </div>
@@ -602,7 +738,9 @@ export default {
       showEditModal: false,
       selectedMachine: null,
       editingMachine: null,
+      editImagePreview: null,
       isLoading: false,
+      isSubmitting: false,
       machinesStats: {
         total: 0,
         categories: 0,
@@ -869,6 +1007,22 @@ export default {
       };
       return labels[difficulty] || difficulty;
     },
+    getMuscleGroupLabel(group) {
+      const labels = {
+        'peito': 'Peito',
+        'costas': 'Costas',
+        'ombros': 'Ombros',
+        'biceps': 'Bíceps',
+        'triceps': 'Tríceps',
+        'pernas': 'Pernas',
+        'gluteos': 'Glúteos',
+        'abdomen': 'Abdômen',
+        'panturrilha': 'Panturrilha',
+        'antebraco': 'Antebraço',
+        'corpo-todo': 'Corpo Todo'
+      };
+      return labels[group] || group;
+    },
     async openCreateMachineModal() {
       // Se instructorId não existe, tentar buscar novamente
       if (!this.instructorId) {
@@ -936,15 +1090,23 @@ export default {
       this.selectedMachine = null;
     },
     openEditModal(machine) {
-      this.editingMachine = { ...machine };
+      this.editingMachine = { 
+        ...machine,
+        muscleGroups: Array.isArray(machine.muscleGroups) ? [...machine.muscleGroups] : []
+      };
+      this.editImagePreview = null;
       this.showDetailModal = false;
       this.showEditModal = true;
     },
     closeEditModal() {
       this.showEditModal = false;
       this.editingMachine = null;
+      this.editImagePreview = null;
     },
     async saveEditedMachine() {
+      if (this.isSubmitting) return;
+      
+      this.isSubmitting = true;
       try {
         const updateData = {
           name: this.editingMachine.name,
@@ -972,6 +1134,8 @@ export default {
         console.error('❌ [saveEditedMachine] Erro ao salvar aparelho:', error);
         console.error('❌ [saveEditedMachine] Response:', error.response?.data);
         this.showNotification('error', 'Erro ao Salvar', 'Erro ao salvar aparelho: ' + (error.response?.data?.message || error.message));
+      } finally {
+        this.isSubmitting = false;
       }
     },
     async deleteMachine(machine) {
@@ -1035,13 +1199,65 @@ export default {
             const base64 = canvas.toDataURL('image/jpeg', 0.7);
             
             // Atualizar preview e armazenar base64 para envio
-            this.editingMachine.image = base64;
+            this.editImagePreview = base64;
             this.editingMachine.newImageBase64 = base64;
           };
           img.src = e.target.result;
         };
         reader.readAsDataURL(file);
       }
+    },
+    handleDropEdit(event) {
+      event.preventDefault();
+      const file = event.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            // Criar canvas para redimensionar
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Definir tamanho máximo
+            const maxWidth = 1200;
+            const maxHeight = 1200;
+            let width = img.width;
+            let height = img.height;
+            
+            // Calcular novo tamanho mantendo proporção
+            if (width > height) {
+              if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width *= maxHeight / height;
+                height = maxHeight;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Converter para base64 (JPEG com qualidade 70%)
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // Atualizar preview e armazenar base64 para envio
+            this.editImagePreview = base64;
+            this.editingMachine.newImageBase64 = base64;
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    removeEditImage() {
+      this.editImagePreview = null;
+      this.editingMachine.image = null;
+      this.editingMachine.newImageBase64 = null;
     },
     editMachine(machine) {
       this.openEditModal(machine);
@@ -2635,25 +2851,58 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .modal-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  padding: 2rem;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32px 48px;
-  border-bottom: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  border-radius: 24px 24px 0 0;
+  gap: 2rem;
+  z-index: 10;
+}
+
+.modal-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.modal-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   flex-shrink: 0;
+}
+
+.header-text-section {
+  flex: 1;
+}
+
+.header-text-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .modal-title-section {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.modal-icon {
-  font-size: 2rem;
-  color: var(--primary-color);
 }
 
 .modal-title {
@@ -2664,7 +2913,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .modal-close {
-  background: white;
+  background: red;
   border: none;
   cursor: pointer;
   width: 32px;
@@ -2686,8 +2935,8 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .modal-close svg {
-  width: 12px;
-  height: 12px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -3233,4 +3482,311 @@ body:has(.navbar-collapsed) .dashboard-main,
     max-width: 100%;
   }
 }
+
+/* Estilos para visualização de dados */
+.view-value {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.view-textarea {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 80px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.muscle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.muscle-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.image-preview-view {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.image-preview-view img {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.no-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: var(--card-bg);
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  color: var(--text-secondary);
+}
+
+.no-image-placeholder svg {
+  opacity: 0.4;
+  margin-bottom: 12px;
+}
+
+.no-image-placeholder p {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.muscle-groups-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Estilos do Equipment Form */
+.equipment-form {
+  width: 100%;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 968px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.form-label svg {
+  color: var(--primary-color);
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-color);
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.dashboard-dark .form-input:focus,
+.dashboard-dark .form-textarea:focus {
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+select.form-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: "Inter", sans-serif;
+}
+
+/* Checkbox Labels */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.dashboard-dark .checkbox-label {
+  background: #334155;
+  border-color: #475569;
+}
+
+.checkbox-label:hover {
+  border-color: #3b82f6;
+  background: #ffffff;
+}
+
+.dashboard-dark .checkbox-label:hover {
+  background: #475569;
+  border-color: #3b82f6;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  font-size: 0.875rem;
+  color: #1f2937;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dashboard-dark .checkbox-text {
+  color: #f1f5f9;
+}
+
+/* Image Upload Area */
+.image-upload-area {
+  width: 100%;
+  min-height: 200px;
+  border: 3px dashed var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.image-upload-area:hover {
+  border-color: #3b82f6;
+  background: var(--bg-primary);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 2rem;
+}
+
+.upload-placeholder svg {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.upload-placeholder p {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.upload-hint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.image-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.9);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-image-btn:hover {
+  background: rgb(239, 68, 68);
+  transform: scale(1.1);
+}
 </style>
+
+
