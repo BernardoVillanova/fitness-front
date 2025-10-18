@@ -31,23 +31,18 @@
       <div class="dashboard-content">
         <!-- Stats Section -->
         <section class="stats-section">
-          <div class="stats-grid stats-grid-2">
+          <div class="stats-grid">
             <div class="stat-card stat-primary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <svg fill="currentColor" viewBox="0 0 20 20" width="28" height="28">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                    <Dumbbell :size="32" :stroke-width="2" />
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">+12%</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ exercisesStats.total }}</span>
+                    <span class="stat-label">Total de Exercícios</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <span class="stat-number">{{ exercisesStats.total }}</span>
-                  <span class="stat-label">Total de Exercícios</span>
                 </div>
               </div>
             </div>
@@ -55,19 +50,29 @@
             <div class="stat-card stat-secondary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <svg fill="currentColor" viewBox="0 0 20 20" width="28" height="28">
-                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-                    </svg>
+                    <LayoutGrid :size="32" :stroke-width="2" />
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">{{ exercisesStats.categories }}</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ exercisesStats.categories }}</span>
+                    <span class="stat-label">Tipos de Treino</span>
                   </div>
                 </div>
-                <div class="stat-body">
-                  <span class="stat-number">{{ exercisesStats.categories }}</span>
-                  <span class="stat-label">Categorias</span>
+              </div>
+            </div>
+
+            <div class="stat-card stat-tertiary">
+              <div class="stat-background"></div>
+              <div class="stat-content">
+                <div class="stat-main">
+                  <div class="stat-icon">
+                    <Users :size="32" :stroke-width="2" />
+                  </div>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ exercisesStats.muscleGroups }}</span>
+                    <span class="stat-label">Grupos Musculares</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -409,6 +414,7 @@ import { useThemeStore } from "@/store/theme";
 import NotificationModal from '@/components/NotificationModal.vue';
 import { storeToRefs } from "pinia";
 import api from "@/api";
+import { Dumbbell, LayoutGrid, Users } from 'lucide-vue-next';
 
 export default {
   name: "ExercisesPage",
@@ -417,7 +423,10 @@ export default {
     DashboardNavBar,
     ExerciseModal,
     EditExerciseModal,
-    CategoryFilter
+    CategoryFilter,
+    Dumbbell,
+    LayoutGrid,
+    Users,
   },
   setup() {
     const themeStore = useThemeStore();
@@ -469,7 +478,7 @@ export default {
       exercisesStats: {
         total: 0,
         categories: 0,
-        mostUsed: 0
+        muscleGroups: 0
       },
       filteredExercises: []
     }
@@ -590,6 +599,13 @@ export default {
         const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
         this.exercisesStats.categories = uniqueCategories.length;
         
+        // Calcula grupos musculares únicos
+        const allMuscleGroups = this.exercises
+          .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
+          .flatMap(ex => ex.muscleGroups);
+        const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
+        this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
+        
         // Aplica filtros
         this.applyFilters();
       } catch (error) {
@@ -640,6 +656,13 @@ export default {
         
         // Atualiza stats
         this.exercisesStats.total = this.exercises.length;
+        const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
+        this.exercisesStats.categories = uniqueCategories.length;
+        const allMuscleGroups = this.exercises
+          .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
+          .flatMap(ex => ex.muscleGroups);
+        const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
+        this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
         
         // Reaplica filtros
         this.applyFilters();
@@ -684,11 +707,22 @@ export default {
           console.log('✅ Lista local atualizada no índice:', index);
         }
 
+        // Atualiza as estatísticas
+        this.exercisesStats.total = this.exercises.length;
+        const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
+        this.exercisesStats.categories = uniqueCategories.length;
+        const allMuscleGroups = this.exercises
+          .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
+          .flatMap(ex => ex.muscleGroups);
+        const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
+        this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
+
         this.closeEditModal();
         // Re-aplica os filtros para atualizar a lista filtrada
         this.applyFilters();
         
         console.log('🔄 Exercícios após atualização:', this.exercises.length);
+        this.showNotification('success', 'Sucesso', 'Exercício atualizado com sucesso!');
       } catch (error) {
         console.error('❌ Erro ao atualizar exercício:', error);
         this.showNotification('error', 'Erro', 'Erro ao salvar exercício');
@@ -866,6 +900,13 @@ export default {
         
         this.exercises.push(response.data.exercise);
         this.exercisesStats.total = this.exercises.length;
+        const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
+        this.exercisesStats.categories = uniqueCategories.length;
+        const allMuscleGroups = this.exercises
+          .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
+          .flatMap(ex => ex.muscleGroups);
+        const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
+        this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
         
         this.closeCreateModal();
         this.applyFilters();
@@ -1183,6 +1224,7 @@ body:has(.navbar-collapsed) .floating-header,
   background: var(--gradient-primary);
   color: white;
   font-size: 16px;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   cursor: pointer;
   overflow: hidden;
@@ -1294,7 +1336,14 @@ body:has(.navbar-collapsed) .floating-header,
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  justify-content: center;
+  height: 100%;
+}
+
+.stat-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 .stat-header {
@@ -1310,47 +1359,57 @@ body:has(.navbar-collapsed) .floating-header,
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .stat-card.stat-primary .stat-icon {
-  background: var(--gradient-primary);
+  background: transparent;
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-primary .stat-icon {
+  background: transparent;
+  color: #8b5cf6;
 }
 
 .stat-card.stat-secondary .stat-icon {
-  background: var(--gradient-secondary);
+  background: transparent;
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-secondary .stat-icon {
+  background: transparent;
+  color: #8b5cf6;
 }
 
 .stat-card.stat-tertiary .stat-icon {
-  background: var(--gradient-tertiary);
+  background: transparent;
+  color: #2563eb;
+}
+
+.dashboard-dark .stat-card.stat-tertiary .stat-icon {
+  background: transparent;
+  color: #8b5cf6;
 }
 
 .stat-card:hover .stat-icon {
   transform: rotate(5deg) scale(1.1);
 }
 
-.stat-trend {
-  padding: 6px 12px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-}
-
-.trend-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #10b981;
+.stat-icon svg {
+  flex-shrink: 0;
 }
 
 .stat-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  flex: 1;
 }
 
 .stat-number {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;

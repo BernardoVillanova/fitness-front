@@ -54,17 +54,14 @@
             <div class="stat-card stat-primary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <i class="fas fa-cogs"></i>
+                    <Dumbbell :size="32" :stroke-width="2" />
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">+8%</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ machinesStats.total }}</span>
+                    <span class="stat-label">Total de Aparelhos</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <span class="stat-number">{{ machinesStats.total }}</span>
-                  <span class="stat-label">Total de Aparelhos</span>
                 </div>
               </div>
             </div>
@@ -72,17 +69,14 @@
             <div class="stat-card stat-secondary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <i class="fas fa-th-large"></i>
+                    <Grid3x3 :size="32" :stroke-width="2" />
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">{{ machinesStats.categories }}</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ machinesStats.categories }}</span>
+                    <span class="stat-label">Categorias</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <span class="stat-number">{{ machinesStats.categories }}</span>
-                  <span class="stat-label">Categorias</span>
                 </div>
               </div>
             </div>
@@ -90,17 +84,14 @@
             <div class="stat-card stat-tertiary">
               <div class="stat-background"></div>
               <div class="stat-content">
-                <div class="stat-header">
+                <div class="stat-main">
                   <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <CheckCircle2 :size="32" :stroke-width="2" />
                   </div>
-                  <div class="stat-trend">
-                    <span class="trend-value">Ativo</span>
+                  <div class="stat-body">
+                    <span class="stat-number">{{ machinesStats.available }}</span>
+                    <span class="stat-label">Disponíveis</span>
                   </div>
-                </div>
-                <div class="stat-body">
-                  <span class="stat-number">{{ machinesStats.available }}</span>
-                  <span class="stat-label">Disponíveis</span>
                 </div>
               </div>
             </div>
@@ -545,6 +536,7 @@ import { useAuthStore } from "@/store/auth";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import api from "@/api";
+import { Dumbbell, Grid3x3, CheckCircle2 } from 'lucide-vue-next';
 
 export default {
   name: "MachinesView",
@@ -554,6 +546,9 @@ export default {
     CategoryFilter,
     NotificationModal,
     ConfirmationModal,
+    Dumbbell,
+    Grid3x3,
+    CheckCircle2,
   },
   setup() {
     const themeStore = useThemeStore();
@@ -1368,7 +1363,14 @@ body:has(.navbar-collapsed) .dashboard-main,
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  justify-content: center;
+  height: 100%;
+}
+
+.stat-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 .stat-header {
@@ -1385,36 +1387,36 @@ body:has(.navbar-collapsed) .dashboard-main,
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  font-size: 2rem;
+  flex-shrink: 0;
 }
 
 .stat-card.stat-primary .stat-icon {
-  background: rgba(37, 99, 235, 0.1);
+  background: transparent;
   color: #2563eb;
 }
 
 .dashboard-dark .stat-card.stat-primary .stat-icon {
-  background: rgba(139, 92, 246, 0.15);
+  background: transparent;
   color: #8b5cf6;
 }
 
 .stat-card.stat-secondary .stat-icon {
-  background: rgba(37, 99, 235, 0.1);
+  background: transparent;
   color: #2563eb;
 }
 
 .dashboard-dark .stat-card.stat-secondary .stat-icon {
-  background: rgba(139, 92, 246, 0.15);
+  background: transparent;
   color: #8b5cf6;
 }
 
 .stat-card.stat-tertiary .stat-icon {
-  background: rgba(37, 99, 235, 0.1);
+  background: transparent;
   color: #2563eb;
 }
 
 .dashboard-dark .stat-card.stat-tertiary .stat-icon {
-  background: rgba(139, 92, 246, 0.15);
+  background: transparent;
   color: #8b5cf6;
 }
 
@@ -1422,31 +1424,19 @@ body:has(.navbar-collapsed) .dashboard-main,
   transform: rotate(5deg) scale(1.1);
 }
 
-.stat-icon i {
-  font-size: 2rem;
-}
-
-.stat-trend {
-  padding: 6px 12px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-}
-
-.trend-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #10b981;
+.stat-icon svg {
+  flex-shrink: 0;
 }
 
 .stat-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  flex: 1;
 }
 
 .stat-number {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
