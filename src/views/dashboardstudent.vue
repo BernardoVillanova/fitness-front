@@ -446,32 +446,56 @@ const fetchDashboardData = async () => {
       const workouts = workoutsResponse.data || []
       
       if (workouts.length > 0) {
-        // Pegar o primeiro plano ativo ou o primeiro disponível
-        const activePlan = workouts.find(w => w.isActive !== false) || workouts[0]
+        // Filtrar planos ativos (que não estão pausados ou inativos)
+        const activePlans = workouts.filter(w => w.isActive !== false && w.status !== 'paused')
+        const planToUse = activePlans.length > 0 ? activePlans[0] : workouts[0]
         
-        // Calcular qual divisão fazer baseado no histórico
-        const planSessions = completedSessions.filter(s => 
-          s.workoutPlanId?._id === activePlan._id || 
-          s.workoutPlanId === activePlan._id
-        )
-        
-        
-        // Determinar próxima divisão baseada no número de treinos completados
-        const nextDivisionIndex = planSessions.length % (activePlan.divisions?.length || 1)
-        const nextDivision = activePlan.divisions?.[nextDivisionIndex]
-        
-        if (nextDivision) {
-          nextWorkout.value = {
-            _id: activePlan._id,
-            name: activePlan.name,
-            divisionName: nextDivision.name,
-            description: nextDivision.description || activePlan.description,
-            divisionIndex: nextDivisionIndex,
-            estimatedTime: calculateEstimatedTime(nextDivision),
-            estimatedCalories: calculateEstimatedCalories(nextDivision),
-            divisions: [nextDivision] // Para compatibilidade com o template
+        if (planToUse && planToUse.divisions && planToUse.divisions.length > 0) {
+          // Buscar sessões completadas deste plano específico
+          const planSessions = completedSessions.filter(s => {
+            const sessionPlanId = s.workoutPlanId?._id || s.workoutPlanId
+            return sessionPlanId === planToUse._id
+          })
+          
+          // Determinar última divisão treinada
+          let lastDivisionIndex = -1
+          if (planSessions.length > 0) {
+            // Pegar a última sessão por data
+            const lastSession = planSessions.reduce((latest, current) => {
+              const latestDate = new Date(latest.endTime || latest.startTime)
+              const currentDate = new Date(current.endTime || current.startTime)
+              return currentDate > latestDate ? current : latest
+            })
+            
+            // Encontrar o índice da divisão
+            if (lastSession.divisionName) {
+              lastDivisionIndex = planToUse.divisions.findIndex(d => d.name === lastSession.divisionName)
+            }
           }
           
+          // Próxima divisão: circular pela lista
+          const nextDivisionIndex = (lastDivisionIndex + 1) % planToUse.divisions.length
+          const nextDivision = planToUse.divisions[nextDivisionIndex]
+          
+          if (nextDivision) {
+            const totalExercises = nextDivision.exercises?.length || 0
+            const estimatedTime = calculateEstimatedTime(nextDivision)
+            const estimatedCalories = calculateEstimatedCalories(nextDivision)
+            
+            nextWorkout.value = {
+              _id: planToUse._id,
+              name: planToUse.name,
+              divisionName: nextDivision.name,
+              description: nextDivision.description || planToUse.description || '',
+              divisionIndex: nextDivisionIndex,
+              totalExercises: totalExercises,
+              estimatedTime: estimatedTime,
+              estimatedCalories: estimatedCalories,
+              divisions: [nextDivision] // Para compatibilidade com o template
+            }
+          } else {
+            nextWorkout.value = null
+          }
         } else {
           nextWorkout.value = null
         }
@@ -549,51 +573,103 @@ const calculateStreak = (sessions) => {
   if (!sessions || sessions.length === 0) {
     return 0
   }
-  // Agrupar sessões por dia (usar apenas um treino por dia)
+  
+  // Agrupar sessões por dia (apenas data, sem hora)
   const daysSet = new Set(
     sessions.map(s => {
       const d = new Date(s.endTime || s.startTime)
       d.setHours(0, 0, 0, 0)
-      return d.getTime()
+      return d.toISOString().split('T')[0] // Formato YYYY-MM-DD
     })
   )
-  // Converter para array e ordenar crescente
-  const daysArr = Array.from(daysSet).sort((a, b) => a - b)
-  // Começar do dia de hoje
-  let streak = 0
-  let today = new Date()
+  
+  // Converter para array de datas e ordenar decrescente (mais recente primeiro)
+  const daysArr = Array.from(daysSet)
+    .map(dateStr => new Date(dateStr))
+    .sort((a, b) => b - a)
+  
+  if (daysArr.length === 0) return 0
+  
+  // Hoje e ontem (apenas data, sem hora)
+  const today = new Date()
   today.setHours(0, 0, 0, 0)
-  // Se não treinou hoje, streak é 0
-  if (!daysSet.has(today.getTime())) {
+  
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  
+  // Data do último treino
+  const lastWorkoutDate = daysArr[0]
+  lastWorkoutDate.setHours(0, 0, 0, 0)
+  
+  // Se último treino não foi hoje nem ontem, streak quebrou
+  if (lastWorkoutDate.getTime() !== today.getTime() && 
+      lastWorkoutDate.getTime() !== yesterday.getTime()) {
     return 0
   }
-  // Contar para trás quantos dias consecutivos tem treino
-  for (let i = daysArr.length - 1; i >= 0; i--) {
-    const day = new Date(daysArr[i])
-    const expected = new Date(today)
-    expected.setDate(today.getDate() - streak)
-    expected.setHours(0, 0, 0, 0)
-    if (day.getTime() === expected.getTime()) {
+  
+  // Contar dias consecutivos para trás a partir do último treino
+  let streak = 1
+  let currentDate = new Date(lastWorkoutDate)
+  
+  for (let i = 1; i < daysArr.length; i++) {
+    const prevDate = daysArr[i]
+    prevDate.setHours(0, 0, 0, 0)
+    
+    // Data esperada (dia anterior ao currentDate)
+    const expectedDate = new Date(currentDate)
+    expectedDate.setDate(expectedDate.getDate() - 1)
+    expectedDate.setHours(0, 0, 0, 0)
+    
+    // Se a data anterior é consecutiva, continua o streak
+    if (prevDate.getTime() === expectedDate.getTime()) {
       streak++
+      currentDate = prevDate
     } else {
+      // Quebrou a sequência
       break
     }
   }
+  
   return streak
 }
 
 const calculateEstimatedTime = (division) => {
-  if (!division?.exercises) return 45
-  // ~2min por exercício + 1min descanso por série
-  const totalSets = division.exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0)
-  return Math.round((division.exercises.length * 2) + (totalSets * 1))
+  if (!division?.exercises || division.exercises.length === 0) return 45
+  
+  let totalTime = 0
+  
+  division.exercises.forEach(ex => {
+    const sets = ex.sets || 3
+    const reps = ex.reps || 12
+    
+    // Tempo por série: ~3 segundos por repetição + descanso
+    const timePerSet = (reps * 3) / 60 // em minutos
+    const restTime = ex.restTime ? (ex.restTime / 60) : 1 // descanso padrão 1min
+    
+    totalTime += (timePerSet * sets) + (restTime * (sets - 1))
+  })
+  
+  // Adicionar tempo de aquecimento/preparação
+  totalTime += 5
+  
+  return Math.round(totalTime)
 }
 
 const calculateEstimatedCalories = (division) => {
-  if (!division?.exercises) return 250
-  // ~10 calorias por exercício * número de séries
-  const totalSets = division.exercises.reduce((sum, ex) => sum + (ex.sets || 3), 0)
-  return Math.round(totalSets * 10)
+  if (!division?.exercises || division.exercises.length === 0) return 200
+  
+  let totalCalories = 0
+  
+  division.exercises.forEach(ex => {
+    const sets = ex.sets || 3
+    
+    // Calorias por série baseado em intensidade
+    // Exercícios compostos queimam mais que isolados
+    const caloriesPerSet = 15
+    totalCalories += caloriesPerSet * sets
+  })
+  
+  return Math.round(totalCalories)
 }
 
 const generateWeekCalendar = (completions = []) => {
