@@ -3,13 +3,11 @@
     <DashboardNavBar />
     
     <div class="main-content">
-      <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <div class="loader"></div>
         <p>Carregando perfil do aluno...</p>
       </div>
 
-      <!-- Error State -->
       <div v-else-if="error" class="error-state">
         <i class="fas fa-exclamation-circle"></i>
         <h3>Erro ao carregar perfil</h3>
@@ -17,9 +15,7 @@
         <button @click="loadStudentData" class="btn-retry">Tentar novamente</button>
       </div>
 
-      <!-- Content -->
       <div v-else class="profile-container">
-        <!-- Header Section -->
         <div class="profile-header">
           <div class="header-left">
             <div class="avatar-container">
@@ -58,7 +54,6 @@
           </div>
         </div>
 
-        <!-- Tabs Navigation -->
         <div class="tabs-container">
           <button 
             v-for="tab in tabs" 
@@ -71,12 +66,9 @@
           </button>
         </div>
 
-        <!-- Tab Content -->
         <div class="tab-content">
-          <!-- Dados Tab -->
           <div v-show="activeTab === 'dados'" class="dados-tab">
             <div class="cards-grid">
-              <!-- Card Dados Pessoais -->
               <div class="info-card-new">
                 <div class="card-header-new">
                   <div class="header-icon">
@@ -147,7 +139,6 @@
                 </div>
               </div>
 
-              <!-- Card Objetivos e Metas -->
               <div class="info-card-new">
                 <div class="card-header-new">
                   <div class="header-icon goals">
@@ -216,7 +207,6 @@
                 </div>
               </div>
 
-              <!-- Card Metas Pessoais -->
               <div v-if="student.goals?.personal && student.goals.personal.length > 0" class="info-card-new full-width">
                 <div class="card-header-new">
                   <div class="header-icon">
@@ -249,7 +239,6 @@
                 </div>
               </div>
 
-              <!-- Card Restrições -->
               <div class="info-card-new full-width">
                 <div class="card-header-new">
                   <div class="header-icon health">
@@ -261,7 +250,6 @@
                   </div>
                 </div>
                 <div class="card-body-new">
-                  <!-- Cada health-item em sua própria caixa -->
                   <div class="health-items-container">
                     <div class="health-item-card">
                       <div class="health-item">
@@ -309,7 +297,6 @@
                     </div>
                   </div>
                   
-                  <!-- Card "Sem Restrições" quando não há nenhuma restrição -->
                   <div v-if="!student.healthRestrictions?.hasChronicConditions && !student.healthRestrictions?.hasMedications && !student.healthRestrictions?.hasInjuries" class="no-restrictions-container">
                     <div class="no-restrictions-card">
                       <div class="no-restrictions-icon">
@@ -326,56 +313,225 @@
             </div>
           </div>
 
-          <!-- Progresso Tab -->
           <div v-show="activeTab === 'progresso'" class="progresso-tab">
-            <!-- Weight Chart -->
-            <div class="chart-card">
-              <div class="card-header">
-                <h3><i class="fas fa-chart-line"></i> Evolução de Peso (6 meses)</h3>
-              </div>
-              <div class="card-body">
-                <div v-if="weightChartData.length === 0" class="empty-chart">
-                  <i class="fas fa-chart-line"></i>
-                  <p>Nenhum registro de peso disponível</p>
+            <div class="weight-evolution-card">
+              <div class="evolution-header">
+                <div class="header-left">
+                  <div class="header-icon-wrapper">
+                    <i class="fas fa-chart-line"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Evolução de Peso</h3>
+                    <p class="header-subtitle">Acompanhe seu progresso ao longo do tempo</p>
+                  </div>
                 </div>
-                <div v-else class="weight-chart">
-                  <svg :viewBox="`0 0 ${chartWidth} ${chartHeight}`" class="chart-svg">
-                    <!-- Grid lines -->
-                    <line v-for="i in 5" :key="'grid-' + i"
-                      :x1="chartPadding" 
-                      :y1="chartPadding + (chartHeight - 2 * chartPadding) * i / 5"
-                      :x2="chartWidth - chartPadding" 
-                      :y2="chartPadding + (chartHeight - 2 * chartPadding) * i / 5"
-                      class="grid-line"
-                    />
-                    
-                    <!-- Line path -->
-                    <polyline 
-                      :points="getChartPoints()" 
-                      class="chart-line"
-                      fill="none"
-                    />
-                    
-                    <!-- Data points -->
-                    <circle 
-                      v-for="(point, idx) in weightChartData" 
-                      :key="'point-' + idx"
-                      :cx="getPointX(idx)"
-                      :cy="getPointY(point.weight)"
-                      r="4"
-                      class="chart-point"
-                    />
-                  </svg>
-                  <div class="chart-labels">
-                    <span v-for="(point, idx) in weightChartData" :key="'label-' + idx" class="chart-label">
-                      {{ formatDate(point.date) }}
+              </div>
+
+              <div class="evolution-stats">
+                <div class="stat-box">
+                  <div class="stat-icon current">
+                    <i class="fas fa-weight-scale"></i>
+                  </div>
+                  <div class="stat-content">
+                    <span class="stat-label">Peso Atual</span>
+                    <span class="stat-value">{{ currentWeight }}<span class="unit">kg</span></span>
+                  </div>
+                </div>
+                
+                <div class="stat-box">
+                  <div class="stat-icon target">
+                    <i class="fas fa-bullseye"></i>
+                  </div>
+                  <div class="stat-content">
+                    <span class="stat-label">Meta</span>
+                    <span class="stat-value">{{ targetWeight }}<span class="unit">kg</span></span>
+                  </div>
+                </div>
+                
+                <div class="stat-box">
+                  <div class="stat-icon change">
+                    <i :class="weightChange.isPositive ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                  </div>
+                  <div class="stat-content">
+                    <span class="stat-label">Variação</span>
+                    <span :class="['stat-value', weightChange.isPositive ? 'positive' : 'negative']">
+                      {{ weightChange.isPositive ? '+' : '' }}{{ weightChange.value }}<span class="unit">kg</span>
                     </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="evolution-body">
+                <div v-if="filteredWeightData.length === 0" class="empty-state">
+                  <div class="empty-icon">
+                    <i class="fas fa-chart-line"></i>
+                  </div>
+                  <h4>Nenhum registro encontrado</h4>
+                  <p>Adicione registros de peso para visualizar sua evolução</p>
+                  <button @click="showProgressModal = true" class="btn-add-record">
+                    <i class="fas fa-plus"></i>
+                    Adicionar Registro
+                  </button>
+                </div>
+                
+                <div v-else class="chart-wrapper">
+                  <div class="chart-container">
+                    <svg :viewBox="`0 0 ${enhancedChartWidth} ${enhancedChartHeight}`" class="chart-svg">
+                      <defs>
+                        <linearGradient id="weightGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.25" />
+                          <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.02" />
+                        </linearGradient>
+                        
+                        <linearGradient id="weightLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style="stop-color:#10b981" />
+                          <stop offset="100%" style="stop-color:#059669" />
+                        </linearGradient>
+                        
+                        <linearGradient id="targetLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style="stop-color:#f59e0b" />
+                          <stop offset="100%" style="stop-color:#d97706" />
+                        </linearGradient>
+                      </defs>
+
+                      <g class="grid-lines">
+                        <line v-for="i in gridLines" :key="'h-grid-' + i"
+                          :x1="enhancedChartPadding" 
+                          :y1="enhancedChartPadding + (enhancedChartHeight - 2 * enhancedChartPadding) * (i - 1) / (gridLines - 1)"
+                          :x2="enhancedChartWidth - enhancedChartPadding" 
+                          :y2="enhancedChartPadding + (enhancedChartHeight - 2 * enhancedChartPadding) * (i - 1) / (gridLines - 1)"
+                          class="grid-line horizontal"
+                        />
+                      </g>
+
+                      <g v-if="targetWeight && weightRange.min <= targetWeight && targetWeight <= weightRange.max">
+                        <line
+                          :x1="enhancedChartPadding"
+                          :y1="getEnhancedPointY(targetWeight)"
+                          :x2="enhancedChartWidth - enhancedChartPadding"
+                          :y2="getEnhancedPointY(targetWeight)"
+                          class="target-line"
+                          stroke="url(#targetLineGradient)"
+                          stroke-width="2"
+                          stroke-dasharray="8,4"
+                        />
+                        <text 
+                          :x="enhancedChartWidth - enhancedChartPadding - 10"
+                          :y="getEnhancedPointY(targetWeight) - 8"
+                          class="target-label"
+                          text-anchor="end"
+                        >Meta: {{ targetWeight }}kg</text>
+                      </g>
+
+                      <path 
+                        :d="getWeightAreaPath()" 
+                        fill="url(#weightGradient)"
+                        class="chart-area"
+                      />
+                      
+                      <path 
+                        :d="getWeightChartPath()" 
+                        class="chart-line"
+                        fill="none"
+                        stroke="url(#weightLineGradient)"
+                        stroke-width="3"
+                      />
+                      
+                      <g class="data-points">
+                        <template v-for="(point, idx) in filteredWeightData" :key="'point-' + idx">
+                          <circle 
+                            v-if="selectedPointIndex === idx"
+                            :cx="getWeightPointX(idx)"
+                            :cy="getEnhancedPointY(point.weight)"
+                            r="14"
+                            class="point-halo"
+                          />
+                          <circle 
+                            :cx="getWeightPointX(idx)"
+                            :cy="getEnhancedPointY(point.weight)"
+                            r="7"
+                            :class="['data-point', getPointClass(point, idx)]"
+                            @mouseenter="showTooltip(point, $event)"
+                            @mouseleave="hideTooltip"
+                            @click="selectPoint(point, idx)"
+                          >
+                            <title>{{ formatTooltipDate(point.date) }}: {{ point.weight }}kg</title>
+                          </circle>
+                        </template>
+                      </g>
+
+                      <g class="y-axis">
+                        <text v-for="i in gridLines" :key="'y-label-' + i"
+                          :x="enhancedChartPadding - 10"
+                          :y="enhancedChartPadding + (enhancedChartHeight - 2 * enhancedChartPadding) * (i - 1) / (gridLines - 1) + 4"
+                          class="axis-label"
+                          text-anchor="end"
+                        >
+                          {{ getYAxisLabel(i) }}
+                        </text>
+                      </g>
+                    </svg>
+
+                    <!-- Tooltip -->
+                    <div v-if="tooltip.visible" 
+                         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+                         class="chart-tooltip">
+                      <div class="tooltip-date">{{ formatTooltipDate(tooltip.data.date) }}</div>
+                      <div class="tooltip-weight">
+                        <i class="fas fa-weight-scale"></i>
+                        <span>{{ tooltip.data.weight }} kg</span>
+                      </div>
+                      <div v-if="tooltip.data.change" :class="['tooltip-change', tooltip.data.change > 0 ? 'positive' : 'negative']">
+                        <i :class="tooltip.data.change > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                        <span>{{ tooltip.data.change > 0 ? '+' : '' }}{{ tooltip.data.change }} kg</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="x-axis-labels">
+                    <span v-for="(point, idx) in filteredWeightData" 
+                          :key="'x-label-' + idx" 
+                          :class="['x-label', { active: selectedPointIndex === idx }]"
+                          @click="selectPoint(point, idx)">
+                      {{ formatEnhancedDate(point.date) }}
+                    </span>
+                  </div>
+
+                  <div class="chart-insights">
+                    <div class="insight-item trend">
+                      <div class="insight-icon">
+                        <i :class="weightTrend.icon"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Tendência</span>
+                        <span class="insight-value">{{ weightTrend.description }}</span>
+                      </div>
+                    </div>
+                    
+                    <div class="insight-item progress">
+                      <div class="insight-icon">
+                        <i class="fas fa-bullseye"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Progresso</span>
+                        <span class="insight-value">{{ progressToGoal }}%</span>
+                      </div>
+                    </div>
+                    
+                    <div class="insight-item consistency">
+                      <div class="insight-icon">
+                        <i class="fas fa-calendar-check"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Consistência</span>
+                        <span class="insight-value">{{ consistencyScore }}%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Measurements Cards -->
             <div class="measurements-section">
               <div class="section-header">
                 <h3><i class="fas fa-ruler-combined"></i> Medidas Corporais</h3>
@@ -473,7 +629,7 @@
                 <div class="measure-card-improved">
                   <div class="measure-card-header">
                     <div class="measure-icon-improved waist">
-                      <i class="fas fa-grip-lines"></i>
+                      <i class="fas fa-ruler-horizontal"></i>
                     </div>
                     <span class="measure-label-improved">Cintura</span>
                   </div>
@@ -560,7 +716,6 @@
               </div>
             </div>
 
-            <!-- Progress Timeline -->
             <div class="timeline-card">
               <div class="card-header">
                 <h3><i class="fas fa-history"></i> Histórico de Registros</h3>
@@ -665,124 +820,151 @@
             </div>
           </div>
 
-          <!-- Treinos Tab -->
           <div v-show="activeTab === 'treinos'" class="treinos-tab">
-            <!-- Training Volume Chart -->
             <div class="volume-chart-card">
-              <div class="card-header">
-                <h3><i class="fas fa-chart-area"></i> Volume de Treino (Últimos 3 meses)</h3>
-                <div class="chart-info">
-                  <i class="fas fa-info-circle"></i>
-                  <span class="tooltip-text">Detecta platôs e progressão</span>
+              <div class="volume-header">
+                <div class="header-left">
+                  <div class="header-icon-wrapper">
+                    <i class="fas fa-chart-area"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Volume de Treino</h3>
+                    <p class="header-subtitle">Últimos 3 meses · Detecta platôs e progressão</p>
+                  </div>
                 </div>
               </div>
-              <div class="card-body">
-                <div v-if="volumeChartData.length === 0" class="empty-chart">
-                  <i class="fas fa-chart-area"></i>
-                  <p>Nenhum dado de volume disponível</p>
-                  <p class="chart-note">Os dados serão exibidos após o aluno completar treinos</p>
+
+              <div class="volume-body">
+                <div v-if="volumeChartData.length === 0" class="empty-state">
+                  <div class="empty-icon">
+                    <i class="fas fa-chart-area"></i>
+                  </div>
+                  <h4>Nenhum dado de volume disponível</h4>
+                  <p>Os dados serão exibidos após o aluno completar treinos</p>
                 </div>
-                <div v-else class="volume-chart-container">
-                  <!-- Volume Chart -->
-                  <svg :viewBox="`0 0 ${chartWidth} ${volumeChartHeight}`" class="chart-svg">
-                    <!-- Grid lines -->
-                    <line v-for="i in 5" :key="'vol-grid-' + i"
-                      :x1="chartPadding" 
-                      :y1="chartPadding + (volumeChartHeight - 2 * chartPadding) * i / 5"
-                      :x2="chartWidth - chartPadding" 
-                      :y2="chartPadding + (volumeChartHeight - 2 * chartPadding) * i / 5"
-                      class="grid-line"
-                    />
-                    
-                    <!-- Volume area fill -->
-                    <polygon 
-                      :points="getVolumeAreaPoints()" 
-                      class="volume-area"
-                    />
-                    
-                    <!-- Volume line -->
-                    <polyline 
-                      :points="getVolumeLinePoints()" 
-                      class="volume-line"
-                      fill="none"
-                    />
-                    
-                    <!-- Data points -->
-                    <circle 
-                      v-for="(point, idx) in volumeChartData" 
-                      :key="'vol-point-' + idx"
-                      :cx="getVolumePointX(idx)"
-                      :cy="getVolumePointY(point.volume)"
-                      r="5"
-                      :class="['volume-point', { 'plateau-point': point.isPlateau }]"
-                    >
-                      <title>{{ formatDateFull(point.date) }}: {{ formatVolume(point.volume) }}</title>
-                    </circle>
-                    
-                    <!-- Plateau indicators -->
-                    <g v-for="(point, idx) in volumeChartData.filter(p => p.isPlateau)" :key="'plateau-' + idx">
-                      <line 
-                        :x1="getVolumePointX(volumeChartData.indexOf(point))"
-                        :y1="getVolumePointY(point.volume) - 15"
-                        :x2="getVolumePointX(volumeChartData.indexOf(point))"
-                        :y2="getVolumePointY(point.volume) - 30"
-                        class="plateau-line"
+                
+                <div v-else class="chart-wrapper">
+                  <div class="chart-container">
+                    <svg :viewBox="`0 0 ${volumeChartWidth} ${volumeChartHeight}`" class="chart-svg">
+                      <defs>
+                        <linearGradient id="volumeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.25" />
+                          <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.02" />
+                        </linearGradient>
+                        <linearGradient id="volumeLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" style="stop-color:#3b82f6" />
+                          <stop offset="100%" style="stop-color:#6366f1" />
+                        </linearGradient>
+                      </defs>
+
+                      <g class="grid-lines">
+                        <line v-for="i in gridLines" :key="'vol-grid-' + i"
+                          :x1="volumeChartPadding" 
+                          :y1="volumeChartPadding + (volumeChartHeight - 2 * volumeChartPadding) * (i - 1) / (gridLines - 1)"
+                          :x2="volumeChartWidth - volumeChartPadding" 
+                          :y2="volumeChartPadding + (volumeChartHeight - 2 * volumeChartPadding) * (i - 1) / (gridLines - 1)"
+                          class="grid-line horizontal"
+                        />
+                      </g>
+                      
+                      <polygon 
+                        :points="getVolumeAreaPoints()" 
+                        fill="url(#volumeGradient)"
+                        class="chart-area"
                       />
+                      
+                      <polyline 
+                        :points="getVolumeLinePoints()" 
+                        class="chart-line"
+                        fill="none"
+                        stroke="url(#volumeLineGradient)"
+                      />
+                      
+                      <g class="data-points">
+                        <circle 
+                          v-for="(point, idx) in volumeChartData" 
+                          :key="'vol-point-' + idx"
+                          :cx="getVolumePointX(idx)"
+                          :cy="getVolumePointY(point.volume)"
+                          r="7"
+                          :class="['data-point', { 'plateau-point': point.isPlateau }]"
+                        >
+                          <title>{{ formatDateFull(point.date) }}: {{ formatVolume(point.volume) }}</title>
+                        </circle>
+                      </g>
+                      
+                      <g v-for="(point, idx) in volumeChartData.filter(p => p.isPlateau)" :key="'plateau-' + idx">
+                        <line 
+                          :x1="getVolumePointX(volumeChartData.indexOf(point))"
+                          :y1="getVolumePointY(point.volume) - 15"
+                          :x2="getVolumePointX(volumeChartData.indexOf(point))"
+                          :y2="getVolumePointY(point.volume) - 30"
+                          class="plateau-line"
+                        />
+                        <text 
+                          :x="getVolumePointX(volumeChartData.indexOf(point))"
+                          :y="getVolumePointY(point.volume) - 35"
+                          class="plateau-label"
+                          text-anchor="middle"
+                        >⚠️</text>
+                      </g>
+                      
+                      <!-- Y-axis labels -->
                       <text 
-                        :x="getVolumePointX(volumeChartData.indexOf(point))"
-                        :y="getVolumePointY(point.volume) - 35"
-                        class="plateau-label"
-                        text-anchor="middle"
-                      >⚠️ Platô</text>
-                    </g>
-                    
-                    <!-- Y-axis labels -->
-                    <text 
-                      v-for="i in 6" 
-                      :key="'y-label-' + i"
-                      :x="chartPadding - 10"
-                      :y="chartPadding + (volumeChartHeight - 2 * chartPadding) * (i - 1) / 5"
-                      class="axis-label"
-                      text-anchor="end"
-                      alignment-baseline="middle"
-                    >{{ getVolumeYLabel(i) }}</text>
-                  </svg>
-                  
-                  <!-- X-axis labels -->
-                  <div class="chart-labels">
-                    <span v-for="(point, idx) in volumeChartData" :key="'vol-label-' + idx" class="chart-label">
+                        v-for="i in gridLines" 
+                        :key="'y-label-' + i"
+                        :x="volumeChartPadding - 10"
+                        :y="volumeChartPadding + (volumeChartHeight - 2 * volumeChartPadding) * (i - 1) / (gridLines - 1) + 4"
+                        class="axis-label"
+                        text-anchor="end"
+                      >{{ getVolumeYLabel(i) }}</text>
+                    </svg>
+                  </div>
+
+                  <div class="x-axis-labels">
+                    <span v-for="(point, idx) in volumeChartData" :key="'vol-label-' + idx" class="x-label">
                       {{ formatDate(point.date) }}
                     </span>
                   </div>
-                  
-                  <!-- Volume Statistics -->
-                  <div class="volume-stats">
-                    <div class="volume-stat-item">
-                      <span class="stat-icon"><i class="fas fa-arrow-trend-up"></i></span>
-                      <div class="stat-data">
-                        <span class="stat-label">Tendência</span>
-                        <span :class="['stat-value', volumeTrend.class]">{{ volumeTrend.text }}</span>
+
+                  <div class="chart-insights">
+                    <div class="insight-item trend">
+                      <div class="insight-icon">
+                        <i class="fas fa-arrow-trend-up"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Tendência</span>
+                        <span :class="['insight-value', volumeTrend.class]">{{ volumeTrend.text }}</span>
                       </div>
                     </div>
-                    <div class="volume-stat-item">
-                      <span class="stat-icon"><i class="fas fa-chart-line"></i></span>
-                      <div class="stat-data">
-                        <span class="stat-label">Volume Médio</span>
-                        <span class="stat-value">{{ formatVolume(averageVolume) }}</span>
+                    
+                    <div class="insight-item">
+                      <div class="insight-icon">
+                        <i class="fas fa-chart-line"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Volume Médio</span>
+                        <span class="insight-value">{{ formatVolume(averageVolume) }}</span>
                       </div>
                     </div>
-                    <div class="volume-stat-item">
-                      <span class="stat-icon"><i class="fas fa-fire"></i></span>
-                      <div class="stat-data">
-                        <span class="stat-label">Pico</span>
-                        <span class="stat-value">{{ formatVolume(peakVolume) }}</span>
+                    
+                    <div class="insight-item">
+                      <div class="insight-icon">
+                        <i class="fas fa-fire"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Pico</span>
+                        <span class="insight-value">{{ formatVolume(peakVolume) }}</span>
                       </div>
                     </div>
-                    <div class="volume-stat-item">
-                      <span class="stat-icon"><i class="fas fa-exclamation-triangle"></i></span>
-                      <div class="stat-data">
-                        <span class="stat-label">Platôs Detectados</span>
-                        <span :class="['stat-value', plateauCount > 0 ? 'warning' : '']">{{ plateauCount }}</span>
+                    
+                    <div class="insight-item warning">
+                      <div class="insight-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                      </div>
+                      <div class="insight-content">
+                        <span class="insight-label">Platôs</span>
+                        <span :class="['insight-value', plateauCount > 0 ? 'warning' : '']">{{ plateauCount }}</span>
                       </div>
                     </div>
                   </div>
@@ -790,50 +972,117 @@
               </div>
             </div>
 
-            <!-- Active Workout Plan -->
-            <div class="active-plan-card">
-              <div class="card-header">
-                <h3><i class="fas fa-dumbbell"></i> Plano Ativo</h3>
+            <div class="active-plan-card-modern">
+              <div class="plan-header-modern">
+                <div class="header-left">
+                  <div class="header-icon-wrapper">
+                    <i class="fas fa-dumbbell"></i>
+                  </div>
+                  <div class="header-content">
+                    <h3>Plano Ativo</h3>
+                    <p class="header-subtitle">Configuração atual do treino</p>
+                  </div>
+                </div>
               </div>
-              <div class="card-body">
-                <div v-if="!activePlan" class="empty-plan">
-                  <i class="fas fa-clipboard-list"></i>
-                  <p>Nenhum plano ativo encontrado</p>
-                  <p class="empty-subtitle">Inicie um treino para ver o plano mais recente</p>
-                  <button @click="openAssignPlanModal" class="btn-primary">
+
+              <div class="plan-body-modern">
+                <div v-if="!activePlan" class="empty-plan-modern">
+                  <div class="empty-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                  </div>
+                  <h4>Nenhum plano ativo</h4>
+                  <p>Atribua um plano de treino para começar</p>
+                  <button @click="openAssignPlanModal" class="btn-assign-plan">
+                    <i class="fas fa-plus"></i>
                     Atribuir Plano
                   </button>
                 </div>
-                <div v-else class="plan-details">
-                  <h4>{{ activePlan.name }}</h4>
-                  <p v-if="activePlan.isFromSession" class="plan-created">
-                    <i class="fas fa-clock"></i> Baseado no último treino realizado
-                  </p>
-                  <p v-else class="plan-created">
-                    <i class="fas fa-calendar"></i> Criado em: {{ formatDateFull(activePlan.createdAt) }}
-                  </p>
-                  <div class="plan-divisions">
-                    <div v-for="(division, idx) in activePlan.divisions" :key="idx" class="division-item">
-                      <div class="division-header">
-                        <span class="division-name">{{ division.name }}</span>
-                        <span class="division-count">{{ division.exercises?.length || 0 }} exercícios</span>
-                      </div>
-                      <div v-if="division.exercises && division.exercises.length > 0" class="division-exercises">
-                        <div v-for="(exercise, exIdx) in division.exercises" :key="exIdx" class="exercise-item">
-                          <span class="exercise-name">{{ exercise.name }}</span>
-                          <span class="exercise-details">
-                            {{ exercise.sets || 3 }}x{{ exercise.reps || 10 }}
-                            <span v-if="exercise.weight && exercise.weight > 0"> - {{ exercise.weight }}kg</span>
-                          </span>
+
+                <div v-else class="plan-content-modern">
+                  <div class="plan-info-header">
+                    <div class="plan-title-section">
+                      <h4 class="plan-name">{{ activePlan.name }}</h4>
+                      <span class="plan-badge">
+                        <i class="fas fa-check-circle"></i> Ativo
+                      </span>
+                    </div>
+                    <div class="plan-meta">
+                      <span v-if="activePlan.isFromSession" class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        Último treino realizado
+                      </span>
+                      <span v-else class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        {{ formatDateFull(activePlan.createdAt) }}
+                      </span>
+                      <span class="meta-item">
+                        <i class="fas fa-layer-group"></i>
+                        {{ activePlan.divisions?.length || 0 }} divisões
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="divisions-grid-modern">
+                    <div 
+                      v-for="(division, idx) in activePlan.divisions" 
+                      :key="idx" 
+                      class="division-card-modern"
+                    >
+                      <div class="division-header-modern">
+                        <div class="division-label">
+                          <span class="division-letter">{{ division.name.charAt(0) }}</span>
+                          <div class="division-info">
+                            <h5>{{ division.name }}</h5>
+                            <span class="exercise-count">
+                              {{ division.exercises?.length || 0 }} exercício(s)
+                            </span>
+                          </div>
                         </div>
+                        <button 
+                          @click="toggleDivision(idx)" 
+                          class="btn-expand"
+                          :class="{ expanded: expandedDivisions.includes(idx) }"
+                        >
+                          <i class="fas fa-chevron-down"></i>
+                        </button>
                       </div>
+
+                      <transition name="expand">
+                        <div v-if="expandedDivisions.includes(idx)" class="division-exercises-modern">
+                          <div 
+                            v-for="(exercise, exIdx) in division.exercises" 
+                            :key="exIdx" 
+                            class="exercise-row-modern"
+                          >
+                            <div class="exercise-icon">
+                              <i class="fas fa-dumbbell"></i>
+                            </div>
+                            <div class="exercise-details">
+                              <span class="exercise-name">{{ exercise.name }}</span>
+                              <div class="exercise-specs">
+                                <span class="spec-item">
+                                  <i class="fas fa-list"></i>
+                                  {{ exercise.sets || 3 }} séries
+                                </span>
+                                <span class="spec-item">
+                                  <i class="fas fa-redo"></i>
+                                  {{ exercise.reps || 10 }} reps
+                                </span>
+                                <span v-if="exercise.weight && exercise.weight > 0" class="spec-item weight">
+                                  <i class="fas fa-weight-hanging"></i>
+                                  {{ exercise.weight }}kg
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </transition>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Workout Statistics -->
             <div class="stats-grid">
               <div class="stat-card">
                 <div class="stat-icon">
@@ -891,32 +1140,101 @@
               </div>
             </div>
 
-            <!-- Workout History -->
-            <div class="history-card">
-              <div class="card-header">
-                <h3><i class="fas fa-history"></i> Histórico de Treinos (Últimos 10)</h3>
-              </div>
-              <div class="card-body">
-                <div v-if="workoutHistory.length === 0" class="empty-history">
-                  <i class="fas fa-dumbbell"></i>
-                  <p>Nenhum treino registrado</p>
+            <div class="history-card-elegant">
+              <div class="history-header-elegant">
+                <div class="header-icon-large">
+                  <i class="fas fa-history"></i>
                 </div>
-                <div v-else class="history-list">
-                  <div v-for="(workout, idx) in workoutHistory" :key="idx" class="history-item">
-                    <div class="history-date">
-                      <i class="fas fa-calendar"></i>
-                      {{ formatDateFull(workout.date) }}
+                <div class="header-text">
+                  <h3>Histórico de Treinos</h3>
+                  <p>Últimos 10 treinos realizados</p>
+                </div>
+                <div class="header-badge-count">
+                  <span class="count-number">{{ workoutHistory.length }}</span>
+                  <span class="count-label">treinos</span>
+                </div>
+              </div>
+
+              <div class="history-content-elegant">
+                <div v-if="workoutHistory.length === 0" class="empty-state-elegant">
+                  <div class="empty-icon-elegant">
+                    <i class="fas fa-dumbbell"></i>
+                  </div>
+                  <h4>Nenhum treino registrado</h4>
+                  <p>Os treinos aparecerão aqui assim que forem completados</p>
+                </div>
+                
+                <div v-else class="history-grid-elegant">
+                  <div 
+                    v-for="(workout, idx) in workoutHistory" 
+                    :key="idx" 
+                    @click="openWorkoutDetails(workout)"
+                    class="workout-card-elegant"
+                  >
+                    <div class="workout-card-header">
+                      <div class="workout-icon-wrapper">
+                        <i class="fas fa-dumbbell"></i>
+                      </div>
+                      <div class="workout-title-section">
+                        <h4 class="workout-name-elegant">{{ workout.name }}</h4>
+                        <span v-if="workout.division" class="division-tag">
+                          <i class="fas fa-layer-group"></i>
+                          {{ workout.division }}
+                        </span>
+                      </div>
+                      <div class="workout-chevron">
+                        <i class="fas fa-chevron-right"></i>
+                      </div>
                     </div>
-                    <div class="history-name">
-                      {{ workout.name }}
-                      <span v-if="workout.division" class="division-tag">{{ workout.division }}</span>
+
+                    <div class="workout-card-body">
+                      <div class="workout-date-elegant">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>{{ formatDateFull(workout.date) }}</span>
+                      </div>
+
+                      <div class="workout-stats-row">
+                        <div class="stat-box">
+                          <div class="stat-icon duration">
+                            <i class="fas fa-stopwatch"></i>
+                          </div>
+                          <div class="stat-info">
+                            <span class="stat-value">{{ workout.duration }}</span>
+                            <span class="stat-label">minutos</span>
+                          </div>
+                        </div>
+
+                        <div class="stat-box">
+                          <div class="stat-icon exercises">
+                            <i class="fas fa-list-check"></i>
+                          </div>
+                          <div class="stat-info">
+                            <span class="stat-value">{{ workout.exercisesCompleted }}/{{ workout.totalExercises }}</span>
+                            <span class="stat-label">exercícios</span>
+                          </div>
+                        </div>
+
+                        <div v-if="workout.totalVolume" class="stat-box">
+                          <div class="stat-icon volume">
+                            <i class="fas fa-weight-hanging"></i>
+                          </div>
+                          <div class="stat-info">
+                            <span class="stat-value">{{ formatVolume(workout.totalVolume) }}</span>
+                            <span class="stat-label">volume</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div class="history-stats">
-                      <span><i class="fas fa-clock"></i> {{ workout.duration }}min</span>
-                      <span><i class="fas fa-list-check"></i> {{ workout.exercisesCompleted }}/{{ workout.totalExercises }}</span>
-                    </div>
-                    <div :class="['history-status', workout.status]">
-                      {{ formatStatus(workout.status) }}
+
+                    <div class="workout-card-footer">
+                      <div :class="['status-indicator', workout.status]">
+                        <i :class="getStatusIcon(workout.status)"></i>
+                        <span>{{ formatStatus(workout.status) }}</span>
+                      </div>
+                      <div class="view-details-btn">
+                        Ver detalhes
+                        <i class="fas fa-arrow-right"></i>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -927,7 +1245,6 @@
       </div>
     </div>
 
-    <!-- Modal: Add Progress -->
     <div v-if="showProgressModal" class="modal-overlay" @click="closeProgressModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
@@ -994,7 +1311,6 @@
       </div>
     </div>
 
-    <!-- Modal: Assign Plan -->
     <div v-if="showAssignPlanModal" class="modal-overlay" @click="closeAssignPlanModal">
       <div class="modal-content modal-large" @click.stop>
         <div class="modal-header">
@@ -1002,20 +1318,17 @@
           <button @click="closeAssignPlanModal" class="btn-close">&times;</button>
         </div>
         <div class="modal-body">
-          <!-- Loading Plans -->
           <div v-if="loadingPlans" class="loading-plans">
             <div class="loader"></div>
             <p>Carregando planos...</p>
           </div>
 
-          <!-- No Plans -->
           <div v-else-if="workoutPlans.length === 0" class="no-plans">
             <i class="fas fa-clipboard-list"></i>
             <p>Nenhum plano de treino disponível</p>
             <p class="modal-note">Crie um plano de treino primeiro</p>
           </div>
 
-          <!-- Plans List -->
           <div v-else class="plans-grid">
             <div 
               v-for="plan in workoutPlans" 
@@ -1059,6 +1372,347 @@
               <span v-else><i class="fas fa-spinner fa-spin"></i> Atribuindo...</span>
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showWorkoutDetailsModal" class="modal-overlay" @click="closeWorkoutDetails">
+      <div class="modal-content modal-workout-details" @click.stop>
+        <div class="modal-header-modern">
+          <div class="header-icon-wrapper">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <div class="header-content">
+            <h2>Detalhes do Treino</h2>
+            <p class="header-subtitle">{{ selectedWorkout?.name }}</p>
+          </div>
+          <button @click="closeWorkoutDetails" class="btn-close-modern">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body-workout">
+          <div class="workout-summary-section">
+            <div class="summary-card">
+              <div class="summary-icon date">
+                <i class="fas fa-calendar"></i>
+              </div>
+              <div class="summary-info">
+                <span class="summary-label">Data de Início</span>
+                <span class="summary-value">{{ formatDateFull(selectedWorkout?.startTime) }}</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-icon duration">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="summary-info">
+                <span class="summary-label">Duração</span>
+                <span class="summary-value">{{ selectedWorkout?.duration || 0 }} min</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-icon exercises">
+                <i class="fas fa-list-check"></i>
+              </div>
+              <div class="summary-info">
+                <span class="summary-label">Exercícios</span>
+                <span class="summary-value">
+                  {{ selectedWorkout?.completedExercises || 0 }}/{{ selectedWorkout?.totalExercises || 0 }}
+                </span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div :class="['summary-icon', 'status', selectedWorkout?.status]">
+                <i :class="getStatusIcon(selectedWorkout?.status)"></i>
+              </div>
+              <div class="summary-info">
+                <span class="summary-label">Status</span>
+                <span class="summary-value">{{ formatStatus(selectedWorkout?.status) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="training-stats-section">
+            <div class="stats-header">
+              <i class="fas fa-chart-bar"></i>
+              <h3>Estatísticas do Treino</h3>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon-wrapper volume">
+                  <i class="fas fa-dumbbell"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-label">Volume Total</span>
+                  <span class="stat-value-large">{{ formatVolume(selectedWorkout?.totalVolume || 0) }}</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon-wrapper sets">
+                  <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-label">Séries</span>
+                  <span class="stat-value-large">{{ selectedWorkout?.completedSets || 0 }}/{{ selectedWorkout?.totalSets || 0 }}</span>
+                </div>
+              </div>
+
+              <div class="stat-card" v-if="selectedWorkout?.studentWeight">
+                <div class="stat-icon-wrapper weight">
+                  <i class="fas fa-weight"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-label">Peso do Aluno</span>
+                  <span class="stat-value-large">{{ selectedWorkout.studentWeight }}kg</span>
+                </div>
+              </div>
+
+              <div class="stat-card" v-if="selectedWorkout?.skippedExercises !== undefined">
+                <div class="stat-icon-wrapper skipped">
+                  <i class="fas fa-forward"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-label">Exercícios Pulados</span>
+                  <span class="stat-value-large">{{ selectedWorkout.skippedExercises }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="selectedWorkout?.startTime && selectedWorkout?.endTime" class="training-timeline">
+              <div class="timeline-item">
+                <i class="fas fa-play-circle"></i>
+                <span class="timeline-label">Início:</span>
+                <span class="timeline-value">{{ formatTimeOnly(selectedWorkout.startTime) }}</span>
+              </div>
+              <div class="timeline-divider">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+              <div class="timeline-item">
+                <i class="fas fa-stop-circle"></i>
+                <span class="timeline-label">Término:</span>
+                <span class="timeline-value">{{ formatTimeOnly(selectedWorkout.endTime) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="selectedWorkout?.division" class="division-info-section">
+            <div class="section-label">
+              <i class="fas fa-layer-group"></i>
+              Divisão do Treino
+            </div>
+            <div class="division-badge-large">{{ selectedWorkout.division }}</div>
+          </div>
+
+          <!-- Exercises Details -->
+          <div v-if="selectedWorkout?.exercises && selectedWorkout.exercises.length > 0" class="exercises-section">
+            <div class="section-header">
+              <h3>
+                <i class="fas fa-dumbbell"></i>
+                Exercícios Realizados
+              </h3>
+              <span class="exercise-count-badge">
+                {{ selectedWorkout.exercises.length }} exercício(s)
+              </span>
+            </div>
+
+            <div class="exercises-list-detail">
+              <div 
+                v-for="(exercise, idx) in selectedWorkout.exercises" 
+                :key="idx"
+                :class="['exercise-detail-card', { 'skipped': exercise.skipped }]"
+              >
+                <div class="exercise-header">
+                  <div class="exercise-number">{{ idx + 1 }}</div>
+                  <div class="exercise-title-section">
+                    <h4>{{ exercise.exerciseName || 'Exercício' }}</h4>
+                    <div class="exercise-meta">
+                      <span v-if="exercise.isBodyWeight" class="meta-badge bodyweight">
+                        <i class="fas fa-user"></i>
+                        Peso Corporal
+                      </span>
+                      <span v-if="exercise.idealWeight !== undefined && exercise.idealWeight > 0" class="meta-badge">
+                        <i class="fas fa-bullseye"></i>
+                        Ideal: {{ exercise.idealWeight }}kg
+                      </span>
+                      <span v-if="exercise.restTime" class="meta-badge rest">
+                        <i class="fas fa-clock"></i>
+                        Descanso: {{ exercise.restTime }}s
+                      </span>
+                      <span v-if="exercise.toFailure" class="meta-badge failure">
+                        <i class="fas fa-fire"></i>
+                        Até a Falha
+                      </span>
+                      <span v-if="exercise.skipped" class="meta-badge skipped-badge">
+                        <i class="fas fa-forward"></i>
+                        Pulado
+                      </span>
+                      <span v-else-if="exercise.completed" class="meta-badge completed-badge">
+                        <i class="fas fa-check"></i>
+                        Concluído
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Skip Reason -->
+                <div v-if="exercise.skipped && exercise.skipReason" class="skip-reason-section">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Motivo: {{ exercise.skipReason }}</span>
+                </div>
+
+                <!-- Muscle Groups -->
+                <div v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0" class="muscle-groups-section">
+                  <div class="muscle-label">
+                    <i class="fas fa-dumbbell"></i>
+                    Grupos Musculares
+                  </div>
+                  <div class="muscle-chips">
+                    <span v-for="(muscle, mIdx) in exercise.muscleGroups" :key="mIdx" class="muscle-chip">
+                      {{ muscle }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Sets Information -->
+                <div v-if="exercise.sets && exercise.sets.length > 0 && !exercise.skipped" class="sets-section-wrapper">
+                  <div class="sets-header">
+                    <h5>
+                      <i class="fas fa-list-ol"></i>
+                      Séries Executadas
+                    </h5>
+                    <span class="sets-summary">{{ getCompletedSets(exercise.sets) }}/{{ exercise.sets.length }} completas</span>
+                  </div>
+
+                  <div class="sets-grid-detailed">
+                    <div 
+                      v-for="(set, setIdx) in exercise.sets" 
+                      :key="setIdx"
+                      :class="['set-card-detailed', { 'completed': set.completed, 'pending': !set.completed }]"
+                    >
+                      <div class="set-card-header">
+                        <div class="set-number-badge">Série {{ set.setNumber || setIdx + 1 }}</div>
+                        <div class="set-time" v-if="set.completedAt">
+                          <i class="fas fa-clock"></i>
+                          {{ formatTime(set.completedAt) }}
+                        </div>
+                      </div>
+
+                      <div class="set-stats-grid">
+                        <div class="stat-item primary">
+                          <div class="stat-icon">
+                            <i class="fas fa-redo"></i>
+                          </div>
+                          <div class="stat-content">
+                            <span class="stat-label">Repetições</span>
+                            <span class="stat-value">
+                              <span v-if="set.actualReps">{{ set.actualReps }}</span>
+                              <span v-else>{{ set.reps }}</span>
+                              <span v-if="set.actualReps && set.actualReps !== set.reps" class="planned-value">
+                                (planejado: {{ set.reps }})
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div class="stat-item primary">
+                          <div class="stat-icon weight">
+                            <i class="fas fa-weight-hanging"></i>
+                          </div>
+                          <div class="stat-content">
+                            <span class="stat-label">Carga</span>
+                            <span class="stat-value">
+                              {{ set.weight || 0 }}kg
+                              <span v-if="set.isBodyWeight" class="bodyweight-indicator">
+                                <i class="fas fa-user"></i>
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div v-if="set.restTimeTaken !== null && set.restTimeTaken !== undefined" class="stat-item">
+                          <div class="stat-icon rest">
+                            <i class="fas fa-hourglass-half"></i>
+                          </div>
+                          <div class="stat-content">
+                            <span class="stat-label">Descanso</span>
+                            <span class="stat-value">{{ set.restTimeTaken }}s</span>
+                          </div>
+                        </div>
+
+                        <div class="stat-item full-width" v-if="set.difficulty">
+                          <div class="difficulty-inline">
+                            <div class="difficulty-label-inline">
+                              <i class="fas fa-signal"></i>
+                              Dificuldade
+                            </div>
+                            <div class="difficulty-rating-inline">
+                              <div class="difficulty-bars-inline">
+                                <div 
+                                  v-for="n in 5" 
+                                  :key="n"
+                                  :class="['difficulty-bar-inline', getDifficultyClass(set.difficulty), { 'active': n <= getDifficultyLevel(set.difficulty) }]"
+                                ></div>
+                              </div>
+                              <span class="difficulty-text-inline">{{ formatDifficulty(set.difficulty) }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Set Notes -->
+                      <div v-if="set.notes" class="set-notes">
+                        <i class="fas fa-comment"></i>
+                        <span>{{ set.notes }}</span>
+                      </div>
+
+                      <div class="set-status-indicator">
+                        <i :class="set.completed ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+                        <span>{{ set.completed ? 'Concluída' : 'Não concluída' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Exercise Time Duration -->
+                  <div v-if="getExerciseDuration(exercise.sets)" class="exercise-duration-info">
+                    <i class="fas fa-stopwatch"></i>
+                    <span>Tempo total no exercício: <strong>{{ getExerciseDuration(exercise.sets) }}</strong></span>
+                  </div>
+                </div>
+
+                <!-- Exercise Notes -->
+                <div v-if="exercise.notes" class="exercise-notes">
+                  <div class="notes-label">
+                    <i class="fas fa-note-sticky"></i>
+                    Observações do Exercício
+                  </div>
+                  <p class="notes-text">{{ exercise.notes }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overall Notes -->
+          <div v-if="selectedWorkout?.notes" class="overall-notes-section">
+            <div class="section-label">
+              <i class="fas fa-comment-dots"></i>
+              Observações Gerais do Treino
+            </div>
+            <div class="notes-content">
+              {{ selectedWorkout.notes }}
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-modern">
+          <button @click="closeWorkoutDetails" class="btn-close-modal">
+            <i class="fas fa-times"></i>
+            Fechar
+          </button>
         </div>
       </div>
     </div>
@@ -1106,10 +1760,15 @@ export default {
     const workoutPlans = ref([]);
     const selectedPlan = ref(null);
     const loadingPlans = ref(false);
+    const expandedDivisions = ref([]); // Para controlar divisões expandidas
     
     // Workout sessions data
     const workoutSessions = ref([]);
     const loadingSessions = ref(false);
+
+    // Workout details modal
+    const showWorkoutDetailsModal = ref(false);
+    const selectedWorkout = ref(null);
 
     const tabs = [
       { id: 'dados', label: 'Dados', icon: 'fas fa-user' },
@@ -1136,8 +1795,44 @@ export default {
     // Chart config
     const chartWidth = ref(800);
     const chartHeight = ref(300);
-    const volumeChartHeight = ref(350);
+    const volumeChartHeight = ref(400);
+    const volumeChartWidth = ref(800);
+    const volumeChartPadding = ref(60);
     const chartPadding = ref(40);
+
+    // Enhanced chart config (Weight Evolution)
+    const enhancedChartWidth = ref(800);
+    const enhancedChartHeight = ref(400);
+    const enhancedChartPadding = ref(60);
+    const gridLines = ref(5);
+    const selectedPeriod = ref('6months');
+    const selectedPointIndex = ref(null);
+    
+    // Chart theme
+    const chartTheme = ref({
+      primary: '#3b82f6',
+      secondary: '#8b5cf6',
+      accent: '#06b6d4',
+      success: '#10b981',
+      warning: '#f59e0b',
+      danger: '#ef4444'
+    });
+
+    // Chart periods
+    const chartPeriods = ref([
+      { label: '3M', value: '3months' },
+      { label: '6M', value: '6months' },
+      { label: '1A', value: '1year' },
+      { label: 'Tudo', value: 'all' }
+    ]);
+
+    // Tooltip state
+    const tooltip = ref({
+      visible: false,
+      x: 0,
+      y: 0,
+      data: null
+    });
     
     // Helper function to calculate workout streak
     const calculateWorkoutStreak = (sessions) => {
@@ -1305,19 +2000,139 @@ export default {
         .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))
         .slice(0, 10)
         .map(session => ({
+          // Manter dados resumidos para exibição na lista
           date: session.endTime || session.startTime,
           name: session.workoutName || 'Treino',
           division: session.divisionName || '',
           duration: session.duration || 0,
           exercisesCompleted: session.completedExercises || 0,
           totalExercises: session.totalExercises || 0,
-          status: 'completed'
+          status: 'completed',
+          // Adicionar dados completos da sessão para o modal
+          ...session
         }));
     });
 
     // Computed para normalizar o avatar
     const studentAvatar = computed(() => {
       return student.value.userId?.avatar || student.value.avatar || null;
+    });
+
+    // Enhanced chart computed properties
+    const filteredWeightData = computed(() => {
+      if (!student.value.progressHistory || student.value.progressHistory.length === 0) return [];
+      
+      let logs = [...student.value.progressHistory]
+        .filter(log => log.weight)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // Filter by selected period
+      const now = new Date();
+      const periodDays = {
+        '3months': 90,
+        '6months': 180,
+        '1year': 365,
+        'all': Infinity
+      };
+
+      if (selectedPeriod.value !== 'all') {
+        const cutoffDate = new Date(now.getTime() - periodDays[selectedPeriod.value] * 24 * 60 * 60 * 1000);
+        logs = logs.filter(log => new Date(log.date) >= cutoffDate);
+      }
+
+      // Add change calculation
+      return logs.map((log, index) => ({
+        ...log,
+        change: index > 0 ? +(log.weight - logs[index - 1].weight).toFixed(1) : null
+      }));
+    });
+
+    const weightRange = computed(() => {
+      if (filteredWeightData.value.length === 0) return { min: 0, max: 100 };
+      
+      const weights = filteredWeightData.value.map(d => d.weight);
+      const min = Math.min(...weights);
+      const max = Math.max(...weights);
+      const padding = (max - min) * 0.1 || 5; // 10% padding or 5kg minimum
+      
+      return {
+        min: Math.max(0, min - padding),
+        max: max + padding
+      };
+    });
+
+    const currentWeight = computed(() => {
+      if (filteredWeightData.value.length === 0) return student.value.personalInfo?.currentWeight || 0;
+      return filteredWeightData.value[filteredWeightData.value.length - 1].weight;
+    });
+
+    const targetWeight = computed(() => {
+      return student.value.goals?.weight?.target || 0;
+    });
+
+    const weightChange = computed(() => {
+      if (filteredWeightData.value.length < 2) return { value: 0, isPositive: true };
+      
+      const first = filteredWeightData.value[0].weight;
+      const last = filteredWeightData.value[filteredWeightData.value.length - 1].weight;
+      const change = +(last - first).toFixed(1);
+      
+      return {
+        value: Math.abs(change),
+        isPositive: change >= 0
+      };
+    });
+
+    const weightTrend = computed(() => {
+      if (filteredWeightData.value.length < 3) {
+        return { icon: 'fas fa-minus', description: 'Dados insuficientes para análise' };
+      }
+
+      const recent = filteredWeightData.value.slice(-3);
+      const avgChange = recent.reduce((sum, point, index) => {
+        if (index === 0) return sum;
+        return sum + (point.weight - recent[index - 1].weight);
+      }, 0) / (recent.length - 1);
+
+      if (avgChange > 0.2) {
+        return { icon: 'fas fa-trending-up', description: 'Tendência de ganho consistente' };
+      } else if (avgChange < -0.2) {
+        return { icon: 'fas fa-trending-down', description: 'Tendência de perda consistente' };
+      } else {
+        return { icon: 'fas fa-minus', description: 'Peso estável' };
+      }
+    });
+
+    const progressToGoal = computed(() => {
+      if (!targetWeight.value || !currentWeight.value) return 0;
+      
+      const initialWeight = filteredWeightData.value.length > 0 
+        ? filteredWeightData.value[0].weight 
+        : currentWeight.value;
+      
+      const totalNeeded = Math.abs(targetWeight.value - initialWeight);
+      const currentProgress = Math.abs(currentWeight.value - initialWeight);
+      
+      return totalNeeded > 0 ? Math.min(100, Math.round((currentProgress / totalNeeded) * 100)) : 0;
+    });
+
+    const consistencyScore = computed(() => {
+      if (filteredWeightData.value.length < 2) return 0;
+      
+      const expectedInterval = 7; // days
+      let consistentMeasurements = 0;
+      
+      for (let i = 1; i < filteredWeightData.value.length; i++) {
+        const prev = new Date(filteredWeightData.value[i - 1].date);
+        const curr = new Date(filteredWeightData.value[i].date);
+        const daysDiff = (curr - prev) / (1000 * 60 * 60 * 24);
+        
+        if (daysDiff <= expectedInterval * 2) { // Allow some flexibility
+          consistentMeasurements++;
+        }
+      }
+      
+      return Math.round((consistentMeasurements / (filteredWeightData.value.length - 1)) * 100);
     });
 
     // Methods
@@ -1640,19 +2455,20 @@ export default {
 
     // Volume Chart Drawing Functions
     const getVolumePointX = (index) => {
-      const dataWidth = chartWidth.value - 2 * chartPadding.value;
+      const dataWidth = volumeChartWidth.value - 2 * volumeChartPadding.value;
       const step = dataWidth / (volumeChartData.value.length - 1 || 1);
-      return chartPadding.value + index * step;
+      return volumeChartPadding.value + index * step;
     };
 
     const getVolumePointY = (volume) => {
-      const volumes = volumeChartData.value.map(d => d.volume);
-      const minVolume = Math.min(...volumes);
-      const maxVolume = Math.max(...volumes);
+      // Sempre começar do 0 até o pico
+      const maxVolume = Math.max(...volumeChartData.value.map(d => d.volume));
+      const minVolume = 0; // Sempre começar do zero
       const range = maxVolume - minVolume || 1;
-      const dataHeight = volumeChartHeight.value - 2 * chartPadding.value;
+      const dataHeight = volumeChartHeight.value - 2 * volumeChartPadding.value;
       
-      return volumeChartHeight.value - chartPadding.value - ((volume - minVolume) / range) * dataHeight;
+      // Invertido: quanto maior o volume, menor o Y (mais perto do topo)
+      return volumeChartHeight.value - volumeChartPadding.value - ((volume - minVolume) / range) * dataHeight;
     };
 
     const getVolumeLinePoints = () => {
@@ -1664,24 +2480,34 @@ export default {
     const getVolumeAreaPoints = () => {
       if (volumeChartData.value.length === 0) return '';
       
-      const linePoints = volumeChartData.value
-        .map((point, idx) => `${getVolumePointX(idx)},${getVolumePointY(point.volume)}`)
-        .join(' ');
-      
-      const lastX = getVolumePointX(volumeChartData.value.length - 1);
+      // Começar do canto inferior esquerdo
       const firstX = getVolumePointX(0);
-      const bottomY = volumeChartHeight.value - chartPadding.value;
+      const lastX = getVolumePointX(volumeChartData.value.length - 1);
+      const bottomY = volumeChartHeight.value - volumeChartPadding.value;
       
-      return `${linePoints} ${lastX},${bottomY} ${firstX},${bottomY}`;
+      // Construir o path: começar de baixo, subir pela linha, descer de volta
+      let points = `${firstX},${bottomY}`;
+      
+      // Adicionar todos os pontos da linha
+      volumeChartData.value.forEach((point, idx) => {
+        points += ` ${getVolumePointX(idx)},${getVolumePointY(point.volume)}`;
+      });
+      
+      // Fechar o polígono voltando para baixo
+      points += ` ${lastX},${bottomY}`;
+      
+      return points;
     };
 
     const getVolumeYLabel = (index) => {
-      const volumes = volumeChartData.value.map(d => d.volume);
-      if (volumes.length === 0) return '0';
+      if (volumeChartData.value.length === 0) return '0';
       
-      const minVolume = Math.min(...volumes);
-      const maxVolume = Math.max(...volumes);
-      const value = maxVolume - ((index - 1) / 5) * (maxVolume - minVolume);
+      // Sempre de 0 até o pico
+      const maxVolume = Math.max(...volumeChartData.value.map(d => d.volume));
+      const minVolume = 0;
+      
+      // Distribuir os labels uniformemente de max até min (de cima para baixo)
+      const value = maxVolume - ((index - 1) / (gridLines.value - 1)) * (maxVolume - minVolume);
       
       return Math.round(value).toString();
     };
@@ -1712,6 +2538,160 @@ export default {
       return weightChartData.value
         .map((point, idx) => `${getPointX(idx)},${getPointY(point.weight)}`)
         .join(' ');
+    };
+
+    // Enhanced chart methods
+    const getEnhancedPointX = (index) => {
+      if (filteredWeightData.value.length <= 1) return enhancedChartPadding.value;
+      
+      const dataWidth = enhancedChartWidth.value - 2 * enhancedChartPadding.value;
+      const step = dataWidth / (filteredWeightData.value.length - 1);
+      return enhancedChartPadding.value + index * step;
+    };
+
+    // Novo método específico para o gráfico de peso
+    const getWeightPointX = (index) => {
+      if (filteredWeightData.value.length <= 1) return enhancedChartPadding.value;
+      
+      const dataWidth = enhancedChartWidth.value - 2 * enhancedChartPadding.value;
+      const step = dataWidth / (filteredWeightData.value.length - 1);
+      return enhancedChartPadding.value + index * step;
+    };
+
+    const getEnhancedPointY = (weight) => {
+      const range = weightRange.value.max - weightRange.value.min || 1;
+      const dataHeight = enhancedChartHeight.value - 2 * enhancedChartPadding.value;
+      
+      return enhancedChartHeight.value - enhancedChartPadding.value - 
+             ((weight - weightRange.value.min) / range) * dataHeight;
+    };
+
+    const getEnhancedChartPath = () => {
+      if (filteredWeightData.value.length === 0) return '';
+      
+      let path = `M ${getEnhancedPointX(0)} ${getEnhancedPointY(filteredWeightData.value[0].weight)}`;
+      
+      for (let i = 1; i < filteredWeightData.value.length; i++) {
+        const x = getEnhancedPointX(i);
+        const y = getEnhancedPointY(filteredWeightData.value[i].weight);
+        path += ` L ${x} ${y}`;
+      }
+      
+      return path;
+    };
+
+    const getWeightChartPath = () => {
+      if (filteredWeightData.value.length === 0) return '';
+      
+      let path = `M ${getWeightPointX(0)} ${getEnhancedPointY(filteredWeightData.value[0].weight)}`;
+      
+      for (let i = 1; i < filteredWeightData.value.length; i++) {
+        const x = getWeightPointX(i);
+        const y = getEnhancedPointY(filteredWeightData.value[i].weight);
+        path += ` L ${x} ${y}`;
+      }
+      
+      return path;
+    };
+
+    const getChartAreaPath = () => {
+      if (filteredWeightData.value.length === 0) return '';
+      
+      // Começar do canto inferior esquerdo
+      const firstX = getWeightPointX(0);
+      const lastX = getWeightPointX(filteredWeightData.value.length - 1);
+      const bottomY = enhancedChartHeight.value - enhancedChartPadding.value;
+      
+      // Construir o path: começar de baixo, subir pela linha, descer de volta
+      let path = `M ${firstX},${bottomY}`;
+      
+      // Adicionar todos os pontos da linha
+      filteredWeightData.value.forEach((point, idx) => {
+        path += ` L ${getWeightPointX(idx)},${getEnhancedPointY(point.weight)}`;
+      });
+      
+      // Fechar o polígono voltando para baixo
+      path += ` L ${lastX},${bottomY} Z`;
+      
+      return path;
+    };
+
+    const getWeightAreaPath = () => {
+      if (filteredWeightData.value.length === 0) return '';
+      
+      // Começar do canto inferior esquerdo
+      const firstX = getWeightPointX(0);
+      const lastX = getWeightPointX(filteredWeightData.value.length - 1);
+      const bottomY = enhancedChartHeight.value - enhancedChartPadding.value;
+      
+      // Construir o path: começar de baixo, subir pela linha, descer de volta
+      let path = `M ${firstX},${bottomY}`;
+      
+      // Adicionar todos os pontos da linha
+      filteredWeightData.value.forEach((point, idx) => {
+        path += ` L ${getWeightPointX(idx)},${getEnhancedPointY(point.weight)}`;
+      });
+      
+      // Fechar o polígono voltando para baixo
+      path += ` L ${lastX},${bottomY} Z`;
+      
+      return path;
+    };
+
+    const getYAxisLabel = (gridIndex) => {
+      const range = weightRange.value.max - weightRange.value.min;
+      const value = weightRange.value.max - ((gridIndex - 1) / (gridLines.value - 1)) * range;
+      return Math.round(value * 10) / 10;
+    };
+
+    const getPointClass = (point, index) => {
+      let classes = [];
+      
+      if (selectedPointIndex.value === index) {
+        classes.push('selected');
+      }
+      
+      if (point.change !== null) {
+        if (point.change > 0) classes.push('positive');
+        else if (point.change < 0) classes.push('negative');
+        else classes.push('neutral');
+      }
+      
+      return classes.join(' ');
+    };
+
+    const showTooltip = (point, event) => {
+      const rect = event.target.getBoundingClientRect();
+      const chartRect = event.target.closest('.chart-container').getBoundingClientRect();
+      
+      tooltip.value = {
+        visible: true,
+        x: rect.left - chartRect.left + 10,
+        y: rect.top - chartRect.top - 50,
+        data: point
+      };
+    };
+
+    const hideTooltip = () => {
+      tooltip.value.visible = false;
+    };
+
+    const selectPoint = (point, index) => {
+      selectedPointIndex.value = selectedPointIndex.value === index ? null : index;
+    };
+
+    const formatEnhancedDate = (dateStr) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    };
+
+    const formatTooltipDate = (dateStr) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      });
     };
 
     // Modal methods
@@ -1775,6 +2755,117 @@ export default {
       } finally {
         submitting.value = false;
       }
+    };
+
+    const toggleDivision = (index) => {
+      const idx = expandedDivisions.value.indexOf(index);
+      if (idx > -1) {
+        expandedDivisions.value.splice(idx, 1);
+      } else {
+        expandedDivisions.value.push(index);
+      }
+    };
+
+    // Workout Details Modal Functions
+    const openWorkoutDetails = (workout) => {
+      selectedWorkout.value = workout;
+      showWorkoutDetailsModal.value = true;
+    };
+
+    const closeWorkoutDetails = () => {
+      showWorkoutDetailsModal.value = false;
+      selectedWorkout.value = null;
+    };
+
+    const getStatusIcon = (status) => {
+      const icons = {
+        completed: 'fas fa-check-circle',
+        partial: 'fas fa-clock',
+        cancelled: 'fas fa-times-circle',
+        missed: 'fas fa-times-circle',
+        scheduled: 'fas fa-calendar'
+      };
+      return icons[status] || 'fas fa-circle';
+    };
+
+    const getDifficultyText = (level) => {
+      const texts = {
+        1: 'Muito Fácil',
+        2: 'Fácil',
+        3: 'Moderado',
+        4: 'Difícil',
+        5: 'Muito Difícil'
+      };
+      return texts[level] || 'N/A';
+    };
+
+    const formatDifficulty = (difficulty) => {
+      if (typeof difficulty === 'string') {
+        const mapping = {
+          'easy': 'Fácil',
+          'medium': 'Moderado',
+          'hard': 'Difícil'
+        };
+        return mapping[difficulty.toLowerCase()] || difficulty;
+      }
+      return getDifficultyText(difficulty);
+    };
+
+    const getDifficultyLevel = (difficulty) => {
+      if (typeof difficulty === 'string') {
+        const mapping = {
+          'easy': 2,
+          'medium': 3,
+          'hard': 4
+        };
+        return mapping[difficulty.toLowerCase()] || 3;
+      }
+      return difficulty;
+    };
+
+    const getDifficultyClass = (difficulty) => {
+      if (typeof difficulty === 'string') {
+        return difficulty.toLowerCase();
+      }
+      if (difficulty <= 2) return 'easy';
+      if (difficulty === 3) return 'medium';
+      return 'hard';
+    };
+
+    const formatTime = (timestamp) => {
+      if (!timestamp) return '-';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+
+    const formatTimeOnly = (timestamp) => {
+      if (!timestamp) return '-';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const getCompletedSets = (sets) => {
+      if (!sets || sets.length === 0) return 0;
+      return sets.filter(set => set.completed).length;
+    };
+
+    const getExerciseDuration = (sets) => {
+      if (!sets || sets.length === 0) return null;
+      
+      const completedSets = sets.filter(set => set.completed && set.completedAt);
+      if (completedSets.length < 2) return null;
+
+      const timestamps = completedSets.map(set => new Date(set.completedAt).getTime());
+      const firstTime = Math.min(...timestamps);
+      const lastTime = Math.max(...timestamps);
+      const durationMs = lastTime - firstTime;
+      const minutes = Math.floor(durationMs / 60000);
+      const seconds = Math.floor((durationMs % 60000) / 1000);
+
+      if (minutes > 0) {
+        return `${minutes}min ${seconds}s`;
+      }
+      return `${seconds}s`;
     };
 
     const submitProgress = async () => {
@@ -1853,6 +2944,7 @@ export default {
       activeTab,
       tabs,
       expandedHealth,
+      expandedDivisions,
       showProgressModal,
       showAssignPlanModal,
       submitting,
@@ -1865,6 +2957,8 @@ export default {
       chartWidth,
       chartHeight,
       volumeChartHeight,
+      volumeChartWidth,
+      volumeChartPadding,
       chartPadding,
       volumeChartData,
       volumeTrend,
@@ -1899,14 +2993,64 @@ export default {
       getPointX,
       getPointY,
       getChartPoints,
+      
+      // Enhanced chart properties
+      enhancedChartWidth,
+      enhancedChartHeight,
+      enhancedChartPadding,
+      gridLines,
+      selectedPeriod,
+      selectedPointIndex,
+      chartTheme,
+      chartPeriods,
+      tooltip,
+      filteredWeightData,
+      weightRange,
+      currentWeight,
+      targetWeight,
+      weightChange,
+      weightTrend,
+      progressToGoal,
+      consistencyScore,
+      
+      // Enhanced chart methods
+      getEnhancedPointX,
+      getWeightPointX,
+      getEnhancedPointY,
+      getEnhancedChartPath,
+      getWeightChartPath,
+      getChartAreaPath,
+      getWeightAreaPath,
+      getYAxisLabel,
+      getPointClass,
+      showTooltip,
+      hideTooltip,
+      selectPoint,
+      formatEnhancedDate,
+      formatTooltipDate,
       closeProgressModal,
       openAssignPlanModal,
       closeAssignPlanModal,
       selectPlan,
       assignPlan,
+      toggleDivision,
       submitProgress,
       exportData,
-      getTotalExercises
+      getTotalExercises,
+      // Workout details modal
+      showWorkoutDetailsModal,
+      selectedWorkout,
+      openWorkoutDetails,
+      closeWorkoutDetails,
+      getStatusIcon,
+      getDifficultyText,
+      formatDifficulty,
+      getDifficultyLevel,
+      getDifficultyClass,
+      formatTime,
+      formatTimeOnly,
+      getCompletedSets,
+      getExerciseDuration
     };
   }
 };
@@ -3721,95 +4865,877 @@ export default {
   transition: all 0.3s ease;
 }
 
-/* Volume Chart Specific Styles */
-.volume-chart-card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+/* Weight Evolution Card Styles */
+.weight-evolution-card {
+  background: var(--card-bg, #ffffff);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
 }
 
-.volume-chart-card .card-header {
+.dark-mode .weight-evolution-card {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.weight-evolution-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.15);
+}
+
+.dark-mode .weight-evolution-card:hover {
+  box-shadow: 0 12px 24px -4px rgba(139, 92, 246, 0.25);
+}
+
+.evolution-header {
+  padding: 1.75rem 2rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+}
+
+.dark-mode .evolution-header {
+  border-bottom-color: #2d2d3f;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+}
+
+.evolution-header .header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.evolution-header .header-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+  flex-shrink: 0;
 }
 
-.volume-chart-card .card-header h3 {
-  font-size: 18px;
+.dark-mode .evolution-header .header-icon-wrapper {
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.4);
+}
+
+.evolution-header .header-content {
+  flex: 1;
+}
+
+.evolution-header .header-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color, #0f172a);
+  margin: 0 0 0.25rem 0;
+  line-height: 1.2;
+}
+
+.dark-mode .evolution-header .header-content h3 {
+  color: #f9fafb;
+}
+
+.evolution-header .header-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dark-mode .evolution-header .header-subtitle {
+  color: #9ca3af;
+}
+
+.evolution-header .header-controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.evolution-header .period-selector {
+  display: flex;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .evolution-header .period-selector {
+  background: #171723;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.evolution-header .period-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  border-radius: 8px;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-color);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chart-info {
-  position: relative;
-  display: flex;
-  align-items: center;
-  cursor: help;
-}
-
-.chart-info .fa-info-circle {
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.chart-info .tooltip-text {
-  position: absolute;
-  right: 100%;
-  margin-right: 10px;
-  background: var(--bg-secondary);
-  color: var(--text-color);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.chart-info:hover .tooltip-text {
+.dark-mode .evolution-header .period-btn {
+  color: #9ca3af;
+}
+
+.evolution-header .period-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.dark-mode .evolution-header .period-btn.active {
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.4);
+}
+
+.evolution-header .period-btn:hover:not(.active) {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.dark-mode .evolution-header .period-btn:hover:not(.active) {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.evolution-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  background: var(--bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.dark-mode .evolution-stats {
+  background: #171723;
+  border-bottom-color: #2d2d3f;
+}
+
+.evolution-stats .stat-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--card-bg, #ffffff);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  transition: all 0.2s ease;
+}
+
+.dark-mode .evolution-stats .stat-box {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.evolution-stats .stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #3b82f6;
+}
+
+.dark-mode .evolution-stats .stat-box:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.evolution-stats .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.evolution-stats .stat-icon.current {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.evolution-stats .stat-icon.target {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.evolution-stats .stat-icon.change {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.evolution-stats .stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.evolution-stats .stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .evolution-stats .stat-label {
+  color: #9ca3af;
+}
+
+.evolution-stats .stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color, #0f172a);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.dark-mode .evolution-stats .stat-value {
+  color: #f9fafb;
+}
+
+.evolution-stats .stat-value.positive {
+  color: #10b981;
+}
+
+.evolution-stats .stat-value.negative {
+  color: #ef4444;
+}
+
+.evolution-stats .stat-value .unit {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  margin-left: 0.25rem;
+}
+
+.dark-mode .evolution-stats .stat-value .unit {
+  color: #9ca3af;
+}
+
+.evolution-body {
+  padding: 2rem;
+}
+
+.evolution-body .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.evolution-body .empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.evolution-body .empty-icon i {
+  font-size: 2rem;
+  color: #3b82f6;
+}
+
+.dark-mode .evolution-body .empty-icon i {
+  color: #8b5cf6;
+}
+
+.evolution-body .empty-state h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color, #0f172a);
+  margin: 0 0 0.5rem;
+}
+
+.dark-mode .evolution-body .empty-state h4 {
+  color: #f9fafb;
+}
+
+.evolution-body .empty-state p {
+  color: var(--text-muted, #64748b);
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.dark-mode .evolution-body .empty-state p {
+  color: #9ca3af;
+}
+
+.evolution-body .btn-add-record {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.evolution-body .btn-add-record:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .evolution-body .btn-add-record {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.dark-mode .evolution-body .btn-add-record:hover {
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.5);
+}
+
+.evolution-body .chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.evolution-body .chart-container {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  border: 1px solid var(--border-color);
+  overflow: visible;
+  width: 100%;
+  height: 450px; /* Altura fixa adequada */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark-mode .evolution-body .chart-container {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.evolution-body .chart-svg {
+  width: 100%;
+  height: 100%; /* Preencher todo o container */
+  display: block;
+  overflow: visible;
+  max-width: 100%;
+}
+
+.evolution-body .grid-line {
+  stroke: var(--border-color, #e2e8f0);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.dark-mode .evolution-body .grid-line {
+  stroke: #2d2d3f;
+  opacity: 0.7;
+}
+
+.evolution-body .target-line {
+  stroke-width: 2;
+  stroke-dasharray: 8, 4;
+  opacity: 0.8;
+  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
+}
+
+.evolution-body .target-label {
+  fill: #d97706;
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .evolution-body .target-label {
+  fill: #fbbf24;
+}
+
+.evolution-body .chart-area {
+  transition: opacity 0.3s ease;
   opacity: 1;
 }
 
-.volume-chart-container {
+.evolution-body .chart-line {
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.2));
+}
+
+.evolution-body .data-point {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  stroke-width: 3;
+  fill: #10b981;
+  stroke: var(--card-bg, #ffffff);
+}
+
+.dark-mode .evolution-body .data-point {
+  fill: #10b981;
+  stroke: #1e1e2d;
+}
+
+.evolution-body .data-point:hover {
+  r: 9;
+  filter: drop-shadow(0 4px 8px rgba(16, 185, 129, 0.4));
+}
+
+.evolution-body .data-point.selected {
+  r: 9;
+  stroke-width: 4;
+  fill: #059669;
+  stroke: white;
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.5));
+}
+
+.dark-mode .evolution-body .data-point.selected {
+  fill: #10b981;
+  stroke: #1e1e2d;
+}
+
+.evolution-body .point-halo {
+  fill: rgba(16, 185, 129, 0.2);
+  stroke: none;
+  animation: pulse-halo 2s infinite;
+}
+
+.dark-mode .evolution-body .point-halo {
+  fill: rgba(139, 92, 246, 0.2);
+}
+
+@keyframes pulse-halo {
+  0%, 100% {
+    opacity: 0.3;
+    r: 14;
+  }
+  50% {
+    opacity: 0.6;
+    r: 18;
+  }
+}
+
+.evolution-body .axis-label {
+  fill: var(--text-muted, #64748b);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dark-mode .evolution-body .axis-label {
+  fill: #9ca3af;
+}
+
+.evolution-body .chart-tooltip {
+  position: absolute;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  margin-top: -12px;
+  z-index: 100;
+  animation: tooltipFadeIn 0.2s ease;
+  min-width: 140px;
+}
+
+.dark-mode .evolution-body .chart-tooltip {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(0);
+  }
+}
+
+.evolution-body .tooltip-date {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.dark-mode .evolution-body .tooltip-date {
+  color: #9ca3af;
+}
+
+.evolution-body .tooltip-weight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color, #0f172a);
+  margin-bottom: 0.25rem;
+}
+
+.dark-mode .evolution-body .tooltip-weight {
+  color: #f9fafb;
+}
+
+.evolution-body .tooltip-weight i {
+  color: #10b981;
+  font-size: 0.875rem;
+}
+
+.dark-mode .evolution-body .tooltip-weight i {
+  color: #34d399;
+}
+
+.evolution-body .tooltip-change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.evolution-body .tooltip-change.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.evolution-body .tooltip-change.negative {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.dark-mode .evolution-body .tooltip-change.positive {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.dark-mode .evolution-body .tooltip-change.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.evolution-body .x-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.evolution-body .x-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.dark-mode .evolution-body .x-label {
+  color: #9ca3af;
+}
+
+.evolution-body .x-label:hover,
+.evolution-body .x-label.active {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.dark-mode .evolution-body .x-label:hover,
+.dark-mode .evolution-body .x-label.active {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.evolution-body .chart-insights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.evolution-body .insight-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--card-bg, #ffffff);
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  transition: all 0.2s ease;
+}
+
+.dark-mode .evolution-body .insight-item {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.evolution-body .insight-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .evolution-body .insight-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.evolution-body .insight-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.evolution-body .insight-icon i {
+  color: white;
+}
+
+.evolution-body .insight-item.trend .insight-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.evolution-body .insight-item.progress .insight-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.evolution-body .insight-item.consistency .insight-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.evolution-body .insight-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0.25rem;
+  flex: 1;
 }
 
-.volume-area {
-  fill: #3b82f6;
-  opacity: 0.1;
+.evolution-body .insight-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.volume-line {
-  stroke: #3b82f6;
+.dark-mode .evolution-body .insight-label {
+  color: #9ca3af;
+}
+
+.evolution-body .insight-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color, #0f172a);
+  line-height: 1.2;
+}
+
+.dark-mode .evolution-body .insight-value {
+  color: #f9fafb;
+}
+
+/* Volume Chart Specific Styles */
+.volume-chart-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.volume-chart-card .volume-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(59, 130, 246, 0.02) 100%);
+}
+
+.volume-chart-card .volume-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.volume-chart-card .volume-header .header-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.25);
+}
+
+.volume-chart-card .volume-header .header-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.volume-chart-card .volume-header .header-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.volume-chart-card .volume-body {
+  padding: 1.5rem 2rem 2rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.volume-chart-card .volume-body .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.volume-chart-card .volume-body .empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  font-size: 32px;
+  margin-bottom: 1.5rem;
+}
+
+.volume-chart-card .volume-body .empty-state h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.volume-chart-card .volume-body .empty-state p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.volume-chart-card .volume-body .chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.volume-chart-card .volume-body .chart-container {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  border: 1px solid var(--border-color);
+  overflow: visible;
+  width: 100%;
+  height: 450px; /* Altura fixa adequada */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.volume-chart-card .volume-body .chart-svg {
+  width: 100%;
+  height: 100%; /* Preencher todo o container */
+  display: block;
+  overflow: visible;
+  max-width: 100%;
+}
+
+.volume-chart-card .volume-body .grid-line.horizontal {
+  stroke: var(--border-color);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.volume-chart-card .volume-body .chart-area {
+  opacity: 1;
+}
+
+.volume-chart-card .volume-body .chart-line {
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.volume-point {
+.volume-chart-card .volume-body .data-point {
   fill: #3b82f6;
   stroke: var(--card-bg);
   stroke-width: 3;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
-.volume-point:hover {
-  r: 7;
+.volume-chart-card .volume-body .data-point:hover {
+  transform: scale(1.2);
   stroke-width: 4;
 }
 
-.volume-point.plateau-point {
+.volume-chart-card .volume-body .data-point.plateau-point {
   fill: #ef4444;
   stroke: #dc2626;
   animation: pulse-plateau 2s infinite;
@@ -3824,79 +5750,752 @@ export default {
   }
 }
 
-.plateau-line {
+.volume-chart-card .volume-body .plateau-line {
   stroke: #ef4444;
   stroke-width: 2;
   stroke-dasharray: 4;
 }
 
-.plateau-label {
+.volume-chart-card .volume-body .plateau-label {
   fill: #ef4444;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
 }
 
-.axis-label {
+.volume-chart-card .volume-body .axis-label {
   fill: var(--text-muted);
   font-size: 12px;
+  font-weight: 500;
 }
 
-.chart-labels {
+.volume-chart-card .volume-body .x-axis-labels {
   display: flex;
   justify-content: space-between;
-  padding: 0 40px;
-  margin-top: -10px;
+  padding: 0 1.5rem;
+  margin-top: 1rem;
   flex-wrap: wrap;
 }
 
-.chart-label {
-  font-size: 12px;
+.volume-chart-card .volume-body .x-label {
+  font-size: 0.75rem;
   color: var(--text-muted);
   text-align: center;
+  font-weight: 500;
 }
 
-.volume-stats {
+.volume-chart-card .volume-body .chart-insights {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  padding: 20px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.volume-stat-item {
+@media (min-width: 768px) {
+  .volume-chart-card .volume-body .chart-insights {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .volume-chart-card .volume-body .chart-insights {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.volume-chart-card .volume-body .insight-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-.stat-icon {
+.volume-chart-card .volume-body .insight-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.volume-chart-card .volume-body .insight-icon {
   width: 40px;
   height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--card-bg);
-  border-radius: 8px;
-  color: #3b82f6;
-  font-size: 18px;
+  font-size: 16px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
-.stat-data {
+.volume-chart-card .volume-body .insight-item.trend .insight-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.volume-chart-card .volume-body .insight-item.warning .insight-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.volume-chart-card .volume-body .insight-content {
   display: flex;
   flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.volume-chart-card .volume-body .insight-label {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.volume-chart-card .volume-body .insight-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1.2;
+}
+
+.volume-chart-card .volume-body .insight-value.positive {
+  color: #10b981;
+}
+
+.volume-chart-card .volume-body .insight-value.negative {
+  color: #ef4444;
+}
+
+.volume-chart-card .volume-body .insight-value.neutral {
+  color: #f59e0b;
+}
+
+.volume-chart-card .volume-body .insight-value.warning {
+  color: #ef4444;
+}
+
+/* Dark mode specific adjustments */
+.dark-mode .volume-chart-card .volume-body .data-point {
+  stroke: #1e1e2d;
+}
+
+/* Responsive adjustments for volume chart */
+@media (max-width: 768px) {
+  .volume-chart-card .volume-body {
+    padding: 1rem 1rem 1.5rem;
+  }
+  
+  .volume-chart-card .volume-body .chart-container {
+    padding: 1.5rem 1rem;
+  }
+  
+  .volume-chart-card .volume-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .volume-chart-card .volume-body .x-axis-labels {
+    padding: 0 1rem;
+  }
+}
+
+/* Enhanced Chart Styles */
+.enhanced-chart-card {
+  background: var(--bg-color, #ffffff);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.enhanced-chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .enhanced-chart-card {
+  --bg-color: #1e1e2d;
+  --border-color: #2d2d3f;
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+}
+
+/* ============================================ */
+/* Active Plan Card - Modern Design */
+/* ============================================ */
+
+.active-plan-card-modern {
+  background: var(--card-bg, #ffffff);
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .active-plan-card-modern {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.active-plan-card-modern:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.active-plan-card-modern .plan-header-modern {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: linear-gradient(135deg, var(--card-bg, #ffffff) 0%, rgba(59, 130, 246, 0.02) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dark-mode .active-plan-card-modern .plan-header-modern {
+  border-color: #2d2d3f;
+  background: linear-gradient(135deg, #1e1e2d 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.active-plan-card-modern .plan-header-modern .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.active-plan-card-modern .plan-header-modern .header-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.25);
+}
+
+.active-plan-card-modern .plan-header-modern .header-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color, #0f172a);
+  margin: 0 0 0.25rem 0;
+}
+
+.dark-mode .active-plan-card-modern .plan-header-modern .header-content h3 {
+  color: #f9fafb;
+}
+
+.active-plan-card-modern .plan-header-modern .header-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+
+.dark-mode .active-plan-card-modern .plan-header-modern .header-subtitle {
+  color: #9ca3af;
+}
+
+.active-plan-card-modern .btn-change-plan {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  border: 1.5px solid #3b82f6;
+  color: #3b82f6;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.active-plan-card-modern .btn-change-plan:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.active-plan-card-modern .plan-body-modern {
+  padding: 1.5rem 2rem 2rem;
+}
+
+/* Empty State */
+.active-plan-card-modern .empty-plan-modern {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.active-plan-card-modern .empty-plan-modern .empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  font-size: 32px;
+  margin-bottom: 1.5rem;
+}
+
+.active-plan-card-modern .empty-plan-modern h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-color, #0f172a);
+  margin: 0 0 0.5rem 0;
+}
+
+.dark-mode .active-plan-card-modern .empty-plan-modern h4 {
+  color: #f9fafb;
+}
+
+.active-plan-card-modern .empty-plan-modern p {
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748b);
+  margin: 0 0 1.5rem 0;
+}
+
+.dark-mode .active-plan-card-modern .empty-plan-modern p {
+  color: #9ca3af;
+}
+
+.active-plan-card-modern .btn-assign-plan {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.active-plan-card-modern .btn-assign-plan:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Plan Content */
+.active-plan-card-modern .plan-content-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.active-plan-card-modern .plan-info-header {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.dark-mode .active-plan-card-modern .plan-info-header {
+  border-color: #2d2d3f;
+}
+
+.active-plan-card-modern .plan-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.active-plan-card-modern .plan-name {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--text-color, #0f172a);
+  margin: 0;
+}
+
+.dark-mode .active-plan-card-modern .plan-name {
+  color: #f9fafb;
+}
+
+.active-plan-card-modern .plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.active-plan-card-modern .plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.active-plan-card-modern .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted, #64748b);
+  font-size: 0.875rem;
+}
+
+.dark-mode .active-plan-card-modern .meta-item {
+  color: #9ca3af;
+}
+
+.active-plan-card-modern .meta-item i {
+  color: #3b82f6;
+}
+
+/* Divisions Grid */
+.active-plan-card-modern .divisions-grid-modern {
+  display: grid;
+  gap: 1rem;
+}
+
+.active-plan-card-modern .division-card-modern {
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .active-plan-card-modern .division-card-modern {
+  background: #171723;
+  border-color: #2d2d3f;
+}
+
+.active-plan-card-modern .division-card-modern:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.active-plan-card-modern .division-header-modern {
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.active-plan-card-modern .division-label {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex: 1;
+}
+
+.active-plan-card-modern .division-letter {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.active-plan-card-modern .division-info h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color, #0f172a);
+  margin: 0 0 0.25rem 0;
+}
+
+.dark-mode .active-plan-card-modern .division-info h5 {
+  color: #f9fafb;
+}
+
+.active-plan-card-modern .exercise-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #64748b);
+}
+
+.dark-mode .active-plan-card-modern .exercise-count {
+  color: #9ca3af;
+}
+
+.active-plan-card-modern .btn-expand {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.active-plan-card-modern .btn-expand:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.active-plan-card-modern .btn-expand.expanded {
+  transform: rotate(180deg);
+  color: #3b82f6;
+}
+
+/* Exercise List */
+.active-plan-card-modern .division-exercises-modern {
+  padding: 0 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.active-plan-card-modern .exercise-row-modern {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 0.875rem;
+  background: var(--card-bg, #ffffff);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  transition: all 0.2s ease;
+}
+
+.dark-mode .active-plan-card-modern .exercise-row-modern {
+  background: #1e1e2d;
+  border-color: #2d2d3f;
+}
+
+.active-plan-card-modern .exercise-row-modern:hover {
+  border-color: #3b82f6;
+  transform: translateX(4px);
+}
+
+.active-plan-card-modern .exercise-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.active-plan-card-modern .exercise-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.active-plan-card-modern .exercise-name {
+  font-weight: 600;
+  color: var(--text-color, #0f172a);
+  font-size: 0.9375rem;
+}
+
+.dark-mode .active-plan-card-modern .exercise-name {
+  color: #f9fafb;
+}
+
+.active-plan-card-modern .exercise-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.active-plan-card-modern .spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+}
+
+.dark-mode .active-plan-card-modern .spec-item {
+  background: rgba(59, 130, 246, 0.15);
+  color: #9ca3af;
+}
+
+.active-plan-card-modern .spec-item i {
+  font-size: 0.75rem;
+  color: #3b82f6;
+}
+
+.active-plan-card-modern .spec-item.weight {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.active-plan-card-modern .spec-item.weight i {
+  color: #f59e0b;
+}
+
+/* Expand Transition */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  max-height: 1000px;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .active-plan-card-modern .plan-header-modern,
+  .active-plan-card-modern .plan-body-modern {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .active-plan-card-modern .plan-meta {
+    gap: 0.875rem;
+  }
+  
+  .active-plan-card-modern .meta-item {
+    font-size: 0.8125rem;
+  }
+  
+  .active-plan-card-modern .btn-change-plan {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.chart-header-enhanced {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: linear-gradient(135deg, var(--bg-color, #ffffff) 0%, rgba(59, 130, 246, 0.02) 100%);
+}
+
+.chart-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.chart-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.chart-title-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color, #1f2937);
+  margin: 0;
+}
+
+.chart-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0.25rem 0 0;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.period-selector {
+  display: flex;
+  background: var(--bg-color, #f8fafc);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.period-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.period-btn.active {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.period-btn:hover:not(.active) {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.chart-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
 }
 
 .stat-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 2px;
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
 }
 
 .stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color, #1f2937);
 }
 
 .stat-value.positive {
@@ -3907,20 +6506,327 @@ export default {
   color: #ef4444;
 }
 
-.stat-value.neutral {
-  color: #f59e0b;
+.chart-body-enhanced {
+  padding: 0;
 }
 
-.stat-value.warning {
+.empty-chart-enhanced {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.empty-icon i {
+  font-size: 2rem;
+  color: #3b82f6;
+}
+
+.empty-chart-enhanced h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color, #1f2937);
+  margin: 0 0 0.5rem;
+}
+
+.empty-chart-enhanced p {
+  color: var(--text-muted, #6b7280);
+  margin: 0 0 1.5rem;
+}
+
+.btn-add-record {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-record:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.enhanced-weight-chart {
+  padding: 1.5rem 2rem;
+}
+
+.chart-container {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.enhanced-chart-svg {
+  width: 100%;
+  height: 400px;
+  border-radius: 8px;
+}
+
+.enhanced-grid-line {
+  stroke: var(--border-color, #e2e8f0);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.enhanced-grid-line.vertical {
+  opacity: 0.3;
+}
+
+.dark-mode .enhanced-grid-line {
+  stroke: #374151;
+}
+
+.target-line {
+  stroke: #f59e0b;
+  stroke-width: 2;
+  stroke-dasharray: 5,5;
+  opacity: 0.8;
+}
+
+.chart-area {
+  opacity: 0.4;
+  transition: all 0.3s ease;
+}
+
+.enhanced-chart-line {
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: all 0.3s ease;
+}
+
+.enhanced-chart-point {
+  stroke: white;
+  stroke-width: 3;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.enhanced-chart-point.positive {
+  fill: #10b981;
+}
+
+.enhanced-chart-point.negative {
+  fill: #ef4444;
+}
+
+.enhanced-chart-point.neutral {
+  fill: #6b7280;
+}
+
+.enhanced-chart-point.selected {
+  r: 8;
+  stroke-width: 4;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.enhanced-chart-point:hover {
+  r: 8;
+  stroke-width: 4;
+}
+
+.point-halo {
+  fill: none;
+  stroke: #3b82f6;
+  stroke-width: 2;
+  opacity: 0.3;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.1); opacity: 0.1; }
+  100% { transform: scale(1); opacity: 0.3; }
+}
+
+.axis-label {
+  font-size: 11px;
+  fill: var(--text-muted, #6b7280);
+  text-anchor: middle;
+}
+
+.y-label {
+  text-anchor: end;
+}
+
+.chart-tooltip {
+  position: absolute;
+  background: var(--bg-color, white);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  pointer-events: none;
+  max-width: 200px;
+}
+
+.tooltip-header {
+  font-weight: 600;
+  color: var(--text-color, #1f2937);
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tooltip-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tooltip-label {
+  color: var(--text-muted, #6b7280);
+}
+
+.tooltip-value {
+  font-weight: 500;
+  color: var(--text-color, #1f2937);
+}
+
+.tooltip-value.positive {
+  color: #10b981;
+}
+
+.tooltip-value.negative {
   color: #ef4444;
 }
 
-.dark-mode .chart-point {
-  stroke: #1e1e2d;
+.enhanced-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 3rem;
+  margin-top: 0.5rem;
 }
 
-.chart-point:hover {
-  r: 6;
+.enhanced-chart-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.enhanced-chart-label:hover,
+.enhanced-chart-label.active {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.chart-insights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.insight-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-color, #f8fafc);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  transition: all 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.insight-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  color: white;
+}
+
+.insight-icon.trend {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.insight-icon.progress {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.insight-icon.consistency {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.insight-content h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color, #1f2937);
+  margin: 0 0 0.25rem;
+}
+
+.insight-content p {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .chart-header-enhanced {
+    padding: 1rem;
+  }
+  
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .chart-stats {
+    justify-content: space-around;
+  }
+  
+  .enhanced-weight-chart {
+    padding: 1rem;
+  }
+  
+  .enhanced-chart-labels {
+    padding: 0 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .chart-insights {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chart-labels {
@@ -5353,6 +8259,1831 @@ export default {
   .history-stats {
     flex-direction: column;
     gap: 0.5rem;
+  }
+}
+
+/* ===========================
+   Workout History Elegant Styles
+   =========================== */
+
+.history-card-elegant {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.history-card-elegant:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .history-card-elegant {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .history-card-elegant:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* Header */
+.history-header-elegant {
+  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-header-elegant::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+.header-icon-large {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.header-text {
+  flex: 1;
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.header-text h3 {
+  margin: 0 0 0.375rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.header-text p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.header-badge-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.count-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.count-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Content */
+.history-content-elegant {
+  padding: 2rem;
+}
+
+.history-grid-elegant {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Workout Card */
+.workout-card-elegant {
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.workout-card-elegant::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.workout-card-elegant:hover::before {
+  opacity: 1;
+}
+
+.workout-card-elegant:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+.dark-mode .workout-card-elegant {
+  background: #252538;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .workout-card-elegant:hover {
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);
+  border-color: #6366f1;
+}
+
+/* Card Header */
+.workout-card-header {
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.05));
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dark-mode .workout-card-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border-bottom-color: #2a2a3e;
+}
+
+.workout-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.workout-title-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.workout-name-elegant {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.division-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.12));
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.dark-mode .division-tag {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.18));
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+
+.division-tag i {
+  font-size: 11px;
+}
+
+.workout-chevron {
+  color: var(--text-secondary);
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.workout-card-elegant:hover .workout-chevron {
+  color: #3b82f6;
+  transform: translateX(4px);
+}
+
+/* Card Body */
+.workout-card-body {
+  padding: 1.5rem 1.75rem;
+}
+
+.workout-date-elegant {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg-hover);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.dark-mode .workout-date-elegant {
+  background: #1e1e2d;
+}
+
+.workout-date-elegant i {
+  color: #8b5cf6;
+  font-size: 14px;
+}
+
+.workout-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--card-bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.05));
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .stat-box {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .stat-box:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.stat-icon.duration {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-icon.exercises {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-icon.volume {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Card Footer */
+.workout-card-footer {
+  padding: 1.25rem 1.75rem;
+  background: var(--card-bg-hover);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dark-mode .workout-card-footer {
+  background: #1e1e2d;
+  border-top-color: #2a2a3e;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.status-indicator.completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.12));
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-indicator.partial {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.12));
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.status-indicator.cancelled,
+.status-indicator.missed {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.12));
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.status-indicator i {
+  font-size: 14px;
+}
+
+.view-details-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.view-details-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.view-details-btn i {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.workout-card-elegant:hover .view-details-btn i {
+  transform: translateX(2px);
+}
+
+/* Empty State */
+.empty-state-elegant {
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.empty-icon-elegant {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 2rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  color: #3b82f6;
+  opacity: 0.5;
+}
+
+.dark-mode .empty-icon-elegant {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  color: #a5b4fc;
+}
+
+.empty-state-elegant h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.empty-state-elegant p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ===========================
+   Workout Details Modal
+   =========================== */
+
+.modal-workout-details {
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header-modern {
+  padding: 1.75rem 2rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.header-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-content h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.btn-close-modern {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-close-modern:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.modal-body-workout {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* Workout Summary Section */
+.workout-summary-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  padding: 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .summary-card {
+  background: #252538;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .summary-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.summary-icon.date {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.summary-icon.duration {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.summary-icon.exercises {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.summary-icon.status {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.summary-icon.status.completed {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.summary-icon.status.partial {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.summary-icon.status.cancelled,
+.summary-icon.status.missed {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.summary-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+/* Division Info */
+.division-info-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 14px;
+}
+
+.dark-mode .division-info-section {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.section-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-label i {
+  color: #3b82f6;
+}
+
+.division-badge-large {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border-radius: 12px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Exercises Section */
+.exercises-section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-header i {
+  color: #3b82f6;
+}
+
+.exercise-count-badge {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.dark-mode .exercise-count-badge {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+.exercises-list-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.exercise-detail-card {
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.exercise-detail-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dark-mode .exercise-detail-card {
+  background: #252538;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .exercise-detail-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.exercise-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.exercise-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.exercise-title-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-title-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.exercise-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.meta-badge {
+  padding: 0.25rem 0.75rem;
+  background: var(--card-bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.dark-mode .meta-badge {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.meta-badge i {
+  font-size: 11px;
+  color: #3b82f6;
+}
+
+/* Sets Grid */
+.sets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.set-card {
+  padding: 1rem;
+  background: var(--card-bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.set-card.completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.08));
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .set-card {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .set-card.completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.12));
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.set-number {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.set-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.set-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.set-item i {
+  color: #3b82f6;
+  font-size: 13px;
+}
+
+.set-item.weight {
+  color: #8b5cf6;
+}
+
+.set-item.weight i {
+  color: #8b5cf6;
+}
+
+.set-status {
+  margin-top: 0.25rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.set-status i {
+  font-size: 16px;
+}
+
+.set-card.completed .set-status i {
+  color: #10b981;
+}
+
+.set-card:not(.completed) .set-status i {
+  color: var(--text-tertiary);
+}
+
+/* Difficulty Section */
+.difficulty-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(124, 58, 237, 0.08));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+}
+
+.dark-mode .difficulty-section {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(124, 58, 237, 0.12));
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.difficulty-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.difficulty-label i {
+  color: #8b5cf6;
+}
+
+.difficulty-rating {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.difficulty-bars {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.difficulty-bar {
+  width: 32px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.difficulty-bar.active {
+  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+
+.difficulty-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #8b5cf6;
+}
+
+/* Exercise Notes */
+.exercise-notes {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--card-bg-hover);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid #3b82f6;
+  border-radius: 10px;
+}
+
+.dark-mode .exercise-notes {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+  border-left-color: #6366f1;
+}
+
+.notes-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notes-label i {
+  color: #3b82f6;
+}
+
+.notes-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* Overall Notes */
+.overall-notes-section {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 14px;
+}
+
+.dark-mode .overall-notes-section {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.notes-content {
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--text-color);
+  line-height: 1.7;
+}
+
+/* Modal Footer */
+.modal-footer-modern {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.dark-mode .modal-footer-modern {
+  border-top-color: #2a2a3e;
+}
+
+.btn-close-modal {
+  padding: 0.75rem 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-color);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-close-modal:hover {
+  background: var(--card-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .btn-close-modal {
+  background: #252538;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .btn-close-modal:hover {
+  background: #2a2a3e;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Training Statistics Section */
+.training-stats-section {
+  margin-bottom: 2rem;
+  padding: 1.75rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.05));
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 16px;
+}
+
+.dark-mode .training-stats-section {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-color);
+}
+
+.stats-header i {
+  color: #3b82f6;
+  font-size: 1.25rem;
+}
+
+.stats-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  padding: 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dark-mode .stat-card {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-icon-wrapper.volume {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-icon-wrapper.sets {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-icon-wrapper.weight {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-icon-wrapper.skipped {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value-large {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+/* Training Timeline */
+.training-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.dark-mode .training-timeline {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.timeline-item i {
+  color: #3b82f6;
+  font-size: 1rem;
+}
+
+.timeline-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.timeline-value {
+  color: var(--text-color);
+  font-weight: 700;
+}
+
+.timeline-divider {
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+}
+
+/* Exercise Detail Card - Enhanced */
+.exercise-detail-card.skipped {
+  opacity: 0.7;
+  background: var(--card-bg-hover);
+}
+
+.dark-mode .exercise-detail-card.skipped {
+  background: #1a1a25;
+}
+
+/* Skip Reason */
+.skip-reason-section {
+  padding: 0.875rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #f59e0b;
+}
+
+.dark-mode .skip-reason-section {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+/* Meta Badges - Enhanced */
+.meta-badge.bodyweight {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.meta-badge.rest {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.15));
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #8b5cf6;
+}
+
+.meta-badge.failure {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.meta-badge.skipped-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.meta-badge.completed-badge {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+/* Muscle Groups Section */
+.muscle-groups-section {
+  padding: 1rem;
+  background: var(--card-bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.dark-mode .muscle-groups-section {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.muscle-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.muscle-label i {
+  color: #3b82f6;
+}
+
+.muscle-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.muscle-chip {
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3b82f6;
+  transition: all 0.2s ease;
+}
+
+.muscle-chip:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+  transform: scale(1.05);
+}
+
+.dark-mode .muscle-chip {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+}
+
+/* Sets Section Wrapper */
+.sets-section-wrapper {
+  margin-top: 1.25rem;
+}
+
+.sets-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.sets-header h5 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sets-header i {
+  color: #3b82f6;
+}
+
+.sets-summary {
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.dark-mode .sets-summary {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Sets Grid Detailed */
+.sets-grid-detailed {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.set-card-detailed {
+  padding: 1.25rem;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.set-card-detailed.completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.05));
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.set-card-detailed.pending {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.05), rgba(75, 85, 99, 0.05));
+  border-color: rgba(107, 114, 128, 0.3);
+}
+
+.set-card-detailed:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .set-card-detailed {
+  background: #1e1e2d;
+  border-color: #2a2a3e;
+}
+
+.dark-mode .set-card-detailed.completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.08));
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.dark-mode .set-card-detailed:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Set Card Header */
+.set-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.set-number-badge {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.set-time {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.set-time i {
+  color: #8b5cf6;
+}
+
+/* Set Stats Grid */
+.set-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  padding: 0.875rem;
+  background: var(--card-bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dark-mode .stat-item {
+  background: #252538;
+  border-color: #2a2a3e;
+}
+
+.stat-item.primary {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.dark-mode .stat-item.primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.stat-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.stat-icon.weight {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-icon.rest {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.planned-value {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.bodyweight-indicator {
+  color: #10b981;
+  font-size: 0.875rem;
+}
+
+/* Difficulty Inline */
+.difficulty-inline {
+  width: 100%;
+}
+
+.difficulty-label-inline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.difficulty-label-inline i {
+  color: #8b5cf6;
+}
+
+.difficulty-rating-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.difficulty-bars-inline {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.difficulty-bar-inline {
+  height: 6px;
+  flex: 1;
+  border-radius: 3px;
+  background: var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.difficulty-bar-inline.active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.difficulty-bar-inline.easy.active {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.difficulty-bar-inline.medium.active {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.difficulty-bar-inline.hard.active {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.difficulty-text-inline {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.difficulty-bar-inline.easy.active ~ * .difficulty-text-inline,
+.difficulty-bars-inline:has(.difficulty-bar-inline.easy.active) ~ .difficulty-text-inline {
+  color: #10b981;
+}
+
+.difficulty-bar-inline.medium.active ~ * .difficulty-text-inline,
+.difficulty-bars-inline:has(.difficulty-bar-inline.medium.active) ~ .difficulty-text-inline {
+  color: #f59e0b;
+}
+
+.difficulty-bar-inline.hard.active ~ * .difficulty-text-inline,
+.difficulty-bars-inline:has(.difficulty-bar-inline.hard.active) ~ .difficulty-text-inline {
+  color: #ef4444;
+}
+
+/* Set Notes */
+.set-notes {
+  padding: 0.75rem;
+  background: var(--card-bg-hover);
+  border-left: 3px solid #8b5cf6;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-color);
+}
+
+.dark-mode .set-notes {
+  background: #1a1a25;
+}
+
+.set-notes i {
+  color: #8b5cf6;
+  margin-top: 0.125rem;
+}
+
+/* Set Status Indicator */
+.set-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.set-card-detailed.completed .set-status-indicator {
+  color: #10b981;
+}
+
+.set-card-detailed.completed .set-status-indicator i {
+  color: #10b981;
+}
+
+.set-card-detailed.pending .set-status-indicator {
+  color: var(--text-secondary);
+}
+
+.set-card-detailed.pending .set-status-indicator i {
+  color: var(--text-tertiary);
+}
+
+/* Exercise Duration Info */
+.exercise-duration-info {
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(124, 58, 237, 0.08));
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  color: var(--text-color);
+}
+
+.dark-mode .exercise-duration-info {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(124, 58, 237, 0.12));
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.exercise-duration-info i {
+  color: #8b5cf6;
+  font-size: 1.125rem;
+}
+
+.exercise-duration-info strong {
+  color: #8b5cf6;
+  font-weight: 700;
+}
+
+/* Responsive Design for Modal */
+@media (max-width: 768px) {
+  .modal-workout-details {
+    max-width: 95%;
+    max-height: 95vh;
+  }
+
+  .workout-summary-section {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sets-grid-detailed {
+    grid-template-columns: 1fr;
+  }
+
+  .set-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-header-modern {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .modal-body-workout {
+    padding: 1.5rem;
+  }
+
+  .modal-footer-modern {
+    padding: 1rem 1.5rem;
+  }
+
+  .training-timeline {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .timeline-divider {
+    transform: rotate(90deg);
+  }
+
+  /* History Elegant Responsive */
+  .history-header-elegant {
+    padding: 1.5rem 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .header-icon-large {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .header-text h3 {
+    font-size: 1.25rem;
+  }
+
+  .header-text p {
+    font-size: 0.875rem;
+  }
+
+  .header-badge-count {
+    padding: 0.75rem 1rem;
+  }
+
+  .count-number {
+    font-size: 1.5rem;
+  }
+
+  .history-content-elegant {
+    padding: 1.25rem;
+  }
+
+  .history-grid-elegant {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .workout-card-header,
+  .workout-card-body,
+  .workout-card-footer {
+    padding: 1.25rem;
+  }
+
+  .workout-stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .workout-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-details-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-badge-count {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .count-number {
+    margin-bottom: 0;
+  }
+
+  .stat-box {
+    padding: 0.875rem;
+  }
+
+  .stat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 1rem;
   }
 }
 </style>
