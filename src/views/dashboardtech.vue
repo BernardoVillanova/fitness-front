@@ -26,7 +26,7 @@
               <h3 class="card-title">Visão Geral do Progresso dos Alunos</h3>
               <p class="card-subtitle">Comparação do progresso ao longo do tempo.</p>
             </div>
-            <div class="dropdown-container" @click="showPeriodDropdown = !showPeriodDropdown">
+            <div v-if="hasProgressData" class="dropdown-container" @click="showPeriodDropdown = !showPeriodDropdown">
               <span class="dropdown-text">{{ selectedPeriod }}</span>
               <i class="fas fa-chevron-down dropdown-icon" :class="{ 'rotated': showPeriodDropdown }"></i>
               <div v-if="showPeriodDropdown" class="dropdown-menu">
@@ -43,69 +43,81 @@
             </div>
           </div>
           
-          <div class="chart-container">
-            <apexchart 
-              ref="progressChart"
-              type="area" 
-              height="300" 
-              :options="progressChartOptions" 
-              :series="progressData" 
-            />
+          <!-- Mensagem quando não há dados -->
+          <div v-if="!hasProgressData" class="no-data-message">
+            <div class="no-data-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <h4>Nenhum dado de progresso disponível</h4>
+            <p>Os gráficos serão exibidos quando houver sessões de treino concluídas ou registros de progresso dos alunos.</p>
           </div>
           
-          <!-- Enhanced Legend with Stats -->
-          <div class="enhanced-chart-legend">
-            <div class="legend-stats-row">
-              <div class="legend-stat-card">
-                <div class="legend-stat-header">
-                  <div class="legend-indicator primary-indicator">
-                    <div class="indicator-dot"></div>
-                    <span class="indicator-line"></span>
+          <!-- Gráfico (só exibe se houver dados) -->
+          <div v-else>
+            <div class="chart-container">
+              <apexchart 
+                ref="progressChart"
+                type="area" 
+                height="300" 
+                :options="progressChartOptions" 
+                :series="progressData" 
+              />
+            </div>
+            
+            <!-- Enhanced Legend with Stats (só exibe se houver dados) -->
+            <div class="enhanced-chart-legend">
+              <div class="legend-stats-row">
+                <div class="legend-stat-card">
+                  <div class="legend-stat-header">
+                    <div class="legend-indicator primary-indicator">
+                      <div class="indicator-dot"></div>
+                      <span class="indicator-line"></span>
+                    </div>
+                    <span class="legend-stat-label">Alunos Ativos</span>
                   </div>
-                  <span class="legend-stat-label">Alunos Ativos</span>
+                  <div class="legend-stat-value">
+                    <span class="stat-number">{{ getTotalActiveStudents() }}</span>
+                    <span class="stat-unit">alunos</span>
+                  </div>
+                  <div class="legend-stat-trend" :class="getActiveStudentsTrendClass()">
+                    <i class="fas" :class="getActiveStudentsTrendIcon()"></i>
+                    <span>{{ getActiveStudentsTrendText() }}</span>
+                  </div>
                 </div>
-                <div class="legend-stat-value">
-                  <span class="stat-number">{{ getTotalActiveStudents() }}</span>
-                  <span class="stat-unit">alunos</span>
-                </div>
-                <div class="legend-stat-trend" :class="getActiveStudentsTrendClass()">
-                  <i class="fas" :class="getActiveStudentsTrendIcon()"></i>
-                  <span>{{ getActiveStudentsTrendText() }}</span>
-                </div>
-              </div>
 
-              <div class="legend-stat-card">
-                <div class="legend-stat-header">
-                  <div class="legend-indicator secondary-indicator">
-                    <div class="indicator-dot"></div>
-                    <span class="indicator-line"></span>
+                <div class="legend-stat-card">
+                  <div class="legend-stat-header">
+                    <div class="legend-indicator secondary-indicator">
+                      <div class="indicator-dot"></div>
+                      <span class="indicator-line"></span>
+                    </div>
+                    <span class="legend-stat-label">Treinos Concluídos</span>
                   </div>
-                  <span class="legend-stat-label">Treinos Concluídos</span>
+                  <div class="legend-stat-value">
+                    <span class="stat-number">{{ getTotalCompletedWorkouts() }}</span>
+                    <span class="stat-unit">sessões</span>
+                  </div>
+                  <div class="legend-stat-trend success">
+                    <i class="fas fa-chart-line"></i>
+                    <span>{{ getWorkoutsPeriodText() }}</span>
+                  </div>
                 </div>
-                <div class="legend-stat-value">
-                  <span class="stat-number">{{ getTotalCompletedWorkouts() }}</span>
-                  <span class="stat-unit">sessões</span>
-                </div>
-                <div class="legend-stat-trend success">
-                  <i class="fas fa-chart-line"></i>
-                  <span>{{ getWorkoutsPeriodText() }}</span>
-                </div>
-              </div>
 
-              <div class="legend-stat-card highlight-card">
-                <div class="legend-stat-header">
-                  <div class="legend-indicator accent-indicator">
-                    <i class="fas fa-percentage"></i>
+                <div class="legend-stat-card highlight-card">
+                  <div class="legend-stat-header">
+                    <div class="legend-indicator accent-indicator">
+                      <i class="fas fa-percentage"></i>
+                    </div>
+                    <span class="legend-stat-label">Adesão Média</span>
                   </div>
-                  <span class="legend-stat-label">Adesão Média</span>
-                </div>
-                <div class="legend-stat-value">
-                  <span class="stat-number">{{ getAverageAdherence() }}</span>
-                  <span class="stat-unit">%</span>
-                </div>
-                <div class="legend-stat-trend" :class="getAdherenceTrendClass()">
-                  <i class="fas" :class="getAdherenceTrendIcon()"></i>
-                  <span>{{ getAdherenceTrendText() }}</span>
+                  <div class="legend-stat-value">
+                    <span class="stat-number">{{ getAverageAdherence() }}</span>
+                    <span class="stat-unit">%</span>
+                  </div>
+                  <div class="legend-stat-trend" :class="getAdherenceTrendClass()">
+                    <i class="fas" :class="getAdherenceTrendIcon()"></i>
+                    <span>{{ getAdherenceTrendText() }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -824,6 +836,32 @@ export default {
       return alerts.slice(0, 6); // Limitar a 6 alertas
     },
 
+    // Verifica se há dados de progresso reais para exibir no gráfico
+    hasProgressData() {
+      // Verifica se há alunos e sessões
+      if (!this.students || this.students.length === 0) {
+        return false;
+      }
+      
+      if (!this.workoutSessions || this.workoutSessions.length === 0) {
+        return false;
+      }
+      
+      // Verifica se há pelo menos uma sessão concluída
+      const hasCompletedSessions = this.workoutSessions.some(s => s.status === 'completed');
+      if (!hasCompletedSessions) {
+        return false;
+      }
+      
+      // Verifica se há registros de progresso
+      const hasProgressLogs = this.students.some(s => 
+        s.progressLogs && s.progressLogs.length > 0
+      );
+      
+      // Retorna true se há sessões concluídas OU registros de progresso
+      return hasCompletedSessions || hasProgressLogs;
+    },
+
     progressChartOptions() {
       return {
         chart: {
@@ -1267,6 +1305,24 @@ export default {
     },
     
     generateProgressData() {
+      // Verificar se há dados reais antes de gerar o gráfico
+      if (!this.hasProgressData) {
+        // Não gerar dados falsos - deixar vazio
+        this.progressData = [
+          {
+            name: "Média de Peso",
+            type: 'area',
+            data: []
+          },
+          {
+            name: "Treinos Concluídos",
+            type: 'area',
+            data: []
+          }
+        ];
+        return;
+      }
+      
       // Gerar dados para o gráfico de progresso baseados em dados reais
       const periods = this.getPeriodData();
       const weightData = [];
@@ -1275,31 +1331,12 @@ export default {
       periods.forEach(period => {
         // Calcular peso médio dos alunos neste período
         const periodWeight = this.calculatePeriodAverageWeight(period.date);
-        weightData.push(periodWeight || 70); // Peso padrão de 70kg se não há dados
+        weightData.push(periodWeight || 0);
         
         // Calcular treinos completados neste período
         const periodCompleted = this.calculatePeriodCompletedWorkouts(period.date, period.isWeek);
         completedData.push(periodCompleted);
       });
-      
-      // Se não há variação nos dados, criar uma progressão mais realista
-      if (weightData.every(w => w === weightData[0])) {
-        // Simular uma pequena variação de peso se todos os valores são iguais
-        const baseWeight = weightData[0];
-        for (let i = 0; i < weightData.length; i++) {
-          weightData[i] = baseWeight + (Math.random() - 0.5) * 2; // ±1kg de variação
-        }
-      }
-      
-      // Se não há treinos, distribuir alguns baseados no total de sessões
-      if (completedData.every(c => c === 0) && this.workoutSessions.length > 0) {
-        const totalCompleted = this.workoutSessions.filter(s => s.status === 'completed').length;
-        const avgPerPeriod = Math.ceil(totalCompleted / periods.length);
-        
-        for (let i = 0; i < completedData.length; i++) {
-          completedData[i] = Math.max(0, avgPerPeriod + Math.floor(Math.random() * 3) - 1);
-        }
-      }
       
       this.progressData = [
         {
@@ -2765,6 +2802,56 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 .chart-container {
   margin: 1rem 0;
+}
+
+/* No Data Message - Mensagem quando não há dados para exibir */
+.no-data-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  min-height: 300px;
+}
+
+.no-data-icon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+  border: 2px solid rgba(139, 92, 246, 0.2);
+}
+
+.dashboard-light .no-data-icon {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.no-data-icon i {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  opacity: 0.6;
+}
+
+.no-data-message h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.025em;
+}
+
+.no-data-message p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
 }
 
 .chart-legend {

@@ -252,7 +252,7 @@
                   <div class="input-wrapper">
                     <input
                       id="arm"
-                      v-model.number="form.initialMeasurements.rightArm"
+                      v-model.number="form.initialMeasurements.arm"
                       type="number"
                       step="0.1"
                       placeholder="Ex: 38"
@@ -326,7 +326,7 @@
                   <div class="input-wrapper">
                     <input
                       id="thigh"
-                      v-model.number="form.initialMeasurements.rightThigh"
+                      v-model.number="form.initialMeasurements.thigh"
                       type="number"
                       step="0.1"
                       placeholder="Ex: 58"
@@ -1022,12 +1022,13 @@ const form = ref({
   initialMeasurements: {
     shoulder: null,
     chest: null,
-    rightArm: null,
+    arm: null,
     forearm: null,
     waist: null,
     hip: null,
-    rightThigh: null,
-    calf: null
+    thigh: null,
+    calf: null,
+    bodyFatPercentage: null
   },
   
   // Step 4: Saúde

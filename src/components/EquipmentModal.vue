@@ -148,10 +148,8 @@
                   </div>
                   <div v-else class="image-preview">
                     <img :src="imagePreview" alt="Preview" />
-                    <button type="button" @click.stop="removeImage" class="remove-image-btn">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                      </svg>
+                    <button type="button" @click.stop="removeImage" class="remove-image-btn" title="Remover imagem">
+                      <i class="fas fa-times"></i>
                     </button>
                   </div>
                 </div>
@@ -1018,11 +1016,18 @@ select.form-input {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.remove-image-btn i {
+  font-size: 14px;
+  pointer-events: none;
 }
 
 .remove-image-btn:hover {
   background: rgb(239, 68, 68);
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 /* ERROR MESSAGE */

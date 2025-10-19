@@ -153,20 +153,23 @@
 
               <!-- Imagem do Exercício -->
               <div class="exercise-image-container">
-                <!-- Imagem do exercício -->
+                <!-- Imagem do exercício (se já carregou) -->
                 <img 
                   v-if="workoutSession.exercises && workoutSession.exercises[currentExerciseIndex] && exerciseDetails[workoutSession.exercises[currentExerciseIndex].exerciseName]?.image"
                   :src="getImageUrl(exerciseDetails[workoutSession.exercises[currentExerciseIndex].exerciseName]?.image)" 
                   :alt="workoutSession.exercises[currentExerciseIndex].exerciseName"
                   class="exercise-image"
+                  :key="exerciseDetails[workoutSession.exercises[currentExerciseIndex].exerciseName]?.image"
                 />
-                <!-- Placeholder -->
+                
+                <!-- Placeholder padrão (sempre mostra imediatamente enquanto carrega em background) -->
                 <img 
                   v-else-if="workoutSession.exercises && workoutSession.exercises[currentExerciseIndex]"
                   :src="`https://via.placeholder.com/400x300/3b82f6/ffffff?text=${encodeURIComponent(workoutSession.exercises[currentExerciseIndex].exerciseName)}`" 
                   :alt="workoutSession.exercises[currentExerciseIndex].exerciseName"
                   class="exercise-image"
                 />
+                
                 <div v-if="workoutSession.exercises && workoutSession.exercises[currentExerciseIndex]" class="image-overlay" @click="showExerciseDetails(workoutSession.exercises[currentExerciseIndex])">
                   <i class="fas fa-info-circle"></i>
                   Ver detalhes
@@ -424,8 +427,6 @@
         <div class="workout-header-compact">
           <div class="header-left">
             <h2>Carregando treino...</h2>
-            <!-- Debug info (hidden) -->
-            <div style="display: none;">{{ debugInfo }}</div>
           </div>
           <div class="header-right">
             <button @click="confirmCloseWorkout" class="btn-close-new">
@@ -868,19 +869,13 @@ const showSkipModal = ref(false)
 const skipReason = ref('')
 const customSkipReason = ref('')
 const isEditingCompletedSet = ref(false)
+const isLoadingExercises = ref(false)
+const exercisesLoadAttempted = ref({})
 
 // Computed
 const allExercisesCompleted = computed(() => {
   if (!props.workoutSession) return false
   return props.workoutSession.exercises.every(ex => ex.completed)
-})
-
-const debugInfo = computed(() => {
-  return {
-    show: props.show,
-    hasSession: !!props.workoutSession,
-    session: props.workoutSession
-  }
 })
 
 const currentExercise = computed(() => {
@@ -949,6 +944,7 @@ watch(() => props.show, (newValue) => {
     
     // Encontrar o primeiro exercício não completo
     const firstIncomplete = props.workoutSession?.exercises.findIndex(ex => !ex.completed)
+    
     if (firstIncomplete !== -1) {
       currentExerciseIndex.value = firstIncomplete
       // Encontrar primeira série não completa do exercício
@@ -965,31 +961,35 @@ watch(() => props.show, (newValue) => {
     // Iniciar timer
     startTimer()
     
-    // Buscar detalhes dos exercícios
-    if (props.workoutSession?.exercises) {
+    // Buscar detalhes dos exercícios em BACKGROUND (sem bloquear renderização)
+    if (props.workoutSession?.exercises && props.workoutSession.exercises.length > 0) {
+      // Marcar TODOS como já tentados IMEDIATAMENTE para evitar loading screen
+      props.workoutSession.exercises.forEach(ex => {
+        exercisesLoadAttempted.value[ex.exerciseName] = true
+      })
       
-      // Carregar primeiro o exercício atual
-      const currentEx = props.workoutSession.exercises[currentExerciseIndex.value]
-      if (currentEx) {
-        fetchExerciseDetails(currentEx.exerciseName)
-      }
+      // Carregar em background sem bloquear
+      const promises = props.workoutSession.exercises.map(ex => {
+        return fetchExerciseDetails(ex.exerciseName)
+      })
       
-      // Depois carregar todos os outros exercícios
-      props.workoutSession.exercises.forEach((ex) => {
-        if (ex.exerciseName !== currentEx?.exerciseName) {
-          fetchExerciseDetails(ex.exerciseName)
-        }
+      Promise.all(promises).catch(error => {
+        console.error('Erro ao carregar detalhes dos exercícios:', error)
       })
     }
   } else {
     // Parar timer quando fechar modal
     stopTimer()
+    // Reset loading states
+    isLoadingExercises.value = false
+    exercisesLoadAttempted.value = {}
   }
 })
 
 watch(() => currentExerciseIndex.value, () => {
   // Reset série para primeira não completa quando trocar exercício
   const exercise = currentExercise.value
+  
   if (exercise) {
     const firstIncompleteSet = exercise.sets.findIndex(set => !set.completed)
     currentSetIndex.value = firstIncompleteSet !== -1 ? firstIncompleteSet : 0
@@ -1001,9 +1001,6 @@ watch(() => currentExerciseIndex.value, () => {
     // Carregar detalhes do exercício atual se ainda não foram carregados
     if (!exerciseDetails.value[exercise.exerciseName]) {
       fetchExerciseDetails(exercise.exerciseName)
-    } else {
-      console.log('✅ [watcher] Detalhes já carregados para:', exercise.exerciseName)
-      console.log('🔍 [watcher] Equipment ID:', exerciseDetails.value[exercise.exerciseName]?.equipmentId)
     }
   }
 })
@@ -1019,6 +1016,23 @@ watch(() => [userWeight.value, currentSet.value, isBodyWeightExercise.value], ([
 onMounted(() => {
   if (props.show) {
     startTimer()
+    
+    // CARREGAR EXERCÍCIOS SE O MODAL JÁ ESTIVER ABERTO NO MOUNT
+    if (props.workoutSession?.exercises && props.workoutSession.exercises.length > 0) {
+      // Marcar TODOS como já tentados IMEDIATAMENTE
+      props.workoutSession.exercises.forEach(ex => {
+        exercisesLoadAttempted.value[ex.exerciseName] = true
+      })
+      
+      // Carregar em background
+      const promises = props.workoutSession.exercises.map(ex => {
+        return fetchExerciseDetails(ex.exerciseName)
+      })
+      
+      Promise.all(promises).catch(error => {
+        console.error('Erro ao carregar exercícios:', error)
+      })
+    }
   }
   
   // Carregar peso do usuário salvo
@@ -1037,9 +1051,14 @@ onUnmounted(() => {
 
 // Methods
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
+  if (!imagePath) {
+    return '';
+  }
+  
   const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-  return `http://localhost:3000/${cleanPath}`;
+  const fullUrl = `http://localhost:3000/${cleanPath}`;
+  
+  return fullUrl;
 }
 
 const startTimer = () => {
@@ -1096,24 +1115,29 @@ const applyBodyWeightToAllSets = () => {
 }
 
 const fetchExerciseDetails = async (exerciseName) => {
-  try {    
+  try {
+    // Verificar se já foi carregado (cache)
+    if (exerciseDetails.value[exerciseName]) {
+      return
+    }
+    
     // Buscar dados do usuário no sessionStorage
     let studentData
     try {
-      studentData = JSON.parse(sessionStorage.getItem('user'))
+      const rawData = sessionStorage.getItem('user')
+      studentData = JSON.parse(rawData)
     } catch (e) {
-      console.error('💥 Erro ao parsear dados do usuário:', e)
+      console.error('Erro ao parsear dados do usuário:', e)
       return
     }
     
     // Buscar apenas dados reais da API
     if (studentData && studentData.id) {
-      try {        
+      try {
         const studentResponse = await api.get(`/students/user/${studentData.id}`)
         
         const studentInfo = studentResponse.data
         const instructorId = studentInfo?.instructorId?._id || studentInfo?.instructorId || studentInfo?.assignedInstructor
-        
         
         if (instructorId) {
           const response = await api.get(`/exercises/instructor/${instructorId}`)
@@ -1122,7 +1146,18 @@ const fetchExerciseDetails = async (exerciseName) => {
             const exercise = response.data.exercises.find(ex => ex.name === exerciseName)
             
             if (exercise) {
-              exerciseDetails.value[exerciseName] = exercise
+              // Atribuir imediatamente ao reactive object
+              exerciseDetails.value[exerciseName] = {
+                name: exercise.name,
+                description: exercise.description,
+                category: exercise.category,
+                difficulty: exercise.difficulty,
+                image: exercise.image,
+                videoUrl: exercise.videoUrl,
+                howToPerform: exercise.howToPerform,
+                safetyTips: exercise.safetyTips,
+                equipmentId: exercise.equipmentId
+              }
               
               // Buscar equipamento se existir
               if (exercise.equipmentId) {
@@ -1131,30 +1166,17 @@ const fetchExerciseDetails = async (exerciseName) => {
                   ? exercise.equipmentId._id || exercise.equipmentId.toString()
                   : exercise.equipmentId;
                 await loadEquipmentDetails(equipmentIdStr);
-              } else {
-                console.log('ℹ️ Exercício não possui equipamento');
               }
             }
-          } else {
-            console.log('⚠️ Nenhum exercício encontrado para o instrutor');
           }
-        } else {
-          console.log('⚠️ Instrutor não encontrado para o aluno');
         }
       } catch (error) {
-        console.error('💥 Erro ao buscar dados da API:', error)
-        console.error('📝 Detalhes do erro:', {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data
-        });
+        console.error('Erro ao buscar dados da API:', error)
       }
-    } else {
-      console.log('⚠️ Dados do usuário não encontrados no sessionStorage');
     }
     
   } catch (error) {
-    console.error('💥 Erro geral ao buscar detalhes do exercício:', error)
+    console.error('Erro ao buscar detalhes do exercício:', error)
   }
 }
 
@@ -1217,29 +1239,25 @@ const loadEquipmentDetails = async (equipmentId) => {
         }
       }
     } catch (error) {
-      console.log('⚠️ [loadEquipmentDetails] Erro na busca por ID, tentando fallback:', error.message);
-    }
-
-    // Fallback: buscar na lista de todos os equipamentos
-    try {
-      const allResponse = await api.get('/equipments');
-      
-      if (allResponse.data && allResponse.data.equipments) {
-        const equipment = allResponse.data.equipments.find(eq => eq._id === equipmentIdStr);
-        if (equipment) {
-          equipmentDetails.value[equipmentIdStr] = equipment;
-          return equipment;
-        } else {
-          console.log('❌ [loadEquipmentDetails] FALLBACK - Equipamento não encontrado na lista');
+      // Fallback: buscar na lista de todos os equipamentos
+      try {
+        const allResponse = await api.get('/equipments');
+        
+        if (allResponse.data && allResponse.data.equipments) {
+          const equipment = allResponse.data.equipments.find(eq => eq._id === equipmentIdStr);
+          if (equipment) {
+            equipmentDetails.value[equipmentIdStr] = equipment;
+            return equipment;
+          }
         }
+      } catch (fallbackError) {
+        console.error('Erro ao carregar equipamento:', fallbackError);
       }
-    } catch (fallbackError) {
-      console.error('💥 [loadEquipmentDetails] Erro no fallback:', fallbackError);
     }
 
     return null;
   } catch (error) {
-    console.error('💥 [loadEquipmentDetails] Erro geral:', error);
+    console.error('Erro ao carregar equipamento:', error);
     return null;
   }
 }
@@ -2219,6 +2237,62 @@ const getDifficultyText = (difficulty) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Loading state para imagens */
+.exercise-image-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--card-bg) 100%);
+  color: var(--text-muted);
+  gap: 1rem;
+}
+
+.loading-spinner-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+  }
+}
+
+.exercise-image-loading p {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .image-overlay {
