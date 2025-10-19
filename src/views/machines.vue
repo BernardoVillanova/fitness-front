@@ -346,46 +346,6 @@
                   </div>
                 </div>
 
-                <!-- Grupos Musculares -->
-                <div class="form-group">
-                  <label class="form-label">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    Grupos Musculares Trabalhados
-                  </label>
-                  <div class="muscle-groups-grid" v-if="selectedMachine.muscleGroups && selectedMachine.muscleGroups.length > 0">
-                    <span v-for="group in selectedMachine.muscleGroups" :key="group" class="muscle-badge">
-                      {{ getMuscleGroupLabel(group) }}
-                    </span>
-                  </div>
-                  <div v-else class="view-value" style="color: var(--text-secondary); font-style: italic;">
-                    Nenhum grupo muscular especificado
-                  </div>
-                </div>
-              </div>
-
-              <!-- Coluna Direita -->
-              <div class="form-column">
-                <!-- Imagem do Aparelho -->
-                <div class="form-group">
-                  <label class="form-label">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    Foto do Aparelho
-                  </label>
-                  <div class="image-preview-view" v-if="selectedMachine.image">
-                    <img :src="getImageUrl(selectedMachine.image)" :alt="selectedMachine.name" />
-                  </div>
-                  <div v-else class="no-image-placeholder">
-                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <p>Sem imagem</p>
-                  </div>
-                </div>
-
                 <!-- Descrição -->
                 <div class="form-group">
                   <label class="form-label">
@@ -417,6 +377,46 @@
                     Dicas de Segurança
                   </label>
                   <div class="view-textarea">{{ selectedMachine.safetyTips || 'Não informado' }}</div>
+                </div>
+              </div>
+
+              <!-- Coluna Direita -->
+              <div class="form-column">
+                <!-- Imagem do Aparelho -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Foto do Aparelho
+                  </label>
+                  <div class="image-preview-view" v-if="selectedMachine.image">
+                    <img :src="getImageUrl(selectedMachine.image)" :alt="selectedMachine.name" />
+                  </div>
+                  <div v-else class="no-image-placeholder">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <p>Sem imagem</p>
+                  </div>
+                </div>
+
+                <!-- Grupos Musculares -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Grupos Musculares Trabalhados
+                  </label>
+                  <div class="muscle-groups-grid" v-if="selectedMachine.muscleGroups && selectedMachine.muscleGroups.length > 0">
+                    <span v-for="group in selectedMachine.muscleGroups" :key="group" class="muscle-badge">
+                      {{ getMuscleGroupLabel(group) }}
+                    </span>
+                  </div>
+                  <div v-else class="view-value" style="color: var(--text-secondary); font-style: italic;">
+                    Nenhum grupo muscular especificado
+                  </div>
                 </div>
               </div>
             </div>
@@ -484,106 +484,39 @@
                   />
                 </div>
 
-                <!-- Categoria -->
-                <div class="form-group">
-                  <label class="form-label">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                    </svg>
-                    Categoria
-                  </label>
-                  <select v-model="editingMachine.category" class="form-input" required>
-                    <option value="" disabled>Selecione a categoria</option>
-                    <option value="cardio">Cardio</option>
-                    <option value="musculacao">Musculação</option>
-                    <option value="funcional">Funcional</option>
-                    <option value="crossfit">CrossFit</option>
-                    <option value="livre">Peso Livre</option>
-                    <option value="outros">Outros</option>
-                  </select>
-                </div>
-
-                <!-- Dificuldade -->
-                <div class="form-group">
-                  <label class="form-label">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                    Nível de Dificuldade
-                  </label>
-                  <select v-model="editingMachine.difficulty" class="form-input" required>
-                    <option value="" disabled>Selecione o nível</option>
-                    <option value="iniciante">Iniciante</option>
-                    <option value="intermediario">Intermediário</option>
-                    <option value="avancado">Avançado</option>
-                  </select>
-                </div>
-
-                <!-- Grupos Musculares -->
-                <div class="form-group">
-                  <label class="form-label">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    Grupos Musculares
-                  </label>
-                  <div class="muscle-groups-grid">
-                    <label v-for="muscle in muscleGroupOptions" :key="muscle.value" class="checkbox-label">
-                      <input
-                        type="checkbox"
-                        :value="muscle.value"
-                        v-model="editingMachine.muscleGroups"
-                        class="checkbox-input"
-                      />
-                      <span class="checkbox-text">{{ muscle.label }}</span>
-                    </label>
-                  </div>
-                  
-                  <div v-if="editingMachine.muscleGroups && editingMachine.muscleGroups.length > 0" style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
-                    Selecionados: {{ editingMachine.muscleGroups.join(', ') }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Coluna Direita -->
-              <div class="form-column">
-                <!-- Upload de Imagem -->
-                <div class="form-group">
-                  <label class="form-label">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    Foto do Aparelho
-                  </label>
-                  <div 
-                    class="image-upload-area"
-                    :class="{ 'has-image': editImagePreview || editingMachine.image }"
-                    @click="$refs.imageInputEdit.click()"
-                    @dragover.prevent
-                    @drop.prevent="handleDropEdit"
-                  >
-                    <input
-                      ref="imageInputEdit"
-                      type="file"
-                      accept="image/*"
-                      @change="handleImageEdit"
-                      style="display: none"
-                    />
-                    <div v-if="!editImagePreview && !editingMachine.image" class="upload-placeholder">
-                      <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                <!-- Categoria e Dificuldade -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                       </svg>
-                      <p>Arraste uma imagem ou clique para selecionar</p>
-                      <span class="upload-hint">PNG, JPG até 5MB</span>
-                    </div>
-                    <div v-else class="image-preview">
-                      <img :src="editImagePreview || getImageUrl(editingMachine.image)" alt="Preview" />
-                      <button type="button" @click.stop="removeEditImage" class="remove-image-btn">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                      </button>
-                    </div>
+                      Categoria
+                    </label>
+                    <select v-model="editingMachine.category" class="form-input" required>
+                      <option value="" disabled>Selecione a categoria</option>
+                      <option value="cardio">Cardio</option>
+                      <option value="musculacao">Musculação</option>
+                      <option value="funcional">Funcional</option>
+                      <option value="crossfit">CrossFit</option>
+                      <option value="livre">Peso Livre</option>
+                      <option value="outros">Outros</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                      </svg>
+                      Nível de Dificuldade
+                    </label>
+                    <select v-model="editingMachine.difficulty" class="form-input" required>
+                      <option value="" disabled>Selecione o nível</option>
+                      <option value="iniciante">Iniciante</option>
+                      <option value="intermediario">Intermediário</option>
+                      <option value="avancado">Avançado</option>
+                    </select>
                   </div>
                 </div>
 
@@ -635,6 +568,71 @@
                     placeholder="Dicas importantes de segurança..."
                     rows="3"
                   ></textarea>
+                </div>
+              </div>
+
+              <!-- Coluna Direita -->
+              <div class="form-column">
+                <!-- Upload de Imagem -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Foto do Aparelho
+                  </label>
+                  <div 
+                    class="image-upload-area"
+                    :class="{ 'has-image': editImagePreview || editingMachine.image }"
+                    @click="$refs.imageInputEdit.click()"
+                    @dragover.prevent
+                    @drop.prevent="handleDropEdit"
+                  >
+                    <input
+                      ref="imageInputEdit"
+                      type="file"
+                      accept="image/*"
+                      @change="handleImageEdit"
+                      style="display: none"
+                    />
+                    <div v-if="!editImagePreview && !editingMachine.image" class="upload-placeholder">
+                      <i class="fas fa-cloud-upload-alt"></i>
+                      <p>Clique ou arraste uma imagem</p>
+                      <span class="upload-hint">PNG, JPG ou GIF • Máximo 10MB</span>
+                    </div>
+                    <div v-else class="image-preview">
+                      <img :src="editImagePreview || getImageUrl(editingMachine.image)" alt="Preview" />
+                      <button type="button" @click.stop="removeEditImage" class="remove-image-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Grupos Musculares -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="fas fa-running"></i>
+                    Grupos Musculares
+                  </label>
+                  <div class="muscle-groups-grid">
+                    <label v-for="muscle in muscleGroupOptions" :key="muscle.value" class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        :value="muscle.value"
+                        v-model="editingMachine.muscleGroups"
+                        class="checkbox-input"
+                      />
+                      <i :class="muscle.icon" class="muscle-icon"></i>
+                      <span class="checkbox-text">{{ muscle.label }}</span>
+                    </label>
+                  </div>
+                  
+                  <div v-if="editingMachine.muscleGroups && editingMachine.muscleGroups.length > 0" style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+                    Selecionados: {{ editingMachine.muscleGroups.join(', ') }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -755,17 +753,17 @@ export default {
         { id: 'outros', name: 'Outros', icon: 'fas fa-tools', count: 0 },
       ],
       muscleGroupOptions: [
-        { value: 'peito', label: 'Peito' },
-        { value: 'costas', label: 'Costas' },
-        { value: 'ombros', label: 'Ombros' },
-        { value: 'biceps', label: 'Bíceps' },
-        { value: 'triceps', label: 'Tríceps' },
-        { value: 'pernas', label: 'Pernas' },
-        { value: 'gluteos', label: 'Glúteos' },
-        { value: 'abdomen', label: 'Abdômen' },
-        { value: 'panturrilha', label: 'Panturrilha' },
-        { value: 'antebraco', label: 'Antebraço' },
-        { value: 'corpo-todo', label: 'Corpo Todo' }
+        { value: 'peito', label: 'Peito', icon: 'fas fa-hand-fist' },
+        { value: 'costas', label: 'Costas', icon: 'fas fa-user' },
+        { value: 'ombros', label: 'Ombros', icon: 'fas fa-arrows-alt-h' },
+        { value: 'biceps', label: 'Bíceps', icon: 'fas fa-dumbbell' },
+        { value: 'triceps', label: 'Tríceps', icon: 'fas fa-dumbbell' },
+        { value: 'pernas', label: 'Pernas', icon: 'fas fa-running' },
+        { value: 'gluteos', label: 'Glúteos', icon: 'fas fa-walking' },
+        { value: 'abdomen', label: 'Abdômen', icon: 'fas fa-circle' },
+        { value: 'panturrilha', label: 'Panturrilha', icon: 'fas fa-shoe-prints' },
+        { value: 'antebraco', label: 'Antebraço', icon: 'fas fa-hand-rock' },
+        { value: 'corpo-todo', label: 'Corpo Todo', icon: 'fas fa-user-check' }
       ],
       machines: [],
       instructorId: null,
@@ -1476,6 +1474,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   color: white;
   border: none;
   border-radius: 16px;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   font-size: 16px;
   cursor: pointer;
@@ -2829,7 +2828,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 .modal-container-large {
   background: var(--bg-tertiary);
   border-radius: 24px;
-  max-width: 900px;
+  max-width: 1200px;
   width: 100%;
   max-height: 90vh;
   display: flex;
@@ -3172,17 +3171,18 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 /* Estilos para Modal de Edição */
 .form-group {
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .form-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 12px;
 }
 
 .form-label i {
@@ -3279,7 +3279,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   justify-content: center;
   padding: 48px;
   background: var(--bg-secondary);
-  border: 2px dashed var(--border-primary);
   border-radius: 12px;
   color: var(--text-secondary);
 }
@@ -3569,9 +3568,9 @@ body:has(.navbar-collapsed) .dashboard-main,
 }
 
 .muscle-groups-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
 }
 
 /* Estilos do Equipment Form */
@@ -3586,8 +3585,17 @@ body:has(.navbar-collapsed) .dashboard-main,
   margin-bottom: 2rem;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
 @media (max-width: 968px) {
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
     grid-template-columns: 1fr;
   }
 }
@@ -3602,7 +3610,7 @@ body:has(.navbar-collapsed) .dashboard-main,
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-color);
 }
@@ -3662,47 +3670,37 @@ select.form-input {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  user-select: none;
-}
-
-.dashboard-dark .checkbox-label {
-  background: #334155;
-  border-color: #475569;
 }
 
 .checkbox-label:hover {
-  border-color: #3b82f6;
-  background: #ffffff;
-}
-
-.dashboard-dark .checkbox-label:hover {
-  background: #475569;
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
+  background: var(--bg-primary);
 }
 
 .checkbox-input {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #3b82f6;
-  margin: 0;
+  accent-color: var(--primary-color);
   flex-shrink: 0;
 }
 
 .checkbox-text {
   font-size: 0.875rem;
-  color: #1f2937;
-  cursor: pointer;
-  user-select: none;
+  color: var(--text-color);
+  flex: 1;
 }
 
-.dashboard-dark .checkbox-text {
-  color: #f1f5f9;
+.muscle-icon {
+  font-size: 16px;
+  color: var(--primary-color);
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 /* Image Upload Area */
@@ -3722,8 +3720,7 @@ select.form-input {
 }
 
 .image-upload-area:hover {
-  border-color: #3b82f6;
-  background: var(--bg-primary);
+  border-color: var(--primary-color);
 }
 
 .upload-placeholder {
@@ -3736,7 +3733,11 @@ select.form-input {
   padding: 2rem;
 }
 
-.upload-placeholder svg {
+.upload-placeholder svg,
+.upload-placeholder i {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
   color: var(--text-secondary);
   opacity: 0.5;
 }
@@ -3755,7 +3756,7 @@ select.form-input {
 
 .image-preview {
   width: 100%;
-  height: 100%;
+  height: 400px;
   position: relative;
 }
 
