@@ -206,10 +206,8 @@
                 <!-- Preview da Imagem -->
                 <div v-if="imagePreview" class="image-preview-container">
                   <img :src="imagePreview" alt="Preview" class="image-preview" />
-                  <button type="button" class="remove-image-btn" @click="removeImage">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M1 1L11 11M11 1L1 11" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                  <button type="button" class="remove-image-btn" @click="removeImage" title="Remover imagem">
+                    <i class="fas fa-times"></i>
                   </button>
                 </div>
 
@@ -1207,11 +1205,12 @@ export default {
   opacity: 0;
   transform: scale(0.8);
   box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  color: white;
 }
 
-.remove-image-btn svg {
-  width: 14px;
-  height: 14px;
+.remove-image-btn i {
+  font-size: 14px;
+  pointer-events: none;
 }
 
 .remove-image-btn:hover {

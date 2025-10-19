@@ -407,6 +407,28 @@ const studentData = reactive({
 
 const originalData = ref({});
 
+// Função para processar URL do avatar
+const getAvatarUrl = (userData) => {
+  const avatar = userData?.avatar
+  
+  if (!avatar) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=2563eb&color=fff&size=120`
+  }
+  
+  // Se é base64, usar diretamente
+  if (avatar.startsWith('data:image')) {
+    return avatar
+  }
+  
+  // Se já é URL completa
+  if (avatar.startsWith('http')) {
+    return avatar
+  }
+  
+  // Se é path relativo, construir URL completa
+  return `http://localhost:3000${avatar}`
+}
+
 // Computed para verificar se perfil está incompleto
 const isProfileIncomplete = computed(() => {
   return !studentData.height || !studentData.weight;
@@ -519,8 +541,10 @@ const fetchProfile = async () => {
                      }).filter(m => m).join(', ')
                    : '',
       
-      // Avatar
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=2563eb&color=fff&size=120`
+      // Avatar - Processa URL do avatar do userId
+      avatar: studentData_API.userId && typeof studentData_API.userId === 'object' 
+              ? getAvatarUrl(studentData_API.userId)
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=2563eb&color=fff&size=120`
     });
 
     originalData.value = { ...studentData };
@@ -548,7 +572,7 @@ const useFallbackData = () => {
       activityLevel: 'moderate',
       medicalConditions: '',
       medications: '',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=2563eb&color=fff&size=120`
+      avatar: getAvatarUrl(userData)
     });
     originalData.value = { ...studentData };
   }
