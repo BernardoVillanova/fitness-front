@@ -187,7 +187,7 @@
           <div class="card-header">
             <div class="student-avatar-wrapper">
               <img 
-                :src="student.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'Student')}&background=3b82f6&color=fff`" 
+                :src="getAvatarUrl(student)"
                 :alt="student.name"
                 class="student-avatar"
               />
@@ -289,7 +289,7 @@
                   <div class="student-info">
                     <div class="avatar-container">
                       <img 
-                        :src="student.userId?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'Student')}&background=3b82f6&color=fff`" 
+                        :src="getAvatarUrl(student)"
                         :alt="student.name"
                         class="avatar"
                       />
@@ -442,6 +442,28 @@ const showNotification = (type, title, message) => {
     title,
     message
   }
+}
+
+// Função para processar URL do avatar
+const getAvatarUrl = (student) => {
+  const avatar = student.userId?.avatar
+  
+  if (!avatar) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'Student')}&background=3b82f6&color=fff&size=200`
+  }
+  
+  // Se é base64, usar diretamente
+  if (avatar.startsWith('data:image')) {
+    return avatar
+  }
+  
+  // Se já é URL completa
+  if (avatar.startsWith('http')) {
+    return avatar
+  }
+  
+  // Se é path relativo, construir URL completa
+  return `http://localhost:3000${avatar}`
 }
 
 const showConfirmation = (title, message, onConfirm, onCancel = null) => {

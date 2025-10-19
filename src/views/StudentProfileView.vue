@@ -1210,7 +1210,7 @@
                           </div>
                           <div class="stat-info">
                             <span class="stat-value">{{ workout.exercisesCompleted }}/{{ workout.totalExercises }}</span>
-                            <span class="stat-label">exercícios</span>
+                            <span class="stat-label">exerc.</span>
                           </div>
                         </div>
 
@@ -2013,9 +2013,30 @@ export default {
         }));
     });
 
+    // Função para processar URL do avatar
+    const getAvatarUrl = (avatarData) => {
+      if (!avatarData) {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.value.name || 'User')}&background=3b82f6&color=fff&size=200`
+      }
+      
+      // Se é base64, usar diretamente
+      if (avatarData.startsWith('data:image')) {
+        return avatarData
+      }
+      
+      // Se já é URL completa
+      if (avatarData.startsWith('http')) {
+        return avatarData
+      }
+      
+      // Se é path relativo, construir URL completa
+      return `http://localhost:3000${avatarData}`
+    }
+
     // Computed para normalizar o avatar
     const studentAvatar = computed(() => {
-      return student.value.userId?.avatar || student.value.avatar || null;
+      const avatar = student.value.userId?.avatar || student.value.avatar || null;
+      return avatar ? getAvatarUrl(avatar) : `https://ui-avatars.com/api/?name=${encodeURIComponent(student.value.name || 'User')}&background=3b82f6&color=fff&size=200`;
     });
 
     // Enhanced chart computed properties

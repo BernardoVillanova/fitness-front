@@ -541,7 +541,7 @@ export default {
           return {
             id: student._id,
             name: student.name || 'Nome não disponível',
-            avatar: student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`,
+            avatar: this.getAvatarUrl(student),
             weightProgress: 0,
             adherence: 0,
             trend: 'neutral',
@@ -586,7 +586,7 @@ export default {
           const result = {
             id: student._id,
             name: student.name || 'Nome não disponível',
-            avatar: student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`,
+            avatar: this.getAvatarUrl(student),
             weightProgress,
             adherence,
             trend,
@@ -608,7 +608,7 @@ export default {
           return {
             id: student._id,
             name: student.name || 'Nome não disponível',
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`,
+            avatar: this.getAvatarUrl(student),
             weightProgress: 0,
             adherence: 0,
             trend: 'neutral',
@@ -1044,6 +1044,29 @@ export default {
   },
 
   methods: {
+    // ========= HELPER PARA PROCESSAR AVATAR =========
+    getAvatarUrl(student) {
+      // Tenta pegar o avatar do userId primeiro, depois do próprio student
+      const avatar = student.userId?.avatar || student.avatar;
+      
+      if (!avatar) {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`;
+      }
+      
+      // Se é base64, usar diretamente
+      if (avatar.startsWith('data:image')) {
+        return avatar;
+      }
+      
+      // Se já é URL completa
+      if (avatar.startsWith('http')) {
+        return avatar;
+      }
+      
+      // Se é path relativo, construir URL completa
+      return `http://localhost:3000${avatar}`;
+    },
+
     // ========= MÉTODOS DE PAGINAÇÃO =========
     nextPage() {
       if (this.currentPage < this.totalPages) {
