@@ -21,17 +21,3 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fitness-frontend .
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/fitness-frontend
-    
-    - name: Deploy to Server
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        script: |
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/fitness-frontend
-          docker stop fitness-frontend || true
-          docker rm fitness-frontend || true
-          docker run -d --name fitness-frontend -p 80:80 \
-            --restart always \
-            ${{ secrets.DOCKERHUB_USERNAME }}/fitness-frontend
