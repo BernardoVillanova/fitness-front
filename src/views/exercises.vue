@@ -414,6 +414,7 @@ import { useThemeStore } from "@/store/theme";
 import NotificationModal from '@/components/NotificationModal.vue';
 import { storeToRefs } from "pinia";
 import api from "@/api";
+import { getImageUrl } from "@/config";
 import { Dumbbell, LayoutGrid, Users } from 'lucide-vue-next';
 
 export default {
@@ -488,7 +489,7 @@ export default {
       return (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
-        return `http://localhost:3000${imagePath}`;
+        return getImageUrl(imagePath);
       };
     },
     categoriesWithCounts() {

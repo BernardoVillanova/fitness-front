@@ -789,6 +789,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, defineProps, defineEmits } from 'vue'
 import api from '@/api'
+import { getImageUrl as getImageUrlHelper } from '@/config'
 import NotificationModal from '@/components/NotificationModal.vue'
 import ConfirmationModal from '@/components/ConfirmationModal.vue'
 
@@ -1056,9 +1057,7 @@ const getImageUrl = (imagePath) => {
   }
   
   const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-  const fullUrl = `http://localhost:3000/${cleanPath}`;
-  
-  return fullUrl;
+  return getImageUrlHelper(`/${cleanPath}`);
 }
 
 const startTimer = () => {
