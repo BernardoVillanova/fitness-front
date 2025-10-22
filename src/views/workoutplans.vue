@@ -391,7 +391,7 @@ import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import api from "@/api.js";
-import { API_URL, API_BASE_URL } from "@/config";
+import { API_BASE_URL } from "@/config";
 
 export default {
   name: "WorkoutPlans",
