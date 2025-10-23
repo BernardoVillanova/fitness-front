@@ -233,6 +233,7 @@
 
 <script>
 import NotificationModal from './NotificationModal.vue';
+import { API_URL } from '@/config';
 
 export default {
   name: 'ViewDivisionModal',
@@ -364,7 +365,7 @@ export default {
         const workingPath = this.imageStates[stateKey].workingUrl;
         if (workingPath.startsWith('http')) return workingPath;
         
-        const baseUrl = 'http://localhost:3000';
+        const baseUrl = `${API_URL}`;
         const path = workingPath.startsWith('/') ? workingPath : `/${workingPath}`;
         return `${baseUrl}${path}`;
       }
@@ -374,7 +375,7 @@ export default {
       }
       
       // Construir URL correta para as imagens
-      const baseUrl = 'http://localhost:3000';
+      const baseUrl = `${API_URL}`;
       let path = imagePath;
       
       // Se não começa com /uploads, adicionar

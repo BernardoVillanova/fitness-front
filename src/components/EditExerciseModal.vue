@@ -386,6 +386,7 @@
 <script>
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
+import { API_URL } from '@/config';
 
 export default {
   name: 'EditExerciseModal',
@@ -631,14 +632,14 @@ export default {
       if (equipment.image.startsWith('http') || equipment.image.startsWith('data:')) {
         return equipment.image;
       }
-      return `http://localhost:3000${equipment.image}`;
+      return `${API_URL}${equipment.image}`;
     },
     getImageUrl(imagePath) {
       if (!imagePath) return null;
       if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
         return imagePath;
       }
-      return `http://localhost:3000${imagePath}`;
+      return `${API_URL}${imagePath}`;
     }
   }
 };

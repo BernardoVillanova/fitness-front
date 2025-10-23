@@ -945,6 +945,7 @@
 </template>
 
 <script setup>
+import { API_URL } from '@/config'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -1384,7 +1385,7 @@ const submitForm = async () => {
       }
     }
     
-    const response = await axios.post('http://localhost:3000/api/students', studentPayload)
+    const response = await axios.post(`${API_URL}/api/students`, studentPayload)
     
     console.log('✅ Student created successfully:', response.data)
     

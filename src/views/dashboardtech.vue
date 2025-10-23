@@ -474,6 +474,7 @@ import { storeToRefs } from "pinia";
 import VueApexCharts from "vue3-apexcharts";
 import { getStudentsByInstructor, getInstructorSessions } from "@/api";
 import api from "@/api";
+import { API_URL } from '@/config';
 
 export default {
   name: "DashboardTech",
@@ -1102,7 +1103,7 @@ export default {
       }
       
       // Se é path relativo, construir URL completa
-      return `http://localhost:3000${avatar}`;
+      return `${API_URL}${avatar}`;
     },
 
     // ========= MÉTODOS DE PAGINAÇÃO =========

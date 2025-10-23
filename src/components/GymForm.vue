@@ -817,6 +817,7 @@ import { storeToRefs } from 'pinia';
 import NotificationModal from '@/components/NotificationModal.vue';
 import ConfirmationModal from '@/components/ConfirmationModal.vue';
 import api from '@/api';
+import { API_URL } from '@/config';
 
 export default {
   name: 'GymForm',
@@ -1277,11 +1278,11 @@ export default {
       
       // Se começa com /, constrói URL completa
       if (imagePath.startsWith('/')) {
-        return `http://localhost:3000${imagePath}`;
+        return `${API_URL}${imagePath}`;
       }
       
       // Caso contrário, adiciona o prefixo padrão
-      return `http://localhost:3000/uploads/equipments/${imagePath}`;
+      return `${API_URL}/uploads/equipments/${imagePath}`;
     };
 
     // Handler de erro de imagem
@@ -1642,8 +1643,8 @@ export default {
             const imageUrl = newVal.image.startsWith('http') 
               ? newVal.image 
               : newVal.image.startsWith('/') 
-                ? `http://localhost:3000${newVal.image}`
-                : `http://localhost:3000/uploads/gyms/${newVal.image}`;
+                ? `${API_URL}${newVal.image}`
+                : `${API_URL}/uploads/gyms/${newVal.image}`;
             
             imagePreview.value = imageUrl;
           }
