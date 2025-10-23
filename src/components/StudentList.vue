@@ -403,6 +403,7 @@
 </template>
 
 <script setup>
+import { API_URL } from '@/config'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useThemeStore } from '@/store/theme'
 import { useRouter } from 'vue-router'
@@ -463,7 +464,7 @@ const getAvatarUrl = (student) => {
   }
   
   // Se é path relativo, construir URL completa
-  return `http://localhost:3000${avatar}`
+  return `${API_URL}${avatar}`
 }
 
 const showConfirmation = (title, message, onConfirm, onCancel = null) => {

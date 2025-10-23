@@ -332,6 +332,7 @@
 </template>
 
 <script setup>
+import { API_URL } from '@/config'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -460,7 +461,7 @@ const searchStudents = () => {
       }
       
       // Usar rota pública que não requer autenticação
-      const response = await axios.get('http://localhost:3000/api/students/public-search', config)
+      const response = await axios.get(`${API_URL}/api/students/public-search`, config)
       
       // Filter out already selected students and students with instructor
       const filtered = response.data.filter(student => {
@@ -598,7 +599,7 @@ const submitForm = async () => {
       students: form.value.students.map(s => s._id)
     }
 
-    const { data } = await axios.post('http://localhost:3000/api/instructors', instructorPayload)
+    const { data } = await axios.post(`${API_URL}/api/instructors`, instructorPayload)
     
     console.log('✅ Instrutor criado:', data)
     

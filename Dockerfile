@@ -7,8 +7,8 @@ RUN npm ci
 
 COPY . .
 
-ARG VUE_APP_API_URL=http://localhost:3000
-ENV VUE_APP_API_URL=$VUE_APP_API_URL
+ARG API_URL=http://localhost:3000
+ENV API_URL=$API_URL
 
 RUN npm run build
 

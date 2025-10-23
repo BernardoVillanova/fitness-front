@@ -217,6 +217,7 @@ import { useThemeStore } from '@/store/theme'
 import { useAuthStore } from '@/store/auth'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import api from '@/api'
+import { API_URL } from '@/config'
 
 // Stores
 const themeStore = useThemeStore()
@@ -316,7 +317,7 @@ const fetchInstructorData = async () => {
               avatarUrl = userData.avatar
               console.log('✅ Avatar carregado (URL completa do populate):', avatarUrl)
             } else {
-              avatarUrl = `http://localhost:3000${userData.avatar}`
+              avatarUrl = `${API_URL}${userData.avatar}`
               console.log('✅ Avatar carregado (path relativo do populate):', avatarUrl)
             }
           } else if (typeof instructorData.userId === 'string') {

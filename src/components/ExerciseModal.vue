@@ -381,6 +381,7 @@
 <script>
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
+import { API_URL } from '@/config';
 
 export default {
   name: 'ExerciseModal',
@@ -603,7 +604,7 @@ export default {
       }
       
       // Se for um caminho relativo, construir URL completa
-      return `http://localhost:3000${equipment.image}`;
+      return `${API_URL}${equipment.image}`;
     }
   }
 };

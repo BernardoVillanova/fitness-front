@@ -316,6 +316,7 @@ import { useThemeStore } from '@/store/theme';
 import NotificationModal from '@/components/NotificationModal.vue';
 import { storeToRefs } from 'pinia';
 import api from '@/api';
+import { API_URL } from '@/config';
 
 export default {
   name: 'EquipmentModal',
@@ -385,7 +386,7 @@ export default {
         // Se já for uma URL completa, retornar como está
         if (imagePath.startsWith('http')) return imagePath;
         // Caso contrário, construir URL do backend (sem /api pois as imagens são servidas direto)
-        return `http://localhost:3000${imagePath}`;
+        return `${API_URL}${imagePath}`;
       };
     }
   },

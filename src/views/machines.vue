@@ -669,6 +669,7 @@ import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import api from "@/api";
 import { Dumbbell, Grid3x3, CheckCircle2 } from 'lucide-vue-next';
+import { API_URL } from '@/config';
 
 export default {
   name: "MachinesView",
@@ -806,7 +807,7 @@ export default {
         // Se já for URL completa, retorna como está
         if (imagePath.startsWith('http')) return imagePath;
         // Constrói URL completa do backend
-        return `http://localhost:3000${imagePath}`;
+        return `${API_URL}${imagePath}`;
       };
     },
     filteredMachines() {

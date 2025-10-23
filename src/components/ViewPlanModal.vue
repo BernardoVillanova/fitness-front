@@ -197,6 +197,7 @@
 <script>
 import NotificationModal from './NotificationModal.vue';
 import ViewDivisionModal from './ViewDivisionModal.vue';
+import { API_URL } from '@/config';
 
 export default {
   name: 'ViewPlanModal',
@@ -362,8 +363,7 @@ export default {
       if (!imagePath.startsWith('/uploads')) {
         path = `/uploads/${imagePath.replace(/^\/*/, '')}`;
       }
-      const baseUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
-      return `${baseUrl}${path}`;
+      return `${API_URL}${path}`;
     },
 
     onImageError(event) {

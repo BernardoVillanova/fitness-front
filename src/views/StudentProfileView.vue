@@ -1581,19 +1581,6 @@
                   <span>Motivo: {{ exercise.skipReason }}</span>
                 </div>
 
-                <!-- Muscle Groups -->
-                <div v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0" class="muscle-groups-section">
-                  <div class="muscle-label">
-                    <i class="fas fa-dumbbell"></i>
-                    Grupos Musculares
-                  </div>
-                  <div class="muscle-chips">
-                    <span v-for="(muscle, mIdx) in exercise.muscleGroups" :key="mIdx" class="muscle-chip">
-                      {{ muscle }}
-                    </span>
-                  </div>
-                </div>
-
                 <!-- Sets Information -->
                 <div v-if="exercise.sets && exercise.sets.length > 0 && !exercise.skipped" class="sets-section-wrapper">
                   <div class="sets-header">
@@ -1751,6 +1738,7 @@ import { useThemeStore } from '../store/theme';
 import DashboardNavBar from '../components/DashboardNavBar.vue';
 import { getStudentById, addStudentProgress, getWorkoutPlans, assignPlanToStudent } from '../api';
 import api from '../api';
+import { API_URL } from '@/config';
 
 export default {
   name: 'StudentProfileView',
@@ -2046,7 +2034,7 @@ export default {
       }
       
       // Se é path relativo, construir URL completa
-      return `http://localhost:3000${avatarData}`
+      return `${API_URL}${avatarData}`
     }
 
     // Computed para normalizar o avatar
@@ -9665,20 +9653,6 @@ export default {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
   border-color: rgba(16, 185, 129, 0.3);
   color: #10b981;
-}
-
-/* Muscle Groups Section */
-.muscle-groups-section {
-  padding: 1rem;
-  background: var(--card-bg-hover);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  margin-bottom: 1.25rem;
-}
-
-.dark-mode .muscle-groups-section {
-  background: #1e1e2d;
-  border-color: #2a2a3e;
 }
 
 .muscle-label {
