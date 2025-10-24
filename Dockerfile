@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 
 ARG API_URL
-ENV API_URL=$API_URL
+ENV VUE_APP_API_URL=$API_URL
 
 RUN npm run build
 
