@@ -77,7 +77,7 @@ fitness-front/
 - **Gestão de Exercícios:** Catálogo completo com descrições e imagens
 - **Fichas de Treino:** Criação com divisões (A, B, C, etc.) e exercícios personalizados
 - **Modo Claro/Escuro:** Interface adaptável às preferências do usuário
-- **Responsivo:** Funciona em desktop, tablet e mobile
+- **Responsivo:** Funciona em desktop, tablet e mobile 🚧 Coming Soon
 
 ## 📝 Scripts Disponíveis
 
