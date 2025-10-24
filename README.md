@@ -89,5 +89,5 @@ npm run lint     # Executa linter de código
 
 ## 🤝 Autores
 
-Bernardo Villanova de Santana
-Rodrigo Carlos dos Santos Neto
+- Bernardo Villanova de Santana
+- Rodrigo Carlos dos Santos Neto
