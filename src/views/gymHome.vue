@@ -329,6 +329,7 @@ import { getAllGyms, createGym, updateGym, deleteGym } from '@/api';
 import DashboardNavBar from "@/components/DashboardNavBar.vue";
 import GymForm from '@/components/GymForm.vue';
 import StudentManagementModal from '@/components/StudentManagementModal.vue';
+import { API_URL } from '@/config';
 
 export default {
   name: 'GymHome',
@@ -487,7 +488,7 @@ export default {
       // Se já é uma URL completa, retorna como está
       if (imagePath.startsWith('http')) return imagePath;
       // Se é um caminho relativo, adiciona a URL base
-      return `http://localhost:3000${imagePath}`;
+      return `${API_URL}${imagePath}`;
     },
     openCreateModal() {
       this.selectedGym = null;

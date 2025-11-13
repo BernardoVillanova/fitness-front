@@ -391,6 +391,7 @@ import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import api from "@/api.js";
+import { API_BASE_URL } from "@/config";
 
 export default {
   name: "WorkoutPlans",
@@ -544,7 +545,7 @@ export default {
       try {
         const token = sessionStorage.getItem('token');
         console.log('🔍 [DEBUG] Fazendo requisição para workout-plans-detailed...');
-        const response = await fetch('http://localhost:3000/api/workout/workout-plans-detailed', {
+        const response = await fetch(`${API_BASE_URL}/workout/workout-plans-detailed`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -570,8 +571,8 @@ export default {
       try {
         const token = sessionStorage.getItem('token');
         const url = this.isEditing 
-          ? `http://localhost:3000/api/workout/workout-plans/${planData._id}`
-          : 'http://localhost:3000/api/workout/workout-plans';
+          ? `${API_BASE_URL}/workout/workout-plans/${planData._id}`
+          : `${API_BASE_URL}/workout/workout-plans`;
         
         const method = this.isEditing ? 'PUT' : 'POST';
         
@@ -670,7 +671,7 @@ export default {
       try {
         const token = sessionStorage.getItem('token');
         
-        const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
+        const response = await fetch(`${API_BASE_URL}/workout/workout-plans/${plan._id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -760,7 +761,7 @@ export default {
         const token = sessionStorage.getItem('token');
         
         // Buscar dados completos do plano
-        const response = await fetch(`http://localhost:3000/api/workout/workout-plans/${plan._id}`, {
+        const response = await fetch(`${API_BASE_URL}/workout/workout-plans/${plan._id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -822,7 +823,7 @@ export default {
         // Teste de conectividade
         console.log('🔍 [DEBUG] Testando conectividade com o backend...');
         try {
-          const healthCheck = await fetch('http://localhost:3000/api/docs');
+          const healthCheck = await fetch(`${API_BASE_URL}/docs`);
           console.log('🔍 [DEBUG] Backend health check status:', healthCheck.status);
         } catch (healthError) {
           console.error('❌ [DEBUG] Backend não está acessível:', healthError);
@@ -852,7 +853,7 @@ export default {
         // Tentar com fetch direto para comparar
         try {
           console.log('🔍 [DEBUG] Tentando fetch direto como fallback...');
-          const directResponse = await fetch('http://localhost:3000/api/students', {
+          const directResponse = await fetch(`${API_BASE_URL}/students`, {
             headers: {
               'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
               'Content-Type': 'application/json'

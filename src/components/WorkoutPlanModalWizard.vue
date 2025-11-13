@@ -891,6 +891,7 @@
 
 <script>
 import NotificationModal from './NotificationModal.vue'
+import { API_URL } from '@/config';
 
 export default {
   name: 'WorkoutPlanModalWizard',
@@ -1140,7 +1141,7 @@ export default {
       if (!imagePath) return '';
       // Remove barra inicial se existir para evitar barra dupla
       const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-      return `http://localhost:3000/${cleanPath}`;
+      return `${API_URL}/${cleanPath}`;
     },
 
     initializeForm() {
@@ -1431,7 +1432,7 @@ export default {
         }
 
         const token = sessionStorage.getItem('token');
-        const url = `http://localhost:3000/api/exercises/instructor/${instructorId}`;
+        const url = `${API_URL}/api/exercises/instructor/${instructorId}`;
         
         const response = await fetch(url, {
           headers: {
@@ -1496,7 +1497,7 @@ export default {
       try {
         const token = sessionStorage.getItem('token');
         
-        const response = await fetch('http://localhost:3000/api/students', {
+        const response = await fetch(`${API_URL}/api/students`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
