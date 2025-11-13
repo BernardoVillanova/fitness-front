@@ -322,7 +322,7 @@
 </template>
 
 <script setup>
-import { API_URL } from '@/config'
+
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
@@ -407,28 +407,6 @@ const studentData = reactive({
 });
 
 const originalData = ref({});
-
-// Função para processar URL do avatar
-const getAvatarUrl = (userData) => {
-  const avatar = userData?.avatar
-  
-  if (!avatar) {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'User')}&background=2563eb&color=fff&size=120`
-  }
-  
-  // Se é base64, usar diretamente
-  if (avatar.startsWith('data:image')) {
-    return avatar
-  }
-  
-  // Se já é URL completa
-  if (avatar.startsWith('http')) {
-    return avatar
-  }
-  
-  // Se é path relativo, construir URL completa
-  return `${API_URL}${avatar}`
-}
 
 // Computed para verificar se perfil está incompleto
 const isProfileIncomplete = computed(() => {
