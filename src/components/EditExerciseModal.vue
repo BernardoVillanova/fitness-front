@@ -1052,13 +1052,14 @@ select.form-input {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
+  background: var(--bg-secondary);
 }
 
 .preview-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: var(--bg-secondary);
+  object-fit: cover;
+  object-position: center;
 }
 
 .remove-image-btn {

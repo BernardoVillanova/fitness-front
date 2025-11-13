@@ -8,7 +8,7 @@
           <div class="header-right">
             <div class="search-bar">
               <i class="fas fa-search search-icon"></i>
-              <input type="text" placeholder="Search here..." />
+              <input type="text" placeholder="Procure aqui..." />
             </div>
             <div class="notification-icon">
               <i class="fas fa-bell"></i>
@@ -72,7 +72,7 @@
 
           <div class="stat-card">
             <div class="stat-content">
-              <div class="stat-icon green">
+              <div class="stat-icon blue">
                 <i class="fas fa-stopwatch"></i>
               </div>
               <div class="stat-info">
@@ -88,7 +88,7 @@
 
           <div class="stat-card">
             <div class="stat-content">
-              <div class="stat-icon purple">
+              <div class="stat-icon blue">
                 <i class="fas fa-fire"></i>
               </div>
               <div class="stat-info">
@@ -104,7 +104,7 @@
 
           <div class="stat-card">
             <div class="stat-content">
-              <div class="stat-icon orange">
+              <div class="stat-icon blue">
                 <i class="fas fa-trophy"></i>
               </div>
               <div class="stat-info">
@@ -129,22 +129,6 @@
                     {{ chartType === 'orders' ? 'Desempenho dos Treinos' : 'Treinos da Semana Atual' }}
                   </div>
                   <div class="chart-header-right">
-                    <div class="chart-toggle">
-                      <button
-                        class="toggle-btn"
-                        :class="{ active: chartType === 'orders' }"
-                        @click="chartType = 'orders'"
-                      >
-                        Gráfico
-                      </button>
-                      <button
-                        class="toggle-btn"
-                        :class="{ active: chartType === 'revenue' }"
-                        @click="chartType = 'revenue'"
-                      >
-                        Semanal
-                      </button>
-                    </div>
                     <div v-if="chartType === 'orders'" class="legend">
                       <div class="legend-item">
                         <div class="legend-dot orders"></div>
@@ -168,6 +152,22 @@
                         <div class="legend-dot" style="background: #2563eb; opacity: 0.45;"></div>
                         Exercícios
                       </div>
+                    </div>
+                    <div class="chart-toggle">
+                      <button
+                        class="toggle-btn"
+                        :class="{ active: chartType === 'orders' }"
+                        @click="chartType = 'orders'"
+                      >
+                        Evolução
+                      </button>
+                      <button
+                        class="toggle-btn"
+                        :class="{ active: chartType === 'revenue' }"
+                        @click="chartType = 'revenue'"
+                      >
+                        Semanal
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -328,13 +328,13 @@
               <div class="divider"></div>
 
               <div class="weekdays">
-                <div class="weekday">Mon</div>
-                <div class="weekday">Tue</div>
-                <div class="weekday">Wed</div>
-                <div class="weekday">Thu</div>
-                <div class="weekday">Fri</div>
-                <div class="weekday">Sat</div>
-                <div class="weekday">Sun</div>
+                <div class="weekday">Seg</div>
+                <div class="weekday">Ter</div>
+                <div class="weekday">Qua</div>
+                <div class="weekday">Qui</div>
+                <div class="weekday">Sex</div>
+                <div class="weekday">Sáb</div>
+                <div class="weekday">Dom</div>
               </div>
 
               <div class="days">
@@ -399,7 +399,7 @@
                 <h2 class="distribution-title">Distribuição de Treinos</h2>
                 <select
                   class="distribution-dropdown"
-                  v-model="selectedLoremPeriod"
+                  v-model="selectedPeriod"
                 >
                   <option value="week">Semana</option>
                   <option value="month">Mês</option>
@@ -414,18 +414,18 @@
                   }}</span>
                 </div>
                 <p class="distribution-stat-description">
-                  Treinos completados com sucesso pelos alunos
+                  Treinos completados com sucesso no período
                 </p>
               </div>
               <div class="distribution-stat-item">
                 <div class="distribution-stat-value">
                   <i class="fa distribution-icon-progress">&#xf110;</i>
                   <span class="distribution-number">{{
-                    animatedInProgressCount
+                    animatedCancelledCount
                   }}</span>
                 </div>
                 <p class="distribution-stat-description">
-                  Treinos em andamento aguardando conclusão
+                  Treinos não concluídos aguardando retomada
                 </p>
               </div>
             </div>
@@ -464,32 +464,32 @@ export default {
       isInitializingChart: false,
       isDestroyed: false,
       monthNames: [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
+        "Janeiro",
+        "Fevereiro",
+        "Março",
+        "Abril",
+        "Maio",
+        "Junho",
+        "Julho",
+        "Agosto",
+        "Setembro",
+        "Outubro",
+        "Novembro",
+        "Dezembro",
       ],
       monthNamesShort: [
         "Jan",
-        "Feb",
+        "Fev",
         "Mar",
-        "Apr",
-        "May",
+        "Abr",
+        "Mai",
         "Jun",
         "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
+        "Ago",
+        "Set",
+        "Out",
         "Nov",
-        "Dec",
+        "Dez",
       ],
       tooltip: {
         show: false,
@@ -521,19 +521,13 @@ export default {
         totalExercises: 0 // Total de exercícios
       },
       updateInterval: null,
-      workoutSessions: [
-        { date: "25/10/2024", status: "completed" },
-        { date: "26/10/2024", status: "completed" },
-        { date: "27/10/2024", status: "in-progress" },
-        { date: "28/10/2024", status: "completed" },
-        { date: "29/10/2024", status: "in-progress" },
-        { date: "30/10/2024", status: "completed" },
-        { date: "31/10/2024", status: "completed" },
-        { date: "01/11/2024", status: "in-progress" },
-      ],
-      selectedLoremPeriod: "week",
+      selectedPeriod: "month",
       animatedCompletedCount: 0,
-      animatedInProgressCount: 0,
+      animatedCancelledCount: 0,
+      periodStats: {
+        completed: 0,
+        cancelled: 0
+      },
       ordersData: [],
       revenueData: [],
       chartLabels: [],
@@ -651,82 +645,6 @@ export default {
       }
 
       return days;
-    },
-    completedCount() {
-      if (!this.workoutSessions || this.workoutSessions.length === 0) {
-        return 0;
-      }
-
-      const now = new Date();
-      let filteredSessions = this.workoutSessions;
-
-      if (this.selectedLoremPeriod === "week") {
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        filteredSessions = this.workoutSessions.filter((session) => {
-          const sessionDate = new Date(
-            session.date.split("/").reverse().join("-")
-          );
-          return sessionDate >= oneWeekAgo;
-        });
-      } else if (this.selectedLoremPeriod === "month") {
-        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        filteredSessions = this.workoutSessions.filter((session) => {
-          const sessionDate = new Date(
-            session.date.split("/").reverse().join("-")
-          );
-          return sessionDate >= oneMonthAgo;
-        });
-      } else if (this.selectedLoremPeriod === "year") {
-        const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        filteredSessions = this.workoutSessions.filter((session) => {
-          const sessionDate = new Date(
-            session.date.split("/").reverse().join("-")
-          );
-          return sessionDate >= oneYearAgo;
-        });
-      }
-
-      return filteredSessions.filter(
-        (session) => session.status === "completed"
-      ).length;
-    },
-    inProgressCount() {
-      if (!this.workoutSessions || this.workoutSessions.length === 0) {
-        return 0;
-      }
-
-      const now = new Date();
-      let filteredSessions = this.workoutSessions;
-
-      if (this.selectedLoremPeriod === "week") {
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        filteredSessions = this.workoutSessions.filter((session) => {
-          const sessionDate = new Date(
-            session.date.split("/").reverse().join("-")
-          );
-          return sessionDate >= oneWeekAgo;
-        });
-      } else if (this.selectedLoremPeriod === "month") {
-        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        filteredSessions = this.workoutSessions.filter((session) => {
-          const sessionDate = new Date(
-            session.date.split("/").reverse().join("-")
-          );
-          return sessionDate >= oneMonthAgo;
-        });
-      } else if (this.selectedLoremPeriod === "year") {
-        const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        filteredSessions = this.workoutSessions.filter((session) => {
-          const sessionDate = new Date(
-            session.date.split("/").reverse().join("-")
-          );
-          return sessionDate >= oneYearAgo;
-        });
-      }
-
-      return filteredSessions.filter(
-        (session) => session.status === "in-progress"
-      ).length;
     },
     // Stats para os cards do topo
     totalActivePlans() {
@@ -923,6 +841,9 @@ export default {
           
           // Calcular estatísticas mensais
           this.calculateMonthlyStats(data.sessions);
+          
+          // Calcular estatísticas do período para o card de distribuição
+          this.calculatePeriodStats(data.sessions);
           
           // Preparar dados do gráfico com os últimos treinos
           this.prepareChartData(data.sessions);
@@ -1148,6 +1069,43 @@ export default {
       console.log('Duração Média:', avgDuration, 'min');
       console.log('Performance:', performancePercent + '%', '-', performanceText);
       console.log('==========================================');
+    },
+    calculatePeriodStats(allSessions) {
+      if (!allSessions || allSessions.length === 0) {
+        this.periodStats = { completed: 0, cancelled: 0 };
+        this.animateCount(0, 'animatedCompletedCount');
+        this.animateCount(0, 'animatedCancelledCount');
+        return;
+      }
+
+      const now = new Date();
+      let startDate;
+
+      if (this.selectedPeriod === 'week') {
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else if (this.selectedPeriod === 'month') {
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      } else if (this.selectedPeriod === 'year') {
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      }
+
+      const periodSessions = allSessions.filter(session => {
+        if (!session.endTime && !session.createdAt) return false;
+        const sessionDate = new Date(session.endTime || session.createdAt);
+        return sessionDate >= startDate && sessionDate <= now;
+      });
+
+      const completed = periodSessions.filter(s => s.status === 'completed').length;
+      const cancelled = periodSessions.filter(s => s.status === 'cancelled').length;
+
+      this.periodStats = { completed, cancelled };
+
+      console.log('📊 Distribuição de Treinos:', this.selectedPeriod);
+      console.log('  Completados:', completed);
+      console.log('  Cancelados (não finalizados):', cancelled);
+
+      this.animateCount(completed, 'animatedCompletedCount');
+      this.animateCount(cancelled, 'animatedCancelledCount');
     },
     prepareChartData(allSessions) {
       console.log('📈 Preparando dados do gráfico de desempenho...');
@@ -1744,6 +1702,11 @@ export default {
     },
   },
   watch: {
+    selectedPeriod() {
+      if (this.allWorkoutSessions && this.allWorkoutSessions.length > 0) {
+        this.fetchRecentWorkouts();
+      }
+    },
     chartType(newVal, oldVal) {
       // Destroy chart immediately when switching away from orders
       if (oldVal === "orders" && this.chart) {
@@ -2339,16 +2302,32 @@ body {
   gap: 10px;
 }
 
+.card-title .chart-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #e6f4ff;
+  color: #0080ff;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
 .card-title i {
-  color: #2563eb;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #e6f4ff;
+  color: #0080ff;
   font-size: 18px;
   font-family: 'Font Awesome 6 Free' !important;
   font-weight: 900 !important;
   font-style: normal !important;
-}
-
-.card-title .chart-icon {
-  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -2383,6 +2362,16 @@ body {
   color: #64748b;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-btn i {
+  font-family: 'Font Awesome 6 Free' !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+  font-size: 16px;
 }
 
 .toggle-btn:hover {
@@ -2393,6 +2382,10 @@ body {
   background: #ffffff;
   color: #0080ff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn.active i {
+  color: #0080ff;
 }
 
 .legend {
@@ -2687,11 +2680,19 @@ body {
 }
 
 .workouts-header h1 i {
-  color: #2563eb;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #e6f4ff;
+  color: #0080ff;
   font-size: 18px;
   font-family: 'Font Awesome 6 Free' !important;
   font-weight: 900 !important;
   font-style: normal !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .view-all {
@@ -2853,7 +2854,7 @@ body {
 
 .workout-exercises {
   font-size: 13.5px;
-  color: #6366f1;
+  color: #2563eb;
   font-weight: 600;
   white-space: nowrap;
 }

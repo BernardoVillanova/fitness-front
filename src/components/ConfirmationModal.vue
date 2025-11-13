@@ -27,7 +27,7 @@
           </div>
           <h3 class="modal-title">{{ title }}</h3>
           <button class="close-btn" @click="close">
-            <i class="fas fa-times"></i>
+            <i class="fa fa-times"></i>
           </button>
         </div>
 
@@ -210,6 +210,16 @@ export default {
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+
+*:not(i):not(.fa):not(.fas):not(.far):not(.fal):not(.fab) {
+  font-family: "Inter", sans-serif;
+}
+
 .confirmation-overlay {
   position: fixed;
   top: 0;
@@ -234,6 +244,7 @@ export default {
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 20px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  font-family: "Inter", sans-serif;
 }
 
 /* Theme Variables */
@@ -312,21 +323,23 @@ export default {
 .close-btn {
   width: 32px;
   height: 32px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border: none;
+  background: transparent !important;
   border-radius: 8px;
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 15px;
+  align-self: flex-start;
 }
 
 .close-btn:hover {
-  background: var(--border-color);
+  background: none !important;
+  box-shadow: none !important;
   color: var(--text-color);
 }
 

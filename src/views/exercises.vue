@@ -403,6 +403,19 @@
       :title="notification.title"
       :message="notification.message"
     />
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :show="showConfirmation"
+      :title="confirmationConfig.title"
+      :message="confirmationConfig.message"
+      :icon-type="confirmationConfig.iconType"
+      :confirm-text="confirmationConfig.confirmText"
+      :cancel-text="confirmationConfig.cancelText"
+      :button-class="confirmationConfig.buttonClass"
+      @confirm="confirmationConfig.onConfirm"
+      @close="showConfirmation = false"
+    />
 </template>
 
 <script>
@@ -412,6 +425,7 @@ import EditExerciseModal from "@/components/EditExerciseModal.vue";
 import CategoryFilter from "@/components/CategoryFilter.vue";
 import { useThemeStore } from "@/store/theme";
 import NotificationModal from '@/components/NotificationModal.vue';
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
 import { storeToRefs } from "pinia";
 import api from "@/api";
 import { getImageUrl } from "@/config";
@@ -420,7 +434,8 @@ import { Dumbbell, LayoutGrid, Users } from 'lucide-vue-next';
 export default {
   name: "ExercisesPage",
   components: {
-    NotificationModal, 
+    NotificationModal,
+    ConfirmationModal,
     DashboardNavBar,
     ExerciseModal,
     EditExerciseModal,
@@ -437,6 +452,16 @@ export default {
   data() {
     return {
       notification: { visible: false, type: 'info', title: '', message: '' },
+      showConfirmation: false,
+      confirmationConfig: {
+        title: '',
+        message: '',
+        iconType: 'warning',
+        confirmText: 'Confirmar',
+        cancelText: 'Cancelar',
+        buttonClass: 'btn-danger',
+        onConfirm: () => {}
+      },
       searchQuery: '',
       activeCategory: 'todos',
       imageError: {},
@@ -645,32 +670,42 @@ export default {
     },
 
     async deleteExercise(exercise) {
-      if (!confirm(`Tem certeza que deseja excluir o exercício "${exercise.name}"?`)) {
-        return;
-      }
-
-      try {
-        await api.delete(`/exercises/${exercise._id}`);
-        
-        // Remove da lista local
-        this.exercises = this.exercises.filter(ex => ex._id !== exercise._id);
-        
-        // Atualiza stats
-        this.exercisesStats.total = this.exercises.length;
-        const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
-        this.exercisesStats.categories = uniqueCategories.length;
-        const allMuscleGroups = this.exercises
-          .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
-          .flatMap(ex => ex.muscleGroups);
-        const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
-        this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
-        
-        // Reaplica filtros
-        this.applyFilters();
-      } catch (error) {
-        console.error('❌ Erro ao deletar exercício:', error);
-        this.showNotification('error', 'Erro', 'Erro ao excluir exercício');
-      }
+      this.confirmationConfig = {
+        title: 'Excluir Exercício',
+        message: `Tem certeza que deseja excluir o exercício "${exercise.name}"? Esta ação não pode ser desfeita.`,
+        iconType: 'danger',
+        confirmText: 'Sim, Excluir',
+        cancelText: 'Cancelar',
+        buttonClass: 'btn-danger',
+        onConfirm: async () => {
+          try {
+            await api.delete(`/exercises/${exercise._id}`);
+            
+            // Remove da lista local
+            this.exercises = this.exercises.filter(ex => ex._id !== exercise._id);
+            
+            // Atualiza stats
+            this.exercisesStats.total = this.exercises.length;
+            const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
+            this.exercisesStats.categories = uniqueCategories.length;
+            const allMuscleGroups = this.exercises
+              .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
+              .flatMap(ex => ex.muscleGroups);
+            const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
+            this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
+            
+            // Reaplica filtros
+            this.applyFilters();
+            
+            this.showNotification('success', 'Exercício Excluído', 'Exercício excluído com sucesso!');
+            this.showConfirmation = false;
+          } catch (error) {
+            console.error('❌ Erro ao deletar exercício:', error);
+            this.showNotification('error', 'Erro', 'Erro ao excluir exercício');
+          }
+        }
+      };
+      this.showConfirmation = true;
     },
 
     viewExerciseDetails(exercise) {
