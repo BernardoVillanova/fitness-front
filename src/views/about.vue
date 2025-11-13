@@ -2,45 +2,18 @@
   <div :class="isDarkMode ? 'dark-mode' : 'light-mode'">
     <NavBar />
     <div class="about-container">
-      <header class="hero" ref="parallax">
+      <section class="hero">
+        <div class="hero-bg"></div>
         <div class="hero-content">
-          <div class="founders-intro">
-            <div class="floating-badge">Treinamento Excelente</div>
-            <h1 class="title">Transformando o Futuro do Treinamento</h1>
-            <p class="subtitle">Plataforma inteligente de gestão de treinos</p>
-            <div class="hero-description">
-              <p>
-                Nossa missão é revolucionar o aprendizado organizacional através
-                de soluções inovadoras de gerenciamento de treinamento que
-                capacitam profissionais, otimizam performance e aceleram o
-                crescimento em todas as plataformas digitais.
-              </p>
-            </div>
-            <div class="hero-stats">
-              <div class="stat-highlight">
-                <span class="stat-number">1.2K+</span>
-                <span class="stat-label">Alunos Ativos</span>
-              </div>
-              <div class="stat-highlight">
-                <span class="stat-number">45+</span>
-                <span class="stat-label">Instrutores</span>
-              </div>
-              <div class="stat-highlight">
-                <span class="stat-number">94%</span>
-                <span class="stat-label">Satisfação</span>
-              </div>
-            </div>
-            <div class="cta-buttons">
-              <button class="btn-primary">Explore nossa Plataforma</button>
-              <button class="btn-secondary">Fale Conosco</button>
-            </div>
-          </div>
+          <div class="hero-badge">Fundada em 2024</div>
+          <h1>Nossa História</h1>
+          <p>
+            Somos uma plataforma inovadora que revoluciona a gestão de treinos,
+            conectando instrutores e alunos em uma experiência única de acompanhamento
+            personalizado e evolução contínua
+          </p>
         </div>
-        <div class="scroll-indicator">
-          <div class="scroll-arrow"></div>
-          <span>Descubra mais</span>
-        </div>
-      </header>
+      </section>
 
       <section class="vision-section">
         <div class="container">
@@ -85,19 +58,17 @@
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path
-                    d="M4.5 16.5C-1.5 10.5 6 0 12 0C18 0 25.5 10.5 19.5 16.5L12 24L4.5 16.5Z"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
                   <circle
                     cx="12"
-                    cy="10"
-                    r="3"
+                    cy="12"
+                    r="10"
                     stroke="currentColor"
                     stroke-width="2"
+                    fill="currentColor"
+                  />
+                  <polygon
+                    points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"
+                    fill="#fff"
                   />
                 </svg>
               </div>
@@ -736,24 +707,14 @@ export default {
     };
   },
   mounted() {
-    window.addEventListener("scroll", this.handleScroll);
     this.setupIntersectionObserver();
   },
   beforeUnmount() {
-    window.removeEventListener("scroll", this.handleScroll);
     if (this.observer) {
       this.observer.disconnect();
     }
   },
   methods: {
-    handleScroll() {
-      const parallax = this.$refs.parallax;
-      if (parallax) {
-        let scrollPosition = window.pageYOffset;
-        parallax.style.backgroundPositionY = `${scrollPosition * 0.5}px`;
-      }
-    },
-
     setupIntersectionObserver() {
       const options = {
         threshold: 0.1,
@@ -901,191 +862,99 @@ export default {
 }
 
 .hero {
-  background: var(--hero-bg);
-  background-attachment: fixed;
+  position: relative;
   height: 100vh;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  color: var(--text-color);
-  text-align: center;
-  position: relative;
+  justify-content: center;
   overflow: hidden;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #000;
+  color: #fff;
 }
 
-.hero::before {
-  content: "";
+.hero-bg {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(59, 130, 246, 0.1) 0%,
-    transparent 50%
-  );
-  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  background: url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070")
+    center/cover;
+  filter: brightness(0.4);
+  animation: zoomIn 20s ease infinite alternate;
 }
 
-.dark-mode .hero::before {
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(139, 92, 246, 0.1) 0%,
-    transparent 50%
-  );
+@keyframes zoomIn {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to top, #000, transparent);
 }
 
 .hero-content {
+  position: relative;
   z-index: 2;
-  max-width: 800px;
-  animation: fadeInUp 1s ease-out;
+  text-align: center;
+  max-width: 1200px;
+  padding: 0 2rem;
 }
 
-.floating-badge {
+.hero-badge {
   display: inline-block;
-  background: var(--card-background);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 8px 20px;
   border-radius: 50px;
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 20px;
-  backdrop-filter: blur(10px);
-  animation: float 3s ease-in-out infinite;
-  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  animation: fadeInUp 1s ease;
 }
 
-.title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
-  margin-bottom: 20px;
-  background: var(--primary-gradient);
+.hero h1 {
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e0e7ff 50%,
+    #c7d2fe 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  line-height: 1.2;
+  animation: fadeInUp 1s ease;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
-.subtitle {
-  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-  margin-bottom: 30px;
-  color: var(--text-secondary);
-  font-weight: 300;
-}
-
-.hero-description {
-  margin-bottom: 40px;
-}
-
-.hero-description p {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  max-width: 600px;
+.hero p {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 700px;
   margin: 0 auto;
-}
-
-.hero-stats {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-bottom: 40px;
-  flex-wrap: wrap;
-}
-
-.stat-highlight {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--card-background);
-  border: 1px solid var(--border-color);
-  border-radius: 15px;
-  padding: 20px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  min-width: 120px;
-}
-
-.stat-highlight:hover {
-  transform: translateY(-5px);
-  border-color: var(--primary-color);
-}
-
-.stat-highlight .stat-number {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--primary-color);
-  margin-bottom: 5px;
-}
-
-.stat-highlight .stat-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-align: center;
-}
-
-.cta-buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 15px 30px;
-  border: none;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
-  font-family: "Inter", sans-serif;
-}
-
-.btn-primary {
-  background: var(--primary-gradient);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
-}
-
-.btn-secondary {
-  background: var(--card-background);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(10px);
-}
-
-.btn-secondary:hover {
-  background: var(--surface-color);
-  transform: translateY(-2px);
-}
-
-.scroll-indicator {
-  position: absolute;
-  bottom: 30px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: bounce 2s infinite;
-  color: var(--text-secondary);
-}
-
-.scroll-arrow {
-  width: 20px;
-  height: 20px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-  margin-bottom: 10px;
+  line-height: 1.6;
+  animation: fadeInUp 1s ease 0.2s backwards;
+  font-weight: 300;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .section-header {
@@ -1838,6 +1707,14 @@ footer {
 
   .stat-number {
     font-size: 2.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+  }
+
+  .hero p {
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
   }
 }
 </style>

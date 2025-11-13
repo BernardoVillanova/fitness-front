@@ -1,14 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AboutUs from '../views/about.vue';
 import HomePage from '../views/home.vue';
+import NewHome from '../views/newhome.vue';
 import LoginPage from '../views/login.vue';
 import RegisterPage from '../views/register.vue';
 import WorkoutPlans from '../views/workoutplans.vue';
 import StudentWorkoutPlans from '../views/StudentWorkoutPlans.vue';
 import DashboardTech from '../views/dashboardtech.vue';
+import NewDashboardTech from '../views/newdashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
+import NewDashboardStudent from '@/views/newdashboardstudent.vue';
 import StudentList from '../components/StudentList.vue';
 import StudentProfile from '../views/studentprofile.vue'
+import NewStudentProfile from '../views/newstudentprofile.vue'
 import InstructorProfile from '../views/InstructorProfile.vue';
 import InstructorRegister from '../views/InstructorRegisterNew.vue';
 import gymHome from '../views/gymHome.vue';
@@ -17,6 +21,7 @@ import { useAuthStore } from '../store/auth';
 
 const routes = [
   { path: '/', component: HomePage },
+  { path: '/newhome', component: NewHome },
   { path: '/login', component: LoginPage },
   { path: '/register', component: RegisterPage },
   { path: '/students', component: StudentList },
@@ -76,8 +81,23 @@ const routes = [
     // meta: { requiresAuth: true, role: 'personal' },  
   },
   {
+    path: '/newdashboard',
+    component: NewDashboardTech,
+    // meta: { requiresAuth: true, role: 'personal' },  
+  },
+  {
     path: '/student-dashboard',
     component: DashboardStudent,
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/newstudent-dashboard',
+    component: NewDashboardStudent,
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/newstudent-profile',
+    component: NewStudentProfile,
     // meta: { requiresAuth: true, role: 'student' },
   },
   // Student Routes

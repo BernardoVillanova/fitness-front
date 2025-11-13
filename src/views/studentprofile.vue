@@ -519,8 +519,20 @@ const fetchProfile = async () => {
                      }).filter(m => m).join(', ')
                    : '',
       
-      // Avatar
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=2563eb&color=fff&size=120`
+      // Avatar - construir URL completa do backend
+      avatar: (() => {
+        const avatarPath = studentData_API.userId?.avatar || userData.avatar;
+        if (avatarPath && avatarPath.startsWith('/uploads/')) {
+          // Se o avatar está salvo como caminho relativo, adicionar a URL do backend
+          return `http://localhost:3000${avatarPath}`;
+        } else if (avatarPath && (avatarPath.startsWith('http://') || avatarPath.startsWith('https://'))) {
+          // Se já é uma URL completa, usar diretamente
+          return avatarPath;
+        } else {
+          // Fallback para avatar gerado
+          return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=2563eb&color=fff&size=120`;
+        }
+      })()
     });
 
     originalData.value = { ...studentData };
@@ -548,7 +560,16 @@ const useFallbackData = () => {
       activityLevel: 'moderate',
       medicalConditions: '',
       medications: '',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=2563eb&color=fff&size=120`
+      avatar: (() => {
+        const avatarPath = userData.avatar;
+        if (avatarPath && avatarPath.startsWith('/uploads/')) {
+          return `http://localhost:3000${avatarPath}`;
+        } else if (avatarPath && (avatarPath.startsWith('http://') || avatarPath.startsWith('https://'))) {
+          return avatarPath;
+        } else {
+          return `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=2563eb&color=fff&size=120`;
+        }
+      })()
     });
     originalData.value = { ...studentData };
   }
@@ -676,9 +697,18 @@ const handleAvatarUpload = async (event) => {
 
     // Atualizar avatar localmente
     if (response.data.avatarUrl) {
-      studentData.avatar = response.data.avatarUrl;
-      userData.avatar = response.data.avatarUrl;
+      // Construir URL completa do avatar
+      const avatarUrl = response.data.avatarUrl.startsWith('/uploads/') 
+        ? `http://localhost:3000${response.data.avatarUrl}`
+        : response.data.avatarUrl;
+      
+      studentData.avatar = avatarUrl;
+      userData.avatar = response.data.avatarUrl; // Salvar caminho relativo no sessionStorage
       sessionStorage.setItem('user', JSON.stringify(userData));
+      
+      // Forçar atualização da página para refletir mudanças na NavBar
+      window.location.reload();
+      
       showNotification('success', 'Sucesso!', 'Foto de perfil atualizada com sucesso!');
     }
   } catch (error) {
@@ -984,22 +1014,36 @@ body:has(.navbar-collapsed) .student-profile {
 .avatar-wrapper {
   position: relative;
   flex-shrink: 0;
+  width: 112px;
+  height: 112px;
 }
 
 .avatar {
   position: relative;
-  width: 112px;
-  height: 112px;
+  width: 112px !important;
+  height: 112px !important;
+  min-width: 112px;
+  min-height: 112px;
+  max-width: 112px;
+  max-height: 112px;
   border-radius: 50%;
   border: 4px solid var(--bg-primary);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  background: #f3f4f6;
+}
+
+.dark-mode .avatar {
+  background: #374151;
 }
 
 .avatar img {
-  width: 100%;
-  height: 100%;
+  width: 112px !important;
+  height: 112px !important;
   object-fit: cover;
+  object-position: center center;
+  display: block;
+  border-radius: 50%;
 }
 
 .avatar-button {

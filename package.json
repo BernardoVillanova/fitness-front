@@ -14,6 +14,7 @@
     "@fortawesome/vue-fontawesome": "^3.1.2",
     "@types/jwt-decode": "^2.2.1",
     "axios": "^1.8.1",
+    "chart.js": "^4.5.1",
     "core-js": "^3.8.3",
     "events": "^3.3.0",
     "jwt-decode": "^4.0.0",
