@@ -381,6 +381,7 @@
 <script>
 import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
+import { API_URL } from '@/config';
 
 export default {
   name: 'ExerciseModal',
@@ -603,7 +604,7 @@ export default {
       }
       
       // Se for um caminho relativo, construir URL completa
-      return `http://localhost:3000${equipment.image}`;
+      return `${API_URL}${equipment.image}`;
     }
   }
 };
@@ -1138,11 +1139,18 @@ i.fab {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.remove-image-btn i {
+  font-size: 14px;
+  pointer-events: none;
 }
 
 .remove-image-btn:hover {
   background: rgb(239, 68, 68);
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 /* ERROR MESSAGE */

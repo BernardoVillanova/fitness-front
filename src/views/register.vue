@@ -189,6 +189,7 @@ import NavBar from "@/components/NavBar.vue";
 import { useThemeStore } from "@/store/theme";
 import NotificationModal from '@/components/NotificationModal.vue';
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 import { storeToRefs } from "pinia";
 import { mask } from "vue-the-mask";
 export default {
@@ -303,7 +304,7 @@ export default {
 
       try {
         const res = await axios.post(
-          "http://localhost:3000/api/auth/register",
+          `${API_BASE_URL}/auth/register`,
           {
             name: this.name,
             cpf: this.cpf.replace(/\D/g, ""),

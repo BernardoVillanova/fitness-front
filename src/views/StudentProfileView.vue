@@ -886,11 +886,21 @@
                           :key="'vol-point-' + idx"
                           :cx="getVolumePointX(idx)"
                           :cy="getVolumePointY(point.volume)"
-                          r="7"
+                          :r="volumeChartData.length === 1 ? 12 : 7"
                           :class="['data-point', { 'plateau-point': point.isPlateau }]"
                         >
                           <title>{{ formatDateFull(point.date) }}: {{ formatVolume(point.volume) }}</title>
                         </circle>
+                        
+                        <!-- Label de valor para ponto único -->
+                        <text 
+                          v-if="volumeChartData.length === 1"
+                          :x="getVolumePointX(0)"
+                          :y="getVolumePointY(volumeChartData[0].volume) - 25"
+                          class="single-point-label"
+                          text-anchor="middle"
+                          style="font-size: 16px; font-weight: 600; fill: #3b82f6;"
+                        >{{ formatVolume(volumeChartData[0].volume) }}</text>
                       </g>
                       
                       <g v-for="(point, idx) in volumeChartData.filter(p => p.isPlateau)" :key="'plateau-' + idx">
@@ -925,6 +935,12 @@
                     <span v-for="(point, idx) in volumeChartData" :key="'vol-label-' + idx" class="x-label">
                       {{ formatDate(point.date) }}
                     </span>
+                  </div>
+
+                  <!-- Mensagem para dados limitados -->
+                  <div v-if="volumeChartData.length <= 2" class="limited-data-message">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Complete mais treinos para visualizar tendências e análises detalhadas</span>
                   </div>
 
                   <div class="chart-insights">
@@ -1210,7 +1226,7 @@
                           </div>
                           <div class="stat-info">
                             <span class="stat-value">{{ workout.exercisesCompleted }}/{{ workout.totalExercises }}</span>
-                            <span class="stat-label">exercícios</span>
+                            <span class="stat-label">exerc.</span>
                           </div>
                         </div>
 
@@ -1565,19 +1581,6 @@
                   <span>Motivo: {{ exercise.skipReason }}</span>
                 </div>
 
-                <!-- Muscle Groups -->
-                <div v-if="exercise.muscleGroups && exercise.muscleGroups.length > 0" class="muscle-groups-section">
-                  <div class="muscle-label">
-                    <i class="fas fa-dumbbell"></i>
-                    Grupos Musculares
-                  </div>
-                  <div class="muscle-chips">
-                    <span v-for="(muscle, mIdx) in exercise.muscleGroups" :key="mIdx" class="muscle-chip">
-                      {{ muscle }}
-                    </span>
-                  </div>
-                </div>
-
                 <!-- Sets Information -->
                 <div v-if="exercise.sets && exercise.sets.length > 0 && !exercise.skipped" class="sets-section-wrapper">
                   <div class="sets-header">
@@ -1735,6 +1738,7 @@ import { useThemeStore } from '../store/theme';
 import DashboardNavBar from '../components/DashboardNavBar.vue';
 import { getStudentById, addStudentProgress, getWorkoutPlans, assignPlanToStudent } from '../api';
 import api from '../api';
+import { API_URL } from '@/config';
 
 export default {
   name: 'StudentProfileView',
@@ -2013,9 +2017,30 @@ export default {
         }));
     });
 
+    // Função para processar URL do avatar
+    const getAvatarUrl = (avatarData) => {
+      if (!avatarData) {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.value.name || 'User')}&background=3b82f6&color=fff&size=200`
+      }
+      
+      // Se é base64, usar diretamente
+      if (avatarData.startsWith('data:image')) {
+        return avatarData
+      }
+      
+      // Se já é URL completa
+      if (avatarData.startsWith('http')) {
+        return avatarData
+      }
+      
+      // Se é path relativo, construir URL completa
+      return `${API_URL}${avatarData}`
+    }
+
     // Computed para normalizar o avatar
     const studentAvatar = computed(() => {
-      return student.value.userId?.avatar || student.value.avatar || null;
+      const avatar = student.value.userId?.avatar || student.value.avatar || null;
+      return avatar ? getAvatarUrl(avatar) : `https://ui-avatars.com/api/?name=${encodeURIComponent(student.value.name || 'User')}&background=3b82f6&color=fff&size=200`;
     });
 
     // Enhanced chart computed properties
@@ -2455,8 +2480,14 @@ export default {
 
     // Volume Chart Drawing Functions
     const getVolumePointX = (index) => {
+      // Para 1 ponto: centralizar
+      if (volumeChartData.value.length === 1) {
+        return volumeChartWidth.value / 2;
+      }
+      
+      // Para múltiplos pontos: distribuir uniformemente
       const dataWidth = volumeChartWidth.value - 2 * volumeChartPadding.value;
-      const step = dataWidth / (volumeChartData.value.length - 1 || 1);
+      const step = dataWidth / (volumeChartData.value.length - 1);
       return volumeChartPadding.value + index * step;
     };
 
@@ -2467,11 +2498,18 @@ export default {
       const range = maxVolume - minVolume || 1;
       const dataHeight = volumeChartHeight.value - 2 * volumeChartPadding.value;
       
+      // Adicionar padding extra no topo para visualização melhor
+      const topPadding = 0.1; // 10% de espaço extra no topo
+      const adjustedRange = range * (1 + topPadding);
+      
       // Invertido: quanto maior o volume, menor o Y (mais perto do topo)
-      return volumeChartHeight.value - volumeChartPadding.value - ((volume - minVolume) / range) * dataHeight;
+      return volumeChartHeight.value - volumeChartPadding.value - ((volume - minVolume) / adjustedRange) * dataHeight;
     };
 
     const getVolumeLinePoints = () => {
+      // Para 1 ponto: não desenhar linha, apenas o ponto será visível
+      if (volumeChartData.value.length === 1) return '';
+      
       return volumeChartData.value
         .map((point, idx) => `${getVolumePointX(idx)},${getVolumePointY(point.volume)}`)
         .join(' ');
@@ -2480,10 +2518,20 @@ export default {
     const getVolumeAreaPoints = () => {
       if (volumeChartData.value.length === 0) return '';
       
-      // Começar do canto inferior esquerdo
+      const bottomY = volumeChartHeight.value - volumeChartPadding.value;
+      
+      // Para 1 ponto: criar um pequeno retângulo ao redor do ponto
+      if (volumeChartData.value.length === 1) {
+        const x = getVolumePointX(0);
+        const y = getVolumePointY(volumeChartData.value[0].volume);
+        const width = 60; // Largura da barra
+        
+        return `${x - width/2},${bottomY} ${x - width/2},${y} ${x + width/2},${y} ${x + width/2},${bottomY}`;
+      }
+      
+      // Para múltiplos pontos: desenhar área normal
       const firstX = getVolumePointX(0);
       const lastX = getVolumePointX(volumeChartData.value.length - 1);
-      const bottomY = volumeChartHeight.value - volumeChartPadding.value;
       
       // Construir o path: começar de baixo, subir pela linha, descer de volta
       let points = `${firstX},${bottomY}`;
@@ -2506,8 +2554,17 @@ export default {
       const maxVolume = Math.max(...volumeChartData.value.map(d => d.volume));
       const minVolume = 0;
       
+      // Adicionar padding extra no topo para labels
+      const topPadding = 0.1; // 10% de espaço extra
+      const adjustedMax = maxVolume * (1 + topPadding);
+      
       // Distribuir os labels uniformemente de max até min (de cima para baixo)
-      const value = maxVolume - ((index - 1) / (gridLines.value - 1)) * (maxVolume - minVolume);
+      const value = adjustedMax - ((index - 1) / (gridLines.value - 1)) * (adjustedMax - minVolume);
+      
+      // Formatação mais amigável
+      if (value >= 1000) {
+        return `${(value / 1000).toFixed(1)}k`;
+      }
       
       return Math.round(value).toString();
     };
@@ -2703,11 +2760,11 @@ export default {
         measurements: {
           shoulder: null,
           chest: null,
-          rightArm: null,
+          arm: null,
           forearm: null,
           waist: null,
           hip: null,
-          rightThigh: null,
+          thigh: null,
           calf: null
         },
         notes: ''
@@ -5727,18 +5784,34 @@ export default {
   stroke: var(--card-bg);
   stroke-width: 3;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.25));
 }
 
 .volume-chart-card .volume-body .data-point:hover {
-  transform: scale(1.2);
+  transform: scale(1.3);
   stroke-width: 4;
+  filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5));
 }
 
 .volume-chart-card .volume-body .data-point.plateau-point {
   fill: #ef4444;
   stroke: #dc2626;
   animation: pulse-plateau 2s infinite;
+}
+
+/* Estilos para label de ponto único */
+.volume-chart-card .volume-body .single-point-label {
+  font-size: 18px;
+  font-weight: 700;
+  fill: #3b82f6;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+.dark-mode .volume-chart-card .volume-body .single-point-label {
+  fill: #60a5fa;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes pulse-plateau {
@@ -5781,6 +5854,45 @@ export default {
   color: var(--text-muted);
   text-align: center;
   font-weight: 500;
+}
+
+/* Mensagem para dados limitados */
+.volume-chart-card .volume-body .limited-data-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+  animation: slideInMessage 0.5s ease-out;
+}
+
+.dark-mode .volume-chart-card .volume-body .limited-data-message {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.1), rgba(129, 140, 248, 0.1));
+  border-color: rgba(96, 165, 250, 0.25);
+  color: #60a5fa;
+}
+
+.volume-chart-card .volume-body .limited-data-message i {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+@keyframes slideInMessage {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .volume-chart-card .volume-body .chart-insights {
@@ -9541,20 +9653,6 @@ export default {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
   border-color: rgba(16, 185, 129, 0.3);
   color: #10b981;
-}
-
-/* Muscle Groups Section */
-.muscle-groups-section {
-  padding: 1rem;
-  background: var(--card-bg-hover);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  margin-bottom: 1.25rem;
-}
-
-.dark-mode .muscle-groups-section {
-  background: #1e1e2d;
-  border-color: #2a2a3e;
 }
 
 .muscle-label {

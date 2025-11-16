@@ -185,6 +185,7 @@
 import { ref, computed, watch } from 'vue';
 import { useThemeStore } from "@/store/theme";
 import { storeToRefs } from "pinia";
+import { API_URL } from '@/config';
 
 export default {
   name: "ManageStudentsModal",
@@ -300,7 +301,7 @@ export default {
         loadingAssigned.value = true;
         
         const token = sessionStorage.getItem('token');
-        const url = `http://localhost:3000/api/workout-plans/${props.plan._id}/students`;
+        const url = `${API_URL}/api/workout-plans/${props.plan._id}/students`;
         
         const response = await fetch(url, {
           headers: {
@@ -345,7 +346,7 @@ export default {
         
         const userId = userData.id;
         
-        const instructorsResponse = await fetch('http://localhost:3000/api/instructors', {
+        const instructorsResponse = await fetch(`${API_URL}/api/instructors`, {
           headers: {
             'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
             'Content-Type': 'application/json'
@@ -372,7 +373,7 @@ export default {
         const instructorId = currentInstructor._id;
         
         // Buscar apenas alunos deste instrutor usando a rota específica
-        const url = `http://localhost:3000/api/students/instructor/${instructorId}`;
+        const url = `${API_URL}/api/students/instructor/${instructorId}`;
         
         const response = await fetch(url, {
           headers: {
@@ -422,7 +423,7 @@ export default {
         processingStudents.value.push(studentId);
         
         const payload = { workoutPlanId: props.plan._id };
-        const url = `http://localhost:3000/api/students/${studentId}/assign-workout-plan`;
+        const url = `${API_URL}/api/students/${studentId}/assign-workout-plan`;
         
         const token = sessionStorage.getItem('token');
         const response = await fetch(url, {
@@ -460,7 +461,7 @@ export default {
         processingStudents.value.push(studentId);
         
         const payload = { workoutPlanId: null };
-        const url = `http://localhost:3000/api/students/${studentId}/assign-workout-plan`;
+        const url = `${API_URL}/api/students/${studentId}/assign-workout-plan`;
         
         const token = sessionStorage.getItem('token');
         const response = await fetch(url, {

@@ -200,6 +200,7 @@ import { useThemeStore } from '@/store/theme';
 import { storeToRefs } from 'pinia';
 import DashboardNavBar from '@/components/DashboardNavBar.vue';
 import api from '@/api';
+import { getImageUrl } from '@/config';
 
 const themeStore = useThemeStore();
 const { isDarkMode } = storeToRefs(themeStore);
@@ -263,7 +264,7 @@ const fetchProfile = async () => {
         originalAvatar.value = avatarFromUser;
       } else {
         // É path relativo (sistema antigo)
-        const avatarUrl = `http://localhost:3000${avatarFromUser}`;
+        const avatarUrl = getImageUrl(avatarFromUser);
         instructorData.avatar = avatarUrl;
         originalAvatar.value = avatarUrl;
       }
