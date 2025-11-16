@@ -8,12 +8,19 @@
           <div class="header-right">
             <div class="search-bar">
               <i class="fas fa-search search-icon"></i>
-              <input type="text" placeholder="Buscar alunos ou treinos..." />
+              <input 
+                type="text" 
+                placeholder="Buscar alunos, treinos ou sessões..." 
+                v-model="searchQuery"
+                @input="handleSearch"
+              />
+              <i 
+                v-if="searchQuery" 
+                class="fa-solid fa-xmark clear-icon" 
+                @click="clearSearch"
+              ></i>
             </div>
-            <div class="notification-icon">
-              <i class="fas fa-bell"></i>
-            </div>
-            <div class="user-profile" @click="toggleUserDropdown">
+            <div class="user-profile clickable-profile" @click="viewInstructorProfile">
               <div class="user-avatar">
                 <img
                   :src="userData.avatar"
@@ -24,28 +31,6 @@
               <div class="user-info">
                 <div class="user-name">{{ userData.name }}</div>
                 <div class="user-role">{{ userData.role }}</div>
-              </div>
-              <i class="fas fa-chevron-down dropdown-arrow" :class="{ 'rotate': showUserDropdown }"></i>
-              
-              <!-- Dropdown Menu -->
-              <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
-                <div class="dropdown-item" @click="navigateTo('/instructor/profile')">
-                  <i class="fa-solid fa-user"></i>
-                  <span>Meu Perfil</span>
-                </div>
-                <div class="dropdown-item" @click="navigateTo('/instructor/students')">
-                  <i class="fa-solid fa-users"></i>
-                  <span>Meus Alunos</span>
-                </div>
-                <div class="dropdown-item" @click="navigateTo('/instructor/workouts')">
-                  <i class="fa-solid fa-dumbbell"></i>
-                  <span>Planos de Treino</span>
-                </div>
-                <div class="dropdown-divider"></div>
-                <div class="dropdown-item logout" @click="handleLogout">
-                  <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                  <span>Sair</span>
-                </div>
               </div>
             </div>
           </div>
@@ -461,7 +446,8 @@
                     empty: day.isEmpty,
                   }"
                 >
-                  {{ day.number }}
+                  <span class="day-number">{{ day.number }}</span>
+                  <span v-if="day.hasWorkout" class="workout-indicator"></span>
                 </div>
               </div>
             </div>
@@ -660,12 +646,13 @@
                   class="table-row"
                 >
                   <td>
-                    <div class="client-cell">
-                      <div
-                        class="client-avatar"
-                        :style="{ background: session.avatarGradient }"
-                      >
-                        {{ session.student.charAt(0) }}
+                    <div class="client-cell clickable" @click="viewStudentProfile(session.studentId)">
+                      <div class="client-avatar">
+                        <img
+                          :src="session.studentAvatar"
+                          :alt="session.student"
+                          @error="(e) => e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.student)}&background=2563eb&color=fff&size=48`"
+                        />
                       </div>
                       <span>{{ session.student }}</span>
                     </div>
@@ -728,20 +715,20 @@ export default {
     const tooltipPosition = ref({ x: 0, y: 0 });
 
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
     ];
-    const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const weekdays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
     let updateInterval = null;
 
@@ -1357,6 +1344,28 @@ export default {
                 session.studentId?.name ||
                 "Aluno Desconhecido";
 
+              // Obter avatar do aluno - tentar múltiplos caminhos
+              let studentAvatar = null;
+              
+              // Verificar diferentes estruturas possíveis
+              if (session.studentId?.userId?.avatar) {
+                studentAvatar = session.studentId.userId.avatar;
+              } else if (session.studentId?.avatar) {
+                studentAvatar = session.studentId.avatar;
+              }
+              
+              // Se o avatar é um caminho relativo, adicionar a URL base
+              if (studentAvatar && studentAvatar.startsWith('/uploads')) {
+                studentAvatar = `http://localhost:3000${studentAvatar}`;
+              }
+              
+              // Se não encontrou avatar, usar UI Avatars
+              if (!studentAvatar) {
+                studentAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=2563eb&color=fff&size=48`;
+              }
+              
+              console.log(`👤 Aluno: ${studentName}, Avatar: ${studentAvatar}`);
+
               return {
                 id: session._id,
                 student: studentName,
@@ -1371,6 +1380,7 @@ export default {
                 totalVolume: session.totalVolume || 0, // Volume total (peso × reps) em kg
                 completedSets: session.completedSets || 0, // Sets completados
                 studentId: session.studentId?._id || session.studentId, // ID do aluno
+                studentAvatar: studentAvatar, // Avatar do aluno
                 avatarGradient: avatarGradients[index % avatarGradients.length],
               };
             });
@@ -1593,19 +1603,52 @@ export default {
       const daysInMonth = lastDay.getDate();
       const daysInPrevMonth = prevLastDay.getDate();
 
+      // Criar set de dias com treinos completados (todos os meses)
+      const workoutDaysByMonth = new Map();
+      if (allWorkoutSessions.value && allWorkoutSessions.value.length > 0) {
+        allWorkoutSessions.value.forEach(session => {
+          if (session.date && session.status === 'completed') {
+            // Converter data DD/MM/YYYY para objeto Date
+            const dateParts = session.date.split('/');
+            if (dateParts.length === 3) {
+              const workoutDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+              const workoutYear = workoutDate.getFullYear();
+              const workoutMonth = workoutDate.getMonth();
+              const workoutDay = workoutDate.getDate();
+              
+              const key = `${workoutYear}-${workoutMonth}`;
+              if (!workoutDaysByMonth.has(key)) {
+                workoutDaysByMonth.set(key, new Set());
+              }
+              workoutDaysByMonth.get(key).add(workoutDay);
+            }
+          }
+        });
+      }
+
       const days = [];
 
       // Dias do mês anterior
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear = month === 0 ? year - 1 : year;
+      const prevMonthKey = `${prevYear}-${prevMonth}`;
+      const prevMonthWorkouts = workoutDaysByMonth.get(prevMonthKey) || new Set();
+      
       for (let i = firstDayOfWeek; i > 0; i--) {
+        const dayNum = daysInPrevMonth - i + 1;
         days.push({
-          number: daysInPrevMonth - i + 1,
+          number: dayNum,
           isOtherMonth: true,
           isToday: false,
           isEmpty: false,
+          hasWorkout: prevMonthWorkouts.has(dayNum),
         });
       }
 
       // Dias do mês atual
+      const currentMonthKey = `${year}-${month}`;
+      const currentMonthWorkouts = workoutDaysByMonth.get(currentMonthKey) || new Set();
+      
       for (let day = 1; day <= daysInMonth; day++) {
         const isToday =
           year === today.getFullYear() &&
@@ -1617,10 +1660,16 @@ export default {
           isOtherMonth: false,
           isToday: isToday,
           isEmpty: false,
+          hasWorkout: !isToday && currentMonthWorkouts.has(day), // Não mostrar bolinha no dia atual
         });
       }
 
       // Dias do próximo mês
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      const nextMonthKey = `${nextYear}-${nextMonth}`;
+      const nextMonthWorkouts = workoutDaysByMonth.get(nextMonthKey) || new Set();
+      
       const totalCells = days.length;
       const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
 
@@ -1630,6 +1679,7 @@ export default {
           isOtherMonth: true,
           isToday: false,
           isEmpty: false,
+          hasWorkout: nextMonthWorkouts.has(i),
         });
       }
 
@@ -1791,6 +1841,31 @@ export default {
       window.location.href = '/login';
     };
 
+    // Handle search
+    const handleSearch = () => {
+      // A busca é aplicada automaticamente via computed property filteredSessions
+    };
+
+    // Clear search
+    const clearSearch = () => {
+      searchQuery.value = '';
+    };
+
+    // View student profile
+    const viewStudentProfile = (studentId) => {
+      if (studentId) {
+        router.push({
+          name: 'StudentProfileView',
+          params: { id: studentId }
+        });
+      }
+    };
+
+    // View instructor profile
+    const viewInstructorProfile = () => {
+      router.push('/instructor-profile');
+    };
+
     // Handle image error
     const handleImageError = (event) => {
       event.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.value.name)}&background=2563eb&color=fff&size=48`;
@@ -1876,6 +1951,10 @@ export default {
       toggleUserDropdown,
       navigateTo,
       handleLogout,
+      handleSearch,
+      clearSearch,
+      viewStudentProfile,
+      viewInstructorProfile,
       handleImageError,
       // Quick Stats - Dados reais do mês
       activeStudentsThisMonth,
@@ -1929,7 +2008,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 /* Header Styles */
 .header {
   background-color: #ffffff;
-  padding: 20px 0;
+  padding: 24px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1963,12 +2042,19 @@ body:has(.navbar-collapsed) .dashboard-main,
 
 .search-bar input {
   width: 300px;
-  padding: 10px 15px 10px 40px;
+  padding: 10px 40px 10px 40px;
   border: none;
   background-color: #f5f5f5;
   border-radius: 8px;
   font-size: 14px;
   color: #666;
+  transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+  outline: none;
+  background-color: #fff;
+  box-shadow: 0 0 0 2px #2563eb;
 }
 
 .search-bar input::placeholder {
@@ -1984,6 +2070,24 @@ body:has(.navbar-collapsed) .dashboard-main,
   font-family: 'Font Awesome 6 Free' !important;
   font-weight: 900 !important;
   font-style: normal !important;
+}
+
+.clear-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.2s ease;
+  font-family: 'Font Awesome 6 Free' !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+}
+
+.clear-icon:hover {
+  color: #2563eb;
 }
 
 .notification-icon {
@@ -2028,6 +2132,19 @@ body:has(.navbar-collapsed) .dashboard-main,
   gap: 10px;
   cursor: pointer;
   position: relative;
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  margin: -4px -8px;
+}
+
+.user-profile.clickable-profile:hover {
+  background-color: #f5f5f5;
+  transform: translateX(-2px);
+}
+
+.user-profile.clickable-profile:hover .user-name {
+  color: #2563eb;
 }
 
 .user-avatar {
@@ -2665,6 +2782,7 @@ body:has(.navbar-collapsed) .dashboard-main,
 .day {
   aspect-ratio: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 14px;
@@ -2673,6 +2791,20 @@ body:has(.navbar-collapsed) .dashboard-main,
   cursor: pointer;
   transition: background 0.2s;
   font-weight: 500;
+  position: relative;
+  gap: 2px;
+}
+
+.day-number {
+  display: block;
+}
+
+.workout-indicator {
+  width: 4px;
+  height: 4px;
+  background: #10b981;
+  border-radius: 50%;
+  display: block;
 }
 
 .day:hover:not(.today):not(.empty):not(.other-month) {
@@ -3351,6 +3483,19 @@ body:has(.navbar-collapsed) .dashboard-main,
   display: flex;
   align-items: center;
   gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.client-cell.clickable {
+  cursor: pointer;
+}
+
+.client-cell.clickable:hover {
+  transform: translateX(2px);
+}
+
+.client-cell.clickable:hover span {
+  color: #2563eb;
 }
 
 .client-avatar {
@@ -3363,6 +3508,15 @@ body:has(.navbar-collapsed) .dashboard-main,
   font-weight: 600;
   color: #fff;
   font-size: 17px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.client-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .value {

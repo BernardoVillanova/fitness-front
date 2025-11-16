@@ -123,6 +123,7 @@ const routes = [
   },
   {
     path: '/student/history',
+    name: 'StudentHistory',
     component: () => import('../views/StudentHistory.vue'),
     // meta: { requiresAuth: true, role: 'student' },
   },
