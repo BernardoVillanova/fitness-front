@@ -8,12 +8,22 @@
           <div class="header-right">
             <div class="search-bar">
               <i class="fas fa-search search-icon"></i>
-              <input type="text" placeholder="Procure aqui..." />
+              <input 
+                type="text" 
+                placeholder="Buscar treinos por nome, divisão ou data..." 
+                v-model="searchQuery"
+                @input="handleSearch"
+              />
+              <i 
+                v-if="searchQuery" 
+                class="fa-solid fa-xmark clear-icon" 
+                @click="clearSearch"
+              ></i>
             </div>
             <div class="notification-icon">
               <i class="fas fa-bell"></i>
             </div>
-            <div class="user-profile" @click="toggleUserDropdown">
+            <div class="user-profile">
               <div class="user-avatar">
                 <img
                   :src="userData.avatar"
@@ -24,28 +34,6 @@
               <div class="user-info">
                 <div class="user-name">{{ userData.name }}</div>
                 <div class="user-role">{{ userData.role }}</div>
-              </div>
-              <i class="fas fa-chevron-down dropdown-arrow" :class="{ 'rotate': showUserDropdown }"></i>
-              
-              <!-- Dropdown Menu -->
-              <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
-                <div class="dropdown-item" @click="navigateTo('/student/profile')">
-                  <i class="fa-solid fa-user"></i>
-                  <span>Meu Perfil</span>
-                </div>
-                <div class="dropdown-item" @click="navigateTo('/student/workouts')">
-                  <i class="fa-solid fa-dumbbell"></i>
-                  <span>Meus Treinos</span>
-                </div>
-                <div class="dropdown-item" @click="navigateTo('/student/progress')">
-                  <i class="fa-solid fa-chart-line"></i>
-                  <span>Progresso</span>
-                </div>
-                <div class="dropdown-divider"></div>
-                <div class="dropdown-item logout" @click="handleLogout">
-                  <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                  <span>Sair</span>
-                </div>
               </div>
             </div>
           </div>
@@ -275,6 +263,12 @@
                   <small>Comece seu primeiro treino para ver o histórico aqui</small>
                 </div>
 
+                <div v-else-if="filteredWorkouts.length === 0 && searchQuery" class="empty-workouts">
+                  <i class="fas fa-search"></i>
+                  <p>Nenhum treino encontrado</p>
+                  <small>Tente buscar por outro nome, divisão ou data</small>
+                </div>
+
                 <div v-else class="workouts-table">
                   <div class="table-header">
                     <div>Treino</div>
@@ -286,9 +280,10 @@
 
                   <div class="workouts-list">
                     <div
-                      class="workout-item"
-                      v-for="(workout, index) in recentWorkouts"
+                      class="workout-item clickable"
+                      v-for="(workout, index) in filteredWorkouts"
                       :key="workout.id || index"
+                      @click="viewWorkoutDetails(workout)"
                     >
                       <div class="workout-info">
                         <div class="workout-icon">
@@ -458,6 +453,7 @@ export default {
         role: 'Aluno'
       },
       showUserDropdown: false,
+      searchQuery: '',
       chartType: "orders",
       currentDate: new Date(),
       chart: null,
@@ -703,8 +699,48 @@ export default {
       const completed = this.monthlyStats.completedWorkouts || 0;
       return Math.min(Math.round((completed / goal) * 100), 100);
     },
+    filteredWorkouts() {
+      if (!this.searchQuery || this.searchQuery.trim() === '') {
+        return this.recentWorkouts;
+      }
+      
+      const query = this.searchQuery.toLowerCase().trim();
+      
+      return this.recentWorkouts.filter(workout => {
+        // Buscar por nome do treino
+        const nameMatch = workout.workoutName && 
+          workout.workoutName.toLowerCase().includes(query);
+        
+        // Buscar por nome da divisão
+        const divisionMatch = workout.divisionName && 
+          workout.divisionName.toLowerCase().includes(query);
+        
+        // Buscar por data formatada
+        const dateMatch = this.formatDate(workout.date).toLowerCase().includes(query);
+        
+        // Buscar por status
+        const statusMatch = this.getStatusText(workout.status).toLowerCase().includes(query);
+        
+        return nameMatch || divisionMatch || dateMatch || statusMatch;
+      });
+    },
   },
   methods: {
+    handleSearch() {
+      // Método chamado quando o usuário digita na busca
+      // O filtro é aplicado automaticamente via computed property
+    },
+    clearSearch() {
+      this.searchQuery = '';
+    },
+    viewWorkoutDetails(workout) {
+      // Navega para a página de histórico com o ID do treino
+      this.$router.push({
+        name: 'StudentHistory',
+        params: { workoutId: workout.id },
+        query: { workoutId: workout.id }
+      });
+    },
     async fetchRecentWorkouts() {
       try {
         const token = sessionStorage.getItem('token');
@@ -1817,7 +1853,7 @@ body {
 
 .header {
   background-color: #ffffff;
-  padding: 20px 0;
+  padding: 24px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1855,12 +1891,19 @@ body {
 
 .search-bar input {
   width: 300px;
-  padding: 10px 15px 10px 40px;
+  padding: 10px 40px 10px 40px;
   border: none;
   background-color: #f5f5f5;
   border-radius: 8px;
   font-size: 14px;
   color: #666;
+  transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+  outline: none;
+  background-color: #fff;
+  box-shadow: 0 0 0 2px #2563eb;
 }
 
 .search-bar input::placeholder {
@@ -1876,6 +1919,24 @@ body {
   font-family: 'Font Awesome 6 Free' !important;
   font-weight: 900 !important;
   font-style: normal !important;
+}
+
+.clear-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.2s ease;
+  font-family: 'Font Awesome 6 Free' !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+}
+
+.clear-icon:hover {
+  color: #2563eb;
 }
 
 .notification-icon {
@@ -2779,7 +2840,16 @@ body {
   background: white;
   width: 100%;
   min-width: 0;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.workout-item.clickable {
+  cursor: pointer;
+}
+
+.workout-item.clickable:hover {
+  background-color: #f0f7ff;
+  transform: translateX(2px);
 }
 
 .workout-item:hover {
@@ -2994,17 +3064,16 @@ body {
   justify-content: center;
   font-size: 14px;
   color: #333;
-  border-radius: 50%;
   cursor: pointer;
-  transition: background 0.2s;
   font-weight: 500;
   position: relative;
-  gap: 4px;
   padding-bottom: 4px;
 }
 
 .day-number {
   line-height: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .workout-indicator {
@@ -3028,14 +3097,35 @@ body {
   }
 }
 
-.day:hover:not(.today):not(.other-month) {
+.day:hover:not(.today):not(.other-month)::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
   background: #f0f0f0;
+  border-radius: 50%;
+  z-index: 0;
 }
 
 .day.today {
-  background: #2563eb;
   color: white;
   font-weight: 600;
+}
+
+.day.today::before {
+  content: "";
+  position: absolute;
+  top: calc(50% - 2px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  background: #2563eb;
+  border-radius: 50%;
+  z-index: 0;
 }
 
 .day.other-month {

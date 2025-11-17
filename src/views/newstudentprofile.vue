@@ -732,12 +732,12 @@ html {
 .background-image {
   position: absolute;
   inset: 0;
-  background-image: url("https://oriobranco.net/wp-content/uploads/2024/02/ramon-dino-0103.jpg");
+  background-image: v-bind('`url(${studentData.avatar})`');
   background-size: cover;
   background-position: center center;
   filter: blur(60px);
   transform: scale(1.1);
-  opacity: 0.3;
+  opacity: 0.6;
 }
 
 .background-gradient {

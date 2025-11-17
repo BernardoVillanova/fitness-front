@@ -194,6 +194,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
@@ -363,6 +364,18 @@ const clearFilters = () => {
 // Lifecycle
 onMounted(() => {
   fetchWorkoutHistory()
+  
+  // Verificar se foi passado um workoutId para abrir o modal automaticamente
+  const route = useRoute()
+  if (route.query.workoutId) {
+    // Aguardar carregamento dos dados
+    setTimeout(() => {
+      const workout = workoutHistory.value.find(w => w.id === route.query.workoutId)
+      if (workout) {
+        selectWorkout(workout)
+      }
+    }, 500)
+  }
 })
 </script>
 
