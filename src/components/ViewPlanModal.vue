@@ -287,13 +287,13 @@ export default {
       let totalTime = 0;
       this.plan.divisions.forEach(division => {
         division.exercises?.forEach(exercise => {
-          const executionTime = (exercise.sets || 0) * 30; // 30s por série
-          const restTime = (exercise.sets || 0) * (exercise.restTime || 60); // tempo de descanso
+          const executionTime = (exercise.sets || 0) * 30;
+          const restTime = (exercise.sets || 0) * (exercise.restTime || 60);
           totalTime += executionTime + restTime;
         });
       });
       
-      return Math.round(totalTime / 60); // converter para minutos
+      return Math.round(totalTime / 60);
     },
     
     getDivisionDuration(division) {
@@ -326,7 +326,7 @@ export default {
         }
       });
       
-      return Array.from(allGroups).slice(0, 8); // Limitar a 8 grupos
+      return Array.from(allGroups).slice(0, 8);
     },
     
     getUniqueEquipments() {
@@ -334,7 +334,7 @@ export default {
       const equipments = new Set();
       this.plan.divisions.forEach(division => {
         division.exercises?.forEach(exercise => {
-          // Tenta pegar o nome do equipamento de diferentes formas
+         
           let equipmentName = '';
           if (exercise.equipment && typeof exercise.equipment === 'object') {
             equipmentName = exercise.equipment.name || exercise.equipment.label || 'Equipamento';
@@ -345,20 +345,20 @@ export default {
           } else {
             equipmentName = 'Equipamento';
           }
-          // Só adiciona se não for vazio
+         
           if (equipmentName && equipmentName !== 'undefined') {
             equipments.add(equipmentName);
           }
         });
       });
-      return Array.from(equipments).slice(0, 6); // Limitar a 6 equipamentos
+      return Array.from(equipments).slice(0, 6);
     },
     
     getImageUrl(imagePath) {
       if (!imagePath) return null;
       if (typeof imagePath !== 'string') return null;
       if (imagePath.startsWith('http')) return imagePath;
-      // Se o caminho não começar com /uploads, adicionar
+     
       let path = imagePath;
       if (!imagePath.startsWith('/uploads')) {
         path = `/uploads/${imagePath.replace(/^\/*/, '')}`;
@@ -367,7 +367,7 @@ export default {
     },
 
     onImageError(event) {
-      // Esconde a imagem e mostra o placeholder
+     
       event.target.style.display = 'none';
       const placeholder = event.target.parentElement.querySelector('.exercise-placeholder');
       if (placeholder) {
@@ -376,7 +376,7 @@ export default {
     },
 
     onImageLoad(event) {
-      // Esconde o placeholder se a imagem carregar
+     
       const placeholder = event.target.parentElement.querySelector('.exercise-placeholder');
       if (placeholder) {
         placeholder.style.display = 'none';

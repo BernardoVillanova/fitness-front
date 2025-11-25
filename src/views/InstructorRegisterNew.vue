@@ -345,11 +345,11 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Get userId from query params
+
 const route = router.currentRoute.value
 const userId = route.query.userId
 
-// Notification state
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -366,7 +366,7 @@ const showNotification = (type, title, message) => {
   }
 }
 
-// Steps configuration
+
 const steps = [
   { label: 'Profissional', title: 'Dados Profissionais', subtitle: 'Informações sobre sua carreira' },
   { label: 'Qualificações', title: 'Certificações e Especializações', subtitle: 'Suas qualificações e áreas de atuação' },
@@ -383,7 +383,7 @@ const searchResults = ref([])
 const loadingStudents = ref(false)
 let searchTimeout = null
 
-// Form data
+
 const form = ref({
   userId: userId || '',
   cref: '',
@@ -400,7 +400,7 @@ const form = ref({
   students: []
 })
 
-// Available specialties
+
 const availableSpecialties = [
   'Musculação',
   'Funcional',
@@ -418,7 +418,7 @@ const availableSpecialties = [
   'Atletas'
 ]
 
-// Days of week
+
 const daysOfWeek = [
   { label: 'Dom', value: 'Domingo' },
   { label: 'Seg', value: 'Segunda' },
@@ -429,7 +429,7 @@ const daysOfWeek = [
   { label: 'Sáb', value: 'Sábado' }
 ]
 
-// Methods
+
 const addCertification = () => {
   const cert = certInput.value.trim()
   if (cert && !form.value.certifications.includes(cert)) {
@@ -460,10 +460,10 @@ const searchStudents = () => {
         }
       }
       
-      // Usar rota pública que não requer autenticação
+     
       const response = await axios.get(`${API_URL}/api/students/public-search`, config)
       
-      // Filter out already selected students and students with instructor
+     
       const filtered = response.data.filter(student => {
         const alreadySelected = form.value.students.some(s => s._id === student._id)
         const hasInstructor = student.instructorId && student.instructorId !== null
@@ -488,7 +488,7 @@ const toggleStudent = (student) => {
   } else {
     form.value.students.splice(index, 1)
   }
-  // Remove from search results
+ 
   searchResults.value = searchResults.value.filter(s => s._id !== student._id)
 }
 
@@ -600,16 +600,14 @@ const submitForm = async () => {
     }
 
     const { data } = await axios.post(`${API_URL}/api/instructors`, instructorPayload)
-    
-    console.log('✅ Instrutor criado:', data)
-    
+    console.log('data: ', data);
+        
     showNotification('success', 'Cadastro Realizado!', 'Você será redirecionado para o login.')
     
     setTimeout(() => {
       router.push('/login')
     }, 2000)
   } catch (error) {
-    console.error('❌ Erro ao cadastrar:', error)
     showNotification('error', 'Erro no Cadastro', error.response?.data?.message || error.message || 'Erro ao cadastrar instrutor')
   } finally {
     isSubmitting.value = false

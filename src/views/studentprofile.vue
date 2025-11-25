@@ -333,7 +333,7 @@ import api from '@/api';
 const themeStore = useThemeStore();
 const { isDarkMode } = storeToRefs(themeStore);
 
-// Notification system
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -354,11 +354,11 @@ const loading = ref(false);
 const saving = ref(false);
 const studentId = ref(null);
 
-// Goals state
+
 const goals = ref([]);
 const currentGoalIndex = ref(0);
 
-// Function to add a new goal to the form
+
 const addGoal = () => {
   goals.value.push({
     description: '',
@@ -366,20 +366,20 @@ const addGoal = () => {
     priority: '',
     status: 'active'
   });
-  // Navegar para a nova meta adicionada
+ 
   currentGoalIndex.value = goals.value.length - 1;
 };
 
-// Function to remove a goal from the form
+
 const removeGoal = (index) => {
   goals.value.splice(index, 1);
-  // Ajustar o índice atual se necessário
+ 
   if (currentGoalIndex.value >= goals.value.length && currentGoalIndex.value > 0) {
     currentGoalIndex.value = goals.value.length - 1;
   }
 };
 
-// Carousel navigation functions
+
 const nextGoal = () => {
   if (currentGoalIndex.value < goals.value.length - 1) {
     currentGoalIndex.value++;
@@ -408,7 +408,7 @@ const studentData = reactive({
 
 const originalData = ref({});
 
-// Computed para verificar se perfil está incompleto
+
 const isProfileIncomplete = computed(() => {
   return !studentData.height || !studentData.weight;
 });
@@ -419,7 +419,6 @@ const fetchProfile = async () => {
     const storedUser = sessionStorage.getItem('user');
     
     if (!storedUser) {
-      console.error('Nenhum usuario no sessionStorage');
       useFallbackData();
       loading.value = false;
       return;
@@ -427,22 +426,20 @@ const fetchProfile = async () => {
 
     const userData = JSON.parse(storedUser);
     
-    // Buscar dados do User primeiro (tem name, email, phone, birthDate, cpf)
+   
     const userId = userData.id || userData._id;
     
     if (!userId) {
-      console.error('Nenhum ID encontrado no userData');
       useFallbackData();
       loading.value = false;
       return;
     }
 
-    // Buscar Student pelo userId usando a rota correta
+   
     const studentResponse = await api.get(`/students/user/${userId}`);
     const studentData_API = studentResponse.data;
     
     if (!studentData_API) {
-      console.error('Student não encontrado para este userId');
       useFallbackData();
       loading.value = false;
       return;
@@ -450,13 +447,13 @@ const fetchProfile = async () => {
     
     studentId.value = studentData_API._id;
     
-    // Buscar também os dados atualizados do User via userId do Student
+   
     let userName = userData.name || '';
     let userEmail = userData.email || '';
     let userPhone = userData.phone || '';
     let userBirthDate = userData.birthDate || '';
     
-    // Se o Student tem userId populado com dados do User, usar esses dados
+   
     if (studentData_API.userId && typeof studentData_API.userId === 'object') {
       userName = studentData_API.userId.name || userName;
       userEmail = studentData_API.userId.email || userEmail;
@@ -464,7 +461,7 @@ const fetchProfile = async () => {
       userBirthDate = studentData_API.userId.birthDate || userBirthDate;
     }
     
-    // Extrair dados físicos (suporta estrutura antiga e nova)
+   
     const height = studentData_API.personalInfo?.currentHeight || 
                    studentData_API.personalInfo?.height || 
                    '';
@@ -472,43 +469,43 @@ const fetchProfile = async () => {
                    studentData_API.personalInfo?.weight || 
                    '';
     
-    // Extrair goal da estrutura correta
+   
     const goalType = studentData_API.personalInfo?.preferences?.trainingGoalType || 
                      studentData_API.goals?.primary?.type || 
                      '';
     
-    // Extrair experiência de treino
+   
     const trainingExp = studentData_API.personalInfo?.trainingExperience || 'intermediario';
     
-    // Extrair condições médicas
+   
     const medicalNotes = studentData_API.healthRestrictions?.generalNotes ||
                          studentData_API.healthRestrictions?.notes || 
                          '';
     const chronicConditions = studentData_API.healthRestrictions?.chronicConditions || [];
     
-    // Extrair medicamentos
+   
     const meds = studentData_API.healthRestrictions?.medications || [];
     
-    // Preencher com dados do User e Student
-    // Suporta estrutura antiga e nova do banco
+   
+   
     Object.assign(studentData, {
-      // Dados do User
+     
       name: userName,
       email: userEmail,
       phone: userPhone,
       birthDate: userBirthDate ? new Date(userBirthDate).toISOString().split('T')[0] : '',
       
-      // Dados físicos do Student (personalInfo)
+     
       height: height || '',
       weight: weight || '',
       
-      // Objetivo dos goals do Student
+     
       goal: goalType || '',
       
-      // Nível de atividade do personalInfo (trainingExperience)
+     
       activityLevel: trainingExp || 'intermediario',
       
-      // Restrições de saúde
+     
       medicalConditions: medicalNotes || 
                          (chronicConditions.length > 0 
                            ? chronicConditions.map(c => c.name || c).join(', ') 
@@ -520,17 +517,17 @@ const fetchProfile = async () => {
                      }).filter(m => m).join(', ')
                    : '',
       
-      // Avatar - construir URL completa do backend
+     
       avatar: (() => {
         const avatarPath = studentData_API.userId?.avatar || userData.avatar;
         if (avatarPath && avatarPath.startsWith('/uploads/')) {
-          // Se o avatar está salvo como caminho relativo, adicionar a URL do backend
+         
           return `http://localhost:3000${avatarPath}`;
         } else if (avatarPath && (avatarPath.startsWith('http://') || avatarPath.startsWith('https://'))) {
-          // Se já é uma URL completa, usar diretamente
+         
           return avatarPath;
         } else {
-          // Fallback para avatar gerado
+         
           return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=2563eb&color=fff&size=120`;
         }
       })()
@@ -538,8 +535,7 @@ const fetchProfile = async () => {
 
     originalData.value = { ...studentData };
   } catch (error) {
-    console.error('Erro ao buscar perfil:', error);
-    console.error('Detalhes do erro:', error.response?.data);
+    console.log('error: ', error);
     useFallbackData();
   } finally {
     loading.value = false;
@@ -590,7 +586,7 @@ const saveProfile = async () => {
     const userData = JSON.parse(storedUser);
     const userId = userData.id || userData._id;
     
-    // Atualizar dados do User (name, email, phone, birthDate)
+   
     if (userId) {
       const userUpdateData = {
         name: studentData.name,
@@ -601,13 +597,13 @@ const saveProfile = async () => {
       
       await api.put(`/auth/user/${userId}`, userUpdateData);
       
-      // Atualizar sessionStorage com novos dados
+     
       const updatedUser = { ...userData, ...userUpdateData };
       sessionStorage.setItem('user', JSON.stringify(updatedUser));
     }
     
-    // Atualizar dados do Student (personalInfo, healthRestrictions, goals)
-    // Usa a estrutura correta do modelo Student
+   
+   
     const studentUpdateData = {
       personalInfo: {
         currentHeight: studentData.height ? Number(studentData.height) : null,
@@ -646,13 +642,11 @@ const saveProfile = async () => {
     const { data } = await api.put(`/students/${studentId.value}`, studentUpdateData);
     console.log('Student atualizado:', data);
     
-    // Atualizar dados originais
+   
     originalData.value = { ...studentData };
     
     showNotification('success', 'Sucesso!', 'Perfil atualizado com sucesso!');
   } catch (error) {
-    console.error('Erro ao salvar perfil:', error);
-    console.error('Detalhes do erro:', error.response?.data);
     showNotification('error', 'Erro ao Salvar', `Erro ao salvar perfil: ${error.response?.data?.message || 'Tente novamente.'}`);
   } finally {
     saving.value = false;
@@ -663,13 +657,13 @@ const handleAvatarUpload = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validar tipo de arquivo
+ 
   if (!file.type.startsWith('image/')) {
     showNotification('error', 'Arquivo Inválido', 'Por favor, selecione uma imagem válida.');
     return;
   }
 
-  // Validar tamanho (max 5MB)
+ 
   if (file.size > 5 * 1024 * 1024) {
     showNotification('error', 'Arquivo Muito Grande', 'A imagem deve ter no máximo 5MB.');
     return;
@@ -685,29 +679,29 @@ const handleAvatarUpload = async (event) => {
     const userData = JSON.parse(storedUser);
     const userId = userData.id || userData._id;
     
-    // Criar FormData para upload
+   
     const formData = new FormData();
     formData.append('avatar', file);
 
-    // Upload da imagem
+   
     const response = await api.post(`/auth/user/${userId}/avatar`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
 
-    // Atualizar avatar localmente
+   
     if (response.data.avatarUrl) {
-      // Construir URL completa do avatar
+     
       const avatarUrl = response.data.avatarUrl.startsWith('/uploads/') 
         ? `http://localhost:3000${response.data.avatarUrl}`
         : response.data.avatarUrl;
       
       studentData.avatar = avatarUrl;
-      userData.avatar = response.data.avatarUrl; // Salvar caminho relativo no sessionStorage
+      userData.avatar = response.data.avatarUrl;
       sessionStorage.setItem('user', JSON.stringify(userData));
       
-      // Forçar atualização da página para refletir mudanças na NavBar
+     
       window.location.reload();
       
       showNotification('success', 'Sucesso!', 'Foto de perfil atualizada com sucesso!');
@@ -723,7 +717,7 @@ onMounted(() => {
   fetchGoals();
 });
 
-// Goals functions
+
 const fetchGoals = async () => {
   try {
     const storedUser = sessionStorage.getItem('user');
@@ -735,7 +729,7 @@ const fetchGoals = async () => {
     const studentResponse = await api.get(`/students/user/${userId}`);
     const studentData_API = studentResponse.data;
     
-    // Buscar metas de goals.personal (estrutura do banco)
+   
     const personalGoals = studentData_API.goals?.personal || [];
     
     goals.value = personalGoals.map(goal => ({

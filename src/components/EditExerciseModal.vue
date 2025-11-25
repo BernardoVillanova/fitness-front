@@ -458,7 +458,7 @@ export default {
   },
   methods: {
     loadExerciseData() {
-      // Carregar dados do exercício existente
+     
       this.formData = {
         name: this.exercise.name || '',
         description: this.exercise.description || '',
@@ -472,7 +472,7 @@ export default {
         imageBase64: null
       };
 
-      // Carregar imagem existente
+     
       if (this.exercise.image) {
         this.imagePreview = this.getImageUrl(this.exercise.image);
       }
@@ -489,7 +489,7 @@ export default {
     processImage(file) {
       this.shouldRemoveImage = false;
       
-      // Para GIFs, manter o formato original sem processamento
+     
       if (file.type === 'image/gif') {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -500,7 +500,7 @@ export default {
         return;
       }
 
-      // Para outros formatos, comprimir mantendo o tipo original
+     
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -524,7 +524,7 @@ export default {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Manter o formato original
+         
           const mimeType = file.type || 'image/jpeg';
           const quality = mimeType === 'image/png' ? 1.0 : 0.85;
           const base64 = canvas.toDataURL(mimeType, quality);
@@ -594,7 +594,7 @@ export default {
       this.errorMessage = '';
 
       try {
-        // Preparar dados para envio
+       
         const updateData = {
           ...this.formData,
           _id: this.exercise._id,
@@ -603,7 +603,6 @@ export default {
 
         this.$emit('save', updateData);
       } catch (error) {
-        console.error('❌ Erro ao salvar exercício:', error);
         this.errorMessage = 'Erro ao salvar exercício. Tente novamente.';
       } finally {
         this.isSubmitting = false;

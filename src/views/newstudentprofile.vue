@@ -245,10 +245,9 @@ export default {
   },
   computed: {
     availableDetails() {
-      console.log('availableDetails - studentData:', this.studentData);
       const details = [];
       
-      // Objetivo
+     
       if (this.studentData.goal) {
         details.push({
           label: 'Objetivo',
@@ -256,7 +255,7 @@ export default {
         });
       }
       
-      // Experiência em Treino
+     
       if (this.studentData.experience) {
         details.push({
           label: 'Experiência em Treino',
@@ -264,7 +263,7 @@ export default {
         });
       }
       
-      // Idade
+     
       if (this.studentData.age) {
         details.push({
           label: 'Idade',
@@ -272,7 +271,7 @@ export default {
         });
       }
       
-      // Data de Nascimento
+     
       if (this.studentData.birthDate) {
         details.push({
           label: 'Data de Nascimento',
@@ -280,7 +279,7 @@ export default {
         });
       }
       
-      // Gênero
+     
       if (this.studentData.gender) {
         details.push({
           label: 'Gênero',
@@ -288,7 +287,7 @@ export default {
         });
       }
       
-      // Academia
+     
       if (this.studentData.gym) {
         details.push({
           label: 'Academia',
@@ -296,7 +295,7 @@ export default {
         });
       }
       
-      // Plano Ativo
+     
       if (this.studentData.activePlan) {
         details.push({
           label: 'Plano Ativo',
@@ -304,7 +303,7 @@ export default {
         });
       }
       
-      // IMC
+     
       if (this.studentData.imc) {
         details.push({
           label: 'IMC',
@@ -312,7 +311,7 @@ export default {
         });
       }
       
-      // Total de Treinos
+     
       if (this.studentData.totalWorkouts > 0) {
         details.push({
           label: 'Treinos Realizados',
@@ -320,7 +319,7 @@ export default {
         });
       }
       
-      // Último Treino
+     
       if (this.studentData.lastWorkout) {
         details.push({
           label: 'Último Treino',
@@ -328,7 +327,7 @@ export default {
         });
       }
       
-      // Retornar apenas os primeiros 4 para manter o layout
+     
       return details.slice(0, 4);
     }
   },
@@ -342,7 +341,7 @@ export default {
         'geral': 'Geral'
       };
       const label = categoryMap[category?.toLowerCase()] || category;
-      // Garantir que a primeira letra seja maiúscula
+     
       return label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
     },
     getPriorityLabel(priority) {
@@ -374,7 +373,6 @@ export default {
         const storedUser = sessionStorage.getItem('user');
         
         if (!storedUser) {
-          console.error('Nenhum usuário no sessionStorage');
           this.loading = false;
           return;
         }
@@ -383,22 +381,21 @@ export default {
         const userId = userData.id || userData._id;
         
         if (!userId) {
-          console.error('Nenhum ID encontrado no userData');
           this.loading = false;
           return;
         }
 
-        // Buscar dados do estudante
+       
         const studentResponse = await api.get(`/students/user/${userId}`);
         const studentData_API = studentResponse.data;
         
         if (studentData_API) {
-          // Buscar nome e email do User populado
+         
           const userName = studentData_API.userId?.name || userData.name || '';
           const userEmail = studentData_API.userId?.email || userData.email || '';
           const userPhone = studentData_API.userId?.phone || userData.phone || '';
           
-          // Buscar altura e peso de personalInfo
+         
           const height = studentData_API.personalInfo?.currentHeight || 
                          studentData_API.personalInfo?.height || 
                          null;
@@ -406,19 +403,17 @@ export default {
                          studentData_API.personalInfo?.weight || 
                          null;
           
-          // Calcular IMC se tiver altura e peso
+         
           let imc = null;
           if (height && weight && height > 0) {
             const heightInMeters = height / 100;
             imc = (weight / (heightInMeters * heightInMeters)).toFixed(1);
           }
           
-          // Calcular idade a partir da data de nascimento
-          const birthDate = studentData_API.birthDate; // birthDate está no nível raiz, não em personalInfo
+         
+          const birthDate = studentData_API.birthDate;
           let age = null;
           let birthDateFormatted = '';
-          
-          console.log('birthDate original:', birthDate);
           
           if (birthDate) {
             const birth = new Date(birthDate);
@@ -429,12 +424,11 @@ export default {
               age--;
             }
             
-            // Data de nascimento formatada
+           
             birthDateFormatted = birth.toLocaleDateString('pt-BR');
-            console.log('birthDateFormatted:', birthDateFormatted);
           }
           
-          // Gênero traduzido
+         
           const gender = studentData_API.personalInfo?.gender || '';
           const genderMap = {
             'male': 'Masculino',
@@ -443,7 +437,7 @@ export default {
           };
           const genderLabel = genderMap[gender] || '';
           
-          // Objetivo traduzido
+         
           const goalType = studentData_API.personalInfo?.preferences?.trainingGoalType || '';
           const goalMap = {
             'hipertrofia': 'Hipertrofia',
@@ -455,7 +449,7 @@ export default {
           };
           const goalLabel = goalMap[goalType] || '';
           
-          // Experiência traduzida
+         
           const experienceLevel = studentData_API.personalInfo?.trainingExperience || '';
           const experienceMap = {
             'iniciante': 'Iniciante',
@@ -465,7 +459,7 @@ export default {
           };
           const experienceLabel = experienceMap[experienceLevel] || '';
           
-          // Montar texto de condições médicas - usar mesma lógica do studentprofile
+         
           let medicalConditions = 'Nenhuma condição médica registrada';
           const healthRestrictions = studentData_API.healthRestrictions || {};
           
@@ -478,7 +472,7 @@ export default {
             medicalConditions = chronicConditions.map(c => c.name || c).join(', ');
           }
           
-          // Buscar nome da academia
+         
           let gymName = '';
           if (studentData_API.gymId) {
             try {
@@ -489,7 +483,7 @@ export default {
             }
           }
           
-          // Buscar dados do instrutor
+         
           if (studentData_API.instructorId && typeof studentData_API.instructorId === 'object') {
             const instructorData_API = studentData_API.instructorId;
             
@@ -498,7 +492,7 @@ export default {
             const instructorPhone = instructorData_API.userId?.phone || '';
             const instructorAvatarPath = instructorData_API.userId?.avatar || '';
             
-            // Especialização e experiência
+           
             const specialization = instructorData_API.specialization || '';
             const experience = instructorData_API.experience || '';
             
@@ -521,7 +515,7 @@ export default {
             };
           }
           
-          // Buscar plano ativo
+         
           let activePlan = '';
           if (studentData_API.workoutPlanId) {
             try {
@@ -532,17 +526,17 @@ export default {
             }
           }
           
-          // Buscar total de treinos e último treino
+         
           let totalWorkouts = 0;
           let lastWorkout = '';
           try {
             const sessionsResponse = await api.get(`/workout-sessions/student/${studentData_API._id}`);
             const sessions = sessionsResponse.data || [];
             
-            // Total de treinos completados
+           
             totalWorkouts = sessions.filter(s => s.status === 'completed').length;
             
-            // Último treino
+           
             if (sessions.length > 0) {
               const sortedSessions = sessions.sort((a, b) => {
                 const dateA = new Date(a.date.split('/').reverse().join('-'));
@@ -562,10 +556,10 @@ export default {
               }
             }
           } catch (err) {
-            console.log('Erro ao buscar sessões:', err);
+            console.log('err: ', err);
           }
           
-          // Construir URL do avatar
+         
           const avatarPath = studentData_API.userId?.avatar || userData.avatar;
           let avatarUrl;
           if (avatarPath && avatarPath.startsWith('/uploads/')) {
@@ -596,10 +590,9 @@ export default {
             medicalConditions: medicalConditions
           };
           
-          console.log('Dados carregados:', this.studentData);
         }
         
-        // Buscar metas pessoais
+       
         const personalGoals = studentData_API.goals?.personal || [];
         this.goals = personalGoals.map(goal => ({
           id: goal._id,
@@ -609,22 +602,21 @@ export default {
           status: goal.achieved ? 'completed' : 'active'
         }));
         
-        console.log('Metas carregadas:', this.goals);
       } catch (error) {
-        console.error('Erro ao buscar perfil:', error);
+        console.log('error: ', error);
       } finally {
         this.loading = false;
       }
     },
     formatPhone(phone) {
       if (!phone) return '';
-      // Remove tudo que não é número
+     
       const numbers = phone.replace(/\D/g, '');
-      // Formata como (XX) XXXXX-XXXX
+     
       if (numbers.length === 11) {
         return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
       }
-      // Formata como (XX) XXXX-XXXX
+     
       if (numbers.length === 10) {
         return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
       }
@@ -632,10 +624,10 @@ export default {
     },
     contactInstructor() {
       if (this.instructorData.email) {
-        // Abrir cliente de e-mail
+       
         window.location.href = `mailto:${this.instructorData.email}?subject=Contato do Aluno ${this.studentData.name}`;
       } else if (this.instructorData.phone) {
-        // Abrir WhatsApp se tiver telefone
+       
         const phone = this.instructorData.phone.replace(/\D/g, '');
         window.open(`https://wa.me/55${phone}`, '_blank');
       } else {
@@ -643,7 +635,7 @@ export default {
       }
     },
     viewSchedule() {
-      // Redirecionar para página de agendamento ou treinos
+     
       this.$router.push('/dashboard-student');
     }
   },

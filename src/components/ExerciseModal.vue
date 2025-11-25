@@ -453,14 +453,14 @@ export default {
     equipments: {
       handler(newVal) {
         if (newVal && newVal.length > 0) {
-          console.log('🖼️ Image URL would be:', this.getEquipmentImageUrl(newVal[0]));
+          console.log('Image URL:', this.getEquipmentImageUrl(newVal[0]));
         }
       },
       immediate: true
     },
     currentStep(newVal) {
       if (newVal === 2) {
-        console.log('📦 Available equipments:', this.equipments.length);
+        console.log('Validação de equip:', this.equipments.length);
       }
     }
   },
@@ -481,7 +481,7 @@ export default {
       }
     },
     processImage(file) {
-      // Para GIFs, manter o formato original sem processamento
+     
       if (file.type === 'image/gif') {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -492,7 +492,7 @@ export default {
         return;
       }
 
-      // Para outros formatos, comprimir mantendo o tipo original
+     
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -516,7 +516,7 @@ export default {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Manter o formato original (png, jpeg, webp)
+         
           const mimeType = file.type || 'image/jpeg';
           const quality = mimeType === 'image/png' ? 1.0 : 0.85;
           const base64 = canvas.toDataURL(mimeType, quality);
@@ -571,7 +571,6 @@ export default {
       try {
         this.$emit('save', this.formData);
       } catch (error) {
-        console.error('❌ Erro ao salvar exercício:', error);
         this.errorMessage = 'Erro ao salvar exercício. Tente novamente.';
       } finally {
         this.isSubmitting = false;
@@ -598,12 +597,12 @@ export default {
     getEquipmentImageUrl(equipment) {
       if (!equipment.image) return null;
       
-      // Se já for uma URL completa (http:// ou data:)
+     
       if (equipment.image.startsWith('http') || equipment.image.startsWith('data:')) {
         return equipment.image;
       }
       
-      // Se for um caminho relativo, construir URL completa
+     
       return `${API_URL}${equipment.image}`;
     }
   }

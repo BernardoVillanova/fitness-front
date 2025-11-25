@@ -200,53 +200,53 @@ import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import api from '@/api'
 
-// Theme
+
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Reactive data
+
 const selectedPeriod = ref('all')
 const selectedType = ref('all')
 const selectedWorkout = ref(null)
 const loading = ref(false)
 
-// History data from API
+
 const workoutHistory = ref([])
 
-// Fetch workout history from API
+
 const fetchWorkoutHistory = async () => {
   try {
     loading.value = true
     
-    // Buscar histórico completo (sem limite para ter todos os dados)
+   
     const response = await api.get('/workout-sessions/sessions/history', {
-      params: { limit: 1000 } // Buscar muitas sessões para estatísticas
+      params: { limit: 1000 }
     })
     
     if (response.data && response.data.sessions) {
       const sessions = response.data.sessions
       
       workoutHistory.value = sessions
-        .filter(session => session.status === 'completed') // Apenas completadas
+        .filter(session => session.status === 'completed')
         .map(session => {
-          // Calcular duração se não estiver definida
+         
           let duration = session.duration
           if (!duration && session.endTime && session.startTime) {
             duration = Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000)
           }
           
-          // Calcular completion percentage
+         
           let completion = 100
           if (session.completedExercises !== undefined && session.totalExercises) {
             completion = Math.round((session.completedExercises / session.totalExercises) * 100)
           }
           
-          // Estimar calorias baseado na duração (aprox 5 cal/min)
+         
           const estimatedCalories = duration ? Math.round(duration * 5) : 0
           
-          // Processar exercícios
+         
           const exerciseDetails = (session.exercises || []).map(ex => {
-            // Calcular quantos sets foram completados
+           
             const completedSets = ex.sets ? ex.sets.filter(s => s.completed).length : 0
             const totalSets = ex.sets ? ex.sets.length : 0
             
@@ -260,7 +260,7 @@ const fetchWorkoutHistory = async () => {
             }
           })
           
-          // Determinar tipo do treino
+         
           const workoutName = session.workoutName || session.workoutPlanId?.name || 'Treino'
           let type = 'Força'
           if (workoutName.toLowerCase().includes('cardio')) type = 'Cardio'
@@ -281,7 +281,7 @@ const fetchWorkoutHistory = async () => {
             notes: session.notes
           }
         })
-        .sort((a, b) => b.date - a.date) // Ordenar por data (mais recente primeiro)
+        .sort((a, b) => b.date - a.date)
     } else {
       workoutHistory.value = []
     }
@@ -293,11 +293,11 @@ const fetchWorkoutHistory = async () => {
   }
 }
 
-// Computed
+
 const filteredHistory = computed(() => {
   let filtered = workoutHistory.value
 
-  // Filter by period
+ 
   if (selectedPeriod.value !== 'all') {
     const now = new Date()
     const periodDays = {
@@ -310,7 +310,7 @@ const filteredHistory = computed(() => {
     filtered = filtered.filter(workout => workout.date >= cutoffDate)
   }
 
-  // Filter by type
+ 
   if (selectedType.value !== 'all') {
     filtered = filtered.filter(workout => workout.type === selectedType.value)
   }
@@ -329,7 +329,7 @@ const totalCalories = computed(() => {
   return filteredHistory.value.reduce((sum, workout) => sum + workout.calories, 0)
 })
 
-// Methods
+
 const formatDay = (date) => {
   return new Date(date).getDate().toString().padStart(2, '0')
 }
@@ -361,14 +361,14 @@ const clearFilters = () => {
   selectedType.value = 'all'
 }
 
-// Lifecycle
+
 onMounted(() => {
   fetchWorkoutHistory()
   
-  // Verificar se foi passado um workoutId para abrir o modal automaticamente
+ 
   const route = useRoute()
   if (route.query.workoutId) {
-    // Aguardar carregamento dos dados
+   
     setTimeout(() => {
       const workout = workoutHistory.value.find(w => w.id === route.query.workoutId)
       if (workout) {

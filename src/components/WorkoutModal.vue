@@ -793,7 +793,7 @@ import { getImageUrl as getImageUrlHelper } from '@/config'
 import NotificationModal from '@/components/NotificationModal.vue'
 import ConfirmationModal from '@/components/ConfirmationModal.vue'
 
-// Props
+
 const props = defineProps({
   show: {
     type: Boolean,
@@ -809,7 +809,7 @@ const props = defineProps({
   }
 })
 
-// Emits
+
 const emit = defineEmits([
   'close',
   'workout-finished',
@@ -817,7 +817,7 @@ const emit = defineEmits([
   'session-updated'
 ])
 
-// Reactive data
+
 const currentExerciseIndex = ref(0)
 const currentSetIndex = ref(0)
 const showExerciseInfo = ref(false)
@@ -827,7 +827,7 @@ const currentTime = ref(Date.now())
 const timerInterval = ref(null)
 const showRestModal = ref(false)
 
-// Notification system
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -844,7 +844,7 @@ const showNotification = (type, title, message) => {
   }
 }
 
-// Confirmation system
+
 const showConfirmation = ref(false)
 const confirmationConfig = ref({
   title: '',
@@ -873,7 +873,7 @@ const isEditingCompletedSet = ref(false)
 const isLoadingExercises = ref(false)
 const exercisesLoadAttempted = ref({})
 
-// Computed
+
 const allExercisesCompleted = computed(() => {
   if (!props.workoutSession) return false
   return props.workoutSession.exercises.every(ex => ex.completed)
@@ -922,7 +922,7 @@ const currentEquipment = computed(() => {
     return null
   }
 
-  // Extrair o ID como string se for um objeto
+ 
   const equipmentIdStr = typeof exercise.equipmentId === 'object' 
     ? exercise.equipmentId._id || exercise.equipmentId.toString()
     : exercise.equipmentId;
@@ -936,19 +936,19 @@ const currentEquipment = computed(() => {
   return equipment
 })
 
-// Watchers
+
 watch(() => props.show, (newValue) => {
   if (newValue) {
-    // Reset para o primeiro exercício quando o modal abrir
+   
     currentExerciseIndex.value = 0
     currentSetIndex.value = 0
     
-    // Encontrar o primeiro exercício não completo
+   
     const firstIncomplete = props.workoutSession?.exercises.findIndex(ex => !ex.completed)
     
     if (firstIncomplete !== -1) {
       currentExerciseIndex.value = firstIncomplete
-      // Encontrar primeira série não completa do exercício
+     
       const exercise = props.workoutSession.exercises[firstIncomplete]
       const firstIncompleteSet = exercise.sets.findIndex(set => !set.completed)
       if (firstIncompleteSet !== -1) {
@@ -956,20 +956,20 @@ watch(() => props.show, (newValue) => {
       }
     }
     
-    // Verificar se precisa do peso para exercícios corporais
+   
     checkBodyWeightRequirement()
     
-    // Iniciar timer
+   
     startTimer()
     
-    // Buscar detalhes dos exercícios em BACKGROUND (sem bloquear renderização)
+   
     if (props.workoutSession?.exercises && props.workoutSession.exercises.length > 0) {
-      // Marcar TODOS como já tentados IMEDIATAMENTE para evitar loading screen
+     
       props.workoutSession.exercises.forEach(ex => {
         exercisesLoadAttempted.value[ex.exerciseName] = true
       })
       
-      // Carregar em background sem bloquear
+     
       const promises = props.workoutSession.exercises.map(ex => {
         return fetchExerciseDetails(ex.exerciseName)
       })
@@ -979,16 +979,16 @@ watch(() => props.show, (newValue) => {
       })
     }
   } else {
-    // Parar timer quando fechar modal
+   
     stopTimer()
-    // Reset loading states
+   
     isLoadingExercises.value = false
     exercisesLoadAttempted.value = {}
   }
 })
 
 watch(() => currentExerciseIndex.value, () => {
-  // Reset série para primeira não completa quando trocar exercício
+ 
   const exercise = currentExercise.value
   
   if (exercise) {
@@ -996,36 +996,36 @@ watch(() => currentExerciseIndex.value, () => {
     currentSetIndex.value = firstIncompleteSet !== -1 ? firstIncompleteSet : 0
     checkBodyWeightRequirement()
     
-    // Aplicar peso corporal a todas as séries se necessário
+   
     applyBodyWeightToAllSets()
     
-    // Carregar detalhes do exercício atual se ainda não foram carregados
+   
     if (!exerciseDetails.value[exercise.exerciseName]) {
       fetchExerciseDetails(exercise.exerciseName)
     }
   }
 })
 
-// Watcher para aplicar peso corporal automaticamente
+
 watch(() => [userWeight.value, currentSet.value, isBodyWeightExercise.value], ([newUserWeight, newCurrentSet, isBodyWeight]) => {
   if (isBodyWeight && newUserWeight && newCurrentSet && !newCurrentSet.completed && !newCurrentSet.weight) {
     newCurrentSet.weight = newUserWeight
   }
 }, { immediate: true })
 
-// Lifecycle hooks
+
 onMounted(() => {
   if (props.show) {
     startTimer()
     
-    // CARREGAR EXERCÍCIOS SE O MODAL JÁ ESTIVER ABERTO NO MOUNT
+   
     if (props.workoutSession?.exercises && props.workoutSession.exercises.length > 0) {
-      // Marcar TODOS como já tentados IMEDIATAMENTE
+     
       props.workoutSession.exercises.forEach(ex => {
         exercisesLoadAttempted.value[ex.exerciseName] = true
       })
       
-      // Carregar em background
+     
       const promises = props.workoutSession.exercises.map(ex => {
         return fetchExerciseDetails(ex.exerciseName)
       })
@@ -1036,7 +1036,7 @@ onMounted(() => {
     }
   }
   
-  // Carregar peso do usuário salvo
+ 
   const savedWeight = localStorage.getItem('userWeight')
   if (savedWeight) {
     userWeight.value = parseFloat(savedWeight)
@@ -1050,7 +1050,7 @@ onUnmounted(() => {
   }
 })
 
-// Methods
+
 const getImageUrl = (imagePath) => {
   if (!imagePath) {
     return '';
@@ -1090,16 +1090,16 @@ const checkBodyWeightRequirement = () => {
 const setUserWeight = (weight) => {
   userWeight.value = weight
   showWeightInput.value = false
-  // Salvar no localStorage para próximas sessões
+ 
   localStorage.setItem('userWeight', weight.toString())
   
-  // Aplicar peso corporal ao set atual se for exercício de peso corporal
+ 
   if (isBodyWeightExercise.value && currentSet.value && !currentSet.value.completed) {
     currentSet.value.weight = weight
   }
 }
 
-// Função auxiliar para aplicar peso corporal a todas as séries não concluídas
+
 const applyBodyWeightToAllSets = () => {
   if (!isBodyWeightExercise.value || !userWeight.value) return
   
@@ -1115,12 +1115,12 @@ const applyBodyWeightToAllSets = () => {
 
 const fetchExerciseDetails = async (exerciseName) => {
   try {
-    // Verificar se já foi carregado (cache)
+   
     if (exerciseDetails.value[exerciseName]) {
       return
     }
     
-    // Buscar dados do usuário no sessionStorage
+   
     let studentData
     try {
       const rawData = sessionStorage.getItem('user')
@@ -1130,7 +1130,7 @@ const fetchExerciseDetails = async (exerciseName) => {
       return
     }
     
-    // Buscar apenas dados reais da API
+   
     if (studentData && studentData.id) {
       try {
         const studentResponse = await api.get(`/students/user/${studentData.id}`)
@@ -1145,7 +1145,7 @@ const fetchExerciseDetails = async (exerciseName) => {
             const exercise = response.data.exercises.find(ex => ex.name === exerciseName)
             
             if (exercise) {
-              // Atribuir imediatamente ao reactive object
+             
               exerciseDetails.value[exerciseName] = {
                 name: exercise.name,
                 description: exercise.description,
@@ -1158,9 +1158,9 @@ const fetchExerciseDetails = async (exerciseName) => {
                 equipmentId: exercise.equipmentId
               }
               
-              // Buscar equipamento se existir
+             
               if (exercise.equipmentId) {
-                // Extrair o ID como string se for um objeto
+               
                 const equipmentIdStr = typeof exercise.equipmentId === 'object' 
                   ? exercise.equipmentId._id || exercise.equipmentId.toString()
                   : exercise.equipmentId;
@@ -1209,25 +1209,25 @@ const formatRestTime = (seconds) => {
 const loadEquipmentDetails = async (equipmentId) => {
   try {
     
-    // Normalizar equipmentId para string
+   
     let equipmentIdStr = equipmentId;
     if (typeof equipmentId === 'object' && equipmentId !== null) {
       equipmentIdStr = equipmentId._id || equipmentId.toString();
     }
     
-    // Verificar se já foi carregado
+   
     if (equipmentDetails.value[equipmentIdStr]) {
       return equipmentDetails.value[equipmentIdStr];
     }
 
-    // Tentar buscar por ID específico
+   
     try {
       const response = await api.get(`/equipments/${equipmentIdStr}`);
       
       if (response.data) {
         let equipment = response.data;
         
-        // Normalizar resposta da API (pode vir como {equipment} ou diretamente)
+       
         if (response.data.equipment) {
           equipment = response.data.equipment;
         }
@@ -1238,7 +1238,7 @@ const loadEquipmentDetails = async (equipmentId) => {
         }
       }
     } catch (error) {
-      // Fallback: buscar na lista de todos os equipamentos
+     
       try {
         const allResponse = await api.get('/equipments');
         
@@ -1268,61 +1268,61 @@ const getExerciseCompletedSets = (exercise) => {
 const completeCurrentSet = () => {
   if (!currentSet.value || currentSet.value.completed) return
   
-  // Garantir que peso corporal seja aplicado antes de completar
+ 
   if (isBodyWeightExercise.value && userWeight.value && !currentSet.value.weight) {
     currentSet.value.weight = userWeight.value
   }
   
-  // Mostrar feedback de dificuldade
+ 
   showDifficultyFeedback.value = true
 }
 
 const submitDifficultyFeedback = (difficulty) => {
   currentSetDifficulty.value = difficulty
   
-  // Marcar série como completa
+ 
   const updatedSession = { ...props.workoutSession }
   const set = updatedSession.exercises[currentExerciseIndex.value].sets[currentSetIndex.value]
   set.completed = true
   set.completedAt = new Date()
   set.difficulty = difficulty
   
-  // Emitir atualização da sessão
+ 
   emit('session-updated', updatedSession)
   
   showDifficultyFeedback.value = false
   currentSetDifficulty.value = null
   
-  // Verificar se deve iniciar timer de descanso
+ 
   const isLastSet = currentSetIndex.value === totalSetsInExercise.value - 1
   if (!isLastSet) {
-    // Usar restTime do exercício ou padrão de 60 segundos
+   
     const restTime = currentExercise.value?.restTime || 60
     setTimeout(() => {
       startRestTimer(restTime)
     }, 500)
   } else {
-    // É a última série, marcar exercício como completo
+   
     markExerciseComplete(currentExerciseIndex.value)
   }
   
-  // Mover para próxima série
+ 
   if (!isLastSet) {
     currentSetIndex.value++
   }
 }
 
 const updateExerciseNotes = (notes) => {
-  // Criar uma cópia do workoutSession para não mutar props
+ 
   const updatedSession = { ...props.workoutSession }
   updatedSession.exercises[currentExerciseIndex.value].notes = notes
   
-  // Emitir atualização da sessão
+ 
   emit('session-updated', updatedSession)
 }
 
 const markExerciseComplete = (exIndex) => {
-  // Criar uma cópia do workoutSession para não mutar props
+ 
   const updatedSession = { ...props.workoutSession }
   const exercise = updatedSession.exercises[exIndex]
   exercise.completed = true
@@ -1333,15 +1333,15 @@ const markExerciseComplete = (exIndex) => {
     }
   })
   
-  // Atualizar contador
+ 
   updatedSession.completedExercises = updatedSession.exercises.filter(ex => ex.completed).length
   
-  // Mover para próximo exercício
+ 
   if (exIndex < updatedSession.exercises.length - 1) {
     currentExerciseIndex.value = exIndex + 1
   }
   
-  // Emitir atualização da sessão
+ 
   emit('session-updated', updatedSession)
 }
 
@@ -1400,7 +1400,7 @@ const finishWorkout = () => {
 }
 
 const handleOverlayClick = () => {
-  // Não fechar clicando fora durante treino
+ 
 }
 
 const confirmCloseWorkout = () => {
@@ -1422,7 +1422,7 @@ const confirmCloseWorkout = () => {
 const showExerciseDetails = async (exercise) => {  
   selectedExerciseInfo.value = exercise
   
-  // Buscar detalhes do exercício se ainda não temos
+ 
   if (!exerciseDetails.value[exercise.exerciseName]) {
     await fetchExerciseDetails(exercise.exerciseName)
   }
@@ -1468,15 +1468,15 @@ const confirmSkipExercise = async () => {
       reason: reason || 'Não informado'
     })
     
-    // Emitir evento para o componente pai atualizar os dados
+   
     emit('session-updated')
     
-    // Fechar modal e limpar
+   
     showSkipModal.value = false
     skipReason.value = ''
     customSkipReason.value = ''
     
-    // Ir para o próximo exercício se disponível
+   
     if (currentExerciseIndex.value < props.workoutSession.exercises.length - 1) {
       currentExerciseIndex.value++
       currentSetIndex.value = 0
@@ -1492,7 +1492,7 @@ const confirmSkipExercise = async () => {
   }
 }
 
-// Funções de edição pós-conclusão
+
 const editCompletedSet = () => {
   isEditingCompletedSet.value = true
 }
@@ -1501,15 +1501,15 @@ const saveEditedSet = async () => {
   try {
     loading.value = true
     
-    // Para exercícios de peso corporal, garantir que o peso seja o peso do usuário
+   
     if (isBodyWeightExercise.value && userWeight.value) {
       currentSet.value.weight = userWeight.value
     }
     
-    // Salvar no backend
+   
     await saveProgress()
     
-    // Sempre mostrar feedback de dificuldade após edição
+   
     isEditingCompletedSet.value = false
     showDifficultyFeedback.value = true
     currentSetDifficulty.value = currentSet.value
@@ -1524,13 +1524,13 @@ const saveEditedSet = async () => {
 
 const cancelEditSet = () => {
   isEditingCompletedSet.value = false
-  // Aqui poderíamos restaurar valores originais se necessário
+ 
 }
 
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return ''
   
-  // Extrair ID do YouTube de diferentes formatos de URL
+ 
   let videoId = ''
   
   if (url.includes('youtube.com/watch?v=')) {
@@ -1547,7 +1547,7 @@ const getYouTubeEmbedUrl = (url) => {
 const getYouTubeThumbnail = (url) => {
   if (!url) return ''
   
-  // Extrair ID do YouTube de diferentes formatos de URL
+ 
   let videoId = ''
   
   if (url.includes('youtube.com/watch?v=')) {
@@ -1558,47 +1558,47 @@ const getYouTubeThumbnail = (url) => {
     videoId = url.split('youtube.com/embed/')[1].split('?')[0]
   }
   
-  // Retornar thumbnail em alta qualidade do YouTube
+ 
   return videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : ''
 }
 
 const handleThumbnailError = (event) => {
-  // Se a thumbnail em alta qualidade falhar, tentar a versão padrão
+ 
   const img = event.target
   const currentSrc = img.src
   
   if (currentSrc.includes('maxresdefault.jpg')) {
-    // Tentar thumbnail padrão
+   
     const videoId = currentSrc.split('/vi/')[1].split('/')[0]
     img.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
   } else if (currentSrc.includes('hqdefault.jpg')) {
-    // Se até a padrão falhar, usar placeholder
+   
     img.src = 'https://via.placeholder.com/480x360/3b82f6/ffffff?text=Vídeo+Indisponível'
   }
 }
 
 const getCategoryColor = (category) => {
   const colors = {
-    'cardio': '#ef4444', // red
-    'força': '#3b82f6', // blue  
-    'flexibilidade': '#10b981', // green
-    'funcional': '#f59e0b', // amber
-    'resistência': '#8b5cf6', // violet
-    'aquecimento': '#06b6d4', // cyan
-    'alongamento': '#84cc16' // lime
+    'cardio': '#ef4444',
+    'força': '#3b82f6',
+    'flexibilidade': '#10b981',
+    'funcional': '#f59e0b',
+    'resistência': '#8b5cf6',
+    'aquecimento': '#06b6d4',
+    'alongamento': '#84cc16'
   }
-  return colors[category?.toLowerCase()] || '#6b7280' // gray default
+  return colors[category?.toLowerCase()] || '#6b7280'
 }
 
 const getDifficultyColor = (difficulty) => {
   const colors = {
-    'iniciante': '#10b981', // green
-    'intermediário': '#f59e0b', // amber
-    'intermediario': '#f59e0b', // amber (sem acento)
-    'avançado': '#ef4444', // red
-    'avancado': '#ef4444' // red (sem acento)
+    'iniciante': '#10b981',
+    'intermediário': '#f59e0b',
+    'intermediario': '#f59e0b',
+    'avançado': '#ef4444',
+    'avancado': '#ef4444'
   }
-  return colors[difficulty?.toLowerCase()] || '#6b7280' // gray default
+  return colors[difficulty?.toLowerCase()] || '#6b7280'
 }
 
 const getDifficultyText = (difficulty) => {

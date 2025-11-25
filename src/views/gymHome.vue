@@ -344,7 +344,7 @@ export default {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
     
-    // Dados mockados de academias para teste
+   
     const gyms = ref([
       {
         _id: '1',
@@ -485,9 +485,9 @@ export default {
   methods: {
     getGymImageUrl(imagePath) {
       if (!imagePath) return null;
-      // Se já é uma URL completa, retorna como está
+     
       if (imagePath.startsWith('http')) return imagePath;
-      // Se é um caminho relativo, adiciona a URL base
+     
       return `${API_URL}${imagePath}`;
     },
     openCreateModal() {
@@ -499,17 +499,17 @@ export default {
       try {
         const response = await getAllGyms();
         
-        // Se houver academias da API, usa elas, senão mantém os mockados
+       
         if (response.data && response.data.length > 0) {
           this.gyms = response.data.map(gym => ({
             ...gym,
             showMenu: false
           }));
         }
-        // Se não houver academias da API, mantém os dados mockados do setup
+       
       } catch (error) {
-        console.error('Error fetching gyms:', error);
-        // Em caso de erro, mantém os dados mockados
+        console.error('Academia 2:', error);
+       
       } finally {
         this.loading = false;
       }
@@ -538,7 +538,7 @@ export default {
     },
     async handleSubmit(formPayload) {
       try {
-        // Verifica se os dados estão na estrutura correta
+       
         const formData = formPayload?.data || formPayload;
         if (!formData || !formData.name) {
           throw new Error('Dados da academia não encontrados no payload');
@@ -555,12 +555,12 @@ export default {
         await this.fetchGyms();
         this.handleCancel();
       } catch (error) {
-        console.error('Error saving gym:', error);
+        console.error('Erro ao enviar acad:', error);
         this.showNotification('error', 'Erro', `${error.response?.data?.message || error.message || 'Erro ao salvar academia'}`);
       }
     },
     handleEdit(gym) {
-      // Fecha todos os dropdowns
+     
       this.gyms = this.gyms.map(g => ({
         ...g,
         showMenu: false
@@ -570,7 +570,7 @@ export default {
       this.showForm = true;
     },
     confirmDelete(gymId) {
-      // Fecha todos os dropdowns
+     
       this.gyms = this.gyms.map(gym => ({
         ...gym,
         showMenu: false
@@ -586,7 +586,7 @@ export default {
         this.showNotification('success', 'Sucesso', '✅ Academia excluída com sucesso!');
         await this.fetchGyms();
       } catch (error) {
-        console.error('Error deleting gym:', error);
+        console.error('Erro ao deletar:', error);
         this.showNotification('info', 'Informacao', '❌ Erro ao excluir academia. Tente novamente.');
       }
     },
@@ -595,7 +595,7 @@ export default {
       this.showForm = false;
     },
     openStudentManagement(gym) {
-      // Fecha todos os dropdowns
+     
       this.gyms = this.gyms.map(g => ({
         ...g,
         showMenu: false
@@ -609,7 +609,7 @@ export default {
       this.selectedGymForStudents = null;
     },
     handleStudentUpdated() {
-      // Recarrega os dados das academias quando alunos são atualizados
+     
       this.fetchGyms();
     },
   },

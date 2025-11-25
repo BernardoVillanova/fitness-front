@@ -110,7 +110,7 @@ export default {
     },
     iconType: {
       type: String,
-      default: 'info', // warning, danger, success, info
+      default: 'info',
       validator: value => ['warning', 'danger', 'success', 'info'].includes(value)
     },
     confirmText: {

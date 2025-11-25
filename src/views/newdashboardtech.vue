@@ -709,7 +709,7 @@ export default {
     const currentDate = ref(new Date());
     const loading = ref(false);
 
-    // Refs para tooltip do gráfico
+   
     const tooltipVisible = ref(false);
     const tooltipData = ref({ week: '', label: '', value: 0, color: '' });
     const tooltipPosition = ref({ x: 0, y: 0 });
@@ -746,14 +746,14 @@ export default {
     ];
 
     const workoutSessions = ref([]);
-    const allWorkoutSessions = ref([]); // Todas as sessões para cálculos de gráficos
-    const students = ref([]); // Lista de alunos para cálculo de engajamento
+    const allWorkoutSessions = ref([]);
+    const students = ref([]);
 
-    // Refs para animação de contagem
+   
     const animatedCompletedCount = ref(0);
     const animatedInProgressCount = ref(0);
 
-    // Header and stats data
+   
     const userData = ref({
       name: 'Instrutor',
       avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=2563eb&color=fff&size=48',
@@ -765,7 +765,7 @@ export default {
     const totalCompletedWorkouts = ref(0);
     const averageCompletionRate = ref(0);
 
-    // Gradientes de avatar para os alunos
+   
     const avatarGradients = [
       "linear-gradient(135deg, #2563eb, #3b82f6)",
       "linear-gradient(135deg, #2563eb, #3b82f6)",
@@ -779,13 +779,13 @@ export default {
       "linear-gradient(135deg, #2563eb, #3b82f6)",
     ];
 
-    // Computed para calcular a taxa de adesão baseado no período
+   
     const completionPercentage = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0 || totalStudents.value === 0) {
         return 0;
       }
       
-      // Filtra sessões baseado no período selecionado
+     
       const now = new Date();
       let filteredSessions = allWorkoutSessions.value;
       
@@ -811,13 +811,13 @@ export default {
       
       if (filteredSessions.length === 0) return 0;
       
-      // Contar alunos únicos que treinaram no período
+     
       const activeStudents = new Set();
       filteredSessions.forEach(session => {
         activeStudents.add(session.studentId);
       });
       
-      // Calcular taxa de adesão: (alunos ativos / total alunos) × 100
+     
       const percentage = Math.round((activeStudents.size / totalStudents.value) * 100);
       
       console.log(`📊 [Taxa de Adesão - ${selectedCompletionPeriod.value}]:`, {
@@ -831,7 +831,7 @@ export default {
       return percentage;
     });
 
-    // Computed para calcular o stroke-dashoffset baseado na porcentagem
+   
     const completionRate = computed(() => {
       const circumference = 502.65;
       const percentage = completionPercentage.value;
@@ -839,7 +839,7 @@ export default {
       return offset;
     });
 
-    // Computed para mensagem dinâmica baseada na taxa de adesão
+   
     const completionMessage = computed(() => {
       const percentage = completionPercentage.value;
       
@@ -856,13 +856,13 @@ export default {
       }
     });
 
-    // Computed para contar treinos completados baseado no período
+   
     const completedCount = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
       }
       
-      // Filtra sessões baseado no período selecionado
+     
       const now = new Date();
       let filteredSessions = allWorkoutSessions.value;
       
@@ -891,13 +891,13 @@ export default {
       ).length;
     });
 
-    // Computed para contar treinos em progresso baseado no período
+   
     const inProgressCount = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
       }
       
-      // Filtra sessões baseado no período selecionado
+     
       const now = new Date();
       let filteredSessions = allWorkoutSessions.value;
       
@@ -926,18 +926,18 @@ export default {
       ).length;
     });
 
-    // ===== DADOS REAIS DO MÊS PARA QUICK STATS =====
+   
     
-    // Total de alunos ativos (alunos com sessões no mês atual)
+   
     const activeStudentsThisMonth = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
-        return totalStudents.value || 0; // Fallback para total de alunos
+        return totalStudents.value || 0;
       }
       
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       
-      // Contar alunos únicos que tiveram sessões este mês
+     
       const uniqueStudents = new Set();
       allWorkoutSessions.value.forEach(session => {
         const sessionDate = new Date(session.date.split('/').reverse().join('-'));
@@ -949,7 +949,7 @@ export default {
       return uniqueStudents.size;
     });
 
-    // Novos alunos este mês (comparado com mês anterior)
+   
     const newStudentsThisMonth = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
@@ -959,7 +959,7 @@ export default {
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       
-      // Alunos que tiveram primeira sessão este mês
+     
       const studentsThisMonth = new Set();
       const studentsLastMonth = new Set();
       
@@ -975,7 +975,7 @@ export default {
         }
       });
       
-      // Alunos que estão neste mês mas não estavam no mês passado
+     
       let newStudents = 0;
       studentsThisMonth.forEach(studentId => {
         if (!studentsLastMonth.has(studentId)) {
@@ -986,7 +986,7 @@ export default {
       return newStudents;
     });
 
-    // Total de treinos realizados este mês
+   
     const workoutsCompletedThisMonth = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
@@ -1001,7 +1001,7 @@ export default {
       }).length;
     });
 
-    // Comparação de treinos com mês anterior (percentual)
+   
     const workoutsChangePercentage = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
@@ -1026,10 +1026,10 @@ export default {
       }
       
       const change = ((workoutsThisMonth - workoutsLastMonth) / workoutsLastMonth) * 100;
-      return Math.round(change * 10) / 10; // Arredondar para 1 casa decimal
+      return Math.round(change * 10) / 10;
     });
 
-    // Taxa de adesão (% de alunos ativos vs total de alunos)
+   
     const adherenceRate = computed(() => {
       if (totalStudents.value === 0) {
         return 0;
@@ -1037,10 +1037,10 @@ export default {
       
       const activeStudents = activeStudentsThisMonth.value;
       const rate = (activeStudents / totalStudents.value) * 100;
-      return Math.round(rate * 10) / 10; // Arredondar para 1 casa decimal
+      return Math.round(rate * 10) / 10;
     });
 
-    // Mudança na taxa de adesão comparado com mês anterior
+   
     const adherenceChangePercentage = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0 || totalStudents.value === 0) {
         return 0;
@@ -1050,7 +1050,7 @@ export default {
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       
-      // Alunos ativos este mês
+     
       const activeThisMonth = new Set();
       allWorkoutSessions.value.forEach(session => {
         const sessionDate = new Date(session.date.split('/').reverse().join('-'));
@@ -1059,7 +1059,7 @@ export default {
         }
       });
       
-      // Alunos ativos mês passado
+     
       const activeLastMonth = new Set();
       allWorkoutSessions.value.forEach(session => {
         const sessionDate = new Date(session.date.split('/').reverse().join('-'));
@@ -1076,10 +1076,10 @@ export default {
       }
       
       const change = ((rateThisMonth - rateLastMonth) / rateLastMonth) * 100;
-      return Math.round(change * 10) / 10; // Arredondar para 1 casa decimal
+      return Math.round(change * 10) / 10;
     });
 
-    // Taxa de Frequência Média - Quantas vezes por semana os alunos treinam
+   
     const averageWeeklyFrequency = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
@@ -1088,44 +1088,40 @@ export default {
       const now = new Date();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       
-      // Mapear DIAS ÚNICOS que cada aluno treinou este mês
+     
       const studentTrainingDays = new Map();
       
       allWorkoutSessions.value.forEach(session => {
         const sessionDate = new Date(session.date.split('/').reverse().join('-'));
         if (sessionDate >= firstDayOfMonth && session.status === 'completed') {
-          // Criar chave única para cada dia (formato: YYYY-MM-DD)
+         
           const dateKey = sessionDate.toISOString().split('T')[0];
           
           if (!studentTrainingDays.has(session.studentId)) {
             studentTrainingDays.set(session.studentId, new Set());
           }
           
-          // Adicionar o dia ao Set (automaticamente ignora duplicatas)
+         
           studentTrainingDays.get(session.studentId).add(dateKey);
         }
       });
       
       if (studentTrainingDays.size === 0) return 0;
       
-      // Calcular dias decorridos no mês (incluindo hoje)
+     
       const today = new Date();
       const daysElapsed = Math.floor((today - firstDayOfMonth) / (1000 * 60 * 60 * 24)) + 1;
       
-      console.log('📊 [Frequência Média] Debug:');
-      console.log('  - Dias decorridos no mês:', daysElapsed);
-      console.log('  - Total de alunos ativos:', studentTrainingDays.size);
-      
-      // Calcular média de DIAS por semana de cada aluno
-      // Fórmula: (dias treinados / dias decorridos) * 7 = dias por semana
+     
+     
       let totalFrequency = 0;
       let debugCount = 0;
       studentTrainingDays.forEach((daysSet, studentId) => {
-        const uniqueDays = daysSet.size; // Quantidade de dias únicos
+        const uniqueDays = daysSet.size;
         const weeklyFrequency = (uniqueDays / daysElapsed) * 7;
         const limitedFreq = Math.min(weeklyFrequency, 7);
         
-        if (debugCount < 5) { // Mostrar primeiros 5 alunos
+        if (debugCount < 5) {
           console.log(`  - Aluno ${studentId}: ${uniqueDays} dias únicos → ${weeklyFrequency.toFixed(1)}x/sem (limitado: ${limitedFreq.toFixed(1)}x)`);
           debugCount++;
         }
@@ -1134,12 +1130,11 @@ export default {
       });
       
       const avgFrequency = totalFrequency / studentTrainingDays.size;
-      console.log('  - Frequência média final:', avgFrequency.toFixed(1) + 'x/semana');
       
-      return Math.round(avgFrequency * 10) / 10; // 1 casa decimal
+      return Math.round(avgFrequency * 10) / 10;
     });
 
-    // Mudança na frequência comparado com mês anterior
+   
     const frequencyChangePercentage = computed(() => {
       if (!allWorkoutSessions.value || allWorkoutSessions.value.length === 0) {
         return 0;
@@ -1149,7 +1144,7 @@ export default {
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       
-      // Calcular frequência deste mês (DIAS ÚNICOS)
+     
       const studentTrainingDaysThisMonth = new Map();
       allWorkoutSessions.value.forEach(session => {
         const sessionDate = new Date(session.date.split('/').reverse().join('-'));
@@ -1176,7 +1171,7 @@ export default {
         ? totalFreqThisMonth / studentTrainingDaysThisMonth.size 
         : 0;
       
-      // Calcular frequência do mês passado (DIAS ÚNICOS)
+     
       const studentTrainingDaysLastMonth = new Map();
       allWorkoutSessions.value.forEach(session => {
         const sessionDate = new Date(session.date.split('/').reverse().join('-'));
@@ -1190,7 +1185,7 @@ export default {
         }
       });
       
-      // Número de dias do mês anterior (mês completo)
+     
       const lastMonthEnd = new Date(firstDayOfMonth);
       lastMonthEnd.setDate(lastMonthEnd.getDate() - 1);
       const daysLastMonth = lastMonthEnd.getDate();
@@ -1213,9 +1208,9 @@ export default {
       return Math.round(change * 10) / 10;
     });
 
-    // Função para animar contagem de números (efeito cassino)
+   
     const animateCount = (targetRef, targetValue) => {
-      const duration = 800; // 800ms para completar a animação
+      const duration = 800;
       const startValue = targetRef.value;
       const difference = targetValue - startValue;
       const startTime = Date.now();
@@ -1225,7 +1220,7 @@ export default {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // Easing function para suavizar a animação
+       
         const easeOutQuart = 1 - Math.pow(1 - progress, 4);
         
         targetRef.value = Math.round(startValue + (difference * easeOutQuart));
@@ -1240,7 +1235,7 @@ export default {
       requestAnimationFrame(updateCount);
     };
 
-    // Watchers para animar as mudanças
+   
     watch(completedCount, (newValue) => {
       animateCount(animatedCompletedCount, newValue);
     });
@@ -1249,7 +1244,7 @@ export default {
       animateCount(animatedInProgressCount, newValue);
     });
 
-    // Função para formatar data
+   
     const formatDate = (dateString) => {
       if (!dateString) return "N/A";
       const date = new Date(dateString);
@@ -1259,7 +1254,7 @@ export default {
       return `${day}/${month}/${year}`;
     };
 
-    // Função para obter o texto do status
+   
     const getStatusText = (status) => {
       const statusMap = {
         completed: "COMPLETO",
@@ -1269,21 +1264,19 @@ export default {
       return statusMap[status] || status.toUpperCase();
     };
 
-    // Funções para tooltip do gráfico ROXO (Total de Sets Completados)
+   
     const showTooltipPurple = (event, weekData) => {
-      console.log('📍 Tooltip Purple:', weekData); // Debug
-      
-      // Mostrar o valor real se o visual for <= 1 (valor mínimo)
+     
       const displayValue = weekData.purpleBottom <= 1 ? 0 : weekData.purpleBottom;
       
       tooltipData.value = {
         week: `Semana ${weekData.month}`,
         label: 'Sets Completados',
-        value: `${displayValue} sets`, // Mostrar 0 se for valor mínimo
+        value: `${displayValue} sets`,
         color: '#8b5cf6'
       };
       
-      // Posição relativa ao chart-container-modern
+     
       const container = event.target.closest('.chart-container-modern');
       const rect = container.getBoundingClientRect();
       
@@ -1295,21 +1288,19 @@ export default {
       tooltipVisible.value = true;
     };
 
-    // Funções para tooltip do gráfico LARANJA (Duração Média dos Treinos)
+   
     const showTooltipOrange = (event, weekData) => {
-      console.log('📍 Tooltip Orange:', weekData); // Debug
-      
-      // Mostrar o valor real se o visual for <= 1 (valor mínimo)
+     
       const displayValue = weekData.orangeBottom <= 1 ? 0 : weekData.orangeBottom;
       
       tooltipData.value = {
         week: `Semana ${weekData.month}`,
         label: 'Duração Média',
-        value: `${displayValue} min`, // Mostrar 0 se for valor mínimo
+        value: `${displayValue} min`,
         color: '#ff8c5a'
       };
       
-      // Posição relativa ao chart-container-modern
+     
       const container = event.target.closest('.chart-container-modern');
       const rect = container.getBoundingClientRect();
       
@@ -1325,46 +1316,42 @@ export default {
       tooltipVisible.value = false;
     };
 
-    // Função para buscar sessões dos alunos
+   
     const fetchWorkoutSessions = async () => {
       try {
         loading.value = true;
-        console.log("🔄 Buscando sessões dos alunos...");
 
         const response = await api.get("/workout-sessions/sessions/instructor");
-        console.log("📊 Resposta da API:", response.data);
 
         if (response.data.success && response.data.sessions) {
-          // Transformar os dados da API para o formato do componente
+         
           const transformedSessions = response.data.sessions
             .map((session, index) => {
-              // Obter nome do aluno
+             
               const studentName =
                 session.studentId?.userId?.name ||
                 session.studentId?.name ||
                 "Aluno Desconhecido";
 
-              // Obter avatar do aluno - tentar múltiplos caminhos
+             
               let studentAvatar = null;
               
-              // Verificar diferentes estruturas possíveis
+             
               if (session.studentId?.userId?.avatar) {
                 studentAvatar = session.studentId.userId.avatar;
               } else if (session.studentId?.avatar) {
                 studentAvatar = session.studentId.avatar;
               }
               
-              // Se o avatar é um caminho relativo, adicionar a URL base
+             
               if (studentAvatar && studentAvatar.startsWith('/uploads')) {
                 studentAvatar = `http://localhost:3000${studentAvatar}`;
               }
               
-              // Se não encontrou avatar, usar UI Avatars
+             
               if (!studentAvatar) {
                 studentAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=2563eb&color=fff&size=48`;
               }
-              
-              console.log(`👤 Aluno: ${studentName}, Avatar: ${studentAvatar}`);
 
               return {
                 id: session._id,
@@ -1376,40 +1363,34 @@ export default {
                 status: session.status,
                 statusText: getStatusText(session.status),
                 date: formatDate(session.startTime || session.createdAt),
-                duration: session.duration || 0, // Duração em minutos
-                totalVolume: session.totalVolume || 0, // Volume total (peso × reps) em kg
-                completedSets: session.completedSets || 0, // Sets completados
-                studentId: session.studentId?._id || session.studentId, // ID do aluno
-                studentAvatar: studentAvatar, // Avatar do aluno
+                duration: session.duration || 0,
+                totalVolume: session.totalVolume || 0,
+                completedSets: session.completedSets || 0,
+                studentId: session.studentId?._id || session.studentId,
+                studentAvatar: studentAvatar,
                 avatarGradient: avatarGradients[index % avatarGradients.length],
               };
             });
 
-          // Armazenar todas as sessões para cálculos
+         
           allWorkoutSessions.value = transformedSessions;
           
-          // Limitar a 5 sessões mais recentes para a tabela
+         
           workoutSessions.value = transformedSessions.slice(0, 5);
-
-          console.log(
-            `✅ ${allWorkoutSessions.value.length} sessões totais, ${workoutSessions.value.length} exibidas na tabela`
-          );
           
-          // Debug: Contar sessões por mês
+         
           const now = new Date();
           const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
           const sessionsThisMonth = transformedSessions.filter(s => {
             const sessionDate = new Date(s.date.split('/').reverse().join('-'));
             return sessionDate >= firstDayOfMonth && s.status === 'completed';
           });
-          console.log(`📅 Sessões completadas em ${now.toLocaleDateString('pt-BR', { month: 'long' })}: ${sessionsThisMonth.length}`);
+          console.log(`Sessões completadas em ${now.toLocaleDateString('pt-BR', { month: 'long' })}: ${sessionsThisMonth.length}`);
         } else {
-          console.log("⚠️ Nenhuma sessão encontrada");
           workoutSessions.value = [];
           allWorkoutSessions.value = [];
         }
       } catch (error) {
-        console.error("❌ Erro ao buscar sessões:", error);
         workoutSessions.value = [];
         allWorkoutSessions.value = [];
       } finally {
@@ -1437,58 +1418,58 @@ export default {
       return filtered;
     });
 
-    // Gera dados do gráfico baseados em treinos reais (últimas 8 semanas COMPLETAS)
+   
     const data = computed(() => {
       const weeks = [];
       const now = new Date();
       
-      // Definir o início da semana atual (domingo = início)
-      const currentDayOfWeek = now.getDay(); // 0 = domingo, 1 = segunda, etc
+     
+      const currentDayOfWeek = now.getDay();
       const currentWeekStart = new Date(now);
       currentWeekStart.setDate(now.getDate() - currentDayOfWeek);
       currentWeekStart.setHours(0, 0, 0, 0);
       
-      // Gerar dados para as últimas 8 semanas COMPLETAS (excluindo a semana atual)
+     
       for (let i = 8; i >= 1; i--) {
-        // Calcular fim da semana (sábado)
+       
         const weekEnd = new Date(currentWeekStart.getTime() - (i * 7 * 24 * 60 * 60 * 1000) + (6 * 24 * 60 * 60 * 1000));
         weekEnd.setHours(23, 59, 59, 999);
         
-        // Calcular início da semana (domingo)
+       
         const weekStart = new Date(weekEnd.getTime() - (6 * 24 * 60 * 60 * 1000));
         weekStart.setHours(0, 0, 0, 0);
         
-        // Verificar se a semana já terminou completamente
+       
         if (weekEnd > now) {
-          continue; // Pular semanas que ainda não terminaram
+          continue;
         }
         
-        // Número da semana (1-8)
+       
         const weekNumber = weeks.length + 1;
         
-        // Filtrar TODAS as sessões desta semana
+       
         const weekSessions = allWorkoutSessions.value.filter(session => {
           const sessionDate = new Date(session.date.split('/').reverse().join('-'));
           return sessionDate >= weekStart && sessionDate <= weekEnd;
         });
         
-        // Calcular Total de Sets Completados na Semana
+       
         const totalSetsCompleted = weekSessions.reduce((sum, session) => {
           return sum + (session.completedSets || 0);
         }, 0);
         
-        // Calcular Duração Média dos Treinos (em minutos)
+       
         const sessionsWithDuration = weekSessions.filter(s => s.duration && s.duration > 0);
         const totalDuration = sessionsWithDuration.reduce((sum, session) => sum + (session.duration || 0), 0);
         const avgDuration = sessionsWithDuration.length > 0 ? totalDuration / sessionsWithDuration.length : 0;
         
-        // Valores REAIS para os gráficos (sem transformação)
-        // Gráfico roxo: Total de Sets Completados
-        // Quando for 0, usa valor mínimo de 1 para ter visualização mínima
+       
+       
+       
         const purpleTopValue = totalSetsCompleted > 0 ? totalSetsCompleted : 1;
         const purpleBottomValue = totalSetsCompleted > 0 ? Math.round(totalSetsCompleted * 0.65) : 0.5;
         
-        // Gráfico laranja: Duração média dos treinos em minutos
+       
         const orangeTopValue = avgDuration > 0 ? Math.round(avgDuration) : 1;
         const orangeBottomValue = avgDuration > 0 ? Math.round(avgDuration * 0.70) : 0.5;
         
@@ -1498,18 +1479,18 @@ export default {
           purpleTop: purpleTopValue,
           orangeBottom: orangeBottomValue,
           orangeTop: orangeTopValue,
-          completedCount: totalSetsCompleted, // Total de sets completados (valor real)
-          inProgressCount: Math.round(avgDuration), // Duração média em minutos (valor real)
+          completedCount: totalSetsCompleted,
+          inProgressCount: Math.round(avgDuration),
         });
         
-        // Parar quando tivermos 8 semanas completas
+       
         if (weeks.length === 8) break;
       }
       
       return weeks;
     });
 
-    // Estatísticas do gráfico Performance Analytics
+   
     const chartStats = computed(() => {
       if (data.value.length === 0) {
         return { peak: 0, average: 0, minimum: 0, conversionRate: 0 };
@@ -1520,7 +1501,7 @@ export default {
       const minimum = Math.min(...purpleTopValues);
       const average = purpleTopValues.reduce((a, b) => a + b, 0) / purpleTopValues.length;
       
-      // Taxa de conversão baseada em treinos completados vs iniciados (usando TODAS as sessões)
+     
       const totalSessions = allWorkoutSessions.value.length;
       const completedSessions = allWorkoutSessions.value.filter(s => s.status === 'completed').length;
       const conversionRate = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
@@ -1536,7 +1517,7 @@ export default {
     const createMonotonePath = (key, maxValue) => {
       const xScale = (i) => 40 + (950 / 7) * i;
       const yScale = (value) => {
-        // Garantir que valor 0 fique exatamente na base
+       
         if (value <= 0) return 203;
         return 203 - (value / maxValue) * 190;
       };
@@ -1559,7 +1540,7 @@ export default {
         const cp2x = p2.x - (p3.x - p1.x) / 6;
         let cp2y = p2.y - (p3.y - p1.y) / 6;
 
-        // Limitar os pontos de controle para nunca irem abaixo da linha base (203)
+       
         cp1y = Math.min(cp1y, 203);
         cp2y = Math.min(cp2y, 203);
 
@@ -1581,7 +1562,7 @@ export default {
       createMonotonePath("orangeBottom", 40)
     );
 
-    // Calendar computed properties
+   
     const monthYear = computed(() => {
       const month = monthNames[currentDate.value.getMonth()];
       const year = currentDate.value.getFullYear();
@@ -1603,12 +1584,12 @@ export default {
       const daysInMonth = lastDay.getDate();
       const daysInPrevMonth = prevLastDay.getDate();
 
-      // Criar set de dias com treinos completados (todos os meses)
+     
       const workoutDaysByMonth = new Map();
       if (allWorkoutSessions.value && allWorkoutSessions.value.length > 0) {
         allWorkoutSessions.value.forEach(session => {
           if (session.date && session.status === 'completed') {
-            // Converter data DD/MM/YYYY para objeto Date
+           
             const dateParts = session.date.split('/');
             if (dateParts.length === 3) {
               const workoutDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
@@ -1628,7 +1609,7 @@ export default {
 
       const days = [];
 
-      // Dias do mês anterior
+     
       const prevMonth = month === 0 ? 11 : month - 1;
       const prevYear = month === 0 ? year - 1 : year;
       const prevMonthKey = `${prevYear}-${prevMonth}`;
@@ -1645,7 +1626,7 @@ export default {
         });
       }
 
-      // Dias do mês atual
+     
       const currentMonthKey = `${year}-${month}`;
       const currentMonthWorkouts = workoutDaysByMonth.get(currentMonthKey) || new Set();
       
@@ -1660,11 +1641,11 @@ export default {
           isOtherMonth: false,
           isToday: isToday,
           isEmpty: false,
-          hasWorkout: !isToday && currentMonthWorkouts.has(day), // Não mostrar bolinha no dia atual
+          hasWorkout: !isToday && currentMonthWorkouts.has(day),
         });
       }
 
-      // Dias do próximo mês
+     
       const nextMonth = month === 11 ? 0 : month + 1;
       const nextYear = month === 11 ? year + 1 : year;
       const nextMonthKey = `${nextYear}-${nextMonth}`;
@@ -1698,13 +1679,12 @@ export default {
       currentDate.value = new Date(year, month + 1, 1);
     };
 
-    // Fetch user data for header
+   
     const fetchUserData = async () => {
       try {
         const storedUser = sessionStorage.getItem('user');
         
         if (!storedUser) {
-          console.warn('⚠️ Nenhum usuário no sessionStorage');
           return;
         }
 
@@ -1712,12 +1692,11 @@ export default {
         const userId = user.id || user._id;
         
         if (!userId) {
-          console.warn('⚠️ Nenhum ID encontrado no userData');
           userData.value.name = user.name || 'Instrutor';
           return;
         }
 
-        // Buscar dados do Instructor
+       
         const token = sessionStorage.getItem('token');
         const response = await api.get(`/instructors/user/${userId}`, {
           headers: {
@@ -1743,15 +1722,13 @@ export default {
           userData.value.name = userName;
           userData.value.avatar = avatarUrl;
           userData.value.role = 'Personal Trainer';
-          
-          console.log('✅ Dados do usuário carregados:', userData.value);
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar dados do usuário:', error);
+        console.log('error: ', error);
       }
     };
 
-    // Fetch instructor statistics
+   
     const fetchInstructorStats = async () => {
       try {
         const storedUser = sessionStorage.getItem('user');
@@ -1762,28 +1739,28 @@ export default {
         
         const token = sessionStorage.getItem('token');
         
-        // Buscar dados do instructor para obter o instructorId
+       
         const instructorResponse = await api.get(`/instructors/user/${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
         const instructorId = instructorResponse.data._id;
         
-        // Buscar alunos do instrutor
+       
         const studentsResponse = await api.get(`/students/instructor/${instructorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        students.value = studentsResponse.data || []; // Armazenar lista de alunos
+        students.value = studentsResponse.data || [];
         totalStudents.value = studentsResponse.data.length || 0;
         
-        // Contar planos ativos (alunos com planos de treino)
+       
         const studentsWithPlans = studentsResponse.data.filter(
           student => student.assignedWorkoutPlans && student.assignedWorkoutPlans.length > 0
         );
         totalActivePlans.value = studentsWithPlans.length;
         
-        // Buscar sessões para calcular estatísticas
+       
         const sessionsResponse = await api.get('/workout-sessions/sessions/instructor', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -1791,7 +1768,7 @@ export default {
         if (sessionsResponse.data.success && sessionsResponse.data.sessions) {
           const sessions = sessionsResponse.data.sessions;
           
-          // Calcular treinos completados este mês
+         
           const now = new Date();
           const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
           
@@ -1803,7 +1780,7 @@ export default {
           
           totalCompletedWorkouts.value = completedThisMonth.length;
           
-          // Calcular taxa média de conclusão
+         
           if (sessions.length > 0) {
             const completed = sessions.filter(s => s.status === 'completed').length;
             averageCompletionRate.value = Math.round((completed / sessions.length) * 100);
@@ -1811,47 +1788,40 @@ export default {
             averageCompletionRate.value = 0;
           }
         }
-        
-        console.log('✅ Estatísticas do instrutor carregadas:', {
-          totalStudents: totalStudents.value,
-          totalActivePlans: totalActivePlans.value,
-          totalCompletedWorkouts: totalCompletedWorkouts.value,
-          averageCompletionRate: averageCompletionRate.value
-        });
       } catch (error) {
-        console.error('❌ Erro ao buscar estatísticas do instrutor:', error);
+        console.log('error: ', error);
       }
     };
 
-    // Toggle user dropdown
+   
     const toggleUserDropdown = () => {
       showUserDropdown.value = !showUserDropdown.value;
     };
 
-    // Navigate to route
+   
     const navigateTo = (route) => {
       showUserDropdown.value = false;
       router.push(route);
     };
 
-    // Handle logout
+   
     const handleLogout = () => {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
       window.location.href = '/login';
     };
 
-    // Handle search
+   
     const handleSearch = () => {
-      // A busca é aplicada automaticamente via computed property filteredSessions
+     
     };
 
-    // Clear search
+   
     const clearSearch = () => {
       searchQuery.value = '';
     };
 
-    // View student profile
+   
     const viewStudentProfile = (studentId) => {
       if (studentId) {
         router.push({
@@ -1861,17 +1831,17 @@ export default {
       }
     };
 
-    // View instructor profile
+   
     const viewInstructorProfile = () => {
       router.push('/instructor-profile');
     };
 
-    // Handle image error
+   
     const handleImageError = (event) => {
       event.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.value.name)}&background=2563eb&color=fff&size=48`;
     };
 
-    // Handle click outside to close dropdown
+   
     const handleClickOutside = (event) => {
       const userProfile = event.target.closest('.user-profile');
       if (!userProfile && showUserDropdown.value) {
@@ -1880,7 +1850,7 @@ export default {
     };
 
     onMounted(() => {
-      // Buscar sessões ao carregar o componente
+     
       fetchWorkoutSessions();
       fetchUserData();
       fetchInstructorStats();
@@ -1956,7 +1926,7 @@ export default {
       viewStudentProfile,
       viewInstructorProfile,
       handleImageError,
-      // Quick Stats - Dados reais do mês
+     
       activeStudentsThisMonth,
       newStudentsThisMonth,
       workoutsCompletedThisMonth,

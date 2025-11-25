@@ -46,7 +46,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
-// Router
+
 const router = useRouter()
 
 const goHome = () => {

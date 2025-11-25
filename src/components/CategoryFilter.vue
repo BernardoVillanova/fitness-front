@@ -59,7 +59,7 @@ export default {
     categories: {
       type: Array,
       required: true,
-      // Formato esperado: [{ id: 'todos', name: 'Todos', icon: 'fas fa-th-large', count: 10 }]
+     
     },
     selectedCategory: {
       type: String,
@@ -72,7 +72,7 @@ export default {
     itemLabel: {
       type: String,
       default: 'itens'
-      // Exemplos: 'aparelhos', 'exercícios', 'alunos'
+     
     }
   },
   emits: ['category-selected', 'clear-filters'],

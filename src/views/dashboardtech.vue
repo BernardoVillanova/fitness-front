@@ -485,12 +485,12 @@ export default {
   async mounted() {
     await this.loadDashboardData();
     
-    // Adicionar listener para fechar dropdown quando clicar fora
+   
     document.addEventListener('click', this.handleClickOutside);
   },
   
   beforeUnmount() {
-    // Remover listener quando o componente for destruído
+   
     document.removeEventListener('click', this.handleClickOutside);
   },
   data() {
@@ -504,12 +504,12 @@ export default {
       ],
       showPeriodDropdown: false,
       weekDays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
-      // Dados reais que serão carregados da API
+     
       students: [],
       workoutSessions: [],
       loading: true,
       error: null,
-      // Paginação para análise individual de alunos
+     
       currentPage: 1,
       itemsPerPage: 3,
       progressData: [
@@ -543,13 +543,10 @@ export default {
     studentsData() {
       
       if (!this.students || !Array.isArray(this.students) || this.students.length === 0) {
-        console.warn('⚠️ DEBUG: Nenhum estudante encontrado ou array inválido');
         return [];
       }
       
-      if (!Array.isArray(this.workoutSessions)) {
-        console.warn('⚠️ DEBUG: workoutSessions não é um array válido');
-        
+      if (!Array.isArray(this.workoutSessions)) {        
         return this.students.map((student) => {
           return {
             id: student._id,
@@ -573,7 +570,6 @@ export default {
           
           const studentSessions = this.workoutSessions.filter(session => {
             if (!session) {
-              console.warn('⚠️ Sessão nula encontrada');
               return false;
             }
             
@@ -614,10 +610,7 @@ export default {
           return result;
           
         } catch (error) {
-          console.error(`❌ ERRO ao processar dados do aluno ${student.name}:`, error);
-          console.error('📋 Stack trace:', error.stack);
-          console.error('👤 Dados do estudante que causou erro:', student);
-          
+          console.log('error: ', error);
           return {
             id: student._id,
             name: student.name || 'Nome não disponível',
@@ -636,20 +629,20 @@ export default {
       });
     },
 
-    // Dados paginados para a seção de análise individual
+   
     paginatedStudentsData() {
       const startIndex = (this.currentPage - 1) * this.itemsPerPage;
       const endIndex = startIndex + this.itemsPerPage;
       return this.studentsData.slice(startIndex, endIndex);
     },
 
-    // Total de páginas
+   
     totalPages() {
       return Math.ceil(this.studentsData.length / this.itemsPerPage);
     },
 
     performanceMetrics() {
-      // Verificar se há dados válidos para calcular métricas
+     
       const hasStudents = this.students && this.students.length > 0;
       const hasSessions = this.workoutSessions && this.workoutSessions.length > 0;
       
@@ -664,15 +657,15 @@ export default {
         ];
       }
       
-      // Calcular métricas reais baseadas nos dados disponíveis
+     
       const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
       const totalSessions = this.workoutSessions.length;
       const completionRate = totalSessions > 0 ? (completedSessions.length / totalSessions) * 100 : 0;
       
-      // Calcular média de exercícios por sessão
+     
       const avgExercisesPerSession = this.calculateAverageExercisesPerSession();
       
-      // Calcular adesão média
+     
       const averageAdherence = this.calculateOverallAdherence();
       
       return [
@@ -718,7 +711,7 @@ export default {
       
       const alerts = [];
       
-      // Alerta para alunos inativos (sem treino há mais de 7 dias)
+     
       const inactiveStudents = this.studentsData.filter(student => {
         if (student.lastWorkout === 'Nenhum treino registrado') return true;
         if (student.lastWorkout.includes('semana') || student.lastWorkout.includes('mês')) return true;
@@ -738,7 +731,7 @@ export default {
         });
       }
       
-      // Alerta para baixa aderência (menos de 50%)
+     
       const lowAdherenceStudents = this.studentsData.filter(student => 
         student.adherence > 0 && student.adherence < 50
       );
@@ -752,7 +745,7 @@ export default {
         });
       }
       
-      // Alerta para tendência negativa
+     
       const negativeProgressStudents = this.studentsData.filter(student => 
         student.trend === 'negative'
       );
@@ -766,7 +759,7 @@ export default {
         });
       }
       
-      // Alerta positivo para alta performance
+     
       const highPerformanceStudents = this.studentsData.filter(student => 
         student.adherence >= 80 && student.totalSessions >= 10
       );
@@ -780,7 +773,7 @@ export default {
         });
       }
       
-      // Alerta para sessões pendentes hoje
+     
       const today = new Date().toDateString();
       const todaySessions = this.workoutSessions.filter(session => {
         if (!session.startTime) return false;
@@ -797,7 +790,7 @@ export default {
         });
       }
       
-      // Sugestão para orientação e acompanhamento
+     
       const studentsNeedingAttention = this.studentsData.filter(student => 
         student.adherence < 70 && student.totalSessions > 3
       );
@@ -821,7 +814,7 @@ export default {
         }
       }
       
-      // Se não houver alertas, mostrar mensagem positiva
+     
       if (alerts.length === 0) {
         const totalSessions = this.workoutSessions.filter(s => s.status === 'completed').length;
         const avgAdherence = this.calculateOverallAdherence();
@@ -834,12 +827,12 @@ export default {
         });
       }
       
-      return alerts.slice(0, 6); // Limitar a 6 alertas
+      return alerts.slice(0, 6);
     },
 
-    // Verifica se há dados de progresso reais para exibir no gráfico
+   
     hasProgressData() {
-      // Verifica se há alunos e sessões
+     
       if (!this.students || this.students.length === 0) {
         return false;
       }
@@ -848,18 +841,18 @@ export default {
         return false;
       }
       
-      // Verifica se há pelo menos uma sessão concluída
+     
       const hasCompletedSessions = this.workoutSessions.some(s => s.status === 'completed');
       if (!hasCompletedSessions) {
         return false;
       }
       
-      // Verifica se há registros de progresso
+     
       const hasProgressLogs = this.students.some(s => 
         s.progressLogs && s.progressLogs.length > 0
       );
       
-      // Retorna true se há sessões concluídas OU registros de progresso
+     
       return hasCompletedSessions || hasProgressLogs;
     },
 
@@ -1083,30 +1076,30 @@ export default {
   },
 
   methods: {
-    // ========= HELPER PARA PROCESSAR AVATAR =========
+   
     getAvatarUrl(student) {
-      // Tenta pegar o avatar do userId primeiro, depois do próprio student
+     
       const avatar = student.userId?.avatar || student.avatar;
       
       if (!avatar) {
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'User')}&background=6c5ce7&color=fff`;
       }
       
-      // Se é base64, usar diretamente
+     
       if (avatar.startsWith('data:image')) {
         return avatar;
       }
       
-      // Se já é URL completa
+     
       if (avatar.startsWith('http')) {
         return avatar;
       }
       
-      // Se é path relativo, construir URL completa
+     
       return `${API_URL}${avatar}`;
     },
 
-    // ========= MÉTODOS DE PAGINAÇÃO =========
+   
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
@@ -1125,13 +1118,13 @@ export default {
       }
     },
 
-    // ========= MÉTODOS DE CARREGAMENTO DE DADOS =========
+   
     async loadDashboardData() {
       try {
         this.loading = true;
         this.error = null;
         
-        // Pegar o ID do usuário logado
+       
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         
         const userId = user.id;
@@ -1139,7 +1132,7 @@ export default {
           throw new Error('ID do usuário não encontrado. Faça login novamente.');
         }
         
-        // Buscar o instrutor pelo userId
+       
         const instructorsResponse = await api.get('/instructors');
         const allInstructors = instructorsResponse.data;
         const currentInstructor = allInstructors.find(
@@ -1152,25 +1145,23 @@ export default {
         
         const instructorId = currentInstructor._id;
         
-        // Buscar estudantes do instrutor
+       
         await this.loadStudents(instructorId);
         
-        // Buscar sessões de treino
+       
         try {
           await this.loadWorkoutSessions(instructorId);
         } catch (sessionError) {
-          console.error('[DEBUG] Erro específico em loadWorkoutSessions:', sessionError);
-          console.error('[DEBUG] Stack do erro:', sessionError.stack);
+          console.log('sessionError: ', sessionError);
         }
         
-        // Gerar dados dos gráficos
+       
         this.generateChartData();
         
-        // Validar e processar dados para garantir consistência
+       
         this.validateAndProcessData();
         
       } catch (error) {
-        console.error('[DEBUG] Erro ao carregar dados do dashboard:', error);
         this.error = error.message;
       } finally {
         this.loading = false;
@@ -1178,29 +1169,21 @@ export default {
     },
     
     validateAndProcessData() {
-      // Validar se os dados carregados estão consistentes
-      console.log('📊 Validando dados carregados:');
-      console.log(`   Estudantes: ${this.students.length}`);
-      console.log(`   Sessões: ${this.workoutSessions.length}`);
-      console.log(`   Sessões concluídas: ${this.workoutSessions.filter(s => s.status === 'completed').length}`);
       
-      // Verificar se há dados de progresso
       const studentsWithProgress = this.students.filter(s => s.progressLogs && s.progressLogs.length > 0);
-      console.log(`   Estudantes com progresso: ${studentsWithProgress.length}`);
+      console.log('studentsWithProgress: ', studentsWithProgress);
       
-      // Verificar sessões com exercícios
       const sessionsWithExercises = this.workoutSessions.filter(s => s.exercises && s.exercises.length > 0);
-      console.log(`   Sessões com exercícios: ${sessionsWithExercises.length}`);
+      console.log('sessionsWithExercises: ', sessionsWithExercises);
       
-      // Log das métricas calculadas
+     
       if (this.performanceMetrics && this.performanceMetrics.length > 0) {
-        console.log('📈 Métricas calculadas:');
         this.performanceMetrics.forEach(metric => {
           console.log(`   ${metric.label}: ${metric.value} (${metric.percentage.toFixed(1)}%)`);
         });
       }
       
-      // Forçar recompute das computed properties se necessário
+     
       this.$nextTick(() => {
         this.$forceUpdate();
       });
@@ -1212,30 +1195,11 @@ export default {
         
         if (response && response.data) {
           this.students = Array.isArray(response.data) ? response.data : [];
-          
-          this.students.forEach((student, index) => {
-            console.log(`� DEBUG: Estudante ${index + 1}:`, {
-              id: student._id,
-              name: student.name,
-              email: student.email,
-              instructorId: student.instructorId,
-              personalInfo: student.personalInfo ? 'Presente' : 'Ausente',
-              progressLogs: student.progressLogs?.length || 0,
-              workoutPlans: student.workoutPlans?.length || 0
-            });
-          });
         } else {
-          console.warn('⚠️ DEBUG: Resposta da API não contém dados válidos');
           this.students = [];
         }
       } catch (error) {
-        console.error('❌ DEBUG: Erro detalhado ao buscar estudantes:');
-        console.error('🔥 Error object:', error);
-        console.error('📊 Error message:', error.message);
-        console.error('📈 Error stack:', error.stack);
-        console.error('🌐 Response status:', error.response?.status);
-        console.error('� Response data:', error.response?.data);
-        console.error('🔗 Request config:', error.config);
+        console.log('error: ', error);
         this.students = [];
       }
     },
@@ -1243,7 +1207,6 @@ export default {
     async loadWorkoutSessions(instructorId) {
       try {
         if (!instructorId) {
-          console.warn('⚠️ ID do instrutor não fornecido');
           this.workoutSessions = [];
           return;
         }
@@ -1256,30 +1219,14 @@ export default {
           } else if (Array.isArray(response.data)) {
             this.workoutSessions = response.data;
           } else {
-            console.warn('⚠️ Resposta da API não contém sessões válidas');
             this.workoutSessions = [];
           }
-          
-          if (this.workoutSessions.length > 0) {
-            console.log('📝 Primeira sessão:', this.workoutSessions[0]);
-            console.log('📝 Tipos de sessões encontradas:', this.workoutSessions.map(s => ({
-              id: s._id,
-              studentId: s.studentId,
-              status: s.status,
-              studentName: s.studentId?.userId?.name || s.studentId?.name
-            })));
-          }
         } else {
-          console.warn('⚠️ Resposta da API está vazia ou inválida');
           this.workoutSessions = [];
         }
         
       } catch (error) {
-        console.error('❌ Erro ao buscar sessões:', error);
-        console.error('📊 Status:', error.response?.status);
-        console.error('📄 Data:', error.response?.data);
-        console.error('📄 Message:', error.message);
-        console.error('📄 Stack:', error.stack);
+        console.log('error: ', error);
         this.workoutSessions = [];
       }
     },
@@ -1291,24 +1238,24 @@ export default {
     },
     
     handleClickOutside(event) {
-      // Fechar dropdown do período se clicar fora dele
+     
       if (!event.target.closest('.dropdown-container')) {
         this.showPeriodDropdown = false;
       }
     },
     
     generateChartData() {
-      // Gerar dados para o gráfico de progresso
+     
       this.generateProgressData();
       
-      // Gerar dados para o gráfico semanal
+     
       this.generateWeeklyData();
     },
     
     generateProgressData() {
-      // Verificar se há dados reais antes de gerar o gráfico
+     
       if (!this.hasProgressData) {
-        // Não gerar dados falsos - deixar vazio
+       
         this.progressData = [
           {
             name: "Média de Peso",
@@ -1324,17 +1271,17 @@ export default {
         return;
       }
       
-      // Gerar dados para o gráfico de progresso baseados em dados reais
+     
       const periods = this.getPeriodData();
       const weightData = [];
       const completedData = [];
       
       periods.forEach(period => {
-        // Calcular peso médio dos alunos neste período
+       
         const periodWeight = this.calculatePeriodAverageWeight(period.date);
         weightData.push(periodWeight || 0);
         
-        // Calcular treinos completados neste período
+       
         const periodCompleted = this.calculatePeriodCompletedWorkouts(period.date, period.isWeek);
         completedData.push(periodCompleted);
       });
@@ -1352,7 +1299,7 @@ export default {
         }
       ];
       
-      // Atualizar as categorias do gráfico
+     
       if (this.$refs.progressChart) {
         this.$refs.progressChart.updateOptions({
           xaxis: {
@@ -1366,7 +1313,7 @@ export default {
       const periods = [];
       
       if (this.selectedPeriod === '1 semana') {
-        // Últimos 7 dias
+       
         for (let i = 6; i >= 0; i--) {
           const date = new Date();
           date.setDate(date.getDate() - i);
@@ -1377,7 +1324,7 @@ export default {
           });
         }
       } else if (this.selectedPeriod === '1 mês') {
-        // Últimas 4 semanas
+       
         for (let i = 3; i >= 0; i--) {
           const date = new Date();
           date.setDate(date.getDate() - (i * 7));
@@ -1388,7 +1335,7 @@ export default {
           });
         }
       } else {
-        // Últimos 6 meses (padrão)
+       
         for (let i = 5; i >= 0; i--) {
           const date = new Date();
           date.setMonth(date.getMonth() - i);
@@ -1409,7 +1356,7 @@ export default {
       this.students.forEach(student => {
         const progressLogs = student.progressLogs || [];
         
-        // Filtrar logs do período específico
+       
         const periodLogs = progressLogs.filter(log => {
           if (!log.date) return false;
           const logDate = new Date(log.date);
@@ -1431,7 +1378,7 @@ export default {
           const avgWeight = periodLogs.reduce((sum, log) => sum + (log.weight || 0), 0) / periodLogs.length;
           weights.push(avgWeight);
         } else {
-          // Se não há logs específicos do período, usar peso atual ou inicial
+         
           const currentWeight = student.personalInfo?.currentWeight;
           const initialWeight = student.personalInfo?.initialWeight;
           
@@ -1444,7 +1391,7 @@ export default {
       });
       
       if (weights.length === 0) {
-        return 70; // Peso médio padrão
+        return 70;
       }
       
       return Math.round(weights.reduce((sum, w) => sum + w, 0) / weights.length);
@@ -1471,7 +1418,7 @@ export default {
     },
     
     generateWeeklyData() {
-      // Gerar dados para os últimos 7 dias
+     
       const weekData = [];
       
       for (let i = 6; i >= 0; i--) {
@@ -1488,13 +1435,13 @@ export default {
         weekData.push(dayWorkouts);
       }
       
-      // Se não há dados reais, gerar uma distribuição baseada no total de sessões
+     
       if (weekData.every(val => val === 0) && this.workoutSessions.length > 0) {
         const totalSessions = this.workoutSessions.filter(s => s.status === 'completed').length;
-        const avgPerDay = Math.ceil(totalSessions / 30); // Distribuir por 30 dias
+        const avgPerDay = Math.ceil(totalSessions / 30);
         
-        // Simular uma distribuição mais realista (mais treinos na semana, menos no fim de semana)
-        const weekPattern = [0.7, 1.2, 1.3, 1.1, 1.2, 0.8, 0.5]; // Dom, Seg, Ter, Qua, Qui, Sex, Sab
+       
+        const weekPattern = [0.7, 1.2, 1.3, 1.1, 1.2, 0.8, 0.5];
         
         for (let i = 0; i < 7; i++) {
           weekData[i] = Math.max(0, Math.round(avgPerDay * weekPattern[i]));
@@ -1510,7 +1457,7 @@ export default {
       ];
     },
     
-    // ========= MÉTODOS DE CÁLCULO DE MÉTRICAS =========
+   
     calculateWeightProgress(progressLogs) {
       if (!progressLogs || progressLogs.length < 2) return 0;
       
@@ -1526,13 +1473,13 @@ export default {
     },
     
     calculateAdherence(studentSessions) {
-      // Validar se é um array
+     
       if (!Array.isArray(studentSessions) || studentSessions.length === 0) {
         return 0;
       }
       
       try {
-        // Considerar últimos 30 dias ou todas as sessões se menor período
+       
         const last30Days = new Date();
         last30Days.setDate(last30Days.getDate() - 30);
         
@@ -1542,7 +1489,7 @@ export default {
           return sessionDate >= last30Days;
         });
         
-        // Se não há sessões recentes, considerar todas as sessões
+       
         const sessionsToAnalyze = recentSessions.length > 0 ? recentSessions : studentSessions;
         
         if (sessionsToAnalyze.length === 0) return 0;
@@ -1553,7 +1500,7 @@ export default {
         
         const adherenceRate = (completedSessions.length / sessionsToAnalyze.length) * 100;
         
-        // Aplicar fator de qualidade baseado na quantidade de exercícios completados
+       
         let qualityFactor = 1;
         if (completedSessions.length > 0) {
           const avgExercisesCompleted = completedSessions.reduce((total, session) => {
@@ -1564,7 +1511,7 @@ export default {
             return total + completedExercises;
           }, 0) / completedSessions.length;
           
-          // Ajustar qualidade baseado na média de exercícios completados
+         
           if (avgExercisesCompleted >= 6) qualityFactor = 1;
           else if (avgExercisesCompleted >= 4) qualityFactor = 0.9;
           else if (avgExercisesCompleted >= 2) qualityFactor = 0.8;
@@ -1579,13 +1526,13 @@ export default {
     },
     
     calculateTrend(completedSessions) {
-      // Validar se é um array
+     
       if (!Array.isArray(completedSessions) || completedSessions.length < 3) {
         return 'neutral';
       }
       
       try {
-        // Pegar as últimas 3 sessões e verificar tendência
+       
         const lastThree = completedSessions
           .filter(session => session && session.startTime && session.totalVolume !== undefined)
           .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
@@ -1641,7 +1588,7 @@ export default {
       
       const avgDuration = totalDuration / completedSessions.length;
       
-      // Meta: 60 minutos = 100%
+     
       return Math.min((avgDuration / 60) * 100, 100);
     },
     
@@ -1667,9 +1614,9 @@ export default {
         const progressLogs = student.progressLogs || [];
         
         if (progressLogs.length >= 2) {
-          // Ordenar por data para pegar inicial e mais recente
+         
           const sortedLogs = progressLogs
-            .filter(log => log.weight && log.date) // Filtrar logs válidos
+            .filter(log => log.weight && log.date)
             .sort((a, b) => new Date(a.date) - new Date(b.date));
           
           if (sortedLogs.length >= 2) {
@@ -1683,7 +1630,7 @@ export default {
             }
           }
         } else {
-          // Se não há progressLogs, tentar usar personalInfo
+         
           const initialWeight = student.personalInfo?.initialWeight;
           const currentWeight = student.personalInfo?.currentWeight;
           
@@ -1695,16 +1642,16 @@ export default {
         }
       });
       
-      // Se não há dados de perda de peso, retornar 0
+     
       if (studentsWithData === 0) {
         return 0;
       }
       
-      return Math.max(0, totalLoss); // Garantir que não seja negativo
+      return Math.max(0, totalLoss);
     },
     
     calculateAverageLoadIncrease() {
-      // Calcular aumento médio de carga baseado nas sessões REAIS
+     
       const increases = [];
       
       this.students.forEach(student => {
@@ -1715,7 +1662,7 @@ export default {
         if (studentSessions.length >= 2) {
           const sorted = studentSessions.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
           
-          // Pegar sessões com pelo menos 30 dias de diferença para medir progressão
+         
           for (let i = 0; i < sorted.length - 1; i++) {
             const first = sorted[i];
             const last = sorted[sorted.length - 1];
@@ -1725,7 +1672,7 @@ export default {
             if (daysDiff >= 30 && first.totalVolume && last.totalVolume && first.totalVolume > 0) {
               const increase = ((last.totalVolume - first.totalVolume) / first.totalVolume) * 100;
               increases.push(increase);
-              break; // Usar apenas a primeira comparação válida
+              break;
             }
           }
         }
@@ -1736,7 +1683,7 @@ export default {
     },
     
     calculateWeightProgression() {
-      // Calcular progressão de peso baseada nos dados REAIS dos exercícios
+     
       const progressions = [];
       
       this.students.forEach(student => {
@@ -1748,7 +1695,7 @@ export default {
         );
         
         if (studentSessions.length >= 2) {
-          // Agrupar por exercício
+         
           const exerciseProgressions = {};
           
           studentSessions.forEach(session => {
@@ -1759,7 +1706,7 @@ export default {
                 exerciseProgressions[exerciseName] = [];
               }
               
-              // Pegar peso máximo da sessão para este exercício
+             
               let maxWeight = 0;
               exercise.sets.forEach(set => {
                 if (set.completed && set.weight) {
@@ -1778,7 +1725,7 @@ export default {
             });
           });
           
-          // Calcular progressão para cada exercício
+         
           Object.keys(exerciseProgressions).forEach(exerciseName => {
             const records = exerciseProgressions[exerciseName]
               .sort((a, b) => a.date - b.date);
@@ -1788,7 +1735,7 @@ export default {
               const last = records[records.length - 1];
               const daysDiff = (last.date - first.date) / (1000 * 60 * 60 * 24);
               
-              // Só considerar se há pelo menos 14 dias de diferença
+             
               if (daysDiff >= 14 && first.weight > 0) {
                 const progression = ((last.weight - first.weight) / first.weight) * 100;
                 progressions.push({
@@ -1813,10 +1760,10 @@ export default {
       
       const validAdherences = this.studentsData
         .map(student => student.adherence)
-        .filter(adherence => adherence > 0); // Filtrar apenas valores válidos
+        .filter(adherence => adherence > 0);
       
       if (validAdherences.length === 0) {
-        // Se não há dados de aderência, calcular baseado na proporção de sessões concluídas
+       
         const totalSessions = this.workoutSessions.length;
         const completedSessions = this.workoutSessions.filter(s => s.status === 'completed').length;
         
@@ -1827,7 +1774,7 @@ export default {
     },
     
     calculateWorkoutEfficiency() {
-      // Calcular eficiência baseada em actualReps vs plannedReps e tempo de descanso
+     
       const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
       
       if (completedSessions.length === 0) return 0;
@@ -1844,23 +1791,23 @@ export default {
             if (exercise.sets && exercise.sets.length > 0) {
               exercise.sets.forEach(set => {
                 if (set.actualReps && set.plannedReps && set.plannedReps > 0) {
-                  // Calcular eficiência de repetições (actualReps / plannedReps)
-                  const repsEfficiency = Math.min((set.actualReps / set.plannedReps), 1.5); // Cap em 150%
+                 
+                  const repsEfficiency = Math.min((set.actualReps / set.plannedReps), 1.5);
                   
-                  // Ajustar pela dificuldade (difficulty 1-5, onde 3 é ideal)
+                 
                   let difficultyFactor = 1;
                   if (set.difficulty) {
-                    if (set.difficulty === 3) difficultyFactor = 1; // Dificuldade ideal
-                    else if (set.difficulty < 3) difficultyFactor = 0.8; // Muito fácil
-                    else if (set.difficulty > 3) difficultyFactor = 1.1; // Mais desafiador
+                    if (set.difficulty === 3) difficultyFactor = 1;
+                    else if (set.difficulty < 3) difficultyFactor = 0.8;
+                    else if (set.difficulty > 3) difficultyFactor = 1.1;
                   }
                   
-                  // Considerar tempo de descanso se disponível
+                 
                   let restFactor = 1;
                   if (set.restTimeTaken && set.plannedRestTime) {
                     const restRatio = set.restTimeTaken / set.plannedRestTime;
-                    if (restRatio <= 1.2) restFactor = 1; // Dentro do esperado
-                    else restFactor = 0.9; // Descanso excessivo
+                    if (restRatio <= 1.2) restFactor = 1;
+                    else restFactor = 0.9;
                   }
                   
                   sessionEfficiency += (repsEfficiency * difficultyFactor * restFactor);
@@ -1881,7 +1828,7 @@ export default {
     },
     
     calculateAveragePerformance() {
-      // Calcular desempenho médio baseado na dificuldade dos exercícios
+     
       const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
       
       if (completedSessions.length === 0) return 0;
@@ -1908,7 +1855,7 @@ export default {
     },
     
     calculateBodyweightExerciseRatio() {
-      // Calcular proporção de exercícios com peso corporal vs peso externo
+     
       const completedSessions = this.workoutSessions.filter(s => s.status === 'completed');
       
       if (completedSessions.length === 0) return 0;
@@ -1925,11 +1872,11 @@ export default {
                   const setVolume = set.actualReps * set.weight;
                   
                   if (set.isBodyWeight) {
-                    // Para exercícios de peso corporal, usar o peso do aluno
-                    const studentWeight = session.studentWeight || 70; // Peso padrão se não disponível
+                   
+                    const studentWeight = session.studentWeight || 70;
                     bodyweightVolume += set.actualReps * studentWeight;
                   } else {
-                    // Exercícios com peso externo
+                   
                     externalWeightVolume += setVolume;
                   }
                 }
@@ -1944,7 +1891,7 @@ export default {
     },
     
     calculateEnhancedVolumeProgression() {
-      // Calcular progressão de volume separando peso corporal de peso externo
+     
       const progressions = [];
       
       this.students.forEach(student => {
@@ -1962,7 +1909,7 @@ export default {
             const daysDiff = (new Date(last.startTime) - new Date(first.startTime)) / (1000 * 60 * 60 * 24);
             
             if (daysDiff >= 30) {
-              // Calcular volume separado por tipo
+             
               const firstVolumes = this.calculateSessionVolumeBreakdown(first);
               const lastVolumes = this.calculateSessionVolumeBreakdown(last);
               
@@ -1988,7 +1935,7 @@ export default {
     },
     
     calculateSessionVolumeBreakdown(session) {
-      // Calcular breakdown de volume da sessão por tipo de peso
+     
       let bodyweightVolume = 0;
       let externalWeightVolume = 0;
       
@@ -2022,7 +1969,7 @@ export default {
       this.students.forEach(student => {
         const progressLogs = student.progressLogs || [];
         
-        // Filtrar logs do mês específico
+       
         const monthLogs = progressLogs.filter(log => {
           if (!log.date) return false;
           const logDate = new Date(log.date);
@@ -2034,7 +1981,7 @@ export default {
           const avgWeight = monthLogs.reduce((sum, log) => sum + (log.weight || 0), 0) / monthLogs.length;
           weights.push(avgWeight);
         } else {
-          // Se não há logs específicos do mês, usar peso atual ou inicial
+         
           const currentWeight = student.personalInfo?.currentWeight;
           const initialWeight = student.personalInfo?.initialWeight;
           
@@ -2047,7 +1994,7 @@ export default {
       });
       
       if (weights.length === 0) {
-        // Se não há dados de peso, retornar peso médio padrão
+       
         return 70;
       }
       
@@ -2063,12 +2010,12 @@ export default {
       }).length;
     },
     
-    // ========= MÉTODOS AUXILIARES =========
+   
     generateEventsForDay(day) {
-      // Usar dados REAIS das sessões ao invés de dados mockados
+     
       const events = [];
       
-      // Filtrar sessões do dia específico
+     
       const sessionsOnDay = this.workoutSessions.filter(session => {
         const sessionDate = new Date(session.startTime);
         return sessionDate.getDate() === day &&
@@ -2077,15 +2024,15 @@ export default {
       });
       
       sessionsOnDay.forEach((session, index) => {
-        // Determinar tipo baseado nos dados da sessão
-        let eventType = 'personal'; // padrão
+       
+        let eventType = 'personal';
         
-        // Se a sessão tem muitos exercícios, pode ser treino em grupo
+       
         if (session.exercises && session.exercises.length > 6) {
           eventType = 'group';
         }
         
-        // Se é primeira sessão do aluno ou tem poucas séries, pode ser avaliação
+       
         const studentSessions = this.workoutSessions.filter(s => s.studentId === session.studentId);
         if (studentSessions.length <= 2) {
           eventType = 'assessment';
@@ -2111,7 +2058,7 @@ export default {
     },
     
     calculateSessionAverageDifficulty(session) {
-      // Calcular dificuldade média da sessão baseada nos sets
+     
       if (!session.exercises || session.exercises.length === 0) return 0;
       
       let totalDifficulty = 0;
@@ -2132,7 +2079,7 @@ export default {
     },
     
     calculateSessionConsistency(session) {
-      // Calcular consistência da sessão baseada em actualReps vs plannedReps
+     
       if (!session.exercises || session.exercises.length === 0) return 0;
       
       let totalConsistency = 0;
@@ -2142,7 +2089,7 @@ export default {
         if (exercise.sets && exercise.sets.length > 0) {
           exercise.sets.forEach(set => {
             if (set.actualReps && set.plannedReps && set.plannedReps > 0) {
-              const consistency = Math.min((set.actualReps / set.plannedReps) * 100, 120); // Cap em 120%
+              const consistency = Math.min((set.actualReps / set.plannedReps) * 100, 120);
               totalConsistency += consistency;
               totalSets++;
             }
@@ -2170,7 +2117,7 @@ export default {
     },
 
     selectDay(day) {
-      console.log('Selected day:', day);
+      console.log('Dia selecionado:', day);
     },
 
     getWeightClass(weight) {
@@ -2181,7 +2128,7 @@ export default {
       return weight < 0 ? 'arrow_downward' : weight > 0 ? 'arrow_upward' : 'remove';
     },
 
-    // Novos métodos Font Awesome
+   
     getWeightIconFA(weight) {
       return weight < 0 ? 'fa-arrow-down' : weight > 0 ? 'fa-arrow-up' : 'fa-minus';
     },
@@ -2252,13 +2199,13 @@ export default {
     },
 
     getLastWorkoutTime(studentSessions) {
-      // Validar se é um array
+     
       if (!Array.isArray(studentSessions) || studentSessions.length === 0) {
         return 'Nenhum treino registrado';
       }
       
       try {
-        // Buscar a sessão mais recente (independente do status)
+       
         const allSessions = studentSessions.filter(session => 
           session && session.startTime
         );
@@ -2276,17 +2223,17 @@ export default {
         const lastDate = new Date(lastSession.startTime);
         const now = new Date();
         
-        // Verificar se a data é válida
+       
         if (isNaN(lastDate.getTime())) return 'Data inválida';
         
         const diffTime = now - lastDate;
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
         
-        // Incluir status da sessão na resposta
+       
         const statusText = lastSession.status === 'completed' ? '' : ' (incompleto)';
         
-        if (diffDays < 0) return 'Data futura'; // Proteção contra datas futuras
+        if (diffDays < 0) return 'Data futura';
         if (diffHours < 1) return `agora${statusText}`;
         if (diffHours < 24) return `${diffHours}h atrás${statusText}`;
         if (diffDays === 1) return `ontem${statusText}`;
@@ -2325,9 +2272,9 @@ export default {
       return this.studentsData.filter(student => student.trend === 'positive').length;
     },
 
-    // ========= MÉTODOS PARA LEGENDA APRIMORADA (100% DADOS REAIS) =========
+   
     
-    // Total de alunos ativos (que tem pelo menos 1 treino)
+   
     getTotalActiveStudents() {
       if (!this.students || this.students.length === 0) {
         return 0;
@@ -2335,7 +2282,7 @@ export default {
       return this.students.length;
     },
 
-    // Trend de alunos ativos
+   
     getActiveStudentsTrendIcon() {
       const total = this.getTotalActiveStudents();
       if (total === 0) return 'fa-minus';
@@ -2359,7 +2306,7 @@ export default {
       return 'warning';
     },
 
-    // Total de treinos completados (DADOS REAIS do banco)
+   
     getTotalCompletedWorkouts() {
       if (!this.workoutSessions || this.workoutSessions.length === 0) {
         return 0;
@@ -2368,14 +2315,14 @@ export default {
       return completedSessions.length;
     },
 
-    // Texto do período de treinos
+   
     getWorkoutsPeriodText() {
       const total = this.getTotalCompletedWorkouts();
       if (total === 0) return 'Nenhum treino concluído';
       return `${this.selectedPeriod.toLowerCase()}`;
     },
 
-    // Adesão média REAL calculada dos alunos
+   
     getAverageAdherence() {
       if (!this.studentsData || this.studentsData.length === 0) {
         return 0;
@@ -2389,7 +2336,7 @@ export default {
       return Math.round(avg);
     },
 
-    // Trend de adesão
+   
     getAdherenceTrendIcon() {
       const avg = this.getAverageAdherence();
       if (avg >= 80) return 'fa-arrow-up';
@@ -2415,7 +2362,6 @@ export default {
     },
 
     viewStudentDetails(studentId) {
-      console.log('Viewing details for student:', studentId);
       this.$router.push(`/student/${studentId}/profile`);
     }
   }

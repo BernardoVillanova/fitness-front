@@ -841,7 +841,7 @@ export default {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
     
-    // Notification system
+   
     const notification = ref({
       visible: false,
       type: 'info',
@@ -858,7 +858,7 @@ export default {
       };
     };
 
-    // Confirmation system
+   
     const showConfirmation = ref(false);
     const confirmationConfig = ref({
       title: '',
@@ -875,44 +875,44 @@ export default {
     const isDragging = ref(false);
     const showModal = ref(props.show);
     
-    // Controle de Etapas
+   
     const currentStep = ref(1);
     
-    // Controle de Equipamentos
+   
     const equipmentsList = ref([]);
     
-    // Rastreamento de erros de imagem
+   
     const imageErrors = ref(new Set());
     
-    // Busca de Equipamentos
+   
     const searchQuery = ref('');
     const filteredEquipments = ref([]);
-    const quantityInputs = ref({}); // Armazena quantidades temporárias para cada equipamento
+    const quantityInputs = ref({});
     const popularSearchTerms = ['Leg Press', 'Supino', 'Esteira', 'Bicicleta'];
     
-    // Paginação dos aparelhos em destaque
+   
     const currentFeaturedPage = ref(1);
     const itemsPerPage = 3;
     
-    // Equipamentos carregados do backend
+   
     const featuredEquipmentsData = ref([]);
     const isLoadingEquipments = ref(false);
 
-    // Validação de CEP
+   
     const isValidatingCep = ref(false);
     const cepValidated = ref(false);
     const cepError = ref('');
     let cepTimeout = null;
 
-    // Upload de imagem
+   
     const isUploadingImage = ref(false);
 
-    // Watch equipmentsList para debug
+   
     watch(equipmentsList, () => {
-      // Lista atualizada
+     
     }, { deep: true });
 
-    // Debug computed para verificar renderização
+   
     const equipmentsDebug = computed(() => {
       return equipmentsList.value.map((eq, index) => {
         const id = eq.sourceId || eq._id || index;
@@ -933,22 +933,22 @@ export default {
       });
     });
 
-    // Watch para logar o debug
+   
     watch(equipmentsDebug, () => {
-      // Debug atualizado
+     
     }, { immediate: true, deep: true });
 
-    // Aparelhos em destaque (mais populares)
+   
     const featuredEquipments = computed(() => {
       return featuredEquipmentsData.value;
     });
 
-    // Total de páginas
+   
     const totalFeaturedPages = computed(() => {
       return Math.ceil(featuredEquipments.value.length / itemsPerPage);
     });
 
-    // Aparelhos paginados
+   
     const paginatedFeaturedEquipments = computed(() => {
       const start = (currentFeaturedPage.value - 1) * itemsPerPage;
       const end = start + itemsPerPage;
@@ -959,7 +959,7 @@ export default {
       name: '',
       description: '',
       image: null,
-      imageBase64: '', // Adiciona campo para imagem base64
+      imageBase64: '',
       location: {
         address: '',
         city: '',
@@ -997,36 +997,36 @@ export default {
     };
 
     const processImageFile = (file) => {
-      // Validar tipo de arquivo
+     
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         showNotification('error', 'Arquivo Inválido', 'Tipo de arquivo inválido. Use PNG, JPG, GIF ou WEBP.');
         return;
       }
 
-      // Validar tamanho (10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+     
+      const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         showNotification('error', 'Arquivo Muito Grande', 'Arquivo muito grande. O tamanho máximo é 10MB.');
         return;
       }
 
-      // Mostrar loading
+     
       isUploadingImage.value = true;
       formData.value.image = file;
       
-      // Comprimir a imagem antes de converter para base64
+     
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
           try {
-            // Criar canvas para redimensionar
+           
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
             
-            // Redimensionar se for muito grande (máximo 1920px para manter qualidade boa)
+           
             const maxSize = 1920;
             if (width > maxSize || height > maxSize) {
               if (width > height) {
@@ -1043,11 +1043,11 @@ export default {
             
             const ctx = canvas.getContext('2d');
             
-            // Aplicar filtros para melhorar a qualidade
+           
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             
-            // Preencher fundo branco para PNGs com transparência
+           
             if (file.type === 'image/png') {
               ctx.fillStyle = '#FFFFFF';
               ctx.fillRect(0, 0, width, height);
@@ -1055,28 +1055,28 @@ export default {
             
             ctx.drawImage(img, 0, 0, width, height);
             
-            // Converter para base64 com qualidade otimizada
-            let quality = 0.8; // Qualidade inicial
+           
+            let quality = 0.8;
             let compressedBase64 = canvas.toDataURL('image/jpeg', quality);
             
-            // Se ainda estiver muito grande, reduzir qualidade gradualmente
-            while (compressedBase64.length > 500000 && quality > 0.3) { // ~500KB limite
+           
+            while (compressedBase64.length > 500000 && quality > 0.3) {
               quality -= 0.1;
               compressedBase64 = canvas.toDataURL('image/jpeg', quality);
             }
             
-            // Verificar tamanho final
+           
             const finalSizeInBytes = (compressedBase64.length * 3) / 4;
             const finalSizeInMB = finalSizeInBytes / (1024 * 1024);
             
-            if (finalSizeInMB > 2) { // Limite de 2MB para o base64
+            if (finalSizeInMB > 2) {
               showNotification('error', 'Imagem Muito Grande', 
                 `A imagem ainda está muito grande (${finalSizeInMB.toFixed(1)}MB). Tente uma imagem menor ou com menor resolução.`);
               resetImageState();
               return;
             }
             
-            // Sucesso
+           
             imagePreview.value = compressedBase64;
             formData.value.imageBase64 = compressedBase64;
             
@@ -1084,11 +1084,10 @@ export default {
               `Imagem processada com sucesso (${finalSizeInMB.toFixed(1)}MB, ${width}x${height}px)`);
               
           } catch (error) {
-            console.error('Erro ao processar imagem:', error);
             showNotification('error', 'Erro no Processamento', 'Erro ao processar a imagem. Tente novamente.');
             resetImageState();
           } finally {
-            isUploadingImage.value = false; // Remove loading
+            isUploadingImage.value = false;
           }
         };
         
@@ -1139,7 +1138,7 @@ export default {
       resetImageState();
     };
 
-    // Funções de validação de CEP
+   
     const validateCep = async () => {
       const cep = formData.value.location.zipCode?.replace(/\D/g, '');
       
@@ -1161,7 +1160,7 @@ export default {
           cepError.value = 'CEP não encontrado';
           cepValidated.value = false;
         } else {
-          // Preenche automaticamente os campos de endereço
+         
           formData.value.location.address = data.logradouro || formData.value.location.address;
           formData.value.location.city = data.localidade || formData.value.location.city;
           formData.value.location.state = data.uf || formData.value.location.state;
@@ -1173,7 +1172,6 @@ export default {
             `Endereço encontrado: ${data.logradouro ? data.logradouro + ', ' : ''}${data.localidade} - ${data.uf}`);
         }
       } catch (error) {
-        console.error('Erro ao validar CEP:', error);
         cepError.value = 'Erro ao validar CEP. Verifique sua conexão.';
         cepValidated.value = false;
       } finally {
@@ -1185,7 +1183,7 @@ export default {
       cepValidated.value = false;
       cepError.value = '';
       
-      // Debounce para validação automática
+     
       if (cepTimeout) {
         clearTimeout(cepTimeout);
       }
@@ -1195,69 +1193,65 @@ export default {
         if (cep && cep.length === 8) {
           validateCep();
         }
-      }, 1000); // Valida automaticamente após 1 segundo de inatividade
+      }, 1000);
     };
 
-    const resetForm = () => {
-      console.log('🔄 Resetando formulário completo');
-      
-      // Reset dos dados do formulário
+    const resetForm = () => {      
+     
       formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
       formData.value.imageBase64 = '';
       
-      // Reset da imagem
+     
       resetImageState();
       
-      // Reset dos estados
+     
       isDragging.value = false;
       showModal.value = false;
       currentStep.value = 1;
       
-      // Reset dos equipamentos
+     
       equipmentsList.value = [];
       searchQuery.value = '';
       filteredEquipments.value = [];
       quantityInputs.value = {};
       
-      // Reset da validação de CEP
+     
       isValidatingCep.value = false;
       cepValidated.value = false;
       cepError.value = '';
       
-      // Clear timeout do CEP se existir
+     
       if (cepTimeout) {
         clearTimeout(cepTimeout);
         cepTimeout = null;
       }
       
-      // Reset da paginação
+     
       currentFeaturedPage.value = 1;
       
       emit('cancel');
     };
     
-    // Equipamentos carregados do backend
+   
     const allEquipments = ref([]);
     
-    // Buscar equipamentos do backend - IGUAL AO MACHINES.VUE
+   
     const loadAllEquipments = async () => {
       try {
         isLoadingEquipments.value = true;
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        // USAR O INSTRUCTORID CORRETO DO USUÁRIO
+       
         const instructorId = user.instructorId || user.id || user._id;
         
         if (!instructorId) {
-          console.warn('⚠️ Instrutor não identificado');
           return;
         }
         
-        // EXATAMENTE COMO NO MACHINES.VUE
+       
         const response = await api.get(`/equipments/instructor/${instructorId}`);
         allEquipments.value = response.data.equipments;
         
       } catch (error) {
-        console.error('❌ Erro ao carregar equipamentos:', error);
         allEquipments.value = [];
         showNotification('error', 'Erro', 'Erro ao carregar equipamentos.');
       } finally {
@@ -1265,37 +1259,37 @@ export default {
       }
     };
 
-    // Função para construir URL completa das imagens
+   
     const getImageUrl = (imagePath) => {
       if (!imagePath) {
         return null;
       }
       
-      // Se já é uma URL completa, retorna como está
+     
       if (imagePath.startsWith('http')) {
         return imagePath;
       }
       
-      // Se começa com /, constrói URL completa
+     
       if (imagePath.startsWith('/')) {
         return `${API_URL}${imagePath}`;
       }
       
-      // Caso contrário, adiciona o prefixo padrão
+     
       return `${API_URL}/uploads/equipments/${imagePath}`;
     };
 
-    // Handler de erro de imagem
+   
     const handleImageError = (equipmentId) => {
       imageErrors.value.add(equipmentId);
     };
 
-    // Verificar se a imagem teve erro
+   
     const hasImageError = (equipmentId) => {
       return imageErrors.value.has(equipmentId);
     };
 
-    // Funções de Busca de Equipamentos
+   
     const filterEquipments = () => {
       if (!searchQuery.value.trim()) {
         filteredEquipments.value = [];
@@ -1310,7 +1304,7 @@ export default {
         (eq.muscleGroups && eq.muscleGroups.some(mg => mg.toLowerCase().includes(query)))
       );
       
-      // Inicializa quantidades para os resultados
+     
       filteredEquipments.value.forEach(eq => {
         if (!quantityInputs.value[eq._id]) {
           quantityInputs.value[eq._id] = 1;
@@ -1318,12 +1312,12 @@ export default {
       });
     };
 
-    // Carregar equipamentos em destaque (usa os primeiros equipamentos carregados)
+   
     const loadFeaturedEquipments = () => {
-      // Usa os primeiros equipamentos como em destaque (máximo 8)
+     
       featuredEquipmentsData.value = allEquipments.value.slice(0, 8);
       
-      // Inicializa quantidades para os equipamentos em destaque
+     
       featuredEquipmentsData.value.forEach(eq => {
         const equipmentId = eq._id || eq.id;
         if (!quantityInputs.value[equipmentId]) {
@@ -1364,7 +1358,7 @@ export default {
       const equipmentId = equipment._id || equipment.id;
       const quantity = quantityInputs.value[equipmentId] || 1;
       
-      // Validações
+     
       if (!equipment.name?.trim()) {
         showNotification('warning', 'Equipamento Inválido', 'Nome do equipamento é obrigatório.');
         return;
@@ -1375,13 +1369,13 @@ export default {
         return;
       }
       
-      // Verifica se já foi adicionado
+     
       if (isEquipmentAdded(equipmentId)) {
         showNotification('warning', 'Equipamento Duplicado', 'Este equipamento já foi adicionado.');
         return;
       }
       
-      // Adiciona o equipamento
+     
       const newEquipment = {
         sourceId: equipmentId,
         name: equipment.name.trim(),
@@ -1395,15 +1389,15 @@ export default {
       
       equipmentsList.value.push(newEquipment);
       
-      // Reseta a quantidade desse equipamento
+     
       quantityInputs.value[equipmentId] = 1;
       
-      // Feedback de sucesso
+     
       showNotification('success', 'Equipamento Adicionado!', 
         `${equipment.name} (${quantity}x) foi adicionado à academia.`);
     };
 
-    // Funções para gerenciar equipamentos adicionados
+   
     const removeEquipment = (index) => {
       if (index >= 0 && index < equipmentsList.value.length) {
         const removedEquipment = equipmentsList.value[index];
@@ -1443,9 +1437,9 @@ export default {
       return equipmentsList.value.length > 0;
     });
     
-    // Navegação entre Etapas
+   
     const goToStep2 = () => {
-      // Validação básica
+     
       if (!formData.value.name?.trim()) {
         showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
         return;
@@ -1462,20 +1456,20 @@ export default {
         return;
       }
       
-      // Validar formato do estado (2 letras)
+     
       if (formData.value.location.state.trim().length !== 2) {
         showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
         return;
       }
       
-      // Validar CEP
+     
       const cepNumbers = formData.value.location.zipCode.replace(/\D/g, '');
       if (cepNumbers.length !== 8) {
         showNotification('warning', 'CEP Inválido', 'CEP deve ter 8 dígitos. Use o formato: 00000-000');
         return;
       }
       
-      // Se CEP não foi validado ainda, tenta validar
+     
       if (!cepValidated.value && !isValidatingCep.value) {
         showNotification('info', 'Validando CEP...', 'Verificando o CEP informado...');
         validateCep().then(() => {
@@ -1486,7 +1480,7 @@ export default {
         return;
       }
       
-      // Se CEP tem erro, bloqueia
+     
       if (cepError.value) {
         showNotification('warning', 'CEP Inválido', 'Por favor, corrija o CEP antes de continuar.');
         return;
@@ -1501,7 +1495,7 @@ export default {
 
     const handleSubmit = async () => {
       try {
-        // Validações básicas da etapa 1
+       
         if (!formData.value.name?.trim()) {
           showNotification('warning', 'Campo Obrigatório', 'Nome da academia é obrigatório.');
           currentStep.value = 1;
@@ -1523,14 +1517,14 @@ export default {
           return;
         }
         
-        // Validar formato do estado (2 letras)
+       
         if (formData.value.location.state.trim().length !== 2) {
           showNotification('warning', 'Estado Inválido', 'Estado deve ter 2 letras (UF).');
           currentStep.value = 1;
           return;
         }
 
-        // Validar CEP (deve ter 8 dígitos)
+       
         const cepNumbers = formData.value.location.zipCode.replace(/\D/g, '');
         if (cepNumbers.length !== 8) {
           showNotification('warning', 'CEP Inválido', 'CEP deve ter 8 dígitos.');
@@ -1538,7 +1532,7 @@ export default {
           return;
         }
 
-        // Prepara os dados da academia
+       
         const gymData = {
           name: formData.value.name.trim(),
           description: (formData.value.description || '').trim(),
@@ -1552,15 +1546,15 @@ export default {
           }
         };
 
-        // Adiciona imagem se houver
+       
         if (formData.value.imageBase64) {
           gymData.imageBase64 = formData.value.imageBase64;
         } else if (formData.value.image) {
-          // Fallback para compatibilidade
+         
           gymData.image = formData.value.image;
         }
 
-        // Processa e valida equipamentos
+       
         if (equipmentsList.value && equipmentsList.value.length > 0) {
           gymData.equipments = equipmentsList.value.map(eq => {
             const equipment = {
@@ -1575,56 +1569,55 @@ export default {
             };
 
             return equipment;
-          }).filter(eq => eq.name); // Remove equipamentos sem nome
+          }).filter(eq => eq.name);
         } else {
           gymData.equipments = [];
         }
 
-        // Emite os dados para o componente pai
+       
         emit('submit', { data: gymData });
         
-        // Feedback de sucesso
+       
         showNotification('success', 'Dados Preparados!', 
           `Academia "${gymData.name}" está pronta para ${editMode.value ? 'atualização' : 'criação'}.`);
         
-        // Reset após sucesso
+       
         setTimeout(() => {
           resetForm();
         }, 1500);
         
       } catch (error) {
-        console.error('❌ Erro ao preparar dados do formulário:', error);
         showNotification('error', 'Erro no Formulário!', 
           `Erro ao processar dados: ${error.message || 'Erro desconhecido'}`);
       }
     };
 
-    // Watch para mudanças no prop show
+   
     watch(() => props.show, (newVal) => {
       showModal.value = newVal;
     });
     
-    // Watch para mudanças no searchQuery com debounce
+   
     let searchTimeout;
     watch(searchQuery, () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         filterEquipments();
-      }, 300); // Debounce de 300ms
+      }, 300);
     });
 
-    // Watch para mudanças no prop gym
+   
     watch(() => props.gym, (newVal) => {
       if (newVal) {
-        // Reset dos estados de validação
+       
         cepValidated.value = false;
         cepError.value = '';
         
         formData.value = {
           name: newVal.name || '',
           description: newVal.description || '',
-          image: null, // Sempre null para evitar conflitos
-          imageBase64: '', // Limpa o base64 ao carregar academia existente
+          image: null,
+          imageBase64: '',
           location: {
             address: newVal.location?.address || '',
             city: newVal.location?.city || '',
@@ -1635,11 +1628,11 @@ export default {
           email: newVal.email || '',
         };
         
-        // Carrega a imagem existente
+       
         if (newVal.image) {
-          // Se é um caminho de imagem do servidor
+         
           if (typeof newVal.image === 'string') {
-            // Constroi URL completa se necessário
+           
             const imageUrl = newVal.image.startsWith('http') 
               ? newVal.image 
               : newVal.image.startsWith('/') 
@@ -1649,13 +1642,13 @@ export default {
             imagePreview.value = imageUrl;
           }
         } else if (newVal.imageUrl) {
-          // Fallback para imageUrl
+         
           imagePreview.value = newVal.imageUrl;
         } else {
           imagePreview.value = null;
         }
         
-        // Carrega equipamentos se existirem
+       
         if (newVal.equipments && Array.isArray(newVal.equipments)) {
           equipmentsList.value = newVal.equipments.map(eq => ({
             sourceId: eq.sourceId || eq._id || eq.id,
@@ -1671,12 +1664,12 @@ export default {
           equipmentsList.value = [];
         }
         
-        // Se tem CEP válido, marca como validado
+       
         if (formData.value.location.zipCode && formData.value.location.zipCode.length >= 8) {
           cepValidated.value = true;
         }
       } else {
-        // Reset completo quando não há academia
+       
         formData.value = { ...defaultFormData, location: { ...defaultFormData.location } };
         imagePreview.value = null;
         equipmentsList.value = [];
@@ -1685,18 +1678,18 @@ export default {
       }
     }, { immediate: true, deep: true });
 
-    // Inicialização dos equipamentos
+   
     const initializeEquipments = async () => {
       await loadAllEquipments();
       loadFeaturedEquipments();
     };
 
-    // Inicializar equipamentos quando o componente for montado
+   
     onMounted(() => {
       initializeEquipments();
     });
 
-    // Reinicializar quando o modal for aberto
+   
     watch(() => props.show, (newVal) => {
       if (newVal) {
         initializeEquipments();
@@ -1726,15 +1719,15 @@ export default {
       paginatedFeaturedEquipments,
       popularSearchTerms,
       allEquipments,
-      // Validação de CEP
+     
       isValidatingCep,
       cepValidated,
       cepError,
       validateCep,
       onCepInput,
-      // Upload de imagem
+     
       isUploadingImage,
-      // Funções existentes
+     
       loadAllEquipments,
       getImageUrl,
       handleImageError,

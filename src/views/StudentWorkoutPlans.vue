@@ -247,11 +247,11 @@ import NotificationModal from '@/components/NotificationModal.vue'
 import ConfirmationModal from '@/components/ConfirmationModal.vue'
 import api from '@/api'
 
-// Stores
+
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Notification system
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -268,7 +268,7 @@ const showNotification = (type, title, message) => {
   }
 }
 
-// Confirmation system
+
 const showConfirmation = ref(false)
 const confirmationConfig = ref({
   title: '',
@@ -280,7 +280,7 @@ const confirmationConfig = ref({
   onConfirm: () => {}
 })
 
-// Reactive data
+
 const activeFilter = ref('all')
 const selectedWorkout = ref(null)
 const workoutSession = ref(null)
@@ -290,9 +290,9 @@ const loading = ref(false)
 const showDivisionModal = ref(false)
 const showWorkoutModal = ref(false)
 const workoutStartTime = ref(null)
-const hasInstructor = ref(true) // Para rastrear se o estudante tem instrutor
+const hasInstructor = ref(true)
 
-// Computed
+
 const filters = computed(() => [
   { id: 'all', name: 'Todos', icon: 'fas fa-list', count: workouts.value.length },
   { id: 'Força', name: 'Força', icon: 'fas fa-dumbbell', count: workouts.value.filter(w => w.type === 'Força').length },
@@ -308,7 +308,7 @@ const filteredWorkouts = computed(() => {
   return workouts.value.filter(workout => workout.type === activeFilter.value)
 })
 
-// Methods
+
 const setFilter = (filter) => {
   activeFilter.value = filter
 }
@@ -356,14 +356,14 @@ const calculateWorkoutTime = (plan) => {
   let totalTime = 0
   plan.divisions.forEach(division => {
     if (division.exercises && division.exercises.length > 0) {
-      // Cada exercício leva em média 3-5 minutos (considerando séries e descanso)
+     
       totalTime += division.exercises.length * 4
-      // Tempo extra para aquecimento e alongamento por divisão
+     
       totalTime += 5
     }
   })
   
-  return Math.max(totalTime, 30) // Mínimo de 30 minutos
+  return Math.max(totalTime, 30)
 }
 
 const clearAllFilters = () => {
@@ -376,12 +376,12 @@ const fetchWorkouts = async () => {
     const response = await api.get('/workout-sessions/workouts')
     const data = response.data
     
-    // Verificar se a resposta contém informações sobre instrutor
+   
     if (data && typeof data === 'object' && 'hasInstructor' in data) {
       hasInstructor.value = data.hasInstructor
       workouts.value = data.workouts || []
     } else {
-      // Resposta no formato antigo (array direto)
+     
       hasInstructor.value = true
       workouts.value = Array.isArray(data) ? data : []
     }
@@ -431,7 +431,6 @@ const startWorkoutWithDivision = async (divisionIndex) => {
     showWorkoutModal.value = true
     
   } catch (error) {
-    console.error('Erro ao iniciar treino:', error)
     showNotification('error', 'Erro!', error.response?.data?.message || 'Erro ao iniciar treino')
   } finally {
     loading.value = false
@@ -457,7 +456,7 @@ const cancelWorkout = () => {
         loading.value = true
         await api.post(`/workout-sessions/sessions/${activeSession.value._id}/cancel`)
         
-        // Usar nextTick para evitar problemas de reatividade
+       
         await nextTick(() => {
           activeSession.value = null
           workoutSession.value = null
@@ -468,7 +467,6 @@ const cancelWorkout = () => {
         showNotification('success', 'Treino Cancelado', 'O treino foi cancelado com sucesso.')
         showConfirmation.value = false
       } catch (error) {
-        console.error('Erro ao cancelar treino:', error)
         showNotification('error', 'Erro!', 'Erro ao cancelar treino')
       } finally {
         loading.value = false
@@ -486,49 +484,44 @@ const openWorkoutModal = (workout) => {
   }
 }
 
-// Handlers para o WorkoutModal
+
 const handleWorkoutModalClose = () => {
-  // Apenas fecha o modal, mantém a sessão ativa para poder continuar depois
+ 
   showWorkoutModal.value = false
 }
 
 const handleWorkoutFinished = async () => {
-  // Usar nextTick para evitar problemas de reatividade
+ 
   await nextTick(() => {
     showWorkoutModal.value = false
     workoutSession.value = null
     activeSession.value = null
   })
   
-  // Recarregar treinos
+ 
   await fetchWorkouts()
   await checkActiveSession()
 }
 
-const handleProgressSaved = () => {
-  // Callback quando progresso for salvo
-  console.log('Progresso salvo')
-}
-
 const handleSessionUpdated = (updatedSession) => {
-  // Validar se a sessão ainda existe antes de atualizar
+ 
   if (!updatedSession) return
   
-  // Atualizar a sessão quando houver mudanças
+ 
   workoutSession.value = updatedSession
   if (activeSession.value && activeSession.value._id === updatedSession._id) {
     activeSession.value = updatedSession
   }
 }
 
-// Lifecycle
+
 onMounted(async () => {
   await Promise.all([
     fetchWorkouts(),
     checkActiveSession()
   ])
   
-  // Atualizar timer a cada segundo
+ 
   setInterval(() => {
     if (showWorkoutModal.value && workoutStartTime.value) {
       // Force re-render para atualizar tempo

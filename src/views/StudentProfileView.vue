@@ -1752,7 +1752,7 @@ export default {
     const themeStore = useThemeStore();
     const isDarkMode = computed(() => themeStore.isDarkMode);
 
-    // State
+   
     const loading = ref(true);
     const error = ref(null);
     const student = ref({});
@@ -1764,13 +1764,13 @@ export default {
     const workoutPlans = ref([]);
     const selectedPlan = ref(null);
     const loadingPlans = ref(false);
-    const expandedDivisions = ref([]); // Para controlar divisões expandidas
+    const expandedDivisions = ref([]);
     
-    // Workout sessions data
+   
     const workoutSessions = ref([]);
     const loadingSessions = ref(false);
 
-    // Workout details modal
+   
     const showWorkoutDetailsModal = ref(false);
     const selectedWorkout = ref(null);
 
@@ -1796,7 +1796,7 @@ export default {
       notes: ''
     });
 
-    // Chart config
+   
     const chartWidth = ref(800);
     const chartHeight = ref(300);
     const volumeChartHeight = ref(400);
@@ -1804,7 +1804,7 @@ export default {
     const volumeChartPadding = ref(60);
     const chartPadding = ref(40);
 
-    // Enhanced chart config (Weight Evolution)
+   
     const enhancedChartWidth = ref(800);
     const enhancedChartHeight = ref(400);
     const enhancedChartPadding = ref(60);
@@ -1812,7 +1812,7 @@ export default {
     const selectedPeriod = ref('6months');
     const selectedPointIndex = ref(null);
     
-    // Chart theme
+   
     const chartTheme = ref({
       primary: '#3b82f6',
       secondary: '#8b5cf6',
@@ -1822,7 +1822,7 @@ export default {
       danger: '#ef4444'
     });
 
-    // Chart periods
+   
     const chartPeriods = ref([
       { label: '3M', value: '3months' },
       { label: '6M', value: '6months' },
@@ -1830,7 +1830,7 @@ export default {
       { label: 'Tudo', value: 'all' }
     ]);
 
-    // Tooltip state
+   
     const tooltip = ref({
       visible: false,
       x: 0,
@@ -1838,7 +1838,7 @@ export default {
       data: null
     });
     
-    // Helper function to calculate workout streak
+   
     const calculateWorkoutStreak = (sessions) => {
       if (!sessions || sessions.length === 0) return 0;
       
@@ -1848,18 +1848,18 @@ export default {
       
       if (completedSessions.length === 0) return 0;
       
-      // Agrupar sessões por dia (ignorar hora)
+     
       const sessionsByDay = {};
       completedSessions.forEach(session => {
         const sessionDate = new Date(session.endTime || session.startTime);
-        const dayKey = sessionDate.toDateString(); // Apenas a data, sem hora
+        const dayKey = sessionDate.toDateString();
         sessionsByDay[dayKey] = true;
       });
       
-      // Converter para array de datas únicas ordenadas
+     
       const uniqueDays = Object.keys(sessionsByDay)
         .map(dayStr => new Date(dayStr))
-        .sort((a, b) => b - a); // Mais recente primeiro
+        .sort((a, b) => b - a);
       
       if (uniqueDays.length === 0) return 0;
       
@@ -1867,7 +1867,7 @@ export default {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      // Começar do dia mais recente e verificar consecutividade
+     
       for (let i = 0; i < uniqueDays.length; i++) {
         const currentDay = new Date(uniqueDays[i]);
         currentDay.setHours(0, 0, 0, 0);
@@ -1875,11 +1875,11 @@ export default {
         const expectedDay = new Date(today);
         expectedDay.setDate(today.getDate() - i);
         
-        // Se o dia atual corresponde ao esperado (hoje - i dias)
+       
         if (currentDay.getTime() === expectedDay.getTime()) {
           streak++;
         } else {
-          // Se não é consecutivo, parar a contagem
+         
           break;
         }
       }
@@ -1887,7 +1887,7 @@ export default {
       return streak;
     };
 
-    // Computed
+   
     const weightChartData = computed(() => {
       if (!student.value.progressHistory || student.value.progressHistory.length === 0) return [];
       
@@ -1910,9 +1910,9 @@ export default {
     });
 
     const activePlan = computed(() => {
-      // Primeiro, verificar se tem workout sessions recentes
+     
       if (workoutSessions.value && workoutSessions.value.length > 0) {
-        // Pegar a sessão mais recente que tem workoutPlanId
+       
         const recentSessionsWithPlan = workoutSessions.value
           .filter(s => s.workoutPlanId && s.workoutName)
           .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime));
@@ -1920,7 +1920,7 @@ export default {
         if (recentSessionsWithPlan.length > 0) {
           const latestSession = recentSessionsWithPlan[0];
           
-          // Agrupar exercícios da sessão por divisão (se houver)
+         
           let divisions = [];
           if (latestSession.exercises && latestSession.exercises.length > 0) {
             divisions = [{
@@ -1944,7 +1944,7 @@ export default {
         }
       }
       
-      // Fallback: verificar se o estudante tem planos atribuídos
+     
       if (student.value.workoutPlans && student.value.workoutPlans.length > 0) {
         return {
           ...student.value.workoutPlans[0],
@@ -1983,7 +1983,7 @@ export default {
         return sum + (s.completedExercises || 0);
       }, 0);
       
-      // Calcular streak (dias consecutivos)
+     
       const streak = calculateWorkoutStreak(completedSessions);
       
       return {
@@ -2004,7 +2004,7 @@ export default {
         .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))
         .slice(0, 10)
         .map(session => ({
-          // Manter dados resumidos para exibição na lista
+         
           date: session.endTime || session.startTime,
           name: session.workoutName || 'Treino',
           division: session.divisionName || '',
@@ -2012,38 +2012,38 @@ export default {
           exercisesCompleted: session.completedExercises || 0,
           totalExercises: session.totalExercises || 0,
           status: 'completed',
-          // Adicionar dados completos da sessão para o modal
+         
           ...session
         }));
     });
 
-    // Função para processar URL do avatar
+   
     const getAvatarUrl = (avatarData) => {
       if (!avatarData) {
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.value.name || 'User')}&background=3b82f6&color=fff&size=200`
       }
       
-      // Se é base64, usar diretamente
+     
       if (avatarData.startsWith('data:image')) {
         return avatarData
       }
       
-      // Se já é URL completa
+     
       if (avatarData.startsWith('http')) {
         return avatarData
       }
       
-      // Se é path relativo, construir URL completa
+     
       return `${API_URL}${avatarData}`
     }
 
-    // Computed para normalizar o avatar
+   
     const studentAvatar = computed(() => {
       const avatar = student.value.userId?.avatar || student.value.avatar || null;
       return avatar ? getAvatarUrl(avatar) : `https://ui-avatars.com/api/?name=${encodeURIComponent(student.value.name || 'User')}&background=3b82f6&color=fff&size=200`;
     });
 
-    // Enhanced chart computed properties
+   
     const filteredWeightData = computed(() => {
       if (!student.value.progressHistory || student.value.progressHistory.length === 0) return [];
       
@@ -2051,7 +2051,7 @@ export default {
         .filter(log => log.weight)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // Filter by selected period
+     
       const now = new Date();
       const periodDays = {
         '3months': 90,
@@ -2065,7 +2065,7 @@ export default {
         logs = logs.filter(log => new Date(log.date) >= cutoffDate);
       }
 
-      // Add change calculation
+     
       return logs.map((log, index) => ({
         ...log,
         change: index > 0 ? +(log.weight - logs[index - 1].weight).toFixed(1) : null
@@ -2078,7 +2078,7 @@ export default {
       const weights = filteredWeightData.value.map(d => d.weight);
       const min = Math.min(...weights);
       const max = Math.max(...weights);
-      const padding = (max - min) * 0.1 || 5; // 10% padding or 5kg minimum
+      const padding = (max - min) * 0.1 || 5;
       
       return {
         min: Math.max(0, min - padding),
@@ -2144,7 +2144,7 @@ export default {
     const consistencyScore = computed(() => {
       if (filteredWeightData.value.length < 2) return 0;
       
-      const expectedInterval = 7; // days
+      const expectedInterval = 7;
       let consistentMeasurements = 0;
       
       for (let i = 1; i < filteredWeightData.value.length; i++) {
@@ -2152,7 +2152,7 @@ export default {
         const curr = new Date(filteredWeightData.value[i].date);
         const daysDiff = (curr - prev) / (1000 * 60 * 60 * 24);
         
-        if (daysDiff <= expectedInterval * 2) { // Allow some flexibility
+        if (daysDiff <= expectedInterval * 2) {
           consistentMeasurements++;
         }
       }
@@ -2160,7 +2160,7 @@ export default {
       return Math.round((consistentMeasurements / (filteredWeightData.value.length - 1)) * 100);
     });
 
-    // Methods
+   
     const loadWorkoutSessions = async (studentId) => {
       try {
         loadingSessions.value = true;
@@ -2171,14 +2171,11 @@ export default {
         workoutSessions.value = sessions;
         
       } catch (error) {
-        console.error('❌ [StudentProfile] Erro ao carregar workout sessions:', error);
-        
         try {
           const fallbackResponse = await api.get('/workout-sessions/sessions/all');
           const allSessions = fallbackResponse.data?.sessions || [];
           workoutSessions.value = allSessions;
         } catch (fallbackError) {
-          console.error('❌ [StudentProfile] Fallback também falhou:', fallbackError);
           workoutSessions.value = [];
         }
       } finally {
@@ -2194,21 +2191,18 @@ export default {
         
         const response = await getStudentById(studentId);
         
-        // Se for array, pegar o primeiro elemento
+       
         if (Array.isArray(response.data)) {
-          console.warn('⚠️ [StudentProfileView] API retornou array, pegando primeiro elemento');
           student.value = response.data[0] || {};
         } else {
           student.value = response.data;
         }
         
-        // Carregar workout sessions do aluno
+       
         if (student.value._id) {
           await loadWorkoutSessions(student.value._id);
         }
       } catch (err) {
-        console.error('❌ [StudentProfileView] Erro ao carregar aluno:', err);
-        console.error('❌ [StudentProfileView] Erro completo:', err.response);
         error.value = err.response?.data?.message || 'Erro ao carregar dados do aluno';
       } finally {
         loading.value = false;
@@ -2260,7 +2254,7 @@ export default {
     };
 
     const getLatestMeasurement = (measurement) => {
-      // Tenta pegar do progressHistory primeiro
+     
       if (student.value.progressHistory && student.value.progressHistory.length > 0) {
         const latest = [...student.value.progressHistory]
           .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -2271,7 +2265,7 @@ export default {
         }
       }
       
-      // Fallback para initialMeasurements
+     
       if (student.value.personalInfo?.initialMeasurements?.[measurement]) {
         return student.value.personalInfo.initialMeasurements[measurement];
       }
@@ -2283,7 +2277,7 @@ export default {
       const initial = student.value.personalInfo?.initialMeasurements?.[measurement];
       let current = null;
       
-      // Pega a medida atual do progressHistory
+     
       if (student.value.progressHistory && student.value.progressHistory.length > 0) {
         const latest = [...student.value.progressHistory]
           .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -2291,7 +2285,7 @@ export default {
         current = latest?.measurements[measurement];
       }
       
-      // Se não tem progresso, usa initial como atual
+     
       if (!current) {
         current = initial;
       }
@@ -2299,7 +2293,7 @@ export default {
       const value = current || '-';
       let change = null;
       
-      // Calcula a diferença percentual se tiver ambos os valores
+     
       if (initial && current && initial !== current) {
         const percentage = ((current - initial) / initial * 100).toFixed(1);
         change = {
@@ -2340,11 +2334,11 @@ export default {
       }, 0);
     };
 
-    // Volume Chart Data and Calculations
+   
     const volumeChartData = computed(() => {
       if (!workoutSessions.value || workoutSessions.value.length === 0) return [];
       
-      // Pegar últimos 3 meses de dados de treino
+     
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
       
@@ -2354,9 +2348,9 @@ export default {
       
       if (completedSessions.length === 0) return [];
       
-      // Calcular volume para cada treino baseado em dados reais
+     
       const volumeData = completedSessions.map((session) => {
-        // Volume = exercícios completados * sets completados * peso médio estimado
+       
         let totalVolume = 0;
         
         if (session.exercises && Array.isArray(session.exercises)) {
@@ -2371,9 +2365,9 @@ export default {
           });
         }
         
-        // Se não temos dados detalhados de volume, usar aproximação
+       
         if (totalVolume === 0) {
-          totalVolume = (session.completedExercises || 0) * (session.completedSets || 0) * 50; // 50kg peso médio estimado
+          totalVolume = (session.completedExercises || 0) * (session.completedSets || 0) * 50;
         }
         
         return {
@@ -2385,13 +2379,13 @@ export default {
         };
       });
       
-      // Detectar platôs (quando o volume não aumenta significativamente em 3+ sessões)
+     
       for (let i = 3; i < volumeData.length; i++) {
         const last3 = volumeData.slice(i - 3, i);
         const avgLast3 = last3.reduce((sum, d) => sum + d.volume, 0) / 3;
         const current = volumeData[i].volume;
         
-        // Platô: menos de 5% de melhoria nas últimas 3 sessões
+       
         if (current <= avgLast3 * 1.05) {
           volumeData[i].isPlateau = true;
         }
@@ -2433,7 +2427,7 @@ export default {
       return volumeChartData.value.filter(d => d.isPlateau).length;
     });
 
-    // Weight Progress Calculations
+   
     const weightProgress = computed(() => {
       const currentWeight = student.value.personalInfo?.currentWeight || 0;
       const targetWeight = student.value.goals?.weight?.target || 0;
@@ -2478,36 +2472,36 @@ export default {
       }
     });
 
-    // Volume Chart Drawing Functions
+   
     const getVolumePointX = (index) => {
-      // Para 1 ponto: centralizar
+     
       if (volumeChartData.value.length === 1) {
         return volumeChartWidth.value / 2;
       }
       
-      // Para múltiplos pontos: distribuir uniformemente
+     
       const dataWidth = volumeChartWidth.value - 2 * volumeChartPadding.value;
       const step = dataWidth / (volumeChartData.value.length - 1);
       return volumeChartPadding.value + index * step;
     };
 
     const getVolumePointY = (volume) => {
-      // Sempre começar do 0 até o pico
+     
       const maxVolume = Math.max(...volumeChartData.value.map(d => d.volume));
-      const minVolume = 0; // Sempre começar do zero
+      const minVolume = 0;
       const range = maxVolume - minVolume || 1;
       const dataHeight = volumeChartHeight.value - 2 * volumeChartPadding.value;
       
-      // Adicionar padding extra no topo para visualização melhor
-      const topPadding = 0.1; // 10% de espaço extra no topo
+     
+      const topPadding = 0.1;
       const adjustedRange = range * (1 + topPadding);
       
-      // Invertido: quanto maior o volume, menor o Y (mais perto do topo)
+     
       return volumeChartHeight.value - volumeChartPadding.value - ((volume - minVolume) / adjustedRange) * dataHeight;
     };
 
     const getVolumeLinePoints = () => {
-      // Para 1 ponto: não desenhar linha, apenas o ponto será visível
+     
       if (volumeChartData.value.length === 1) return '';
       
       return volumeChartData.value
@@ -2520,28 +2514,28 @@ export default {
       
       const bottomY = volumeChartHeight.value - volumeChartPadding.value;
       
-      // Para 1 ponto: criar um pequeno retângulo ao redor do ponto
+     
       if (volumeChartData.value.length === 1) {
         const x = getVolumePointX(0);
         const y = getVolumePointY(volumeChartData.value[0].volume);
-        const width = 60; // Largura da barra
+        const width = 60;
         
         return `${x - width/2},${bottomY} ${x - width/2},${y} ${x + width/2},${y} ${x + width/2},${bottomY}`;
       }
       
-      // Para múltiplos pontos: desenhar área normal
+     
       const firstX = getVolumePointX(0);
       const lastX = getVolumePointX(volumeChartData.value.length - 1);
       
-      // Construir o path: começar de baixo, subir pela linha, descer de volta
+     
       let points = `${firstX},${bottomY}`;
       
-      // Adicionar todos os pontos da linha
+     
       volumeChartData.value.forEach((point, idx) => {
         points += ` ${getVolumePointX(idx)},${getVolumePointY(point.volume)}`;
       });
       
-      // Fechar o polígono voltando para baixo
+     
       points += ` ${lastX},${bottomY}`;
       
       return points;
@@ -2550,18 +2544,18 @@ export default {
     const getVolumeYLabel = (index) => {
       if (volumeChartData.value.length === 0) return '0';
       
-      // Sempre de 0 até o pico
+     
       const maxVolume = Math.max(...volumeChartData.value.map(d => d.volume));
       const minVolume = 0;
       
-      // Adicionar padding extra no topo para labels
-      const topPadding = 0.1; // 10% de espaço extra
+     
+      const topPadding = 0.1;
       const adjustedMax = maxVolume * (1 + topPadding);
       
-      // Distribuir os labels uniformemente de max até min (de cima para baixo)
+     
       const value = adjustedMax - ((index - 1) / (gridLines.value - 1)) * (adjustedMax - minVolume);
       
-      // Formatação mais amigável
+     
       if (value >= 1000) {
         return `${(value / 1000).toFixed(1)}k`;
       }
@@ -2574,7 +2568,7 @@ export default {
       return Math.round(volume).toLocaleString();
     };
 
-    // Chart methods
+   
     const getPointX = (index) => {
       const dataWidth = chartWidth.value - 2 * chartPadding.value;
       const step = dataWidth / (weightChartData.value.length - 1 || 1);
@@ -2597,7 +2591,7 @@ export default {
         .join(' ');
     };
 
-    // Enhanced chart methods
+   
     const getEnhancedPointX = (index) => {
       if (filteredWeightData.value.length <= 1) return enhancedChartPadding.value;
       
@@ -2606,7 +2600,7 @@ export default {
       return enhancedChartPadding.value + index * step;
     };
 
-    // Novo método específico para o gráfico de peso
+   
     const getWeightPointX = (index) => {
       if (filteredWeightData.value.length <= 1) return enhancedChartPadding.value;
       
@@ -2654,20 +2648,20 @@ export default {
     const getChartAreaPath = () => {
       if (filteredWeightData.value.length === 0) return '';
       
-      // Começar do canto inferior esquerdo
+     
       const firstX = getWeightPointX(0);
       const lastX = getWeightPointX(filteredWeightData.value.length - 1);
       const bottomY = enhancedChartHeight.value - enhancedChartPadding.value;
       
-      // Construir o path: começar de baixo, subir pela linha, descer de volta
+     
       let path = `M ${firstX},${bottomY}`;
       
-      // Adicionar todos os pontos da linha
+     
       filteredWeightData.value.forEach((point, idx) => {
         path += ` L ${getWeightPointX(idx)},${getEnhancedPointY(point.weight)}`;
       });
       
-      // Fechar o polígono voltando para baixo
+     
       path += ` L ${lastX},${bottomY} Z`;
       
       return path;
@@ -2676,20 +2670,20 @@ export default {
     const getWeightAreaPath = () => {
       if (filteredWeightData.value.length === 0) return '';
       
-      // Começar do canto inferior esquerdo
+     
       const firstX = getWeightPointX(0);
       const lastX = getWeightPointX(filteredWeightData.value.length - 1);
       const bottomY = enhancedChartHeight.value - enhancedChartPadding.value;
       
-      // Construir o path: começar de baixo, subir pela linha, descer de volta
+     
       let path = `M ${firstX},${bottomY}`;
       
-      // Adicionar todos os pontos da linha
+     
       filteredWeightData.value.forEach((point, idx) => {
         path += ` L ${getWeightPointX(idx)},${getEnhancedPointY(point.weight)}`;
       });
       
-      // Fechar o polígono voltando para baixo
+     
       path += ` L ${lastX},${bottomY} Z`;
       
       return path;
@@ -2751,7 +2745,7 @@ export default {
       });
     };
 
-    // Modal methods
+   
     const closeProgressModal = () => {
       showProgressModal.value = false;
       progressForm.value = {
@@ -2778,7 +2772,6 @@ export default {
         const response = await getWorkoutPlans();
         workoutPlans.value = response.data;
       } catch (err) {
-        console.error('Error loading workout plans:', err);
         showNotification('error', 'Erro', 'Erro ao carregar planos de treino');
       } finally {
         loadingPlans.value = false;
@@ -2807,7 +2800,6 @@ export default {
         closeAssignPlanModal();
         showNotification('success', 'Sucesso', 'Plano atribuído com sucesso!');
       } catch (err) {
-        console.error('Error assigning plan:', err);
         showNotification('error', 'Erro', 'Erro ao atribuir plano');
       } finally {
         submitting.value = false;
@@ -2823,7 +2815,7 @@ export default {
       }
     };
 
-    // Workout Details Modal Functions
+   
     const openWorkoutDetails = (workout) => {
       selectedWorkout.value = workout;
       showWorkoutDetailsModal.value = true;
@@ -2934,7 +2926,6 @@ export default {
         
         closeProgressModal();
       } catch (err) {
-        console.error('❌ Error adding progress:', err);
         showNotification('error', 'Erro', 'Erro ao adicionar progresso: ' + (err.response?.data?.message || err.message));
       } finally {
         submitting.value = false;
@@ -2942,7 +2933,7 @@ export default {
     };
 
     const exportData = () => {
-      // Criar CSV com dados do aluno
+     
       const csvData = [
         ['Nome', student.value.name],
         ['Email', student.value.email],
@@ -3051,7 +3042,7 @@ export default {
       getPointY,
       getChartPoints,
       
-      // Enhanced chart properties
+     
       enhancedChartWidth,
       enhancedChartHeight,
       enhancedChartPadding,
@@ -3070,7 +3061,7 @@ export default {
       progressToGoal,
       consistencyScore,
       
-      // Enhanced chart methods
+     
       getEnhancedPointX,
       getWeightPointX,
       getEnhancedPointY,
@@ -3094,7 +3085,7 @@ export default {
       submitProgress,
       exportData,
       getTotalExercises,
-      // Workout details modal
+     
       showWorkoutDetailsModal,
       selectedWorkout,
       openWorkoutDetails,

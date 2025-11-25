@@ -209,8 +209,8 @@ const notification = ref({ visible: false, type: 'info', title: '', message: '' 
 const loading = ref(false);
 const saving = ref(false);
 const instructorId = ref(null);
-const originalAvatar = ref(''); // Armazena o avatar original
-const pendingAvatarFile = ref(null); // Armazena o arquivo pendente
+const originalAvatar = ref('');
+const pendingAvatarFile = ref(null);
 
 const instructorData = reactive({
   avatar: 'https://ui-avatars.com/api/?name=Instrutor&background=2563eb&color=fff&size=200',
@@ -225,7 +225,7 @@ const instructorData = reactive({
   bio: ''
 });
 
-// Fetch instructor profile
+
 const fetchProfile = async () => {
   loading.value = true;
   try {
@@ -238,41 +238,41 @@ const fetchProfile = async () => {
     const userData = JSON.parse(storedUser);
     const userId = userData.id || userData._id;
     
-    // Fetch instructor data
+   
     const response = await api.get(`/instructors/user/${userId}`);
     const instructor = response.data;
     
     instructorId.value = instructor._id;
     
-    // Populate form - instructor.userId is populated with user data
+   
     instructorData.name = instructor.userId?.name || instructor.name || userData.name || '';
     instructorData.email = instructor.userId?.email || instructor.email || userData.email || '';
     instructorData.phone = instructor.userId?.phone || instructor.phone || '';
     instructorData.birthDate = instructor.userId?.birthDate?.split('T')[0] || '';
     
-    // Avatar: priorizar do userId, depois userData, depois default
+   
     const avatarFromUser = instructor.userId?.avatar || userData.avatar;
     if (avatarFromUser) {
-      // Se for base64, usar direto; se for URL antiga, construir path completo
+     
       if (avatarFromUser.startsWith('data:image')) {
-        // É base64, usar diretamente
+       
         instructorData.avatar = avatarFromUser;
         originalAvatar.value = avatarFromUser;
       } else if (avatarFromUser.startsWith('http')) {
-        // Já é URL completa
+       
         instructorData.avatar = avatarFromUser;
         originalAvatar.value = avatarFromUser;
       } else {
-        // É path relativo (sistema antigo)
+       
         const avatarUrl = getImageUrl(avatarFromUser);
         instructorData.avatar = avatarUrl;
         originalAvatar.value = avatarUrl;
       }
     } else {
-      originalAvatar.value = instructorData.avatar; // Salvar avatar padrão
+      originalAvatar.value = instructorData.avatar;
     }
     
-    // Limpar arquivo pendente ao recarregar
+   
     pendingAvatarFile.value = null;
     
     instructorData.cref = instructor.cref || '';
@@ -291,7 +291,7 @@ const fetchProfile = async () => {
   }
 };
 
-// Save profile
+
 const saveProfile = async () => {
   saving.value = true;
   try {
@@ -301,7 +301,7 @@ const saveProfile = async () => {
     const userData = JSON.parse(storedUser);
     const userId = userData.id || userData._id;
 
-    // Se houver um arquivo de avatar pendente, fazer upload primeiro
+   
     if (pendingAvatarFile.value) {
       const formData = new FormData();
       formData.append('avatar', pendingAvatarFile.value);
@@ -312,13 +312,13 @@ const saveProfile = async () => {
         });
 
         if (avatarResponse.data.avatarUrl) {
-          // Avatar retorna em base64, usar diretamente
+         
           const avatarBase64 = avatarResponse.data.avatarUrl;
           
-          // Atualizar avatar no sessionStorage
+         
           userData.avatar = avatarBase64;
           
-          // Atualizar avatar original e atual
+         
           originalAvatar.value = avatarBase64;
           instructorData.avatar = avatarBase64;
         }
@@ -327,11 +327,11 @@ const saveProfile = async () => {
         showNotification('info', 'Informacao', '❌ Erro ao salvar a foto de perfil. Outras alterações serão salvas.');
       }
       
-      // Limpar arquivo pendente após upload
+     
       pendingAvatarFile.value = null;
     }
 
-    // Update user data
+   
     await api.put(`/auth/user/${userId}`, {
       name: instructorData.name,
       email: instructorData.email,
@@ -339,7 +339,7 @@ const saveProfile = async () => {
       birthDate: instructorData.birthDate
     });
 
-    // Update instructor data
+   
     await api.put(`/instructors/${instructorId.value}`, {
       cref: instructorData.cref,
       specialization: instructorData.specialization,
@@ -347,7 +347,7 @@ const saveProfile = async () => {
       bio: instructorData.bio
     });
 
-    // Update session
+   
     userData.name = instructorData.name;
     userData.email = instructorData.email;
     sessionStorage.setItem('user', JSON.stringify(userData));
@@ -361,7 +361,7 @@ const saveProfile = async () => {
   }
 };
 
-// Função para mostrar notificações
+
 const showNotification = (type, title, message) => {
   notification.value = {
     visible: true,
@@ -371,12 +371,12 @@ const showNotification = (type, title, message) => {
   };
 };
 
-// Handle avatar upload - apenas preview, não salva ainda
+
 const handleAvatarUpload = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validação
+ 
   if (file.size > 5 * 1024 * 1024) {
     showNotification('info', 'Informacao', '❌ Arquivo muito grande! Tamanho máximo: 5MB');
     event.target.value = '';
@@ -389,28 +389,28 @@ const handleAvatarUpload = (event) => {
     return;
   }
 
-  // Armazenar o arquivo para upload posterior
+ 
   pendingAvatarFile.value = file;
 
-  // Criar preview local da imagem
+ 
   const reader = new FileReader();
   reader.onload = (e) => {
     instructorData.avatar = e.target.result;
   };
   reader.readAsDataURL(file);
 
-  // Limpar input
+ 
   event.target.value = '';
 };
 
-// Cancel edit and reload
+
 const cancelEdit = async () => {
   if (confirm('⚠️ Deseja descartar as alterações não salvas?')) {
-    // Restaurar avatar original
+   
     instructorData.avatar = originalAvatar.value;
-    // Limpar arquivo pendente
+   
     pendingAvatarFile.value = null;
-    // Recarregar dados do perfil
+   
     await fetchProfile();
   }
 };

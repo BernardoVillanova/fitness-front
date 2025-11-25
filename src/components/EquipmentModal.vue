@@ -340,12 +340,8 @@ export default {
   },
   mounted() {
     if (!this.instructorId) {
-      console.error('❌ [EquipmentModal] CRÍTICO: instructorId está null/undefined!');
+      console.error('[EquipmentModal] CRÍTICO: instructorId está null/undefined!');
     }
-    console.log('EquipmentModal mounted:', {
-      muscleGroupOptions: this.muscleGroupOptions,
-      formDataMuscleGroups: this.formData.muscleGroups
-    });
   },
   data() {
     return {
@@ -383,43 +379,34 @@ export default {
     getImageUrl() {
       return (imagePath) => {
         if (!imagePath) return null;
-        // Se já for uma URL completa, retornar como está
+       
         if (imagePath.startsWith('http')) return imagePath;
-        // Caso contrário, construir URL do backend (sem /api pois as imagens são servidas direto)
+       
         return `${API_URL}${imagePath}`;
       };
     }
   },
   methods: {
     toggleMuscleGroup(muscleValue) {
-      console.log('Toggling muscle group:', muscleValue);
-      console.log('Current groups before:', [...this.formData.muscleGroups]);
-      
-      // Criar uma nova cópia do array para forçar reatividade
+     
       const currentGroups = [...this.formData.muscleGroups];
       const index = currentGroups.indexOf(muscleValue);
       
       if (index > -1) {
-        // Remove se já existe
+       
         currentGroups.splice(index, 1);
       } else {
-        // Adiciona se não existe
+       
         currentGroups.push(muscleValue);
       }
       
-      // Atualizar o array inteiro para garantir reatividade no Vue 3
+     
       this.formData.muscleGroups = currentGroups;
-      
-      console.log('Current groups after:', [...this.formData.muscleGroups]);
     },
     handleMuscleGroupChange(event) {
-      console.log('Checkbox event:', {
-        value: event.target.value,
-        checked: event.target.checked,
-        currentGroups: [...this.formData.muscleGroups]
-      });
+      console.log('event: ', event);
       
-      // Force reactivity update
+     
       this.$forceUpdate();
     },
     showNotification(type, title, message) {
@@ -446,17 +433,17 @@ export default {
       }
     },
     processImage(file) {
-      // Comprimir a imagem antes de converter para base64
+     
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          // Criar canvas para redimensionar
+         
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
           
-          // Redimensionar se for muito grande (máximo 1200px)
+         
           const maxSize = 1200;
           if (width > maxSize || height > maxSize) {
             if (width > height) {
@@ -474,12 +461,12 @@ export default {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          // Converter para base64 com qualidade reduzida
+         
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
           
-          // Verificar tamanho após compressão
+         
           const sizeInBytes = (compressedBase64.length * 3) / 4;
-          if (sizeInBytes > 10 * 1024 * 1024) { // 10MB após compressão
+          if (sizeInBytes > 10 * 1024 * 1024) {
             this.errorMessage = 'A imagem ainda está muito grande. Tente uma imagem menor.';
             return;
           }
@@ -499,7 +486,7 @@ export default {
       }
     },
     async handleSubmit() {
-      // Validar instructorId
+     
       if (!this.instructorId) {
         this.errorMessage = 'ID do instrutor não encontrado. Por favor, recarregue a página.';
         return;
@@ -531,7 +518,6 @@ export default {
         this.resetForm();
         this.closeModal();
       } catch (error) {
-        console.error('Erro ao cadastrar equipamento:', error);
         this.errorMessage = error.response?.data?.message || 'Erro ao cadastrar equipamento. Tente com uma imagem menor.';
       } finally {
         this.isSubmitting = false;
@@ -563,7 +549,6 @@ export default {
         await api.delete(`/equipments/${equipment._id}`);
         this.$emit('equipment-removed');
       } catch (error) {
-        console.error('Erro ao remover equipamento:', error);
         this.showNotification('error', 'Erro', 'Erro ao remover equipamento');
       }
     },

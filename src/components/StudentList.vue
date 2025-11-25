@@ -419,7 +419,7 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Notification state
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -427,7 +427,7 @@ const notification = ref({
   message: ''
 })
 
-// Confirmation state
+
 const confirmationModal = ref({
   visible: false,
   title: '',
@@ -445,7 +445,7 @@ const showNotification = (type, title, message) => {
   }
 }
 
-// Função para processar URL do avatar
+
 const getAvatarUrl = (student) => {
   const avatar = student.userId?.avatar
   
@@ -453,17 +453,17 @@ const getAvatarUrl = (student) => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name || 'Student')}&background=3b82f6&color=fff&size=200`
   }
   
-  // Se é base64, usar diretamente
+ 
   if (avatar.startsWith('data:image')) {
     return avatar
   }
   
-  // Se já é URL completa
+ 
   if (avatar.startsWith('http')) {
     return avatar
   }
   
-  // Se é path relativo, construir URL completa
+ 
   return `${API_URL}${avatar}`
 }
 
@@ -491,7 +491,7 @@ const handleConfirmationCancel = () => {
   confirmationModal.value.visible = false
 }
 
-// Estado
+
 const students = ref([])
 const search = ref('')
 const currentPage = ref(1)
@@ -506,7 +506,7 @@ const showViewPlan = ref(false)
 const loading = ref(false)
 const selectedStudent = ref(null)
 
-// Computed Properties
+
 const totalStudents = computed(() => students.value.length)
 const activeStudents = computed(() => students.value.filter(s => s.status === 'active').length)
 const pausedStudents = computed(() => students.value.filter(s => s.status === 'paused').length)
@@ -515,7 +515,7 @@ const studentsWithPlans = computed(() => students.value.filter(s => s.hasActiveP
 const filteredStudents = computed(() => {
   let filtered = students.value
 
-  // Filtro de busca
+ 
   if (search.value) {
     const searchLower = search.value.toLowerCase()
     filtered = filtered.filter(s => {
@@ -525,19 +525,19 @@ const filteredStudents = computed(() => {
     })
   }
 
-  // Filtro de status
+ 
   if (statusFilter.value !== 'all') {
     filtered = filtered.filter(s => s.status === statusFilter.value)
   }
 
-  // Filtro de plano
+ 
   if (planFilter.value === 'with-plan') {
     filtered = filtered.filter(s => s.hasActivePlan)
   } else if (planFilter.value === 'without-plan') {
     filtered = filtered.filter(s => !s.hasActivePlan)
   }
 
-  // Filtro de experiência
+ 
   if (experienceFilter.value !== 'all') {
     filtered = filtered.filter(s => s.personalInfo?.trainingExperience === experienceFilter.value)
   }
@@ -586,7 +586,7 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// Formatadores
+
 const formatExperience = (exp) => {
   const map = {
     iniciante: 'Iniciante',
@@ -606,7 +606,7 @@ const formatStatus = (status) => {
   return map[status] || status
 }
 
-// Formatar última atividade
+
 const formatLastWorkout = (lastWorkout) => {
   if (!lastWorkout) return 'Nunca';
   
@@ -622,7 +622,7 @@ const formatLastWorkout = (lastWorkout) => {
   return `${Math.floor(diffDays / 30)}m atrás`;
 }
 
-// Helper function to calculate workout streak
+
 const calculateWorkoutStreak = (sessions) => {
   if (!sessions || sessions.length === 0) return 0;
   
@@ -632,18 +632,18 @@ const calculateWorkoutStreak = (sessions) => {
   
   if (completedSessions.length === 0) return 0;
   
-  // Agrupar sessões por dia (ignorar hora)
+ 
   const sessionsByDay = {};
   completedSessions.forEach(session => {
     const sessionDate = new Date(session.endTime || session.startTime);
-    const dayKey = sessionDate.toDateString(); // Apenas a data, sem hora
+    const dayKey = sessionDate.toDateString();
     sessionsByDay[dayKey] = true;
   });
   
-  // Converter para array de datas únicas ordenadas
+ 
   const uniqueDays = Object.keys(sessionsByDay)
     .map(dayStr => new Date(dayStr))
-    .sort((a, b) => b - a); // Mais recente primeiro
+    .sort((a, b) => b - a);
   
   if (uniqueDays.length === 0) return 0;
   
@@ -651,7 +651,7 @@ const calculateWorkoutStreak = (sessions) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  // Começar do dia mais recente e verificar consecutividade
+ 
   for (let i = 0; i < uniqueDays.length; i++) {
     const currentDay = new Date(uniqueDays[i]);
     currentDay.setHours(0, 0, 0, 0);
@@ -659,11 +659,11 @@ const calculateWorkoutStreak = (sessions) => {
     const expectedDay = new Date(today);
     expectedDay.setDate(today.getDate() - i);
     
-    // Se o dia atual corresponde ao esperado (hoje - i dias)
+   
     if (currentDay.getTime() === expectedDay.getTime()) {
       streak++;
     } else {
-      // Se não é consecutivo, parar a contagem
+     
       break;
     }
   }
@@ -671,31 +671,31 @@ const calculateWorkoutStreak = (sessions) => {
   return streak;
 };
 
-// Função para buscar workout sessions de um aluno
+
 const getStudentWorkoutSessions = async (studentId) => {
   try {
     const response = await api.get(`/workout-sessions/sessions/student/${studentId}`);
     return response.data?.sessions || [];
   } catch (error) {
-    console.error('❌ [StudentList] Erro ao buscar sessions para student', studentId, ':', error);
+    console.log('error: ', error);
     return [];
   }
 };
 
-// Ações
+
 const fetchStudents = async () => {
   try {
     loading.value = true
     
-    // Pegar dados do usuário logado
+   
     const userData = JSON.parse(sessionStorage.getItem('user'))
     const userId = userData.id
         
-    // Buscar o instrutor pelo userId usando a lista de instrutores
+   
     const instructorsResponse = await api.get('/instructors')
     const allInstructors = instructorsResponse.data
     
-    // Encontrar o instrutor que corresponde ao userId
+   
     const currentInstructor = allInstructors.find(inst => inst.userId === userId || inst.userId?._id === userId)
     
     if (!currentInstructor) {
@@ -707,11 +707,11 @@ const fetchStudents = async () => {
     
     const instructorId = currentInstructor._id
     
-    // Buscar apenas alunos deste instrutor usando a rota específica
+   
     const response = await api.get(`/students/instructor/${instructorId}`)
         
     if (response.data) {
-      // A resposta pode vir diretamente como array ou dentro de um objeto
+     
       let studentsData = Array.isArray(response.data) ? response.data : (response.data.students || [])
             
       const studentsWithStats = await Promise.all(
@@ -719,7 +719,7 @@ const fetchStudents = async () => {
           const sessions = await getStudentWorkoutSessions(student._id);
           const completedSessions = sessions.filter(s => s.status === 'completed');
           
-          // Calcular treinos da última semana (últimos 7 dias)
+         
           const now = new Date();
           const sevenDaysAgo = new Date(now);
           sevenDaysAgo.setDate(now.getDate() - 7);
@@ -729,14 +729,14 @@ const fetchStudents = async () => {
             return sessionDate >= sevenDaysAgo && sessionDate <= now;
           }).length;
           
-          // Detectar se tem plano ativo baseado APENAS no instrutor atual
+         
           let hasActivePlan = false;
           let planInfo = null;
           
-          // 1. Verificar se tem workoutPlans atribuídos pelo instrutor atual
+         
           if (student.workoutPlans && student.workoutPlans.length > 0) {
             
-            // Filtrar apenas planos criados pelo instrutor atual
+           
             const instructorPlans = student.workoutPlans.filter(plan => {
               const planInstructorId = plan.instructorId?._id || plan.instructorId;
               const match = planInstructorId === instructorId;
@@ -754,7 +754,7 @@ const fetchStudents = async () => {
             }
           }
           
-          // 2. Se não encontrou planos atribuídos, verificar sessões com planos do instrutor
+         
           if (!hasActivePlan && sessions.length > 0) {            
             const instructorSessions = sessions.filter(s => {
               const hasWorkoutPlan = s.workoutPlanId && s.workoutName;
@@ -783,10 +783,10 @@ const fetchStudents = async () => {
             workoutsThisWeek: workoutsThisWeek,
             lastWorkout: completedSessions.length > 0 ? 
               completedSessions.sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))[0] : null,
-            // Adicionar informações de plano DO INSTRUTOR ATUAL
+           
             hasActivePlan,
             planInfo,
-            // Manter compatibilidade com currentWorkoutPlanId
+           
             currentWorkoutPlanId: hasActivePlan ? (student.currentWorkoutPlanId || 'detected') : null
           };
         })
@@ -829,20 +829,20 @@ const confirmUnlinkStudent = async (student) => {
     'Confirmar Desvinculação',
     `Tem certeza que deseja desvincular ${studentName}? O aluno ficará sem instrutor.`,
     async () => {
-      // Função executada quando confirmar
+     
       try {    
-        // Usar a função específica da API
+       
         await unlinkStudent(student._id)
         
-        // Atualizar a lista de alunos
+       
         await fetchStudents()
         
-        // Notificar sucesso
+       
         showNotification('success', 'Sucesso', `${studentName} foi desvinculado com sucesso!`)
       } catch (error) {
         console.error('Erro ao desvincular aluno:', error)
         
-        // Mostrar mensagem de erro específica
+       
         const errorMessage = error.response?.data?.message || 'Erro ao desvincular aluno'
         showNotification('error', 'Erro ao Desvincular', errorMessage)
       }
@@ -889,7 +889,7 @@ const confirmDeleteStudent = async (student) => {
   }
 }
 
-// Watchers
+
 watch([statusFilter, planFilter, experienceFilter], () => {
   currentPage.value = 1
   totalPages.value = Math.ceil(filteredStudents.value.length / limit)

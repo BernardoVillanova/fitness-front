@@ -443,7 +443,7 @@ export default {
       totalExercises: 0,
       loading: false,
       error: null,
-      // Confirmation modal
+     
       showConfirmation: false,
       confirmationConfig: {
         title: '',
@@ -539,12 +539,10 @@ export default {
   },
   methods: {
     async fetchWorkoutPlans() {
-      console.log('🔍 [DEBUG] Iniciando fetchWorkoutPlans...');
       this.loading = true;
       this.error = null;
       try {
         const token = sessionStorage.getItem('token');
-        console.log('🔍 [DEBUG] Fazendo requisição para workout-plans-detailed...');
         const response = await fetch(`${API_BASE_URL}/workout/workout-plans-detailed`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -555,11 +553,8 @@ export default {
           throw new Error(`Erro ao carregar planos: ${response.status}`);
         }
         const plans = await response.json();
-        console.log('✅ [DEBUG] Planos recebidos:', plans.length);
-        console.log('🔍 [DEBUG] Primeiro plano:', plans[0]);
         this.workoutPlans = plans;
       } catch (error) {
-        console.error('Erro ao carregar planos:', error);
         this.error = error.message;
         this.workoutPlans = [];
       } finally {
@@ -599,23 +594,21 @@ export default {
           
           this.showSuccessMessage('Plano de treino salvo com sucesso!');
           this.closeModal();
-          // Resetar estado de salvamento no modal filho
+         
           if (this.$refs.workoutPlanModal) {
             this.$refs.workoutPlanModal.isSaving = false;
           }
         } else {
           const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-          console.error('❌ Erro do servidor:', errorData);
-          // Resetar estado de salvamento em caso de erro
+         
           if (this.$refs.workoutPlanModal) {
             this.$refs.workoutPlanModal.isSaving = false;
           }
           throw new Error(errorData.message || 'Erro ao salvar plano');
         }
       } catch (error) {
-        console.error('❌ Erro ao salvar plano:', error);
         this.showErrorMessage('Erro ao salvar plano: ' + error.message);
-        // Resetar estado de salvamento em caso de erro
+       
         if (this.$refs.workoutPlanModal) {
           this.$refs.workoutPlanModal.isSaving = false;
         }
@@ -639,7 +632,6 @@ export default {
           throw new Error('Erro ao atribuir plano');
         }
       } catch (error) {
-        console.error('Erro ao atribuir plano:', error);
         this.showNotification('error', 'Erro!', 'Erro ao atribuir plano: ' + error.message);
       }
     },
@@ -690,7 +682,6 @@ export default {
           throw new Error(errorData.message || 'Erro ao excluir plano');
         }
       } catch (error) {
-        console.error('❌ Erro ao excluir plano:', error);
         this.showErrorMessage('❌ Erro ao excluir plano: ' + error.message);
       }
     },
@@ -760,7 +751,7 @@ export default {
       try {
         const token = sessionStorage.getItem('token');
         
-        // Buscar dados completos do plano
+       
         const response = await fetch(`${API_BASE_URL}/workout/workout-plans/${plan._id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -778,7 +769,6 @@ export default {
           throw new Error('Erro ao carregar plano para edição');
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar plano:', error);
         this.showNotification('error', 'Erro!', 'Erro ao carregar plano: ' + error.message);
       }
     },
@@ -812,64 +802,39 @@ export default {
 
     async fetchStudents() {
       try {
-        console.log('🔍 [DEBUG] Iniciando fetchStudents com API axios...');
         const token = sessionStorage.getItem('token');
-        console.log('🔍 [DEBUG] Token encontrado:', token ? 'Sim' : 'Não');
-        console.log('🔍 [DEBUG] Token value:', token?.substring(0, 20) + '...');
-        
-        console.log('🔍 [DEBUG] Base URL da API:', api.defaults.baseURL);
-        console.log('🔍 [DEBUG] Fazendo requisição para: /students');
-        
-        // Teste de conectividade
-        console.log('🔍 [DEBUG] Testando conectividade com o backend...');
+        console.log('token: ', token);
+       
         try {
           const healthCheck = await fetch(`${API_BASE_URL}/docs`);
-          console.log('🔍 [DEBUG] Backend health check status:', healthCheck.status);
+          console.log('healthCheck: ', healthCheck);
         } catch (healthError) {
-          console.error('❌ [DEBUG] Backend não está acessível:', healthError);
+          console.log('healthError: ', healthError);
         }
         
         const response = await api.get('/students');
         
-        console.log('✅ [DEBUG] Students data received:', response.data);
         this.students = response.data;
         
       } catch (error) {
-        console.error('❌ [DEBUG] Axios error fetching students:', error);
-        console.error('❌ [DEBUG] Error type:', error.constructor.name);
-        console.error('❌ [DEBUG] Error message:', error.message);
-        console.error('❌ [DEBUG] Error response:', error.response);
-        
-        if (error.response) {
-          console.error('❌ [DEBUG] Response status:', error.response.status);
-          console.error('❌ [DEBUG] Response data:', error.response.data);
-          console.error('❌ [DEBUG] Response headers:', error.response.headers);
-        }
-        
-        if (error.request) {
-          console.error('❌ [DEBUG] Request data:', error.request);
-        }
-        
-        // Tentar com fetch direto para comparar
+        console.log('error: ', error);
+       
         try {
-          console.log('🔍 [DEBUG] Tentando fetch direto como fallback...');
           const directResponse = await fetch(`${API_BASE_URL}/students`, {
             headers: {
               'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
               'Content-Type': 'application/json'
             }
           });
-          console.log('🔍 [DEBUG] Direct fetch status:', directResponse.status);
           if (directResponse.ok) {
             const directData = await directResponse.json();
-            console.log('✅ [DEBUG] Direct fetch data:', directData);
             this.students = directData;
           } else {
             const errorText = await directResponse.text();
-            console.error('❌ [DEBUG] Direct fetch error body:', errorText);
+            console.log('errorText: ', errorText);
           }
         } catch (directError) {
-          console.error('❌ [DEBUG] Direct fetch also failed:', directError);
+          console.log('directError: ', directError);
         }
       }
     },

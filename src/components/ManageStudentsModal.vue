@@ -201,7 +201,7 @@ export default {
     const themeStore = useThemeStore();
     const { isDarkMode } = storeToRefs(themeStore);
 
-    // State
+   
     const searchQuery = ref('');
     const assignedStudents = ref([]);
     const availableStudents = ref([]);
@@ -211,7 +211,7 @@ export default {
     const currentPage = ref(1);
     const studentsPerPage = 5;
 
-    // Computed
+   
     const filteredAvailableStudents = computed(() => {      
       if (!Array.isArray(availableStudents.value)) {
         return [];
@@ -247,7 +247,7 @@ export default {
       return filteredAvailableStudents.value.slice(start, end);
     });
 
-    // Watch
+   
     watch(() => props.show, async (isOpen) => {
       
       if (isOpen && props.plan && props.plan._id) {
@@ -268,7 +268,7 @@ export default {
       currentPage.value = 1;
     });
 
-    // Methods
+   
     const getInitials = (name) => {
       return name
         .split(' ')
@@ -279,14 +279,14 @@ export default {
     };
 
     const onSearchInput = () => {
-      console.log('🔍 Filtered students count:', filteredAvailableStudents.value.length);
+      console.log('Busca:', filteredAvailableStudents.value.length);
     };
 
     const loadStudentData = async () => {
       
       try {
-        // Load assigned students first, then available students
-        // This ensures proper filtering
+       
+       
         await loadAssignedStudents();
         
         await loadAvailableStudents();
@@ -314,17 +314,15 @@ export default {
         if (response.ok) {
           const data = await response.json();
           
-          // A resposta vem diretamente como array de alunos
+         
           assignedStudents.value = data || [];
         } else if (response.status === 404) {
           assignedStudents.value = [];
         } else {
-          console.error('❌ Failed to fetch assigned students:', response.status);
           assignedStudents.value = [];
         }
         
       } catch (error) {
-        console.error('❌ Error loading assigned students:', error);
         assignedStudents.value = [];
       } finally {
         loadingAssigned.value = false;
@@ -335,11 +333,10 @@ export default {
       try {
         loadingAvailable.value = true;
         
-        // Pegar dados do usuário logado
+       
         const userData = JSON.parse(sessionStorage.getItem('user'));
         
         if (!userData || !userData.instructorId) {
-          console.error('DEBUG ERROR: Dados do instrutor não encontrados no token');
           availableStudents.value = [];
           return;
         }
@@ -359,7 +356,7 @@ export default {
         
         const allInstructors = await instructorsResponse.json();
         
-        // Encontrar o instrutor que corresponde ao userId
+       
         const currentInstructor = allInstructors.find(
           inst => inst.userId === userId || inst.userId?._id === userId
         );
@@ -372,7 +369,7 @@ export default {
         
         const instructorId = currentInstructor._id;
         
-        // Buscar apenas alunos deste instrutor usando a rota específica
+       
         const url = `${API_URL}/api/students/instructor/${instructorId}`;
         
         const response = await fetch(url, {
@@ -385,11 +382,7 @@ export default {
         if (response.ok) {
           const allStudents = await response.json();
                     
-          if (Array.isArray(allStudents) && allStudents.length > 0) {
-            console.log('DEBUG 10: First student sample:', allStudents[0]);
-          }
-                    
-          // Filter out students already assigned to this plan
+         
           const filtered = allStudents.filter(student => {
             const isAssigned = assignedStudents.value.some(assigned => assigned._id === student._id);
             return !isAssigned;
@@ -400,17 +393,10 @@ export default {
         } else if (response.status === 404) {
           availableStudents.value = [];
         } else {
-          console.error('DEBUG ERROR: HTTP ERROR!');
-          console.error('Status:', response.status);
-          console.error('Status text:', response.statusText);
           availableStudents.value = [];
         }
         
       } catch (error) {
-        console.error('DEBUG FATAL ERROR IN loadAvailableStudents:');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
-        console.error('Full error object:', error);
         availableStudents.value = [];
       } finally {
         loadingAvailable.value = false;
@@ -437,20 +423,17 @@ export default {
                 
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ Student assignment response data:', data);
+          console.log('data: ', data);
           
           await loadStudentData();
           
           emit('updated');
         } else {
-          console.error('❌ Failed to assign student:', response.status);
+          console.error('Falhou aqui:', response.status);
         }
         
       } catch (error) {
-        console.error('❌ Error adding student to plan:', error);
-        console.error('❌ Error response:', error.response);
-        console.error('❌ Error status:', error.response?.status);
-        console.error('❌ Error data:', error.response?.data);
+        console.log('error: ', error);
       } finally {
         processingStudents.value = processingStudents.value.filter(id => id !== studentId);
       }
@@ -475,19 +458,16 @@ export default {
                 
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ Student removal response data:', data);
+          console.log('Resposta ok', data);
           
           await loadStudentData();          
           emit('updated');
         } else {
-          console.error('❌ Failed to remove student:', response.status);
+          console.error('Falhou', response.status);
         }
         
       } catch (error) {
-        console.error('❌ Error removing student from plan:', error);
-        console.error('❌ Error response:', error.response);
-        console.error('❌ Error status:', error.response?.status);
-        console.error('❌ Error data:', error.response?.data);
+        console.log('error: ', error);
       } finally {
         processingStudents.value = processingStudents.value.filter(id => id !== studentId);
       }

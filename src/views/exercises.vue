@@ -540,7 +540,6 @@ export default {
   watch: {
     exercises: {
       handler() {
-        console.log('📝 Lista de exercícios foi atualizada, re-aplicando filtros');
         this.applyFilters();
       },
       deep: true
@@ -555,10 +554,10 @@ export default {
         this.fetchEquipments()
       ]);
     } else {
-      console.error('❌ InstructorId inválido, não foi possível buscar dados');
+      console.error('InstructorId inválido, não foi possível buscar dados');
     }
     
-    // Adiciona listener para cliques fora do dropdown
+   
     document.addEventListener('click', this.handleClickOutside);
   },
   
@@ -583,9 +582,6 @@ export default {
         }
         
         if (!userId) {
-          console.error('❌ UserId não encontrado no localStorage nem sessionStorage');
-          
-          // Tentar pegar do user completo
           const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
           if (userStr) {
             const user = JSON.parse(userStr);
@@ -594,48 +590,43 @@ export default {
         }
         
         if (!userId) {
-          console.error('❌ Não foi possível obter userId de nenhuma fonte');
           return;
         }
 
         const response = await api.get(`/instructors/user/${userId}`);
         
-        // A API retorna o instructor diretamente, não em response.data.instructor
+       
         const instructor = response.data.instructor || response.data;
         this.instructorId = instructor._id;
       } catch (error) {
-        console.error('❌ Erro ao buscar instructorId:', error);
-        console.error('❌ Detalhes:', error.response?.data);
-        console.error('❌ Status:', error.response?.status);
+        console.log('error: ', error);
       }
     },
     
     async fetchExercises() {
       try {
         if (!this.instructorId) {
-          console.error('❌ InstructorId não disponível');
           return;
         }
 
         const response = await api.get(`/exercises/instructor/${this.instructorId}`);
         this.exercises = response.data.exercises || [];
         
-        // Atualiza estatísticas
+       
         this.exercisesStats.total = this.exercises.length;
         const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
         this.exercisesStats.categories = uniqueCategories.length;
         
-        // Calcula grupos musculares únicos
+       
         const allMuscleGroups = this.exercises
           .filter(ex => ex.muscleGroups && ex.muscleGroups.length > 0)
           .flatMap(ex => ex.muscleGroups);
         const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
         this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
         
-        // Aplica filtros
+       
         this.applyFilters();
       } catch (error) {
-        console.error('❌ Erro ao buscar exercícios:', error);
         this.exercises = [];
       }
     },
@@ -643,7 +634,6 @@ export default {
     async fetchEquipments() {
       try {
         if (!this.instructorId) {
-          console.warn('⚠️ Sem instructorId para buscar equipamentos');
           return;
         }
         
@@ -653,9 +643,7 @@ export default {
         
         this.equipments = response.data.equipments || [];
       } catch (error) {
-        console.error('❌ Erro ao buscar equipamentos:', error);
-        console.error('❌ Detalhes do erro:', error.response?.data);
-        console.error('❌ Status:', error.response?.status);
+        console.log('error: ', error);
         this.equipments = [];
       }
     },
@@ -681,10 +669,10 @@ export default {
           try {
             await api.delete(`/exercises/${exercise._id}`);
             
-            // Remove da lista local
+           
             this.exercises = this.exercises.filter(ex => ex._id !== exercise._id);
             
-            // Atualiza stats
+           
             this.exercisesStats.total = this.exercises.length;
             const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
             this.exercisesStats.categories = uniqueCategories.length;
@@ -694,13 +682,12 @@ export default {
             const uniqueMuscleGroups = [...new Set(allMuscleGroups)];
             this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
             
-            // Reaplica filtros
+           
             this.applyFilters();
             
             this.showNotification('success', 'Exercício Excluído', 'Exercício excluído com sucesso!');
             this.showConfirmation = false;
           } catch (error) {
-            console.error('❌ Erro ao deletar exercício:', error);
             this.showNotification('error', 'Erro', 'Erro ao excluir exercício');
           }
         }
@@ -720,7 +707,7 @@ export default {
 
     openEditModal(exercise) {
       
-      // Passamos o exercício original - o componente filho irá processar os dados
+     
       this.editingExercise = exercise;
       
       this.showEditModal = true;
@@ -735,15 +722,14 @@ export default {
       try {
         const response = await api.put(`/exercises/${updateData._id}`, updateData);
         
-        // Atualiza na lista local usando _id como identificador
+       
         const index = this.exercises.findIndex(ex => ex._id === updateData._id || ex.id === updateData._id);
         if (index !== -1) {
-          // Substitui o exercício completo na lista
+         
           this.exercises.splice(index, 1, response.data.exercise || response.data);
-          console.log('✅ Lista local atualizada no índice:', index);
         }
 
-        // Atualiza as estatísticas
+       
         this.exercisesStats.total = this.exercises.length;
         const uniqueCategories = [...new Set(this.exercises.map(ex => ex.category))];
         this.exercisesStats.categories = uniqueCategories.length;
@@ -754,13 +740,12 @@ export default {
         this.exercisesStats.muscleGroups = uniqueMuscleGroups.length;
 
         this.closeEditModal();
-        // Re-aplica os filtros para atualizar a lista filtrada
+       
         this.applyFilters();
         
-        console.log('🔄 Exercícios após atualização:', this.exercises.length);
         this.showNotification('success', 'Sucesso', 'Exercício atualizado com sucesso!');
       } catch (error) {
-        console.error('❌ Erro ao atualizar exercício:', error);
+        console.log('error: ', error);
         this.showNotification('error', 'Erro', 'Erro ao salvar exercício');
       }
     },
@@ -854,14 +839,13 @@ export default {
     },
     async openCreateExerciseModal() {
       if (!this.instructorId) {
-        console.warn('⚠️ Sem instructorId, buscando novamente...');
         await this.fetchInstructorId();
       }
       
-      // Re-fetch equipments para garantir dados atualizados
+     
       await this.fetchEquipments();
       
-      this.exerciseModalKey++; // Force re-render
+      this.exerciseModalKey++;
       this.showCreateModal = true;
       this.currentStep = 1;
       this.newExercise = {
@@ -915,7 +899,7 @@ export default {
     async saveNewExercise(formData) {
       try {
         
-        // formData já vem do modal com todos os campos preenchidos
+       
         const exerciseData = {
           name: formData.name,
           description: formData.description || '',
@@ -949,8 +933,7 @@ export default {
         
         this.showNotification('success', 'Sucesso', 'Exercício criado com sucesso!');
       } catch (error) {
-        console.error('❌ Erro ao criar exercício:', error);
-        console.error('❌ Detalhes:', error.response?.data);
+        console.log('error: ', error);
         this.showNotification('error', 'Erro', 'Erro ao criar exercício: ' + (error.response?.data?.message || error.message));
       }
     },
@@ -988,7 +971,7 @@ export default {
           };
           img.src = e.target.result;
         } catch (error) {
-          console.error('❌ Erro ao processar imagem:', error);
+          console.error('Erro ao processar imagem:', error);
         }
       };
       reader.readAsDataURL(file);
@@ -1010,13 +993,13 @@ export default {
       }
     },
     processCreateFile(file) {
-      // Valida o tamanho do arquivo (10MB)
+     
       if (file.size > 10 * 1024 * 1024) {
         this.showNotification('warning', 'Atencao', 'A imagem deve ter no máximo 10MB');
         return;
       }
 
-      // Valida o tipo do arquivo
+     
       if (!file.type.startsWith('image/')) {
         this.showNotification('warning', 'Atencao', 'Por favor, selecione apenas arquivos de imagem');
         return;
@@ -1024,7 +1007,7 @@ export default {
 
       this.createSelectedFile = file;
 
-      // Cria preview da imagem
+     
       const reader = new FileReader();
       reader.onload = (e) => {
         this.createImagePreview = e.target.result;
