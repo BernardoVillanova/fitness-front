@@ -229,7 +229,7 @@ export default {
   setup() {
     const router = useRouter();
     
-    // Reactive data
+   
     const loading = ref(true);
     const error = ref(null);
     const workouts = ref([]);
@@ -240,14 +240,14 @@ export default {
     const completedThisWeek = ref(0);
     const streak = ref(0);
 
-    // Computed properties
+   
     const filteredWorkouts = computed(() => {
       if (selectedFilter.value === 'all') return workouts.value;
       return workouts.value.filter(workout => workout.status === selectedFilter.value);
     });
 
     const todaysWorkout = computed(() => {
-      // Return the first active workout with divisions
+     
       return workouts.value.find(workout => 
         workout.status === 'active' && workout.divisions && workout.divisions.length > 0
       );
@@ -262,23 +262,23 @@ export default {
     });
 
     const totalWorkouts = computed(() => {
-      // Total divisions across all active plans
+     
       return workouts.value.reduce((total, plan) => {
         return total + (plan.divisions?.length || 0);
       }, 0);
     });
 
-    // Methods
+   
     const fetchWorkouts = async () => {
       try {
         loading.value = true;
         error.value = null;
         
-        // Fetch workout plans
+       
         const plansResponse = await api.get('/workout-sessions/workouts');
         const plans = plansResponse.data || [];
         
-        // Fetch session history for stats
+       
         const sessionsResponse = await api.get('/workout-sessions/sessions/history', {
           params: { limit: 1000 }
         });
@@ -286,7 +286,7 @@ export default {
         const completedSessions = allSessions.filter(s => s.status === 'completed');
         workoutSessions.value = completedSessions;
         
-        // Calculate this week's completions
+       
         const now = new Date();
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
@@ -297,10 +297,10 @@ export default {
           return sessionDate >= weekStart;
         }).length;
         
-        // Calculate streak
+       
         streak.value = calculateStreak(completedSessions);
         
-        // Transform plans into workout cards
+       
         workouts.value = plans.flatMap(plan => {
           if (!plan.divisions || plan.divisions.length === 0) return [];
           
@@ -311,7 +311,7 @@ export default {
             
             const totalSessions = divisionSessions.length;
             const estimatedTime = division.exercises?.reduce((total, ex) => {
-              return total + (ex.sets || 3) * 2; // ~2 min per set
+              return total + (ex.sets || 3) * 2;
             }, 0) || 45;
             
             return {
@@ -322,7 +322,7 @@ export default {
               estimatedTime: estimatedTime,
               difficulty: plan.difficulty || 'Intermediário',
               status: plan.status === 'active' ? 'active' : 'paused',
-              progress: 0, // Progress is per-session, not per-division
+              progress: 0,
               exercises: (division.exercises || []).map(ex => ({
                 id: ex._id,
                 name: ex.name,
@@ -338,7 +338,7 @@ export default {
         
       } catch (err) {
         error.value = 'Erro ao carregar treinos. Tente novamente.';
-        console.error('Error fetching workouts:', err);
+        console.log('err: ', err);
       } finally {
         loading.value = false;
       }
@@ -371,11 +371,11 @@ export default {
     };
 
     const filterWorkouts = () => {
-      // Filter logic is handled by computed property
+     
     };
 
     const startWorkout = (workout) => {
-      // Navigate to workout session page
+     
       router.push({
         name: 'WorkoutSession',
         params: { 
@@ -409,7 +409,7 @@ export default {
       return statusMap[status] || 'Desconhecido';
     };
 
-    // Lifecycle
+   
     onMounted(() => {
       fetchWorkouts();
     });

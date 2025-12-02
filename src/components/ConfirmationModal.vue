@@ -66,7 +66,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="modal-actions">
+        <div v-if="!hideButtons" class="modal-actions">
           <button 
             class="btn btn-secondary" 
             @click="close"
@@ -110,7 +110,7 @@ export default {
     },
     iconType: {
       type: String,
-      default: 'info', // warning, danger, success, info
+      default: 'info',
       validator: value => ['warning', 'danger', 'success', 'info'].includes(value)
     },
     confirmText: {
@@ -138,6 +138,10 @@ export default {
       default: () => []
     },
     closeOnOverlayClick: {
+      type: Boolean,
+      default: false
+    },
+    hideButtons: {
       type: Boolean,
       default: false
     }
@@ -492,6 +496,16 @@ export default {
 .btn-danger:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .btn-warning {

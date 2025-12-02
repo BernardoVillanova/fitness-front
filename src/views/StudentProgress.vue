@@ -55,8 +55,10 @@
           </div>
           <div class="progress-details">
             <div class="detail-item">
-              <span class="detail-number">{{ completedWorkouts }}</span>
-              <span class="detail-label">Treinos Concluídos</span>
+              <div class="detail-info">
+                <span class="detail-number">{{ completedWorkouts }}</span>
+                <span class="detail-label">Treinos Concluídos</span>
+              </div>
               <span 
                 v-if="comparisons.workouts.trend !== 'neutral'" 
                 class="detail-comparison" 
@@ -67,8 +69,10 @@
               </span>
             </div>
             <div class="detail-item">
-              <span class="detail-number">{{ totalGoals }}</span>
-              <span class="detail-label">Metas Atingidas</span>
+              <div class="detail-info">
+                <span class="detail-number">{{ totalGoals }}</span>
+                <span class="detail-label">Metas Atingidas</span>
+              </div>
             </div>
           </div>
         </div>
@@ -299,14 +303,14 @@ import { useThemeStore } from '@/store/theme'
 import StudentNavBar from '@/components/StudentNavBar.vue'
 import api from '@/api'
 
-// Stores
+
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Reactive data
+
 const loading = ref(true)
 
-// Data from API
+
 const progressData = ref({
   completedWorkouts: 0,
   totalWorkouts: 0,
@@ -316,7 +320,7 @@ const progressData = ref({
   totalGoals: 0
 })
 
-// Measurements evolution data
+
 const measurementsHistory = ref([])
 
 const availableMeasurements = [
@@ -330,7 +334,7 @@ const availableMeasurements = [
   { key: 'calf', label: 'Panturrilha', icon: 'fas fa-shoe-prints', color: 'linear-gradient(135deg, #6366f1, #4f46e5)' }
 ]
 
-// Comparação com mês anterior
+
 const lastMonthData = ref({
   completedWorkouts: 0,
   totalCalories: 0,
@@ -355,11 +359,11 @@ const weeklyData = ref([
   { day: 'Sáb', workouts: 0, calories: 0 }
 ])
 
-// Estado para navegação de semanas
-const currentWeekOffset = ref(0) // 0 = semana atual, -1 = semana anterior, etc.
-const allSessions = ref([]) // Guardar todas as sessões para processamento
 
-// Computed
+const currentWeekOffset = ref(0)
+const allSessions = ref([])
+
+
 const overallProgress = computed(() => {
   if (progressData.value.totalWorkouts === 0) return 0
   return Math.round((progressData.value.completedWorkouts / progressData.value.totalWorkouts) * 100)
@@ -371,7 +375,7 @@ const totalCalories = computed(() => progressData.value.totalCalories)
 const totalTime = computed(() => progressData.value.totalTime)
 const currentStreak = computed(() => progressData.value.currentStreak)
 
-// Computed para navegação de semanas
+
 const currentWeekStart = computed(() => {
   const now = new Date()
   const weekStart = new Date(now)
@@ -406,7 +410,7 @@ const weekIndicator = computed(() => {
 })
 
 const canGoPrevious = computed(() => {
-  // Permitir voltar até onde há dados de sessões
+ 
   if (allSessions.value.length === 0) return false
   
   const oldestSession = allSessions.value.reduce((oldest, session) => {
@@ -423,11 +427,11 @@ const canGoPrevious = computed(() => {
 })
 
 const canGoNext = computed(() => {
-  // Não permitir ir além da semana atual
+ 
   return currentWeekOffset.value < 0
 })
 
-// Computed for measurements chart
+
 const hasAnyMeasurements = computed(() => {
   const result = measurementsHistory.value.length > 0
   return result
@@ -448,14 +452,14 @@ const measurementsSummary = computed(() => {
   return availableMeasurements.map(m => {
     const data = measurementsHistory.value
     
-    // Pegar a última medição (mais recente)
+   
     let current = null
     if (data.length > 0) {
       const lastMeasurement = data[data.length - 1]
       current = lastMeasurement[m.key]
     }
     
-    // Pegar a medição inicial
+   
     let initial = null
     if (hasInitialMeasurement.value) {
       const initialMeasurement = data.find(d => d.isInitial === true)
@@ -464,7 +468,7 @@ const measurementsSummary = computed(() => {
       }
     }
     
-    // Calcular mudança e percentual apenas se tiver inicial e atual
+   
     let change = null
     let changePercent = null
     if (initial != null && current != null && initial !== 0) {
@@ -482,39 +486,39 @@ const measurementsSummary = computed(() => {
   })
 })
 
-// Methods
+
 const fetchProgressData = async () => {
   try {
     loading.value = true
     
-    // Buscar histórico de treinos completo
+   
     const historyResponse = await api.get('/workout-sessions/sessions/history', {
       params: { limit: 1000 }
     })
     
     const sessions = historyResponse.data?.sessions || []
-    allSessions.value = sessions // Guardar para navegação de semanas
+    allSessions.value = sessions
     const completedSessions = sessions.filter(s => s.status === 'completed')
     
-    // Calcular dados de progresso
+   
     progressData.value.completedWorkouts = completedSessions.length
     
-    // Calcular total de treinos disponíveis (estimativa)
+   
     try {
       const workoutsResponse = await api.get('/workout-sessions/workouts')
       const workouts = workoutsResponse.data || []
       
-      // Cada divisão pode ser feita 4x por mês
+     
       progressData.value.totalWorkouts = workouts.reduce((total, plan) => {
         return total + (plan.divisions?.length || 0) * 4
       }, 0) || 24
     } catch (err) {
-      progressData.value.totalWorkouts = 24 // Valor padrão
+      progressData.value.totalWorkouts = 24
     }
     
-    // Calcular calorias totais (com estimativa se não houver dados)
+   
     progressData.value.totalCalories = completedSessions.reduce((total, session) => {
-      // Estimar 5 cal/min se não tiver valor registrado
+     
       let calories = session.caloriesBurned || 0
       if (!calories && session.duration) {
         calories = session.duration * 5
@@ -522,32 +526,32 @@ const fetchProgressData = async () => {
       return total + calories
     }, 0)
     
-    // Calcular tempo total em HORAS
+   
     progressData.value.totalTime = completedSessions.reduce((total, session) => {
-      let duration = session.duration // já em minutos
+      let duration = session.duration
       if (!duration && session.endTime && session.startTime) {
         duration = Math.round((new Date(session.endTime) - new Date(session.startTime)) / 60000)
       }
       return total + (duration || 0)
     }, 0)
     
-    // Converter minutos para horas
+   
     progressData.value.totalTime = Math.round(progressData.value.totalTime / 60)
     
-    // Calcular sequência
+   
     calculateStreak(completedSessions)
     
-    // Processar dados semanais
+   
     processWeeklyData(sessions)
     
-    // Calcular comparações com mês anterior
+   
     calculateMonthComparisons(completedSessions)
     
-    // Buscar histórico de medidas corporais
+   
     await fetchMeasurementsHistory()
     
   } catch (error) {
-    console.error('Erro ao buscar dados de progresso:', error)
+    console.log('error: ', error);
   } finally {
     loading.value = false
   }
@@ -556,18 +560,18 @@ const fetchProgressData = async () => {
 const calculateMonthComparisons = (sessions) => {
   const now = new Date()
   
-  // Mês anterior
+ 
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
   lastMonthEnd.setHours(23, 59, 59, 999)
   
-  // Filtrar sessões do mês anterior
+ 
   const lastMonthSessions = sessions.filter(s => {
     const sessionDate = new Date(s.endTime)
     return sessionDate >= lastMonthStart && sessionDate <= lastMonthEnd
   })
   
-  // Calcular métricas do mês anterior
+ 
   lastMonthData.value.completedWorkouts = lastMonthSessions.length
   
   lastMonthData.value.totalCalories = lastMonthSessions.reduce((total, session) => {
@@ -587,7 +591,7 @@ const calculateMonthComparisons = (sessions) => {
   }, 0)
   lastMonthData.value.totalTime = Math.round(lastMonthData.value.totalTime / 60)
   
-  // Calcular streak do mês anterior (último dia do mês anterior)
+ 
   const lastMonthStreakSessions = sessions.filter(s => {
     const sessionDate = new Date(s.endTime)
     return sessionDate <= lastMonthEnd
@@ -612,8 +616,8 @@ const calculateMonthComparisons = (sessions) => {
   }
   lastMonthData.value.currentStreak = lastStreak
   
-  // Calcular comparações percentuais
-  // Treinos
+ 
+ 
   if (lastMonthData.value.completedWorkouts > 0) {
     const workoutsDiff = progressData.value.completedWorkouts - lastMonthData.value.completedWorkouts
     const workoutsPercent = Math.round((workoutsDiff / lastMonthData.value.completedWorkouts) * 100)
@@ -623,7 +627,7 @@ const calculateMonthComparisons = (sessions) => {
     }
   }
   
-  // Calorias
+ 
   if (lastMonthData.value.totalCalories > 0) {
     const caloriesDiff = progressData.value.totalCalories - lastMonthData.value.totalCalories
     const caloriesPercent = Math.round((caloriesDiff / lastMonthData.value.totalCalories) * 100)
@@ -633,7 +637,7 @@ const calculateMonthComparisons = (sessions) => {
     }
   }
   
-  // Tempo
+ 
   if (lastMonthData.value.totalTime > 0) {
     const timeDiff = progressData.value.totalTime - lastMonthData.value.totalTime
     const timePercent = Math.round((timeDiff / lastMonthData.value.totalTime) * 100)
@@ -643,7 +647,7 @@ const calculateMonthComparisons = (sessions) => {
     }
   }
   
-  // Streak
+ 
   if (lastMonthData.value.currentStreak > 0) {
     const streakDiff = progressData.value.currentStreak - lastMonthData.value.currentStreak
     const streakPercent = Math.round((streakDiff / lastMonthData.value.currentStreak) * 100)
@@ -692,11 +696,11 @@ const calculateStreak = (sessions) => {
 const processWeeklyData = (sessions, weekStart = null, weekEnd = null) => {
   const completedSessions = sessions.filter(s => s.status === 'completed')
   
-  // Se não fornecidas, usar as datas da semana atual baseada no offset
+ 
   const start = weekStart || currentWeekStart.value
   const end = weekEnd || currentWeekEnd.value
   
-  // Reset weekly data
+ 
   weeklyData.value = [
     { day: 'Dom', workouts: 0, calories: 0 },
     { day: 'Seg', workouts: 0, calories: 0 },
@@ -713,17 +717,17 @@ const processWeeklyData = (sessions, weekStart = null, weekEnd = null) => {
       const dayOfWeek = sessionDate.getDay()
       weeklyData.value[dayOfWeek].workouts++
       
-      // Calcular calorias (estimar se não houver dados)
+     
       let calories = session.caloriesBurned || 0
       if (!calories && session.duration) {
-        calories = session.duration * 5 // ~5 cal/min
+        calories = session.duration * 5
       }
       weeklyData.value[dayOfWeek].calories += calories
     }
   })
 }
 
-// Funções de navegação de semanas
+
 const previousWeek = () => {
   if (canGoPrevious.value) {
     currentWeekOffset.value--
@@ -752,7 +756,7 @@ const fetchMeasurementsHistory = async () => {
     
     const history = []
     
-    // Adicionar medida inicial se existir e tiver pelo menos uma medida não-null
+   
     if (initialMeasurements) {
       const measurementValues = {
         shoulder: initialMeasurements.shoulder,
@@ -785,8 +789,6 @@ const fetchMeasurementsHistory = async () => {
         
         history.push(initialEntry)
       }
-    } else {
-      console.log('⚠️ Nenhuma medida inicial encontrada')
     }
     
     progressHistory.forEach((p) => {
@@ -807,31 +809,28 @@ const fetchMeasurementsHistory = async () => {
         }
         
         history.push(progressEntry)
-      } else {
-        console.log('⚠️ Entrada sem measurements, pulando...')
       }
     })
     
-    // Ordenar por data
+   
     history.sort((a, b) => new Date(a.date) - new Date(b.date))
     
     measurementsHistory.value = history
     
     availableMeasurements.forEach(m => {
       const count = history.filter(h => h[m.key] != null && h[m.key] !== '').length
-      console.log(`  ${m.label} (${m.key}): ${count} medições`)
+      console.log('count: ', count);
     })
     
   } catch (error) {
-    console.error('❌ Erro ao buscar histórico de medidas:', error)
-    console.error('Stack:', error.stack)
+    console.log('error: ', error);
     measurementsHistory.value = []
   }
 }
 
 
 
-// Lifecycle
+
 onMounted(async () => {
   await fetchProgressData()
 })
@@ -888,6 +887,7 @@ body:has(.navbar-collapsed) .main-content {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 1.5rem;
+  grid-auto-rows: 1fr;
 }
 
 .overview-card {
@@ -904,7 +904,7 @@ body:has(.navbar-collapsed) .main-content {
 }
 
 .overview-card.main {
-  grid-row: span 2;
+  grid-row: span 1;
 }
 
 .card-header {
@@ -931,7 +931,7 @@ body:has(.navbar-collapsed) .main-content {
 
 .main-progress {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 2rem;
 }
@@ -941,6 +941,8 @@ body:has(.navbar-collapsed) .main-content {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  margin-right: 1.5rem;
 }
 
 .progress-text {
@@ -963,13 +965,20 @@ body:has(.navbar-collapsed) .main-content {
 
 .progress-details {
   display: flex;
-  gap: 2rem;
-  width: 100%;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
 }
 
 .detail-item {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-number {
@@ -984,6 +993,28 @@ body:has(.navbar-collapsed) .main-content {
   font-size: 0.9rem;
   color: var(--text-muted);
   margin-top: 0.25rem;
+}
+
+.detail-comparison {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  width: fit-content;
+}
+
+.detail-comparison.up {
+  color: var(--success-color);
+}
+
+.detail-comparison.down {
+  color: var(--danger-color);
+}
+
+.detail-comparison i {
+  font-size: 0.75rem;
 }
 
 .card-icon {

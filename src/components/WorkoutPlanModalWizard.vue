@@ -520,53 +520,79 @@
                 <small>Clique nos exercícios ao lado para adicionar</small>
               </div>
 
-              <div v-else class="added-exercises-list">
-                <div 
-                  v-for="(exercise, exIndex) in formData.divisions[activeDivision].exercises"
-                  :key="exIndex"
-                  class="added-exercise-card"
+              <div v-else class="added-exercises-container">
+                <!-- Left arrow (only when not at start) -->
+                <button 
+                  v-if="formData.divisions[activeDivision] && formData.divisions[activeDivision].exercises.length > 2 && currentExerciseIndex > 0"
+                  class="nav-arrow-btn nav-arrow-left"
+                  @click="previousExercises"
+                  type="button"
                 >
-                  <div class="exercise-card-header">
-                    <div class="exercise-number">{{ exIndex + 1 }}</div>
-                    <h5>{{ exercise.name }}</h5>
-                    <div class="exercise-actions">
-                      <button @click="editExerciseInList(activeDivision, exIndex)" class="btn-icon-small" type="button" title="Editar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </button>
-                      <button @click="removeExercise(activeDivision, exIndex)" class="btn-icon-small btn-delete" type="button" title="Remover">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                      </button>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
+                
+                <div class="added-exercises-list">
+                  <div 
+                    v-for="(exercise, exIndex) in visibleExercises"
+                    :key="exIndex"
+                    class="added-exercise-card"
+                  >
+                    <div class="exercise-card-header">
+                      <div class="exercise-number">{{ exercise.index + 1 }}</div>
+                      <h5>{{ exercise.name }}</h5>
+                      <div class="exercise-actions">
+                        <button @click="editExerciseInList(activeDivision, exercise.index)" class="btn-icon-small" type="button" title="Editar">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        <button @click="removeExercise(activeDivision, exercise.index)" class="btn-icon-small btn-delete" type="button" title="Remover">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div class="exercise-card-details">
-                    <div class="detail-item">
-                      <span class="detail-label">Séries:</span>
-                      <span class="detail-value">{{ exercise.sets }}</span>
+                    <div class="exercise-card-details">
+                      <div class="detail-item">
+                        <span class="detail-label">Séries:</span>
+                        <span class="detail-value">{{ exercise.sets }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Reps:</span>
+                        <span class="detail-value">{{ exercise.reps }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Carga:</span>
+                        <span class="detail-value">{{ exercise.isBodyweight ? 'Corporal' : exercise.idealWeight + 'kg' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Descanso:</span>
+                        <span class="detail-value">{{ exercise.restTime }}s</span>
+                      </div>
                     </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Reps:</span>
-                      <span class="detail-value">{{ exercise.reps }}</span>
+                    <div v-if="exercise.toFailure || exercise.notes" class="exercise-card-footer">
+                      <span v-if="exercise.toFailure" class="tag-failure">Até a Falha</span>
+                      <span v-if="exercise.notes" class="exercise-notes">{{ exercise.notes }}</span>
                     </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Carga:</span>
-                      <span class="detail-value">{{ exercise.isBodyweight ? 'Corporal' : exercise.idealWeight + 'kg' }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Descanso:</span>
-                      <span class="detail-value">{{ exercise.restTime }}s</span>
-                    </div>
-                  </div>
-                  <div v-if="exercise.toFailure || exercise.notes" class="exercise-card-footer">
-                    <span v-if="exercise.toFailure" class="tag-failure">Até a Falha</span>
-                    <span v-if="exercise.notes" class="exercise-notes">{{ exercise.notes }}</span>
                   </div>
                 </div>
+                
+                <!-- Right arrow (only when there are more exercises) -->
+                <button 
+                  v-if="formData.divisions[activeDivision] && formData.divisions[activeDivision].exercises.length > 2 && currentExerciseIndex + 2 < formData.divisions[activeDivision].exercises.length"
+                  class="nav-arrow-btn nav-arrow-right"
+                  @click="nextExercises"
+                  type="button"
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -908,7 +934,7 @@ export default {
     return {
       currentStep: 1,
       activeDivision: 0,
-      currentDivisionIndex: 0, // Novo: controla qual divisão está sendo exibida no carrossel
+      currentDivisionIndex: 0,
       numberOfDivisions: 0,
       studentSearch: '',
       selectedStudents: [],
@@ -921,7 +947,7 @@ export default {
       exercisesPerPage: 6,
       isSaving: false,
       
-      // Modal de exercício
+     
       showExerciseModal: false,
       editingExerciseIndex: null,
       tempExercise: {
@@ -951,6 +977,9 @@ export default {
         onConfirm: null
       },
       
+      // Carousel navigation for exercises
+      currentExerciseIndex: 0,
+      
       stepTitles: [
         'Informações do Plano',
         'Divisões de Treino',
@@ -971,7 +1000,7 @@ export default {
         divisions: []
       },
 
-      // Estado inicial para comparar se houve alterações
+     
       initialFormData: {
         name: '',
         description: '',
@@ -981,7 +1010,7 @@ export default {
 
       initialSelectedStudents: [],
       
-      // Controle do dropdown de divisões
+     
       divisionDropdownOpen: false
     }
   },
@@ -1003,9 +1032,8 @@ export default {
     },
 
     filteredExercises() {
-      // Garantir que availableExercises sempre seja um array
+     
       if (!Array.isArray(this.availableExercises)) {
-        console.warn('⚠️ availableExercises não é um array:', this.availableExercises);
         return [];
       }
       
@@ -1045,7 +1073,7 @@ export default {
     },
 
     canProceedFromCurrentDivision() {
-      // Valida apenas a divisão atual
+     
       if (this.currentStep === 2 && this.formData.divisions[this.currentDivisionIndex]) {
         const currentDivision = this.formData.divisions[this.currentDivisionIndex];
         return currentDivision.name.trim() !== '' && currentDivision.muscleGroups.length > 0;
@@ -1054,7 +1082,7 @@ export default {
     },
 
     hasFormChanges() {
-      // Compara os dados atuais com o estado inicial
+     
       const formChanged = JSON.stringify(this.formData) !== JSON.stringify(this.initialFormData);
       const studentsChanged = JSON.stringify(this.selectedStudents) !== JSON.stringify(this.initialSelectedStudents);
       
@@ -1075,14 +1103,26 @@ export default {
                  e.idealWeight >= 0
                )
              );
+    },
+    
+    // Visible exercises in carousel (2 at a time)
+    visibleExercises() {
+      if (!this.formData.divisions[this.activeDivision]) return [];
+      const exercises = this.formData.divisions[this.activeDivision].exercises;
+      if (exercises.length <= 2) {
+        return exercises.map((ex, idx) => ({ ...ex, index: idx }));
+      }
+      return exercises
+        .slice(this.currentExerciseIndex, this.currentExerciseIndex + 2)
+        .map((ex, idx) => ({ ...ex, index: this.currentExerciseIndex + idx }));
     }
   },
 
   watch: {
     show(newVal) {
       if (newVal) {        
-        // Só inicializa se NÃO estiver em modo de edição
-        // Em modo de edição, deixa os watchers de isEditing/planData cuidarem
+       
+       
         if (!this.isEditing) {
           this.initializeForm();
         }
@@ -1096,9 +1136,9 @@ export default {
     isEditing: {
       immediate: true,
       handler(newVal, oldVal) {
-        console.log('🔄 Watch isEditing:', { newVal, oldVal, planData: this.planData });
+        console.log('oldVal: ', oldVal);
         
-        // Se entrou em modo de edição e tem dados do plano
+       
         if (newVal && this.planData && this.planData._id) {
           this.initializeForm();
         }
@@ -1109,7 +1149,7 @@ export default {
       immediate: true,
       deep: true,
       handler(newPlanData) {
-        // Se está em modo de edição e recebeu dados do plano
+       
         if (this.isEditing && newPlanData && newPlanData._id) {
           this.initializeForm();
         }
@@ -1123,38 +1163,60 @@ export default {
       if (newVal === 4 && this.availableStudents.length === 0) {
         this.fetchStudents();
       }
+    },
+    
+    activeDivision() {
+      this.resetCarousel();
     }
   },
 
   mounted() {
-    // Adicionar listener para navegação por teclado
+   
     document.addEventListener('keydown', this.handleKeyboardNavigation);
   },
 
   beforeUnmount() {
-    // Remover listener para evitar memory leaks
+   
     document.removeEventListener('keydown', this.handleKeyboardNavigation);
   },
 
   methods: {
+    // Carousel navigation methods
+    nextExercises() {
+      const maxIndex = this.formData.divisions[this.activeDivision].exercises.length - 2;
+      if (this.currentExerciseIndex < maxIndex) {
+        this.currentExerciseIndex += 2;
+      }
+    },
+    
+    previousExercises() {
+      if (this.currentExerciseIndex > 0) {
+        this.currentExerciseIndex = Math.max(0, this.currentExerciseIndex - 2);
+      }
+    },
+    
+    resetCarousel() {
+      this.currentExerciseIndex = 0;
+    },
+    
     getImageUrl(imagePath) {
       if (!imagePath) return '';
-      // Remove barra inicial se existir para evitar barra dupla
+     
       const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
       return `${API_URL}/${cleanPath}`;
     },
 
     initializeForm() {
       if (this.planData && this.isEditing) {        
-        // Criar cópia profunda dos dados
+       
         const planCopy = JSON.parse(JSON.stringify(this.planData));
         
-        // Garantir que divisions está definido
+       
         if (!planCopy.divisions || !Array.isArray(planCopy.divisions)) {
           planCopy.divisions = [];
         }
         
-        // Garantir que cada divisão tem exercises
+       
         planCopy.divisions.forEach(div => {
           if (!div.exercises || !Array.isArray(div.exercises)) {
             div.exercises = [];
@@ -1163,7 +1225,7 @@ export default {
             div.muscleGroups = [];
           }
           
-          // Converter isBodyweight baseado em idealWeight
+         
           div.exercises.forEach(ex => {
             ex.isBodyweight = ex.idealWeight === 0;
           });
@@ -1172,7 +1234,7 @@ export default {
         this.formData = planCopy;
         this.numberOfDivisions = this.formData.divisions.length;
         
-        // Mapear assignedStudents (pode ser array de objetos ou de IDs)
+       
         if (Array.isArray(this.planData.assignedStudents)) {
           this.selectedStudents = this.planData.assignedStudents.map(s => {
             return typeof s === 'string' ? s : (s._id || s);
@@ -1181,7 +1243,7 @@ export default {
           this.selectedStudents = [];
         }
         
-        // Salva o estado inicial após carregar os dados de edição
+       
         this.saveInitialState();
       } else {
         this.resetForm();
@@ -1201,12 +1263,12 @@ export default {
         divisions: []
       };
       
-      // Salva o estado inicial
+     
       this.saveInitialState();
     },
 
     saveInitialState() {
-      // Salva uma cópia profunda do estado atual como estado inicial
+     
       this.initialFormData = JSON.parse(JSON.stringify(this.formData));
       this.initialSelectedStudents = [...this.selectedStudents];
     },
@@ -1221,12 +1283,12 @@ export default {
           exercises: []
         });
       }
-      // Resetar o carrossel para a primeira divisão
+     
       this.currentDivisionIndex = 0;
     },
 
     getDivisionLetter(index) {
-      return String.fromCharCode(65 + index); // A, B, C, D...
+      return String.fromCharCode(65 + index);
     },
 
     getMuscleGroupIcon(muscle) {
@@ -1257,7 +1319,7 @@ export default {
       this.formData.divisions[divisionIndex].muscleGroups = [];
     },
 
-    // Métodos do carrossel de divisões
+   
     goToDivision(index) {
       this.currentDivisionIndex = index;
     },
@@ -1274,9 +1336,9 @@ export default {
       }
     },
 
-    // Navegação por teclado
+   
     handleKeyboardNavigation(event) {
-      // Só navegar se estivermos na etapa 2 (divisões)
+     
       if (this.currentStep !== 2) return;
       
       if (event.key === 'ArrowLeft') {
@@ -1290,7 +1352,7 @@ export default {
 
     addExerciseToDivision(divisionIndex, exerciseData = null) {
       if (exerciseData) {
-        // Adicionar exercício do catálogo
+       
         this.formData.divisions[divisionIndex].exercises.push({
           exerciseId: exerciseData._id,
           name: exerciseData.name,
@@ -1303,7 +1365,7 @@ export default {
           notes: ''
         });
       } else {
-        // Adicionar exercício em branco
+       
         this.formData.divisions[divisionIndex].exercises.push({
           name: '',
           sets: 3,
@@ -1360,7 +1422,7 @@ export default {
 
     saveExerciseFromModal() {
       if (this.editingExerciseIndex !== null) {
-        // Editando exercício existente
+       
         const exerciseData = {
           exerciseId: this.tempExercise.exerciseId,
           name: this.tempExercise.name,
@@ -1374,7 +1436,7 @@ export default {
         };
         this.formData.divisions[this.activeDivision].exercises[this.editingExerciseIndex] = exerciseData;
       } else {
-        // Adicionando novo exercício
+       
         const exerciseData = {
           exerciseId: this.tempExercise.exerciseId,
           name: this.tempExercise.name,
@@ -1412,21 +1474,19 @@ export default {
       this.loadingExercises = true;
       
       try {
-        // Buscar o ID do instrutor logado
+       
         const userStr = sessionStorage.getItem('user');
         
         if (!userStr) {
-          console.error('❌ Usuário não encontrado na sessão');
           this.availableExercises = [];
           return;
         }
         
         const user = JSON.parse(userStr);
-        // CORREÇÃO: usar instructorId do objeto user (campo correto do backend)
+       
         const instructorId = user.instructorId || user._id || user.id;
         
         if (!instructorId) {
-          console.error('❌ ID do instrutor não encontrado');
           this.availableExercises = [];
           return;
         }
@@ -1444,28 +1504,23 @@ export default {
         if (response.ok) {
           const data = await response.json();
           
-          // Garantir que sempre seja um array
+         
           if (Array.isArray(data)) {
             this.availableExercises = data;
           } else if (data && Array.isArray(data.exercises)) {
             this.availableExercises = data.exercises;
           } else if (data && typeof data === 'object') {
-            // Se for um objeto único, transforma em array
+           
             this.availableExercises = [data];
           } else {
             this.availableExercises = [];
           }
-          
-          if (this.availableExercises.length === 0) {
-            console.warn('⚠️ Nenhum exercício cadastrado para este instrutor!');
-          }
         } else {
           const errorText = await response.text();
-          console.error('❌ Erro ao buscar exercícios:', response.status, errorText);
+          console.log('errorText: ', errorText);
           this.availableExercises = [];
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar exercícios:', error);
         this.availableExercises = [];
       } finally {
         this.loadingExercises = false;
@@ -1479,7 +1534,7 @@ export default {
     },
 
     handleExerciseSearchChange() {
-      this.exerciseCurrentPage = 1; // Reset para primeira página ao buscar
+      this.exerciseCurrentPage = 1;
     },
 
     toggleDivisionDropdown() {
@@ -1509,10 +1564,8 @@ export default {
           try {
             const errorJson = await response.json();
             errorText = JSON.stringify(errorJson);
-            console.error('❌ Erro JSON:', errorJson);
           } catch {
             errorText = await response.text();
-            console.error('❌ Erro Text:', errorText);
           }
           this.showNotification('error', 'Erro ao buscar alunos', `Erro ao buscar alunos: ${errorText}`);
           this.availableStudents = [];
@@ -1522,9 +1575,9 @@ export default {
         if (response.ok) {
           const data = await response.json();
           
-          // Normalizar estrutura dos alunos (alguns têm personalInfo, outros não)
+         
           this.availableStudents = (Array.isArray(data) ? data : []).map(student => {
-            // Se tiver personalInfo, usar esses dados
+           
             if (student.personalInfo) {
               return {
                 ...student,
@@ -1537,24 +1590,22 @@ export default {
           });
           
         } else {
-          console.error('❌ Erro ao buscar alunos:', response.status);
           this.availableStudents = [];
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar alunos:', error);
         this.availableStudents = [];
       } finally {
         this.loadingStudents = false;
       }
     },
 
-    // Obtém as iniciais do nome do aluno (proteção contra undefined)
+   
     getInitials(name) {
-      // Validação: retorna '?' se name for undefined, null ou não for string
+     
       if (!name || typeof name !== 'string') {
         return '?';
       }
-      // Pega as 2 primeiras letras do nome
+     
       return name
         .trim()
         .split(' ')
@@ -1566,41 +1617,33 @@ export default {
     },
 
     handleDivisionNextButton() {
-      console.log('🔘 Botão clicado!');
-      console.log('Step atual:', this.currentStep);
-      console.log('Divisão atual:', this.currentDivisionIndex);
-      console.log('Total de divisões:', this.numberOfDivisions);
-      console.log('canProceedFromCurrentDivision:', this.canProceedFromCurrentDivision);
       
-      // Verifica se a divisão atual está válida
+     
       if (!this.canProceedFromCurrentDivision) {
-        console.log('❌ Divisão atual não está completa');
         return;
       }
       
-      // Se não for a última divisão, avança para próxima divisão
+     
       if (this.currentDivisionIndex < this.numberOfDivisions - 1) {
-        console.log('➡️ Avançando para próxima divisão');
         this.nextDivision();
       } 
-      // Se for a última divisão e todas as divisões estão completas, avança para próxima etapa
+     
       else if (this.canProceedToNextStep) {
-        console.log('⏭️ Avançando para próxima etapa');
         this.currentStep++;
         if (this.currentStep === 3) {
           this.activeDivision = 0;
         }
       } else {
-        console.log('⚠️ Ainda há divisões incompletas. Complete todas antes de avançar.');
+        console.log('Ainda há divisões incompletas. Complete todas antes de avançar.');
       }
     },
 
     nextStep() {
-      // Se estivermos na etapa 2 (divisões) e não for a última divisão
+     
       if (this.currentStep === 2 && this.currentDivisionIndex < this.numberOfDivisions - 1) {
         this.nextDivision();
       } 
-      // Se estivermos na etapa 2 e for a última divisão, ou qualquer outra etapa
+     
       else if (this.canProceedToNextStep && this.currentStep < 4) {
         this.currentStep++;
         if (this.currentStep === 3) {
@@ -1625,7 +1668,7 @@ export default {
         assignedStudents: this.selectedStudents
       };
       
-      // Se está editando, incluir o _id
+     
       if (this.isEditing && this.planData && this.planData._id) {
         planToSave._id = this.planData._id;
       }
@@ -1634,14 +1677,14 @@ export default {
     },
 
     closeModal() {
-      // Se não há alterações no formulário, fecha diretamente
+     
       if (!this.hasFormChanges) {
         this.resetForm();
         this.$emit('close');
         return;
       }
       
-      // Se há alterações, mostra a confirmação
+     
       this.showConfirmation(
         'Confirmar saída',
         'Tem certeza que deseja sair? As alterações não salvas serão perdidas.',
@@ -3038,7 +3081,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
   border-radius: 16px;
   padding: 24px;
@@ -3131,6 +3174,14 @@ export default {
   position: relative;
 }
 
+/* Container for exercises with navigation */
+.added-exercises-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
 .added-exercises-list {
   flex: 1;
   overflow-y: auto;
@@ -3157,6 +3208,45 @@ export default {
 
 .added-exercises-list::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+
+/* Navigation arrows positioned absolutely on sides */
+.nav-arrow-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #3b82f6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-arrow-btn svg {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.nav-arrow-btn:hover {
+  background: #f8fafc;
+  color: #2563eb;
+}
+
+.nav-arrow-left {
+  left: -24px;
+}
+
+.nav-arrow-right {
+  right: -24px;
 }
 
 .added-exercise-card {

@@ -958,11 +958,11 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Get data from query params (from register page)
+
 const route = router.currentRoute.value
 const userId = route.query.userId
 
-// Notification state
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -979,7 +979,7 @@ const showNotification = (type, title, message) => {
   }
 }
 
-// Steps configuration (agora começa do endereço, pois dados básicos já foram preenchidos)
+
 const steps = [
   { label: 'Endereço', title: 'Onde Você Mora', subtitle: 'Informe seu endereço completo' },
   { label: 'Dados Físicos', title: 'Perfil Físico', subtitle: 'Suas medidas e experiência com treinos' },
@@ -989,13 +989,13 @@ const steps = [
 ]
 
 const currentStep = ref(1)
-const totalSteps = 5 // Agora são 5 etapas (removemos dados básicos)
+const totalSteps = 5
 const isSubmitting = ref(false)
 const loadingCep = ref(false)
 
-// Form data (dados básicos vêm da query)
+
 const form = ref({
-  // Dados básicos já preenchidos (vem da tela anterior)
+ 
   userId: userId || '',
   name: route.query.name || '',
   cpf: route.query.cpf || '',
@@ -1003,7 +1003,7 @@ const form = ref({
   email: route.query.email || '',
   phone: route.query.phone || '',
   
-  // Step 2: Endereço
+ 
   address: {
     cep: '',
     street: '',
@@ -1014,12 +1014,12 @@ const form = ref({
     state: ''
   },
   
-  // Step 3: Dados Físicos
+ 
   currentWeight: null,
   currentHeight: null,
   trainingExperience: '',
   
-  // Medidas corporais iniciais (opcional)
+ 
   initialMeasurements: {
     shoulder: null,
     chest: null,
@@ -1032,7 +1032,7 @@ const form = ref({
     bodyFatPercentage: null
   },
   
-  // Step 4: Saúde
+ 
   health: {
     hasChronicConditions: false,
     chronicConditions: [],
@@ -1055,7 +1055,7 @@ const form = ref({
     generalNotes: ''
   },
   
-  // Step 5: Objetivos
+ 
   goals: {
     goalType: '',
     targetWeight: null,
@@ -1063,7 +1063,7 @@ const form = ref({
     personalGoals: []
   },
   
-  // Step 6: Preferências
+ 
   preferences: {
     trainingDays: [],
     preferredTimeStart: '',
@@ -1076,7 +1076,7 @@ const form = ref({
   additionalInfo: ''
 })
 
-// Days of week
+
 const daysOfWeek = [
   { label: 'Dom', value: 'Domingo' },
   { label: 'Seg', value: 'Segunda' },
@@ -1087,7 +1087,7 @@ const daysOfWeek = [
   { label: 'Sáb', value: 'Sábado' }
 ]
 
-// Computed
+
 const calculatedBMI = computed(() => {
   if (!form.value.currentWeight || !form.value.currentHeight) return '-'
   const heightInMeters = form.value.currentHeight / 100
@@ -1104,7 +1104,7 @@ const bmiCategory = computed(() => {
   return 'Obesidade'
 })
 
-// Address methods
+
 const fetchAddress = async () => {
   const cep = form.value.address.cep.replace(/\D/g, '')
   if (cep.length !== 8) {
@@ -1133,7 +1133,7 @@ const fetchAddress = async () => {
   }
 }
 
-// Dynamic items methods
+
 const addChronicCondition = () => {
   form.value.health.chronicConditions.push({
     name: ''
@@ -1217,7 +1217,7 @@ const handleSurgeryCheckbox = () => {
   if (form.value.health.hasSurgeries && form.value.health.surgeries.length === 0) {
     addSurgery()
   } else if (!form.value.health.hasSurgeries) {
-    // Limpar array quando desmarcar
+   
     form.value.health.surgeries = []
   }
 }
@@ -1238,12 +1238,12 @@ const handleDietaryRestrictionCheckbox = () => {
   }
 }
 
-// Navigation methods
+
 const nextStep = async (event) => {
-  // Prevent default form submission
+ 
   event.preventDefault()
   
-  // Validate current step
+ 
   if (!validateStep()) {
     showNotification('warning', 'Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios')
     return
@@ -1265,29 +1265,29 @@ const prevStep = () => {
 }
 
 const validateStep = () => {
-  // Validação por etapa
+ 
   switch (currentStep.value) {
-    case 1: // Endereço
+    case 1:
       if (!form.value.address.cep || !form.value.address.street || 
           !form.value.address.number || !form.value.address.neighborhood || 
           !form.value.address.city) {
         return false
       }
       break
-    case 2: // Dados Físicos
+    case 2:
       if (!form.value.currentWeight || !form.value.currentHeight || 
           !form.value.trainingExperience) {
         return false
       }
       break
-    case 3: // Saúde - não tem campos obrigatórios
+    case 3:
       break
-    case 4: // Objetivos
+    case 4:
       if (!form.value.goals.goalType) {
         return false
       }
       break
-    case 5: // Preferências
+    case 5:
       if (form.value.preferences.trainingDays.length === 0 || 
           !form.value.preferences.preferredTimeStart || 
           !form.value.preferences.preferredTimeEnd || 
@@ -1312,7 +1312,7 @@ const submitForm = async () => {
   isSubmitting.value = true
   
   try {
-    // Criar perfil de estudante (usuário já foi criado na tela anterior)
+   
     const studentPayload = {
       userId: form.value.userId,
       name: form.value.name,
@@ -1326,7 +1326,7 @@ const submitForm = async () => {
         currentHeight: form.value.currentHeight,
         trainingExperience: form.value.trainingExperience,
         
-        // Medidas corporais iniciais (se fornecidas)
+       
         initialMeasurements: form.value.initialMeasurements,
         
         address: {
@@ -1349,7 +1349,7 @@ const submitForm = async () => {
         
         availability: {
           daysPerWeek: form.value.preferences.daysPerWeek,
-          minutesPerSession: 60, // Tempo padrão de sessão
+          minutesPerSession: 60,
           flexibleSchedule: form.value.preferences.flexibleSchedule
         }
       },
@@ -1386,10 +1386,9 @@ const submitForm = async () => {
     }
     
     const response = await axios.post(`${API_URL}/api/students`, studentPayload)
+    console.log('response: ', response);
     
-    console.log('✅ Student created successfully:', response.data)
-    
-    // Success
+   
     showNotification('success', 'Cadastro Realizado!', 'Você será redirecionado para o login')
     
     setTimeout(() => {
@@ -1397,7 +1396,6 @@ const submitForm = async () => {
     }, 2000)
     
   } catch (error) {
-    console.error('Erro ao cadastrar:', error)
     showNotification('error', 'Erro no Cadastro', error.response?.data?.message || 'Erro ao realizar cadastro. Tente novamente')
   } finally {
     isSubmitting.value = false

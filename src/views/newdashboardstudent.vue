@@ -446,7 +446,7 @@ export default {
   },
   data() {
     return {
-      // Dados do usuário
+     
       userData: {
         name: '',
         avatar: '',
@@ -503,7 +503,7 @@ export default {
         top: "0px",
       },
       recentWorkouts: [],
-      allWorkoutSessions: [], // Todas as sessões para o calendário
+      allWorkoutSessions: [],
       monthlyStats: {
         completedWorkouts: 0,
         totalMinutes: 0,
@@ -512,9 +512,9 @@ export default {
         timeChange: 0,
         performancePercent: 0,
         performanceText: '',
-        totalVolume: 0, // Volume total (kg)
-        totalSets: 0,   // Total de séries
-        totalExercises: 0 // Total de exercícios
+        totalVolume: 0,
+        totalSets: 0,  
+        totalExercises: 0
       },
       updateInterval: null,
       selectedPeriod: "month",
@@ -562,19 +562,16 @@ export default {
       const daysInMonth = lastDay.getDate();
       const daysInPrevMonth = prevLastDay.getDate();
 
-      // Criar set de dias com treinos completados (todos os meses desde o primeiro treino)
+     
       const workoutDaysByMonth = new Map();
       if (this.allWorkoutSessions && this.allWorkoutSessions.length > 0) {
-        console.log('📅 CALENDÁRIO - Total de treinos:', this.allWorkoutSessions.length);
         this.allWorkoutSessions.forEach(workout => {
           if (workout.date && workout.status === 'completed') {
             const workoutDate = new Date(workout.date);
             const workoutYear = workoutDate.getFullYear();
             const workoutMonth = workoutDate.getMonth();
             const workoutDay = workoutDate.getDate();
-            
-            console.log(`  📍 Treino: ${workoutDate.toLocaleDateString('pt-BR')} - Mês: ${workoutMonth} (${workoutMonth === 8 ? 'SET' : workoutMonth === 9 ? 'OUT' : workoutMonth === 10 ? 'NOV' : 'OUTRO'}), Dia: ${workoutDay}`);
-            
+                        
             const key = `${workoutYear}-${workoutMonth}`;
             if (!workoutDaysByMonth.has(key)) {
               workoutDaysByMonth.set(key, new Set());
@@ -582,16 +579,11 @@ export default {
             workoutDaysByMonth.get(key).add(workoutDay);
           }
         });
-        
-        console.log('📊 Meses com treinos:', Array.from(workoutDaysByMonth.keys()));
-        workoutDaysByMonth.forEach((days, monthKey) => {
-          console.log(`  ${monthKey}: ${days.size} dias com treinos`, Array.from(days).sort((a, b) => a - b));
-        });
       }
 
       const days = [];
 
-      // Dias do mês anterior
+     
       const prevMonth = month === 0 ? 11 : month - 1;
       const prevYear = month === 0 ? year - 1 : year;
       const prevMonthKey = `${prevYear}-${prevMonth}`;
@@ -606,7 +598,7 @@ export default {
         });
       }
 
-      // Dias do mês atual
+     
       const currentMonthKey = `${year}-${month}`;
       const currentMonthWorkouts = workoutDaysByMonth.get(currentMonthKey) || new Set();
       
@@ -619,11 +611,11 @@ export default {
         days.push({
           number: day,
           class: isToday ? "today" : "",
-          hasWorkout: !isToday && currentMonthWorkouts.has(day), // Não mostrar bolinha no dia atual
+          hasWorkout: !isToday && currentMonthWorkouts.has(day),
         });
       }
 
-      // Dias do próximo mês
+     
       const nextMonth = month === 11 ? 0 : month + 1;
       const nextYear = month === 11 ? year + 1 : year;
       const nextMonthKey = `${nextYear}-${nextMonth}`;
@@ -642,22 +634,22 @@ export default {
 
       return days;
     },
-    // Stats para os cards do topo
+   
     totalActivePlans() {
-      // Retorna número de planos de treino ativos do aluno
-      // Por enquanto retorna valor fixo até implementarmos endpoint específico
+     
+     
       return 3;
     },
     totalCompletedWorkouts() {
-      // Total de treinos completados (todos os tempos)
+     
       return this.monthlyStats.completedWorkouts || 0;
     },
     completedThisMonth() {
-      // Treinos completados este mês
+     
       return this.monthlyStats.workoutChange || 0;
     },
     currentStreak() {
-      // Calcula sequência de dias consecutivos com treino
+     
       if (!this.recentWorkouts || this.recentWorkouts.length === 0) return 0;
       
       const today = new Date();
@@ -666,13 +658,13 @@ export default {
       let streak = 0;
       let currentDate = new Date(today);
       
-      // Ordenar treinos por data (mais recente primeiro)
+     
       const sortedWorkouts = [...this.recentWorkouts].sort((a, b) => 
         new Date(b.date) - new Date(a.date)
       );
       
-      // Verificar dias consecutivos
-      for (let i = 0; i < 30; i++) { // Verificar últimos 30 dias
+     
+      for (let i = 0; i < 30; i++) {
         const hasWorkout = sortedWorkouts.some(workout => {
           const workoutDate = new Date(workout.date);
           workoutDate.setHours(0, 0, 0, 0);
@@ -683,18 +675,18 @@ export default {
           streak++;
           currentDate.setDate(currentDate.getDate() - 1);
         } else if (i === 0) {
-          // Se não treinou hoje, verificar ontem
+         
           currentDate.setDate(currentDate.getDate() - 1);
           continue;
         } else {
-          break; // Sequência quebrada
+          break;
         }
       }
       
       return streak;
     },
     monthGoalProgress() {
-      // Progresso da meta do mês (baseado em treinos completados vs meta de 20)
+     
       const goal = 20;
       const completed = this.monthlyStats.completedWorkouts || 0;
       return Math.min(Math.round((completed / goal) * 100), 100);
@@ -707,18 +699,18 @@ export default {
       const query = this.searchQuery.toLowerCase().trim();
       
       return this.recentWorkouts.filter(workout => {
-        // Buscar por nome do treino
+       
         const nameMatch = workout.workoutName && 
           workout.workoutName.toLowerCase().includes(query);
         
-        // Buscar por nome da divisão
+       
         const divisionMatch = workout.divisionName && 
           workout.divisionName.toLowerCase().includes(query);
         
-        // Buscar por data formatada
+       
         const dateMatch = this.formatDate(workout.date).toLowerCase().includes(query);
         
-        // Buscar por status
+       
         const statusMatch = this.getStatusText(workout.status).toLowerCase().includes(query);
         
         return nameMatch || divisionMatch || dateMatch || statusMatch;
@@ -727,14 +719,14 @@ export default {
   },
   methods: {
     handleSearch() {
-      // Método chamado quando o usuário digita na busca
-      // O filtro é aplicado automaticamente via computed property
+     
+     
     },
     clearSearch() {
       this.searchQuery = '';
     },
     viewWorkoutDetails(workout) {
-      // Navega para a página de histórico com o ID do treino
+     
       this.$router.push({
         name: 'StudentHistory',
         params: { workoutId: workout.id },
@@ -744,10 +736,8 @@ export default {
     async fetchRecentWorkouts() {
       try {
         const token = sessionStorage.getItem('token');
-        console.log('Token encontrado:', token ? 'Sim' : 'Não');
         
         if (!token) {
-          console.warn('⚠️ Nenhum token encontrado. Usuário não autenticado.');
           this.recentWorkouts = [];
           return;
         }
@@ -757,25 +747,17 @@ export default {
           'Authorization': `Bearer ${token}`
         };
         
-        console.log('=== INÍCIO BUSCA TREINOS RECENTES ===');
-        console.log('URL da API:', 'http://localhost:3000/api/workout-sessions/sessions/history?limit=50');
-        
         const response = await fetch('http://localhost:3000/api/workout-sessions/sessions/history?limit=50', {
           method: 'GET',
           headers: headers
         });
         
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Erro na resposta:', response.status, response.statusText);
-          console.error('Corpo da resposta de erro:', errorText);
+          console.log('errorText: ', errorText);
           
-          // Se token expirado, redirecionar para login
+         
           if (response.status === 401 || response.status === 403) {
-            console.error('❌ Token inválido ou expirado. Redirecionando para login...');
             sessionStorage.removeItem('token');
             this.$router.push('/login');
             return;
@@ -786,33 +768,9 @@ export default {
         }
         
         const data = await response.json();
-        console.log('=== DADOS RECEBIDOS DA API ===');
-        console.log('Data completo:', JSON.stringify(data, null, 2));
-        console.log('Tipo de data:', typeof data);
-        console.log('data.sessions existe?', !!data.sessions);
-        console.log('data.sessions é array?', Array.isArray(data.sessions));
-        console.log('Quantidade de sessions:', data.sessions ? data.sessions.length : 0);
         
-        if (data && data.sessions && Array.isArray(data.sessions)) {
-          console.log('=== PROCESSANDO SESSIONS ===');
-          console.log('Total de sessions recebidas:', data.sessions.length);
-          
-          // Log cada session antes de processar
-          data.sessions.forEach((session, index) => {
-            console.log(`Session ${index}:`, {
-              id: session._id,
-              workoutPlanId: session.workoutPlanId,
-              endTime: session.endTime,
-              startTime: session.startTime,
-              createdAt: session.createdAt,
-              status: session.status,
-              duration: session.duration,
-              exercisesCompleted: session.exercisesCompleted,
-              exercises: session.exercises
-            });
-          });
-          
-          // Armazenar TODAS as sessões para o calendário
+        if (data && data.sessions && Array.isArray(data.sessions)) {          
+         
           this.allWorkoutSessions = data.sessions.map(session => {
             const date = session.endTime || session.createdAt;
             return {
@@ -822,22 +780,22 @@ export default {
             };
           });
           
-          // Processar e mapear diretamente (API já retorna apenas completed/cancelled)
+         
           this.recentWorkouts = data.sessions
-            .slice(0, 5) // Limita a 5 para a lista de treinos recentes
+            .slice(0, 5)
             .map(session => {
-              // Pegar o nome do treino do workoutPlanId (se foi populado)
+             
               let workoutName = 'Treino';
               let divisionName = '';
               
               if (session.workoutPlanId) {
                 if (typeof session.workoutPlanId === 'object') {
-                  // Se foi populado, pegar o nome do plano
+                 
                   workoutName = session.workoutPlanId.name || 'Treino';
                   
-                  // Tentar pegar a divisão do plano
+                 
                   if (session.workoutPlanId.divisions && session.workoutPlanId.divisions.length > 0) {
-                    // Se houver divisões no plano, mostrar a primeira ou baseado no index
+                   
                     divisionName = session.workoutPlanId.divisions[0]?.name || '';
                   }
                 } else {
@@ -845,18 +803,18 @@ export default {
                 }
               }
               
-              // Usar endTime se existir, senão usar createdAt
+             
               const date = session.endTime || session.createdAt;
               
-              // Calcular duração se não estiver definida
+             
               let duration = session.duration || 0;
               if (!duration && session.startTime && session.endTime) {
                 const start = new Date(session.startTime);
                 const end = new Date(session.endTime);
-                duration = Math.round((end - start) / (1000 * 60)); // em minutos
+                duration = Math.round((end - start) / (1000 * 60));
               }
               
-              // Contar exercícios
+             
               const exercises = session.exercisesCompleted || 
                               (session.exercises ? session.exercises.length : 0);
               
@@ -871,34 +829,19 @@ export default {
               };
             });
           
-          console.log('=== RESULTADO FINAL ===');
-          console.log('Treinos processados para exibição:', this.recentWorkouts.length);
-          console.log('Dados dos treinos:', JSON.stringify(this.recentWorkouts, null, 2));
-          
-          // Calcular estatísticas mensais
+         
           this.calculateMonthlyStats(data.sessions);
           
-          // Calcular estatísticas do período para o card de distribuição
+         
           this.calculatePeriodStats(data.sessions);
           
-          // Preparar dados do gráfico com os últimos treinos
+         
           this.prepareChartData(data.sessions);
-          
-          if (this.recentWorkouts.length === 0) {
-            console.warn('⚠️ NENHUM TREINO ENCONTRADO NO HISTÓRICO');
-            console.log('O aluno ainda não completou ou cancelou nenhum treino');
-          }
         } else {
-          console.error('❌ FORMATO DE DADOS INESPERADO');
-          console.log('data:', data);
-          console.log('data.sessions:', data.sessions);
           this.recentWorkouts = [];
         }
         
-        console.log('=== FIM BUSCA TREINOS RECENTES ===');
       } catch (error) {
-        console.error('❌ ERRO AO BUSCAR TREINOS RECENTES:', error);
-        console.error('Stack trace:', error.stack);
         this.recentWorkouts = [];
       }
     },
@@ -907,7 +850,6 @@ export default {
         const storedUser = sessionStorage.getItem('user');
         
         if (!storedUser) {
-          console.warn('⚠️ Nenhum usuário no sessionStorage');
           this.userData.name = 'Usuário';
           this.userData.avatar = 'https://ui-avatars.com/api/?name=User&background=2563eb&color=fff&size=48';
           this.userData.role = 'Aluno';
@@ -918,14 +860,13 @@ export default {
         const userId = userData.id || userData._id;
         
         if (!userId) {
-          console.warn('⚠️ Nenhum ID encontrado no userData');
           this.userData.name = userData.name || 'Usuário';
           this.userData.avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.userData.name) + '&background=2563eb&color=fff&size=48';
           this.userData.role = 'Aluno';
           return;
         }
 
-        // Buscar dados do Student para pegar informações completas
+       
         const token = sessionStorage.getItem('token');
         const response = await fetch(`http://localhost:3000/api/students/user/${userId}`, {
           method: 'GET',
@@ -938,10 +879,10 @@ export default {
         if (response.ok) {
           const studentData = await response.json();
           
-          // Extrair nome do User populado
+         
           const userName = studentData.userId?.name || userData.name || 'Usuário';
           
-          // Extrair avatar com URL completa do backend
+         
           const avatarPath = studentData.userId?.avatar || userData.avatar;
           let avatarUrl;
           
@@ -957,15 +898,13 @@ export default {
           this.userData.avatar = avatarUrl;
           this.userData.role = 'Aluno';
           
-          console.log('✅ Dados do usuário carregados:', this.userData);
         } else {
-          // Fallback para dados do sessionStorage
+         
           this.userData.name = userData.name || 'Usuário';
           this.userData.avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.userData.name) + '&background=2563eb&color=fff&size=48';
           this.userData.role = 'Aluno';
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar dados do usuário:', error);
         const storedUser = sessionStorage.getItem('user');
         if (storedUser) {
           const userData = JSON.parse(storedUser);
@@ -984,47 +923,29 @@ export default {
       const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
       const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
       
-      console.log('🔍 CALCULANDO ESTATÍSTICAS MENSAIS:');
-      console.log('Data atual:', now);
-      console.log('Mês atual:', currentMonth, '(Novembro = 10)');
-      console.log('Ano atual:', currentYear);
-      console.log('Mês anterior:', lastMonth, '(Outubro = 9)');
-      console.log('Total de sessões recebidas:', allSessions.length);
-      
-      // Filtrar sessões do mês atual (completadas)
+     
       const currentMonthSessions = allSessions.filter(session => {
         if (!session.endTime || session.status !== 'completed') return false;
         const date = new Date(session.endTime);
         const isCurrentMonth = date.getMonth() === currentMonth && date.getFullYear() === currentYear;
         if (isCurrentMonth) {
-          console.log('✅ Treino do mês atual:', {
-            date: session.endTime,
-            duration: session.duration,
-            status: session.status
-          });
+          console.log('isCurrentMonth: ', isCurrentMonth);
         }
         return isCurrentMonth;
       });
       
-      // Filtrar sessões do mês anterior (completadas)
+     
       const lastMonthSessions = allSessions.filter(session => {
         if (!session.endTime || session.status !== 'completed') return false;
         const date = new Date(session.endTime);
         const isLastMonth = date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
         if (isLastMonth) {
-          console.log('📅 Treino do mês anterior:', {
-            date: session.endTime,
-            duration: session.duration,
-            status: session.status
-          });
+          console.log('isLastMonth: ', isLastMonth);
         }
         return isLastMonth;
       });
       
-      console.log('📊 Treinos do mês atual:', currentMonthSessions.length);
-      console.log('📊 Treinos do mês anterior:', lastMonthSessions.length);
-      
-      // Calcular estatísticas
+     
       const completedWorkouts = currentMonthSessions.length;
       const totalMinutes = currentMonthSessions.reduce((sum, session) => {
         let duration = session.duration || 0;
@@ -1036,7 +957,7 @@ export default {
         return sum + duration;
       }, 0);
       
-      // Calcular tempo total do mês anterior
+     
       const lastMonthMinutes = lastMonthSessions.reduce((sum, session) => {
         let duration = session.duration || 0;
         if (!duration && session.startTime && session.endTime) {
@@ -1051,17 +972,17 @@ export default {
       const workoutChange = completedWorkouts - lastMonthSessions.length;
       const timeChange = totalMinutes - lastMonthMinutes;
       
-      // Calcular volume total, séries e exercícios do mês atual
+     
       const totalVolume = currentMonthSessions.reduce((sum, s) => sum + (s.totalVolume || 0), 0);
       const totalSets = currentMonthSessions.reduce((sum, s) => sum + (s.completedSets || 0), 0);
       const totalExercises = currentMonthSessions.reduce((sum, s) => sum + (s.completedExercises || 0), 0);
       
-      // Calcular porcentagem de desempenho real baseada nos treinos completados
+     
       let performancePercent = 0;
       let performanceText = 'Sem dados anteriores';
       
       if (lastMonthSessions.length > 0) {
-        // Calcula a diferença percentual entre este mês e o anterior
+       
         const difference = completedWorkouts - lastMonthSessions.length;
         performancePercent = Math.round((difference / lastMonthSessions.length) * 100);
         
@@ -1073,11 +994,11 @@ export default {
           performanceText = 'Mesmo que mês passado';
         }
       } else if (completedWorkouts > 0) {
-        // Primeiro mês: considera 100% de progresso se tiver pelo menos 1 treino
+       
         performancePercent = 100;
         performanceText = 'Primeiro mês ativo!';
       } else {
-        // Sem treinos em ambos os meses
+       
         performancePercent = 0;
         performanceText = 'Sem dados anteriores';
       }
@@ -1094,17 +1015,6 @@ export default {
         totalSets,
         totalExercises
       };
-      
-      console.log('📊 ========== ESTATÍSTICAS FINAIS ==========');
-      console.log('Treinos Completados (mês atual):', completedWorkouts);
-      console.log('Treinos Completados (mês anterior):', lastMonthSessions.length);
-      console.log('Mudança de Treinos:', workoutChange);
-      console.log('Tempo Total (mês atual):', totalMinutes, 'min');
-      console.log('Tempo Total (mês anterior):', lastMonthMinutes, 'min');
-      console.log('Mudança de Tempo:', timeChange, 'min');
-      console.log('Duração Média:', avgDuration, 'min');
-      console.log('Performance:', performancePercent + '%', '-', performanceText);
-      console.log('==========================================');
     },
     calculatePeriodStats(allSessions) {
       if (!allSessions || allSessions.length === 0) {
@@ -1136,52 +1046,33 @@ export default {
 
       this.periodStats = { completed, cancelled };
 
-      console.log('📊 Distribuição de Treinos:', this.selectedPeriod);
-      console.log('  Completados:', completed);
-      console.log('  Cancelados (não finalizados):', cancelled);
-
       this.animateCount(completed, 'animatedCompletedCount');
       this.animateCount(cancelled, 'animatedCancelledCount');
     },
     prepareChartData(allSessions) {
-      console.log('📈 Preparando dados do gráfico de desempenho...');
-      console.log('Total de sessões recebidas:', allSessions ? allSessions.length : 0);
       
       if (!allSessions || allSessions.length === 0) {
-        console.warn('⚠️ Nenhuma sessão recebida para o gráfico');
         this.chartLabels = ['Sem dados'];
         this.ordersData = [0];
         this.revenueData = [0];
         return;
       }
       
-      // Filtrar apenas sessões completadas com endTime
+     
       const completedSessions = allSessions
         .filter(session => session.status === 'completed' && session.endTime)
-        .sort((a, b) => new Date(b.endTime) - new Date(a.endTime)); // Mais recentes primeiro
-      
-      console.log('Total de sessões completadas com endTime:', completedSessions.length);
-      
-      // Pegar os últimos 8 treinos (ou menos se houver menos de 8)
-      const lastWorkouts = completedSessions.slice(0, 8).reverse(); // Reverter para ordem cronológica
-      
-      console.log('Últimos treinos selecionados para o gráfico:', lastWorkouts.length);
-      console.log('Treinos selecionados:', lastWorkouts.map(w => ({
-        date: w.endTime,
-        duration: w.duration,
-        status: w.status
-      })));
+        .sort((a, b) => new Date(b.endTime) - new Date(a.endTime));      
+      const lastWorkouts = completedSessions.slice(0, 8).reverse();
       
       if (lastWorkouts.length === 0) {
-        // Se não houver treinos, usar dados vazios
+       
         this.chartLabels = ['Sem dados'];
         this.ordersData = [0];
         this.revenueData = [0];
-        console.log('⚠️ Nenhum treino para exibir no gráfico');
         return;
       }
       
-      // Processar labels e dados - SEM agrupar por dia
+     
       this.chartLabels = lastWorkouts.map(session => {
         const date = new Date(session.endTime);
         const day = date.getDate();
@@ -1189,7 +1080,7 @@ export default {
         return `${month} ${day}`;
       });
       
-      // Processar duração em minutos
+     
       this.ordersData = lastWorkouts.map(session => {
         let duration = session.duration || 0;
         if (!duration && session.startTime && session.endTime) {
@@ -1200,41 +1091,29 @@ export default {
         return duration || 0;
       });
       
-      // Séries completadas - métrica de volume de trabalho realizado
+     
       this.revenueData = lastWorkouts.map(session => {
         return session.completedSets || 0;
       });
       
-      console.log('Labels do gráfico:', this.chartLabels);
-      console.log('Durações (minutos):', this.ordersData);
-      console.log('Séries completadas:', this.revenueData);
-      
-      // Preparar dados do gráfico de barras (revenue) por dia da semana
+     
       this.prepareBarChartData(allSessions);
       
-      // Atualizar o gráfico se já estiver criado
+     
       if (this.chart && this.chartType === 'orders') {
-        console.log('Atualizando gráfico existente...');
         this.destroyChart();
         this.$nextTick(() => {
           this.initChart();
         });
       } else if (this.chartType === 'orders') {
-        // Se o gráfico ainda não foi criado, inicializar agora
-        console.log('Inicializando gráfico pela primeira vez com dados...');
+       
         this.$nextTick(() => {
           this.initChart();
         });
       }
     },
     prepareBarChartData(allSessions) {
-      console.log('📊 ========== PREPARANDO GRÁFICO DE BARRAS ==========');
-      console.log('📊 Preparando dados do gráfico de barras por dia da semana...');
-      console.log('Total de sessões recebidas:', allSessions ? allSessions.length : 0);
-      
       if (!allSessions || allSessions.length === 0) {
-        console.warn('⚠️ Nenhuma sessão para gráfico de barras');
-        // Resetar para zeros
         this.barChartData = [
           { day: "Seg", bars: [0, 0, 0] },
           { day: "Ter", bars: [0, 0, 0] },
@@ -1247,7 +1126,7 @@ export default {
         return;
       }
       
-      // Filtrar apenas sessões completadas DA SEMANA ATUAL (últimos 7 dias)
+     
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       
@@ -1258,43 +1137,27 @@ export default {
         return sessionDate >= sevenDaysAgo && sessionDate <= now;
       });
       
-      console.log('Sessões completadas DA SEMANA ATUAL (últimos 7 dias):', completedSessions.length);
-      console.log('Período:', sevenDaysAgo.toLocaleDateString('pt-BR'), 'até', now.toLocaleDateString('pt-BR'));
-      
-      // Definir nomes dos dias
+     
       const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
       
-      // Agrupar por dia da semana (0 = domingo, 1 = segunda, etc.)
+     
       const dayGroups = {
-        1: [], // Segunda
-        2: [], // Terça
-        3: [], // Quarta
-        4: [], // Quinta
-        5: [], // Sexta
-        6: [], // Sábado
-        0: []  // Domingo
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: [],
+        6: [],
+        0: [] 
       };
       
-      completedSessions.forEach((session, index) => {
+      completedSessions.forEach((session) => {
         const date = new Date(session.endTime);
         const dayOfWeek = date.getDay();
         dayGroups[dayOfWeek].push(session);
-        
-        // Log SUPER detalhado de cada sessão
-        console.log(`\n📅 TREINO #${index + 1}:`);
-        console.log(`   Nome: ${session.workoutName || 'Sem nome'}`);
-        console.log(`   Divisão: ${session.divisionName || 'Sem divisão'}`);
-        console.log(`   Data/Hora Fim: ${date.toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}`);
-        console.log(`   Dia da Semana: ${dayOfWeek} = ${dayNames[dayOfWeek]}`);
-        console.log(`   Duração: ${session.duration || 0} minutos`);
-        console.log(`   Séries Completadas: ${session.completedSets || 0}`);
-        console.log(`   Exercícios Completados: ${session.completedExercises || 0}`);
-        console.log(`   Status: ${session.status}`);
-        console.log(`   ID: ${session._id || session.id}`);
       });
       
-      // Mostrar resumo de cada dia
-      console.log('\n📊 ========== RESUMO POR DIA DA SEMANA ==========');
+     
       Object.keys(dayGroups).forEach(dayNum => {
         const dayName = dayNames[parseInt(dayNum)];
         const sessions = dayGroups[dayNum];
@@ -1307,31 +1170,22 @@ export default {
           });
         }
       });
-      console.log('===============================================\n');
       
-      // Ordem dos dias para exibição: Seg, Ter, Qua, Qui, Sex, Sáb, Dom
-      const weekDays = [1, 2, 3, 4, 5, 6, 0]; // Ordem: Seg, Ter, Qua, Qui, Sex, Sáb, Dom
+     
+      const weekDays = [1, 2, 3, 4, 5, 6, 0];
       
       this.barChartData = weekDays.map(dayNum => {
         const sessions = dayGroups[dayNum];
         const dayName = dayNames[dayNum];
         
         if (sessions.length === 0) {
-          console.log(`⚠️ ${dayName}: Nenhum treino encontrado`);
           return { day: dayName, bars: [0, 0, 0] };
         }
         
-        // Calcular TOTAIS (não médias)
+       
         const totalDuration = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
         const totalSets = sessions.reduce((sum, s) => sum + (s.completedSets || 0), 0);
         const totalExercises = sessions.reduce((sum, s) => sum + (s.completedExercises || 0), 0);
-        
-        console.log(`\n✅ ${dayName} - TOTAIS:`);
-        console.log(`   Quantidade de treinos: ${sessions.length}`);
-        console.log(`   Total de minutos: ${totalDuration}min`);
-        console.log(`   Total de séries: ${totalSets}`);
-        console.log(`   Total de exercícios: ${totalExercises}`);
-        console.log(`   Barras no gráfico: [${totalDuration}, ${totalSets}, ${totalExercises}]`);
         
         return {
           day: dayName,
@@ -1339,18 +1193,14 @@ export default {
         };
       });
       
-      // Calcular maxValue dinâmico
+     
       const allValues = this.barChartData.flatMap(day => day.bars);
       const maxBarValue = Math.max(...allValues);
-      this.maxValue = Math.ceil(maxBarValue / 10) * 10 + 10; // Arredondar para cima
+      this.maxValue = Math.ceil(maxBarValue / 10) * 10 + 10;
       
-      // Criar labels do eixo Y
+     
       const step = Math.ceil(this.maxValue / 4);
       this.yLabels = [0, step, step * 2, step * 3, this.maxValue];
-      
-      console.log('📊 Dados do gráfico de barras preparados:', this.barChartData);
-      console.log('Max value:', this.maxValue);
-      console.log('Y labels:', this.yLabels);
     },
     showBarTooltip(event, day, value, barIndex) {
       const labels = ['Duração', 'Séries', 'Exercícios'];
@@ -1361,7 +1211,7 @@ export default {
       this.barTooltip.label = labels[barIndex];
       this.barTooltip.value = `${value} ${units[barIndex]}`;
       
-      // Posicionar o tooltip próximo ao mouse
+     
       const rect = event.target.getBoundingClientRect();
       const container = event.target.closest('.bar-chart-container');
       const containerRect = container.getBoundingClientRect();
@@ -1441,41 +1291,41 @@ export default {
     destroyChart() {
       if (this.chart) {
         try {
-          // Immediately disable all animations
+         
           if (this.chart.options && this.chart.options.animation) {
             this.chart.options.animation = false;
           }
-          // Stop all animations
+         
           if (this.chart.stop) {
             this.chart.stop();
           }
-          // Set to null first to prevent callbacks
+         
           const chartToDestroy = this.chart;
           this.chart = null;
-          // Now destroy
+         
           if (chartToDestroy && chartToDestroy.destroy) {
             chartToDestroy.destroy();
           }
         } catch (e) {
-          console.warn("Chart destruction warning:", e);
+          console.log('e: ', e);
           this.chart = null;
         }
       }
     },
     initChart() {
-      // Prevent multiple initializations
+     
       if (this.isInitializingChart || this.isDestroyed) return;
       
-      // Clear any existing chart first
+     
       this.destroyChart();
       
-      // Only proceed if we should show the chart
+     
       if (this.chartType !== "orders") return;
 
       this.isInitializingChart = true;
 
       this.$nextTick(() => {
-        // Double check conditions
+       
         if (this.chartType !== "orders" || this.isDestroyed) {
           this.isInitializingChart = false;
           return;
@@ -1497,13 +1347,11 @@ export default {
           return;
         }
 
-        // Usar os dados reais dos treinos ou dados padrão se não houver treinos
+       
         const labels = this.chartLabels.length > 0 ? this.chartLabels : this.getChartLabels();
         const ordersData = this.ordersData.length > 0 ? this.ordersData : [0];
         const revenueData = this.revenueData.length > 0 ? this.revenueData : [0];
         
-        console.log('📊 Criando gráfico com dados:', { labels, ordersData, revenueData });
-
         const gradient1 = ctx.createLinearGradient(0, 0, 0, 300);
         gradient1.addColorStop(0, "rgba(0, 128, 255, 0.3)");
         gradient1.addColorStop(0.5, "rgba(0, 128, 255, 0.15)");
@@ -1514,7 +1362,7 @@ export default {
         gradient2.addColorStop(0.5, "rgba(93, 211, 199, 0.15)");
         gradient2.addColorStop(1, "rgba(93, 211, 199, 0.01)");
 
-        // Final check before creating chart
+       
         if (this.chart || this.chartType !== "orders") return;
 
         try {
@@ -1605,7 +1453,7 @@ export default {
                       const dataPoints = tooltipModel.dataPoints;
                       const date = dataPoints[0].label;
                       
-                      // Pegar ambos os valores
+                     
                       let minutos = 0;
                       let series = 0;
                       
@@ -1669,7 +1517,7 @@ export default {
             },
           });
         } catch (error) {
-          console.error("Chart creation error:", error);
+          console.log('error: ', error);
           this.chart = null;
         } finally {
           this.isInitializingChart = false;
@@ -1712,7 +1560,7 @@ export default {
       requestAnimationFrame(updateCount);
     },
     handleImageError(event) {
-      // Se a imagem falhar ao carregar, usar avatar gerado com tamanho 48px
+     
       event.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(this.userData.name || 'User')}&background=2563eb&color=fff&size=48`;
     },
     toggleUserDropdown() {
@@ -1730,10 +1578,10 @@ export default {
     },
     handleLogout() {
       this.showUserDropdown = false;
-      // Limpar dados de sessão
+     
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
-      // Redirecionar para login
+     
       this.$router.push('/login');
     },
   },
@@ -1744,14 +1592,14 @@ export default {
       }
     },
     chartType(newVal, oldVal) {
-      // Destroy chart immediately when switching away from orders
+     
       if (oldVal === "orders" && this.chart) {
         this.destroyChart();
       }
 
-      // Initialize chart when switching to orders
+     
       if (newVal === "orders") {
-        // Use setTimeout with longer delay to ensure DOM is ready
+       
         setTimeout(() => {
           if (this.chartType === "orders") {
             this.initChart();
@@ -1759,7 +1607,7 @@ export default {
         }, 100);
       }
 
-      // Trigger animation when switching to revenue
+     
       if (newVal === "revenue") {
         this.barChartKey++;
       }
@@ -1772,17 +1620,17 @@ export default {
     },
   },
   mounted() {
-    // Use nextTick to ensure DOM is fully ready
+   
     this.$nextTick(async () => {
       this.startCalendarUpdate();
       
-      // Buscar dados do usuário
+     
       await this.fetchUserData();
       
-      // Buscar dados dos treinos
+     
       await this.fetchRecentWorkouts();
       
-      // Depois inicializar o gráfico com os dados
+     
       if (this.chartType === 'orders') {
         setTimeout(() => {
           this.initChart();
@@ -1790,26 +1638,26 @@ export default {
       }
     });
     
-    // Adicionar listener para fechar dropdown ao clicar fora
+   
     document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
-    // Mark as destroyed to prevent any new operations
+   
     this.isDestroyed = true;
     
-    // Clear interval first
+   
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
     }
     
-    // Destroy chart
+   
     this.destroyChart();
     
-    // Clear chart type last
+   
     this.chartType = null;
     
-    // Remover listener de click
+   
     document.removeEventListener('click', this.handleClickOutside);
   },
 };

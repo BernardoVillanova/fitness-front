@@ -219,22 +219,22 @@ import StudentNavBar from '@/components/StudentNavBar.vue'
 import api from '@/api'
 import { API_URL } from '@/config'
 
-// Stores
+
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Reactive data
+
 const loading = ref(true)
 const instructor = ref(null)
 const upcomingSessions = ref([])
 
-// Cache do instructor no store para evitar re-fetch
+
 const cachedInstructor = computed(() => authStore.instructorData)
 
-// Fetch instructor data
+
 const fetchInstructorData = async () => {
-  // Verificar se já temos dados em cache
+ 
   if (cachedInstructor.value) {
     instructor.value = cachedInstructor.value
     loading.value = false
@@ -243,7 +243,7 @@ const fetchInstructorData = async () => {
 
   loading.value = true
   try {
-    // Buscar dados do estudante do sessionStorage
+   
     const storedUser = sessionStorage.getItem('user')
     if (!storedUser) {
       useFallbackData()
@@ -260,79 +260,52 @@ const fetchInstructorData = async () => {
       return
     }
 
-    // Buscar dados completos do estudante por userId (já traz instructor populado)
+   
     const studentResponse = await api.get(`/students/user/${userId}`)
     const studentData = studentResponse.data
     
-      // Verificar se o aluno tem instrutor atribuído
+     
       if (studentData.instructorId) {
         const instructorData = studentData.instructorId
         
-        console.log('📋 instructorData inicial:', instructorData)
         
-        // Se só tiver _id e name, o populate não funcionou - buscar diretamente
+       
         const fieldsCount = Object.keys(instructorData).length
-        if (fieldsCount <= 3) {  // _id, name, __v ou similar
+        if (fieldsCount <= 3) { 
           try {
-            console.log('🔄 Populate incompleto, buscando dados completos do instrutor...')
             const instructorResponse = await api.get(`/instructors/${instructorData._id}`)
             Object.assign(instructorData, instructorResponse.data)
-            console.log('✅ Dados completos do instrutor carregados:', instructorResponse.data)
           } catch (err) {
-            console.error('❌ Erro ao buscar dados completos do instrutor:', err)
+            console.log('err: ', err);
           }
-        } else {
-          console.log('✅ instructorData já está populado')
         }
         
-        // Buscar dados do userId do instrutor para pegar avatar e informações atualizadas
+       
         let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorData.name)}&background=2563eb&color=fff&size=200`
         
-        console.log('🔍 Dados do instrutor:', {
-          id: instructorData._id,
-          name: instructorData.name,
-          userId: instructorData.userId,
-          hasUserId: !!instructorData.userId,
-          userIdType: typeof instructorData.userId,
-          userIdKeys: instructorData.userId ? Object.keys(instructorData.userId) : []
-        })
-        
-        // Tentar buscar avatar do próprio objeto instructorData primeiro
+       
         if (instructorData.userId) {
-          // Se userId é um objeto (populado), extrair avatar
+         
           if (typeof instructorData.userId === 'object' && instructorData.userId.avatar) {
             const userData = instructorData.userId
             
-            console.log('👤 userId já populado com avatar:', {
-              hasAvatar: !!userData.avatar,
-              avatarType: userData.avatar.startsWith('data:image') ? 'base64' : 
-                         userData.avatar.startsWith('http') ? 'url' : 'path',
-              avatarPreview: userData.avatar.substring(0, 50) + '...'
-            })
-            
             if (userData.avatar.startsWith('data:image')) {
               avatarUrl = userData.avatar
-              console.log('✅ Avatar carregado (base64 do populate)')
             } else if (userData.avatar.startsWith('http')) {
               avatarUrl = userData.avatar
-              console.log('✅ Avatar carregado (URL completa do populate):', avatarUrl)
             } else {
               avatarUrl = `${API_URL}${userData.avatar}`
-              console.log('✅ Avatar carregado (path relativo do populate):', avatarUrl)
             }
           } else if (typeof instructorData.userId === 'string') {
-            // userId é apenas string (ID), não está populado
-            console.log('⚠️ userId é string, não está populado. Precisamos fazer populate no backend')
+           
+            console.log('userId é string, não está populado. Precisamos fazer populate no backend')
           } else {
-            console.log('⚠️ userId está populado mas não tem avatar')
+            console.log('userId está populado mas não tem avatar')
           }
         } else {
-          console.log('⚠️ Instrutor não tem userId associado')
-        }
-        
-        console.log('🖼️ Avatar final que será usado:', avatarUrl)
-        
-        // Formatar horário de trabalho (SOMENTE se existir no banco)
+          console.log('Instrutor não tem userId associado')
+        }        
+       
         let availableHours = null
         if (instructorData.availability && instructorData.availability.workingDays && instructorData.availability.workingDays.length > 0) {
           const days = instructorData.availability.workingDays.join(', ')
@@ -341,7 +314,7 @@ const fetchInstructorData = async () => {
           availableHours = `${days}: ${start} - ${end}`
         }
         
-        // Usar APENAS dados reais do banco, sem fallbacks ou mocks
+       
         instructor.value = {
           id: instructorData._id,
           name: instructorData.name,
@@ -361,11 +334,9 @@ const fetchInstructorData = async () => {
           yearsOfExperience: instructorData.yearsOfExperience,
           cref: instructorData.cref
         }
-        
-        // Salvar no store para cache
-        authStore.setInstructorData(instructor.value)
-        
-        // Buscar sessões agendadas (se houver endpoint)
+            
+        authStore.setInstructorData(instructor.value) 
+       
         try {
           const sessionsResponse = await api.get('/workout-sessions/sessions/upcoming')
           if (sessionsResponse.data && Array.isArray(sessionsResponse.data)) {
@@ -378,10 +349,10 @@ const fetchInstructorData = async () => {
             }))
           }
         } catch (err) {
-        // Nenhuma sessão agendada
+          console.log('err: ', err);
       }
     } else {
-      // Se não tem instrutor, usar fallback
+     
       useFallbackData()
     }
   } catch (error) {
@@ -392,14 +363,8 @@ const fetchInstructorData = async () => {
   }
 }
 
-// Fallback quando não há instrutor atribuído
 const useFallbackData = () => {
-  instructor.value = null  // Apenas null, sem dados mockados
-}
-
-// Schedule session
-const scheduleSession = () => {
-  // TODO: Implementar modal de agendamento
+  instructor.value = null 
 }
 
 const getDay = (dateStr) => {
@@ -415,7 +380,7 @@ const getMonth = (dateStr) => {
 const getSpecialtyIcon = (specialty) => {
   const specialtyLower = specialty.toLowerCase()
   
-  // Mapeamento de especialidades para ícones Font Awesome
+ 
   const iconMap = {
     'musculação': 'fas fa-dumbbell',
     'musculacao': 'fas fa-dumbbell',
@@ -449,18 +414,18 @@ const getSpecialtyIcon = (specialty) => {
     'atletas': 'fas fa-medal'
   }
   
-  // Buscar correspondência exata ou parcial
+ 
   for (const [key, value] of Object.entries(iconMap)) {
     if (specialtyLower === key || specialtyLower.includes(key) || key.includes(specialtyLower)) {
       return value
     }
   }
   
-  // Ícone padrão
+ 
   return 'fas fa-star'
 }
 
-// Lifecycle
+
 onMounted(() => {
   fetchInstructorData()
 })

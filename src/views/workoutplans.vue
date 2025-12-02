@@ -184,9 +184,9 @@
               <div class="plan-stats-main">
                 <div class="stat-item-main">
                   <div class="stat-icon-main students-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
                     </svg>
                   </div>
                   <div class="stat-details">
@@ -364,18 +364,22 @@
     />
     
     <!-- Confirmation Modal -->
-    <ConfirmationModal
-      :show="showConfirmation"
-      :title="confirmationConfig.title"
-      :message="confirmationConfig.message"
-      :icon-type="confirmationConfig.iconType"
-      :require-text-confirmation="confirmationConfig.requireTextConfirmation"
-      :confirmation-text="confirmationConfig.confirmationText"
-      :details="confirmationConfig.details"
-      button-class="btn-danger"
-      @close="closeConfirmation"
-      @confirm="handleConfirmAction"
-    />
+    <transition name="modal-fade">
+      <ConfirmationModal
+        v-if="showConfirmation"
+        :show="showConfirmation"
+        :title="confirmationConfig.title"
+        :message="confirmationConfig.message"
+        :icon-type="confirmationConfig.iconType"
+        :require-text-confirmation="confirmationConfig.requireTextConfirmation"
+        :confirmation-text="confirmationConfig.confirmationText"
+        :details="confirmationConfig.details"
+        :button-class="confirmationConfig.buttonClass || 'btn-danger'"
+        :hide-buttons="confirmationConfig.hideButtons"
+        @close="closeConfirmation"
+        @confirm="handleConfirmAction"
+      />
+    </transition>
   </div>
 </template>
 
@@ -443,7 +447,8 @@ export default {
       totalExercises: 0,
       loading: false,
       error: null,
-      // Confirmation modal
+      autoCloseTimer: null,
+     
       showConfirmation: false,
       confirmationConfig: {
         title: '',
@@ -539,12 +544,10 @@ export default {
   },
   methods: {
     async fetchWorkoutPlans() {
-      console.log('🔍 [DEBUG] Iniciando fetchWorkoutPlans...');
       this.loading = true;
       this.error = null;
       try {
         const token = sessionStorage.getItem('token');
-        console.log('🔍 [DEBUG] Fazendo requisição para workout-plans-detailed...');
         const response = await fetch(`${API_BASE_URL}/workout/workout-plans-detailed`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -555,11 +558,8 @@ export default {
           throw new Error(`Erro ao carregar planos: ${response.status}`);
         }
         const plans = await response.json();
-        console.log('✅ [DEBUG] Planos recebidos:', plans.length);
-        console.log('🔍 [DEBUG] Primeiro plano:', plans[0]);
         this.workoutPlans = plans;
       } catch (error) {
-        console.error('Erro ao carregar planos:', error);
         this.error = error.message;
         this.workoutPlans = [];
       } finally {
@@ -599,23 +599,21 @@ export default {
           
           this.showSuccessMessage('Plano de treino salvo com sucesso!');
           this.closeModal();
-          // Resetar estado de salvamento no modal filho
+         
           if (this.$refs.workoutPlanModal) {
             this.$refs.workoutPlanModal.isSaving = false;
           }
         } else {
           const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-          console.error('❌ Erro do servidor:', errorData);
-          // Resetar estado de salvamento em caso de erro
+         
           if (this.$refs.workoutPlanModal) {
             this.$refs.workoutPlanModal.isSaving = false;
           }
           throw new Error(errorData.message || 'Erro ao salvar plano');
         }
       } catch (error) {
-        console.error('❌ Erro ao salvar plano:', error);
         this.showErrorMessage('Erro ao salvar plano: ' + error.message);
-        // Resetar estado de salvamento em caso de erro
+       
         if (this.$refs.workoutPlanModal) {
           this.$refs.workoutPlanModal.isSaving = false;
         }
@@ -639,7 +637,6 @@ export default {
           throw new Error('Erro ao atribuir plano');
         }
       } catch (error) {
-        console.error('Erro ao atribuir plano:', error);
         this.showNotification('error', 'Erro!', 'Erro ao atribuir plano: ' + error.message);
       }
     },
@@ -684,14 +681,23 @@ export default {
           if (index > -1) {
             this.workoutPlans.splice(index, 1);
           }
-          this.showSuccessMessage('🎉 Plano de treino excluído com sucesso!');
+          
+          // Fecha o modal de confirmação primeiro
+          this.closeConfirmation();
+          
+          // Aguarda um pouco antes de mostrar a mensagem de sucesso
+          setTimeout(() => {
+            this.showSuccessMessage('Plano de treino excluído com sucesso!');
+          }, 100);
         } else {
           const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
           throw new Error(errorData.message || 'Erro ao excluir plano');
         }
       } catch (error) {
-        console.error('❌ Erro ao excluir plano:', error);
-        this.showErrorMessage('❌ Erro ao excluir plano: ' + error.message);
+        this.closeConfirmation();
+        setTimeout(() => {
+          this.showErrorMessage('Erro ao excluir plano: ' + error.message);
+        }, 100);
       }
     },
     
@@ -702,9 +708,16 @@ export default {
         iconType: 'success',
         requireTextConfirmation: false,
         details: [],
+        buttonClass: 'btn-success',
+        hideButtons: true,
         onConfirm: () => this.closeConfirmation()
       };
       this.showConfirmation = true;
+      
+      // Auto-close after 2.5 seconds
+      this.autoCloseTimer = setTimeout(() => {
+        this.closeConfirmation();
+      }, 2500);
     },
     
     showErrorMessage(message) {
@@ -714,12 +727,24 @@ export default {
         iconType: 'danger',
         requireTextConfirmation: false,
         details: [],
+        hideButtons: true,
         onConfirm: () => this.closeConfirmation()
       };
       this.showConfirmation = true;
+      
+      // Auto-close after 2.5 seconds
+      this.autoCloseTimer = setTimeout(() => {
+        this.closeConfirmation();
+      }, 2500);
     },
     
     closeConfirmation() {
+      // Clear auto-close timer if it exists
+      if (this.autoCloseTimer) {
+        clearTimeout(this.autoCloseTimer);
+        this.autoCloseTimer = null;
+      }
+      
       this.showConfirmation = false;
       this.confirmationConfig = {
         title: '',
@@ -760,7 +785,7 @@ export default {
       try {
         const token = sessionStorage.getItem('token');
         
-        // Buscar dados completos do plano
+       
         const response = await fetch(`${API_BASE_URL}/workout/workout-plans/${plan._id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -778,7 +803,6 @@ export default {
           throw new Error('Erro ao carregar plano para edição');
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar plano:', error);
         this.showNotification('error', 'Erro!', 'Erro ao carregar plano: ' + error.message);
       }
     },
@@ -812,64 +836,39 @@ export default {
 
     async fetchStudents() {
       try {
-        console.log('🔍 [DEBUG] Iniciando fetchStudents com API axios...');
         const token = sessionStorage.getItem('token');
-        console.log('🔍 [DEBUG] Token encontrado:', token ? 'Sim' : 'Não');
-        console.log('🔍 [DEBUG] Token value:', token?.substring(0, 20) + '...');
-        
-        console.log('🔍 [DEBUG] Base URL da API:', api.defaults.baseURL);
-        console.log('🔍 [DEBUG] Fazendo requisição para: /students');
-        
-        // Teste de conectividade
-        console.log('🔍 [DEBUG] Testando conectividade com o backend...');
+        console.log('token: ', token);
+       
         try {
           const healthCheck = await fetch(`${API_BASE_URL}/docs`);
-          console.log('🔍 [DEBUG] Backend health check status:', healthCheck.status);
+          console.log('healthCheck: ', healthCheck);
         } catch (healthError) {
-          console.error('❌ [DEBUG] Backend não está acessível:', healthError);
+          console.log('healthError: ', healthError);
         }
         
         const response = await api.get('/students');
         
-        console.log('✅ [DEBUG] Students data received:', response.data);
         this.students = response.data;
         
       } catch (error) {
-        console.error('❌ [DEBUG] Axios error fetching students:', error);
-        console.error('❌ [DEBUG] Error type:', error.constructor.name);
-        console.error('❌ [DEBUG] Error message:', error.message);
-        console.error('❌ [DEBUG] Error response:', error.response);
-        
-        if (error.response) {
-          console.error('❌ [DEBUG] Response status:', error.response.status);
-          console.error('❌ [DEBUG] Response data:', error.response.data);
-          console.error('❌ [DEBUG] Response headers:', error.response.headers);
-        }
-        
-        if (error.request) {
-          console.error('❌ [DEBUG] Request data:', error.request);
-        }
-        
-        // Tentar com fetch direto para comparar
+        console.log('error: ', error);
+       
         try {
-          console.log('🔍 [DEBUG] Tentando fetch direto como fallback...');
           const directResponse = await fetch(`${API_BASE_URL}/students`, {
             headers: {
               'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
               'Content-Type': 'application/json'
             }
           });
-          console.log('🔍 [DEBUG] Direct fetch status:', directResponse.status);
           if (directResponse.ok) {
             const directData = await directResponse.json();
-            console.log('✅ [DEBUG] Direct fetch data:', directData);
             this.students = directData;
           } else {
             const errorText = await directResponse.text();
-            console.error('❌ [DEBUG] Direct fetch error body:', errorText);
+            console.log('errorText: ', errorText);
           }
         } catch (directError) {
-          console.error('❌ [DEBUG] Direct fetch also failed:', directError);
+          console.log('directError: ', directError);
         }
       }
     },
@@ -1528,52 +1527,60 @@ body:has(.navbar-collapsed) .floating-header,
 
 .plan-actions-header {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .action-btn {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 12px;
+  padding: 10px 16px;
+  border: 2px solid transparent;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-family: "Inter", sans-serif;
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   position: relative;
   overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .manage-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  min-width: 140px;
-  justify-content: center;
+  color: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .manage-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 .delete-btn {
-  background: #dc2626;
-  color: white;
-  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+  color: #ef4444;
+  border-color: #ef4444;
+  padding: 10px 14px;
 }
 
 .delete-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .action-btn:active {
-  transform: translateY(0) scale(0.95);
+  transform: scale(0.96);
 }
 
 /* Estatísticas principais melhoradas */
@@ -1604,23 +1611,24 @@ body:has(.navbar-collapsed) .floating-header,
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  transition: none;
 }
 
-.plan-card:hover .stat-icon-main {
-  transform: scale(1.1) rotate(5deg);
+.stat-icon-main svg {
+  display: block;
+  margin: auto;
 }
 
 .students-icon {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .divisions-icon {
-  background: var(--gradient-secondary);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .exercises-icon {
-  background: var(--gradient-tertiary);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .stat-details {
@@ -2112,5 +2120,16 @@ body:has(.navbar-collapsed) .floating-header,
   .page-numbers {
     display: none;
   }
+}
+
+/* Transição suave para notificações de sucesso/erro */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -705,7 +705,7 @@ export default {
       };
     };
 
-    // Confirmation system
+   
     const showConfirmation = ref(false);
     const confirmationConfig = ref({
       title: '',
@@ -769,27 +769,24 @@ export default {
     };
   },
   async created() {
-    console.log('🔵 [machines.vue] sessionStorage token:', sessionStorage.getItem('token'));
+    console.log('Token:', sessionStorage.getItem('token'));
   },
 
   async mounted() {
     await this.$nextTick();
     
-    // Wait for auth store to be properly hydrated
+   
     await this.waitForAuthStore();
     
     await this.fetchInstructorId();
     if (this.instructorId) {
       await this.fetchEquipments();
     } else {
-      // Try again after a delay
+     
       setTimeout(async () => {
         await this.fetchInstructorId();
         if (this.instructorId) {
-          console.log('✅ [machines.vue] instructorId carregado na segunda tentativa:', this.instructorId);
           await this.fetchEquipments();
-        } else {
-          console.error('❌ [machines.vue] instructorId continua null após segunda tentativa');
         }
       }, 1000);
     }
@@ -804,9 +801,9 @@ export default {
     getImageUrl() {
       return (imagePath) => {
         if (!imagePath) return null;
-        // Se já for URL completa, retorna como está
+       
         if (imagePath.startsWith('http')) return imagePath;
-        // Constrói URL completa do backend
+       
         return `${API_URL}${imagePath}`;
       };
     },
@@ -823,7 +820,7 @@ export default {
     },
   },
   watch: {
-    // Observar mudanças no user e carregar dados se necessário
+   
     user: {
       handler(newUser) {
         const userId = newUser?.userId || newUser?.id;
@@ -834,7 +831,7 @@ export default {
       deep: true,
       immediate: true
     },
-    // Observar mudanças no instructorId e carregar equipamentos
+   
     instructorId: {
       handler(newInstructorId) {
         if (newInstructorId && this.machines.length === 0) {
@@ -846,7 +843,7 @@ export default {
   },
   methods: {
     async waitForAuthStore() {
-      // Wait for auth store to be properly initialized
+     
       let retries = 0;
       const maxRetries = 10;
       
@@ -854,95 +851,81 @@ export default {
         const userData = this.user || this.currentUser;
         const token = sessionStorage.getItem('token');
         
-        // Check if we have either user data or at least a token
+       
         if (userData || token) {
-          console.log('✅ [waitForAuthStore] Auth store is ready, userData:', userData, 'token exists:', !!token);
           return;
         }
         
-        console.log(`⏳ [waitForAuthStore] Waiting for auth store... attempt ${retries + 1}/${maxRetries}`);
         await new Promise(resolve => setTimeout(resolve, 100));
         retries++;
       }
-      
-      console.warn('⚠️ [waitForAuthStore] Auth store not ready after max retries');
     },
     async loadData() {
       try {
-        // Primeiro, garantir que temos o instructorId
+       
         await this.fetchInstructorId();
         
         if (this.instructorId) {
           await this.fetchEquipments();
         } else {
-          console.warn('[loadData] instructorId não encontrado, tentando novamente...');
           
-          // Tentar novamente após um pequeno delay
+         
           setTimeout(async () => {
             await this.loadData();
           }, 1500);
         }
       } catch (error) {
-        console.error('[loadData] Erro:', error);
+        console.log('error: ', error);
         
-        // Tentar uma última vez após delay maior
+       
         setTimeout(async () => {
           await this.loadData();
         }, 3000);
       }
     },
     async fetchInstructorId() {
-      console.log('🟢 [fetchInstructorId] Iniciando busca do instructorId');
-      console.log('🟢 [fetchInstructorId] this.user:', this.user);
-      console.log('🟢 [fetchInstructorId] this.currentUser:', this.currentUser);
       
       try {
-        // Priorizar user real, depois currentUser
+       
         let userData = this.user || this.currentUser;
-        console.log('🟢 [fetchInstructorId] userData selecionado:', userData);
         
-        // Se não houver userData, tentar recuperar do sessionStorage
+       
         if (!userData) {
           const sessionUser = sessionStorage.getItem('user');
           if (sessionUser) {
             try {
               userData = JSON.parse(sessionUser);
-              console.log('🟢 [fetchInstructorId] userData recuperado do sessionStorage:', userData);
             } catch (e) {
-              console.error('[fetchInstructorId] Erro ao parsear user do sessionStorage:', e);
+              console.log('e: ', e);
             }
           }
         }
         
-        // Se não houver userData,         ..\migrate-notifications.ps1 -DryRun -Verbosear e abortar
+       
         if (!userData) {
           this.showNotification('error', 'Erro de Autenticação', 'Dados de usuário não encontrados.\nPor favor, faça logout e login novamente.');
           this.instructorId = null;
           return;
         }
         
-        // Se já tiver instructorId no userData (vem do login), usar direto
+       
         if (userData.instructorId) {
-          console.log('✅ [fetchInstructorId] instructorId já existe no userData:', userData.instructorId);
           this.instructorId = userData.instructorId;
           return;
         }
         
-        // Caso contrário, buscar usando userId ou id
+       
         const userId = userData.userId || userData.id;
         
         if (userId) {
           const response = await api.get(`/instructors/user/${userId}`);
           this.instructorId = response.data._id;
         } else {
-          console.error('[fetchInstructorId] userId não existe no userData:', userData);
           this.showNotification('error', 'Erro de Autenticação', 'Dados de usuário incompletos.\nPor favor, faça logout e login novamente.');
           this.instructorId = null;
           return;
         }
       } catch (error) {
-        console.error('[fetchInstructorId] Erro ao buscar instrutor:', error);
-        console.error('[fetchInstructorId] Error response:', error.response?.data);
         this.showNotification('error', 'Erro ao Buscar Instrutor', 'Erro ao buscar dados do instrutor.\nPor favor, tente novamente ou faça login novamente.');
         this.instructorId = null;
         return;
@@ -1021,17 +1004,11 @@ export default {
       return labels[group] || group;
     },
     async openCreateMachineModal() {
-      // Se instructorId não existe, tentar buscar novamente
+     
       if (!this.instructorId) {
-        console.warn('⚠️ [openCreateMachineModal] instructorId está null, tentando buscar novamente...');
         await this.fetchInstructorId();
         
         if (!this.instructorId) {
-          console.error('❌ [openCreateMachineModal] CRÍTICO: instructorId continua null após segunda tentativa!');
-          console.error('❌ [openCreateMachineModal] user:', this.user);
-          console.error('❌ [openCreateMachineModal] currentUser:', this.currentUser);
-          console.error('❌ [openCreateMachineModal] sessionStorage user:', sessionStorage.getItem('user'));
-          console.error('❌ [openCreateMachineModal] sessionStorage token:', sessionStorage.getItem('token'));
           this.showNotification('error', 'Erro Crítico', 'Não foi possível carregar o ID do instrutor.\n\nDados de debug (verifique o console):\n- User: ' + JSON.stringify(this.user || this.currentUser) + '\n\nPor favor, faça logout e login novamente.');
           return;
         } else {
@@ -1115,21 +1092,18 @@ export default {
           muscleGroups: this.editingMachine.muscleGroups || []
         };
 
-        // Se houver nova imagem (base64), adicionar ao payload
+       
         if (this.editingMachine.newImageBase64) {
           updateData.imageBase64 = this.editingMachine.newImageBase64;
         }
 
         const response = await api.put(`/equipments/${this.editingMachine._id}`, updateData);
+        console.log('response: ', response);
         
-        console.log('✅ [saveEditedMachine] Resposta da API:', response.data);
-
         await this.fetchEquipments();
         this.closeEditModal();
         this.showNotification('success', 'Sucesso', 'Aparelho atualizado com sucesso!');
       } catch (error) {
-        console.error('❌ [saveEditedMachine] Erro ao salvar aparelho:', error);
-        console.error('❌ [saveEditedMachine] Response:', error.response?.data);
         this.showNotification('error', 'Erro ao Salvar', 'Erro ao salvar aparelho: ' + (error.response?.data?.message || error.message));
       } finally {
         this.isSubmitting = false;
@@ -1165,17 +1139,17 @@ export default {
         reader.onload = (e) => {
           const img = new Image();
           img.onload = () => {
-            // Criar canvas para redimensionar
+           
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Definir tamanho máximo
+           
             const maxWidth = 1200;
             const maxHeight = 1200;
             let width = img.width;
             let height = img.height;
             
-            // Calcular novo tamanho mantendo proporção
+           
             if (width > height) {
               if (width > maxWidth) {
                 height *= maxWidth / width;
@@ -1192,10 +1166,10 @@ export default {
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
             
-            // Converter para base64 (JPEG com qualidade 70%)
+           
             const base64 = canvas.toDataURL('image/jpeg', 0.7);
             
-            // Atualizar preview e armazenar base64 para envio
+           
             this.editImagePreview = base64;
             this.editingMachine.newImageBase64 = base64;
           };
@@ -1212,17 +1186,17 @@ export default {
         reader.onload = (e) => {
           const img = new Image();
           img.onload = () => {
-            // Criar canvas para redimensionar
+           
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Definir tamanho máximo
+           
             const maxWidth = 1200;
             const maxHeight = 1200;
             let width = img.width;
             let height = img.height;
             
-            // Calcular novo tamanho mantendo proporção
+           
             if (width > height) {
               if (width > maxWidth) {
                 height *= maxWidth / width;
@@ -1239,10 +1213,10 @@ export default {
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
             
-            // Converter para base64 (JPEG com qualidade 70%)
+           
             const base64 = canvas.toDataURL('image/jpeg', 0.7);
             
-            // Atualizar preview e armazenar base64 para envio
+           
             this.editImagePreview = base64;
             this.editingMachine.newImageBase64 = base64;
           };

@@ -285,12 +285,12 @@ export default {
       return this.division.muscleGroups;
     },
     
-    // Dados padrão para exercícios comuns
+   
     getExerciseDefaults(exerciseName) {
       const defaults = {
         'Flexão Padrão': {
           description: 'Exercício clássico para desenvolvimento do peitoral, tríceps e ombros. Mantenha o corpo reto e desça até o peito quase tocar o chão.',
-          image: null, // Será usado placeholder
+          image: null,
           muscleGroups: ['Peitoral', 'Tríceps', 'Ombros']
         },
         'Agachamento': {
@@ -317,7 +317,7 @@ export default {
       };
     },
     
-    // Método melhorado para pegar descrição com fallback
+   
     getExerciseDescription(exercise) {
       if (exercise.description) {
         return exercise.description;
@@ -339,13 +339,13 @@ export default {
       
       let totalTime = 0;
       this.division.exercises.forEach(exercise => {
-        // Tempo estimado: (sets * 30s para execução) + (sets * tempo de descanso)
-        const executionTime = (exercise.sets || 0) * 30; // 30s por série
-        const restTime = (exercise.sets || 0) * (exercise.restTime || 60); // tempo de descanso
+       
+        const executionTime = (exercise.sets || 0) * 30;
+        const restTime = (exercise.sets || 0) * (exercise.restTime || 60);
         totalTime += executionTime + restTime;
       });
       
-      return Math.round(totalTime / 60); // converter para minutos
+      return Math.round(totalTime / 60);
     },
     
     formatRestTime(seconds) {
@@ -360,7 +360,7 @@ export default {
         return null;
       }
       
-      // Se temos uma URL que sabemos que funciona, usar ela
+     
       if (stateKey && this.imageStates[stateKey]?.workingUrl) {
         const workingPath = this.imageStates[stateKey].workingUrl;
         if (workingPath.startsWith('http')) return workingPath;
@@ -374,11 +374,11 @@ export default {
         return imagePath;
       }
       
-      // Construir URL correta para as imagens
+     
       const baseUrl = `${API_URL}`;
       let path = imagePath;
       
-      // Se não começa com /uploads, adicionar
+     
       if (!path.startsWith('/uploads')) {
         path = `/uploads/exercises/${path}`;
       }
@@ -389,9 +389,7 @@ export default {
 
 
 
-    onImageError(event) {
-      console.warn('Erro ao carregar imagem:', event.target.src);
-      // Substituir a imagem por um placeholder
+    onImageError(event) {     
       event.target.style.display = 'none';
       const placeholder = event.target.nextElementSibling || event.target.parentElement.querySelector('.exercise-placeholder');
       if (placeholder) {
@@ -400,8 +398,7 @@ export default {
     },
 
     onImageLoad(event) {
-      console.log('Imagem carregada com sucesso:', event.target.src);
-      // Esconder placeholder se existir
+     
       const placeholder = event.target.nextElementSibling || event.target.parentElement.querySelector('.exercise-placeholder');
       if (placeholder) {
         placeholder.style.display = 'none';

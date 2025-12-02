@@ -280,7 +280,7 @@ export default {
     },
     
     async register() {
-      // Validações
+     
       if (!this.validateCPF(this.cpf)) {
         this.errors.cpf = "CPF inválido";
         this.showNotification('info', 'Informacao', 'Por favor, corrija os erros no formulário');
@@ -291,7 +291,7 @@ export default {
       this.validateConfirmPassword();
       this.validateBirthDate();
       
-      // Verifica se há erros
+     
       if (Object.values(this.errors).some(error => error !== "")) {
         this.showNotification('info', 'Informacao', 'Por favor, corrija os erros no formulário');
         return;
@@ -318,7 +318,7 @@ export default {
 
         const userId = res.data.user._id;
 
-        // Se for aluno, passa os dados para o StudentRegisterNew
+       
         if (this.role === "aluno") {
           this.$router.push({
             path: "/student-register",
@@ -332,7 +332,7 @@ export default {
             },
           });
         } else {
-          // Para instrutor, mantém o fluxo antigo
+         
           this.$router.push({
             path: "/instructor-register",
             query: { userId },
@@ -346,7 +346,7 @@ export default {
     },
 
     validateCPF(cpf) {
-      // GPT para validação de CPF
+     
       cpf = cpf.replace(/[^\d]+/g, "");
 
       if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;

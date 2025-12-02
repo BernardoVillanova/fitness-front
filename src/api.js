@@ -5,7 +5,6 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Adiciona o token JWT em todas as requisições
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem('token');
@@ -21,30 +20,12 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   response => {
-    console.log('[API DEBUG] Resposta bem-sucedida:', {
-      url: response.config.url,
-      method: response.config.method,
-      status: response.status,
-      data: response.data
-    });
     return response;
   },
   error => {
-    console.error('[API ERROR] Erro na requisição:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message
-    });
-    
-    // Se receber 401, pode limpar o token e redirecionar para login
     if (error.response && error.response.status === 401) {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
-      // Opcional: redirecionar para login
-      // window.location.href = '/login';
     }
     
     return Promise.reject(error);

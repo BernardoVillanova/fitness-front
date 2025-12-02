@@ -110,12 +110,12 @@ export default {
 
         sessionStorage.setItem("token", token);
 
-        // Usar dados retornados pela API (mais confiável que apenas o token)
+       
         const userId = response.data.user?.id || decodedToken.id;
         
         let userData = {
           id: userId,
-          userId: userId, // Adicionar userId explicitamente
+          userId: userId,
           email: response.data.user?.email || this.email,
           role: response.data.user?.role || decodedToken.role,
           name: response.data.user?.name || decodedToken.name || 'Usuário',
@@ -124,7 +124,7 @@ export default {
           avatar: response.data.user?.avatar
         };
 
-        // Se for personal, buscar instructorId
+       
         if (decodedToken.role === 'personal') {
           try {
             const instructorResponse = await api.get(`/instructors/user/${userId}`);
@@ -136,21 +136,21 @@ export default {
             };
             
           } catch (err) {
-            console.error('❌ Erro ao buscar dados do instructor:', err);
+            console.error('Erro ao buscar dados do instructor:', err);
           }
         }
         
-        // Se for student, buscar dados completos
+       
         if (decodedToken.role === 'student') {
           try {
-            // O token contém o userId, precisamos buscar o student por userId
+           
             const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
             
             if (!userId) {
               throw new Error('ID do estudante não encontrado no token');
             }
 
-            // Buscar student por userId em vez de _id
+           
             const studentResponse = await api.get(`/students/user/${userId}`);
             
             userData = {
@@ -165,13 +165,13 @@ export default {
           } catch (err) {
             console.error('Erro ao buscar dados do student:', err);
             
-            // Fallback: tentar buscar todos os students e filtrar
+           
             try {
               const allStudentsResponse = await api.get('/students');
               const students = allStudentsResponse.data;
               const userId = decodedToken.id || decodedToken.userId || decodedToken.sub;
               
-              // Procurar o student pelo userId
+             
               const student = students.find(s => 
                 s.userId === userId || 
                 s.userId?._id === userId ||
@@ -202,7 +202,6 @@ export default {
         } else if (userData.role === "aluno") {
           this.$router.push("/student-dashboard");
         } else {
-          console.error('❌ Role desconhecida:', userData.role);
           this.showNotification('error', 'Erro', 'Tipo de usuário desconhecido');
           return;
         }

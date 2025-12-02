@@ -189,7 +189,7 @@ export default {
     onMounted(() => {
       window.addEventListener('resize', checkScreenSize);
       
-      // Restaurar estado do localStorage
+     
       const saved = localStorage.getItem('dashboardSidebarCollapsed');
       if (saved !== null) {
         isCollapsed.value = saved === 'true';

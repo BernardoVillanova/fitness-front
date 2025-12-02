@@ -249,7 +249,7 @@ const router = useRouter()
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Reactive data
+
 const loading = ref(false)
 const dashboardData = ref({
   totalWorkouts: 0,
@@ -263,10 +263,10 @@ const recentActivities = ref([])
 const goals = ref([])
 const weekDays = ref([])
 
-// Reactive data for user
+
 const userName = ref('Atleta')
 
-// Computed
+
 const getUserName = () => {
   return userName.value
 }
@@ -320,24 +320,19 @@ const getActivityIcon = (type) => {
   return icons[type] || 'fas fa-check'
 }
 
-// Methods
 const fetchDashboardData = async () => {
   loading.value = true
   try {
-    // Buscar dados do estudante do sessionStorage
     const userData = JSON.parse(sessionStorage.getItem('user'))
     const userIdFromSession = userData.id || userData.userId
     const token = sessionStorage.getItem('token')
         
     if (!token) {
-      console.error('❌ Token não encontrado no sessionStorage!')
       throw new Error('Token de autenticação não encontrado')
     }
     
-    // Definir nome do usuário
     userName.value = userData.name ? userData.name.split(' ')[0] : 'Atleta'
     
-    // IMPORTANTE: Buscar o studentId real do banco de dados
     let realStudentId = null
     let currentStudent = null
     
@@ -348,23 +343,20 @@ const fetchDashboardData = async () => {
       if (currentStudent) {
         realStudentId = currentStudent._id
         
-        // Atualizar nome se disponível
         if (currentStudent.name) {
           userName.value = currentStudent.name.split(' ')[0]
         }
       } else {
-        console.error('❌ Estudante não encontrado para userId:', userIdFromSession)
         throw new Error('Estudante não encontrado')
       }
     } catch (error) {
-      console.error('❌ Erro ao buscar estudante:', error)
+      console.error('Erro ao buscar estudante:', error)
       throw error
     }
         
     let allSessions = []
     
     try {
-      // Primeira tentativa: API de histórico existente
       const historyResponse = await api.get('/workout-sessions/sessions/history', {
         params: { limit: 1000 }
       })
@@ -378,58 +370,45 @@ const fetchDashboardData = async () => {
       })
       
       if (allSessions.length === 0) {
-        // Segunda tentativa: Nova API que busca todas as sessões
         try {
           const allSessionsResponse = await api.get('/workout-sessions/sessions/all')
           const alternativeSessions = allSessionsResponse.data?.sessions || []
           
-          // Filtrar pelo studentId correto
           allSessions = alternativeSessions.filter(session => {
             const sessionStudentId = session.studentId?._id || session.studentId
             return sessionStudentId === realStudentId
           })
         } catch (altError) {
-          console.error('❌ API alternativa também falhou:', altError)
+          console.error('API alternativa também falhou:', altError)
         }
       }
     } catch (error) {
-      console.error('❌ Erro ao buscar histórico:', error)
       allSessions = []
     }
     
-    // Filtrar apenas sessões completadas e adicionar logs detalhados
     const completedSessions = allSessions.filter(s => {
       const isCompleted = s.status === 'completed'
 
       return isCompleted
     })
     
-    if (completedSessions.length === 0) {
-      console.warn('⚠️ Nenhuma sessão completada encontrada!')
-    }
-    
-    // Calcular estatísticas baseadas em dados reais
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     
-    // Filtrar sessões da semana usando startTime ou endTime
     const sessionsThisWeek = completedSessions.filter(s => {
       const sessionDate = new Date(s.endTime || s.startTime)
       const isThisWeek = sessionDate >= weekAgo
       return isThisWeek
     })
     
-    // Calcular total de horas (duration está em minutos)
     const totalMinutes = completedSessions.reduce((sum, s) => {
       const minutes = s.duration || 0
       return sum + minutes
     }, 0)
-    const totalHours = Math.round(totalMinutes / 60 * 10) / 10 // Arredondar para 1 casa decimal
+    const totalHours = Math.round(totalMinutes / 60 * 10) / 10
     
-    // Calcular streak
     const streak = calculateStreak(completedSessions)
     
-    // Meta semanal do aluno (padrão 4 ou do perfil)
     const weeklyGoal = (currentStudent?.weeklyGoal || currentStudent?.goals?.weeklyWorkouts) || 4
     
     dashboardData.value = {
@@ -440,40 +419,33 @@ const fetchDashboardData = async () => {
       totalHours: totalHours
     }
     
-    // 2. Buscar próximo treino (plano de treino ativo)
     try {
       const workoutsResponse = await api.get('/workout-sessions/workouts')
       const workouts = workoutsResponse.data || []
       
       if (workouts.length > 0) {
-        // Filtrar planos ativos (que não estão pausados ou inativos)
         const activePlans = workouts.filter(w => w.isActive !== false && w.status !== 'paused')
         const planToUse = activePlans.length > 0 ? activePlans[0] : workouts[0]
         
         if (planToUse && planToUse.divisions && planToUse.divisions.length > 0) {
-          // Buscar sessões completadas deste plano específico
           const planSessions = completedSessions.filter(s => {
             const sessionPlanId = s.workoutPlanId?._id || s.workoutPlanId
             return sessionPlanId === planToUse._id
           })
           
-          // Determinar última divisão treinada
           let lastDivisionIndex = -1
           if (planSessions.length > 0) {
-            // Pegar a última sessão por data
             const lastSession = planSessions.reduce((latest, current) => {
               const latestDate = new Date(latest.endTime || latest.startTime)
               const currentDate = new Date(current.endTime || current.startTime)
               return currentDate > latestDate ? current : latest
             })
             
-            // Encontrar o índice da divisão
             if (lastSession.divisionName) {
               lastDivisionIndex = planToUse.divisions.findIndex(d => d.name === lastSession.divisionName)
             }
           }
           
-          // Próxima divisão: circular pela lista
           const nextDivisionIndex = (lastDivisionIndex + 1) % planToUse.divisions.length
           const nextDivision = planToUse.divisions[nextDivisionIndex]
           
@@ -491,7 +463,7 @@ const fetchDashboardData = async () => {
               totalExercises: totalExercises,
               estimatedTime: estimatedTime,
               estimatedCalories: estimatedCalories,
-              divisions: [nextDivision] // Para compatibilidade com o template
+              divisions: [nextDivision]
             }
           } else {
             nextWorkout.value = null
@@ -507,10 +479,8 @@ const fetchDashboardData = async () => {
       nextWorkout.value = null
     }
     
-    // 3. Processar atividades recentes (apenas sessões realmente completadas)
     recentActivities.value = []
     
-    // Adicionar últimas sessões completadas (ordenar por data mais recente)
     const recentCompletedSessions = completedSessions
       .filter(s => s.status === 'completed')
       .sort((a, b) => new Date(b.endTime || b.startTime) - new Date(a.endTime || a.startTime))
@@ -533,16 +503,13 @@ const fetchDashboardData = async () => {
       
     })
     
-    // 4. Remover metas conforme solicitado pelo usuário
     goals.value = []
     
-    // 5. Configurar calendário semanal (apenas sessões completadas)
     const weekCompletions = Array(7).fill(0)
     
     sessionsThisWeek
       .filter(s => s.status === 'completed')
       .forEach(session => {
-        // Usar endTime se disponível, senão startTime
         const sessionDate = new Date(session.endTime || session.startTime)
         const sessionDay = sessionDate.getDay()
         weekCompletions[sessionDay] = 1
@@ -552,7 +519,6 @@ const fetchDashboardData = async () => {
     generateWeekCalendar(weekCompletions)
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error)
-    // Em caso de erro, usar estrutura vazia ao invés de dados mock
     dashboardData.value = {
       totalWorkouts: 0,
       currentStreak: 0,
@@ -574,40 +540,34 @@ const calculateStreak = (sessions) => {
     return 0
   }
   
-  // Agrupar sessões por dia (apenas data, sem hora)
   const daysSet = new Set(
     sessions.map(s => {
       const d = new Date(s.endTime || s.startTime)
       d.setHours(0, 0, 0, 0)
-      return d.toISOString().split('T')[0] // Formato YYYY-MM-DD
+      return d.toISOString().split('T')[0]
     })
   )
   
-  // Converter para array de datas e ordenar decrescente (mais recente primeiro)
   const daysArr = Array.from(daysSet)
     .map(dateStr => new Date(dateStr))
     .sort((a, b) => b - a)
   
   if (daysArr.length === 0) return 0
   
-  // Hoje e ontem (apenas data, sem hora)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
   
-  // Data do último treino
   const lastWorkoutDate = daysArr[0]
   lastWorkoutDate.setHours(0, 0, 0, 0)
   
-  // Se último treino não foi hoje nem ontem, streak quebrou
   if (lastWorkoutDate.getTime() !== today.getTime() && 
       lastWorkoutDate.getTime() !== yesterday.getTime()) {
     return 0
   }
   
-  // Contar dias consecutivos para trás a partir do último treino
   let streak = 1
   let currentDate = new Date(lastWorkoutDate)
   
@@ -615,17 +575,14 @@ const calculateStreak = (sessions) => {
     const prevDate = daysArr[i]
     prevDate.setHours(0, 0, 0, 0)
     
-    // Data esperada (dia anterior ao currentDate)
     const expectedDate = new Date(currentDate)
     expectedDate.setDate(expectedDate.getDate() - 1)
     expectedDate.setHours(0, 0, 0, 0)
     
-    // Se a data anterior é consecutiva, continua o streak
     if (prevDate.getTime() === expectedDate.getTime()) {
       streak++
       currentDate = prevDate
     } else {
-      // Quebrou a sequência
       break
     }
   }
@@ -642,14 +599,12 @@ const calculateEstimatedTime = (division) => {
     const sets = ex.sets || 3
     const reps = ex.reps || 12
     
-    // Tempo por série: ~3 segundos por repetição + descanso
-    const timePerSet = (reps * 3) / 60 // em minutos
-    const restTime = ex.restTime ? (ex.restTime / 60) : 1 // descanso padrão 1min
+    const timePerSet = (reps * 3) / 60
+    const restTime = ex.restTime ? (ex.restTime / 60) : 1
     
     totalTime += (timePerSet * sets) + (restTime * (sets - 1))
   })
   
-  // Adicionar tempo de aquecimento/preparação
   totalTime += 5
   
   return Math.round(totalTime)
@@ -663,8 +618,6 @@ const calculateEstimatedCalories = (division) => {
   division.exercises.forEach(ex => {
     const sets = ex.sets || 3
     
-    // Calorias por série baseado em intensidade
-    // Exercícios compostos queimam mais que isolados
     const caloriesPerSet = 15
     totalCalories += caloriesPerSet * sets
   })
@@ -699,7 +652,6 @@ const viewWorkouts = () => {
   router.push('/student/workouts')
 }
 
-// Lifecycle
 onMounted(() => {
   fetchDashboardData()
 })
@@ -708,7 +660,6 @@ onMounted(() => {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
-/* Layout Principal */
 .dashboard-container {
   display: flex;
   min-height: 100vh;
@@ -733,7 +684,6 @@ onMounted(() => {
   background: #16213e;
 }
 
-/* Detecta quando o navbar está colapsado globalmente */
 .dashboard-main {
   margin-left: 280px;
 }
@@ -743,7 +693,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   margin-left: 0 !important;
 }
 
-/* Header */
 .page-header {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -833,7 +782,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   transform: translateY(-2px);
 }
 
-/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -906,7 +854,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   font-size: 0.9rem;
 }
 
-/* Content Grid */
 .content-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -971,7 +918,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   color: var(--primary-hover);
 }
 
-/* Loading */
 .card-loading {
   display: flex;
   flex-direction: column;
@@ -995,7 +941,6 @@ body:has(.navbar-collapsed) .dashboard-main,
   to { transform: rotate(360deg); }
 }
 
-/* Workout Preview */
 .workout-preview {
   padding: 0.5rem 0;
 }

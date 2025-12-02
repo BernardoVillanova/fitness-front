@@ -208,7 +208,7 @@ export default {
     const showConfirmModal = ref(false);
     const studentToRemove = ref(null);
 
-    // Obter ID do instrutor a partir do token
+   
     const getInstructorId = () => {
       try {
         const token = sessionStorage.getItem('token');
@@ -248,10 +248,10 @@ export default {
           return;
         }
 
-        // Buscar alunos do instrutor atual
+       
         const response = await getStudentsByInstructor(instructorId);
         
-        // Filtrar alunos que já estão na academia
+       
         const currentStudentIds = currentStudents.value.map(s => s._id);
         const studentsData = response.data.students || response.data || [];
         
@@ -282,12 +282,12 @@ export default {
       try {
         const payload = {
           studentId: student._id,
-          instructorId: instructorId.value // Usar o ID do instrutor do store
+          instructorId: instructorId.value
         };
 
         await addStudentToGym(props.gym._id, payload);
         
-        // Atualizar listas
+       
         await fetchCurrentStudents();
         await fetchAvailableStudents();
         
@@ -312,7 +312,7 @@ export default {
       try {
         await removeStudentFromGym(props.gym._id, studentToRemove.value._id);
         
-        // Atualizar listas
+       
         await fetchCurrentStudents();
         await fetchAvailableStudents();
         
@@ -329,17 +329,17 @@ export default {
     };
 
     const updateInstructor = () => {
-      // Função removida - não é mais necessária já que o instrutor é sempre o atual
+     
     };
 
-    // Carregar instrutores da academia
+   
     watch(() => props.gym, (newGym) => {
       if (newGym?.instructors) {
         availableInstructors.value = newGym.instructors;
       }
     }, { immediate: true });
 
-    // Atualizar dados quando a tab muda
+   
     watch(activeTab, (newTab) => {
       if (newTab === 'add' && availableStudents.value.length === 0) {
         fetchAvailableStudents();

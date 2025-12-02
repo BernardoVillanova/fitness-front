@@ -180,7 +180,7 @@ export default {
 
     const checkInstructor = async () => {
       try {
-        // Buscar dados do sessionStorage para evitar problemas com Proxy
+       
         const storedUser = sessionStorage.getItem('user');
         if (!storedUser) {
           hasInstructor.value = false;
@@ -189,7 +189,7 @@ export default {
 
         const userData = JSON.parse(storedUser);
         
-        // Se já tem instructorId no userData, usar direto
+       
         if (userData.instructorId) {
           const instructorId = userData.instructorId?.$oid || 
                               userData.instructorId?._id || 
@@ -205,28 +205,28 @@ export default {
           return;
         }
         
-        // Tentar buscar por studentId primeiro
+       
         let response;
         try {
           response = await api.get(`/students/${studentId}`);
         } catch (err) {
-          // Fallback: buscar por userId
+         
           response = await api.get(`/students/user/${userData.id}`);
         }
         
         let instructorId = null;
         
-        // Se instructorId for um objeto (formato MongoDB)
+       
         if (response.data.instructorId && typeof response.data.instructorId === 'object') {
           instructorId = response.data.instructorId.$oid || 
                         response.data.instructorId._id || 
                         response.data.instructorId.toString();
         } else {
-          // Se for string direta
+         
           instructorId = response.data.instructorId;
         }
         
-        // Verificar se existe e não é null/undefined/string vazia
+       
         hasInstructor.value = !!(instructorId && instructorId.toString().trim() !== '');
       } catch (error) {
         console.error('Erro ao verificar instrutor:', error);
@@ -238,7 +238,7 @@ export default {
       window.addEventListener('resize', checkScreenSize);
       checkInstructor();
       
-      // Carregar estado do sidebar
+     
       const saved = localStorage.getItem('sidebarCollapsed');
       if (saved !== null) {
         isCollapsed.value = saved === 'true';

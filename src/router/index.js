@@ -6,7 +6,7 @@ import LoginPage from '../views/login.vue';
 import RegisterPage from '../views/register.vue';
 import WorkoutPlans from '../views/workoutplans.vue';
 import StudentWorkoutPlans from '../views/StudentWorkoutPlans.vue';
-import DashboardTech from '../views/dashboardtech.vue';
+// import DashboardTech from '../views/dashboardtech.vue';
 import NewDashboardTech from '../views/newdashboardtech.vue';
 import  DashboardStudent from '@/views/dashboardstudent.vue';
 import NewDashboardStudent from '@/views/newdashboardstudent.vue';
@@ -75,23 +75,23 @@ const routes = [
   { path: '/exercises', component: () => import('../views/exercises.vue') },
   { path: '/machines', component: () => import('../views/machines.vue') },
   { path: '/workout-plans', component: WorkoutPlans },
+  // {
+  //   path: '/dashboard',
+  //   component: DashboardTech,
+  //   // meta: { requiresAuth: true, role: 'personal' },  
+  // },
   {
     path: '/dashboard',
-    component: DashboardTech,
-    // meta: { requiresAuth: true, role: 'personal' },  
-  },
-  {
-    path: '/newdashboard',
     component: NewDashboardTech,
     // meta: { requiresAuth: true, role: 'personal' },  
   },
+  // {
+  //   path: '/student-dashboard',
+  //   component: DashboardStudent,
+  //   // meta: { requiresAuth: true, role: 'student' },
+  // },
   {
     path: '/student-dashboard',
-    component: DashboardStudent,
-    // meta: { requiresAuth: true, role: 'student' },
-  },
-  {
-    path: '/newstudent-dashboard',
     component: NewDashboardStudent,
     // meta: { requiresAuth: true, role: 'student' },
   },

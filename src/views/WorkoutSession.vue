@@ -288,7 +288,7 @@ export default {
     
     const isDarkMode = computed(() => themeStore.isDarkMode);
     
-    // State
+   
     const workout = ref(null);
     const currentExerciseIndex = ref(0);
     const currentSet = ref(1);
@@ -300,7 +300,7 @@ export default {
     const completedSets = ref(0);
     const totalSets = ref(0);
     
-    // Session state
+   
     const elapsedTime = ref(0);
     const isPaused = ref(false);
     const isResting = ref(false);
@@ -309,7 +309,7 @@ export default {
     const showExerciseList = ref(false);
     const showFinishModal = ref(false);
     
-    // Timers
+   
     let sessionTimer = null;
     let restTimer = null;
     
@@ -381,7 +381,7 @@ export default {
     const completeSet = () => {
       if (currentReps.value <= 0) return;
       
-      // Save set data
+     
       const setData = {
         exercise: currentExercise.value.name,
         set: currentSet.value,
@@ -392,7 +392,7 @@ export default {
         timestamp: new Date()
       };
       
-      // Store in session for recovery
+     
       const progress = JSON.parse(sessionStorage.getItem('workoutProgress') || '{}');
       if (!progress.completedSets) progress.completedSets = [];
       progress.completedSets.push(setData);
@@ -401,24 +401,24 @@ export default {
       
       completedSets.value++;
       
-      // Check if all sets of current exercise are done
+     
       if (currentSet.value >= currentExercise.value.sets) {
         completedExercises.value.push(currentExerciseIndex.value);
         
-        // Check if workout is complete
+       
         if (isLastExercise.value) {
           completeWorkout();
           return;
         }
         
-        // Move to next exercise
+       
         nextExercise();
       } else {
-        // Move to next set
+       
         currentSet.value++;
         resetSetInputs();
         
-        // Start rest timer if specified
+       
         if (currentExercise.value.restTime) {
           startRestTimer(currentExercise.value.restTime);
         }
@@ -494,7 +494,7 @@ export default {
     };
     
     const saveWorkout = () => {
-      // Save workout to history
+     
       const workoutRecord = {
         id: Date.now(),
         workoutId: workout.value.id,
@@ -507,12 +507,12 @@ export default {
         exercises: JSON.parse(sessionStorage.getItem('workoutProgress') || '{}').completedSets || []
       };
       
-      // Store in localStorage for now (would be API call in real app)
+     
       const history = JSON.parse(localStorage.getItem('workoutHistory') || '[]');
       history.unshift(workoutRecord);
       localStorage.setItem('workoutHistory', JSON.stringify(history));
       
-      // Clean up session storage
+     
       sessionStorage.removeItem('activeWorkout');
       sessionStorage.removeItem('workoutProgress');
       
@@ -524,14 +524,14 @@ export default {
     };
     
     onMounted(() => {
-      // Load workout from session storage
+     
       const storedWorkout = sessionStorage.getItem('activeWorkout');
       if (storedWorkout) {
         workout.value = JSON.parse(storedWorkout);
         totalSets.value = workout.value.exercises.reduce((sum, ex) => sum + ex.sets, 0);
         resetSetInputs();
         
-        // Load progress if exists
+       
         const progress = JSON.parse(sessionStorage.getItem('workoutProgress') || '{}');
         if (progress.elapsedTime) {
           elapsedTime.value = progress.elapsedTime;
@@ -542,7 +542,7 @@ export default {
         
         startSessionTimer();
       } else {
-        // No active workout, redirect to workouts page
+       
         router.push('/student/workouts');
       }
     });

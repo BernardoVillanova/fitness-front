@@ -147,7 +147,7 @@ const emit = defineEmits(['close', 'linked'])
 const themeStore = useThemeStore()
 const { isDarkMode } = storeToRefs(themeStore)
 
-// Notification state
+
 const notification = ref({
   visible: false,
   type: 'info',
@@ -164,7 +164,7 @@ const showNotification = (type, title, message) => {
   }
 }
 
-// State
+
 const searchQuery = ref('')
 const availableUsers = ref([])
 const loading = ref(false)
@@ -172,10 +172,10 @@ const selectedUser = ref(null)
 const showConfirmation = ref(false)
 const isLinking = ref(false)
 
-// Search debounce timeout
+
 let searchTimeout = null
 
-// Methods
+
 const handleSearch = () => {
   if (searchTimeout) clearTimeout(searchTimeout)
   
@@ -196,7 +196,6 @@ const fetchAvailableUsers = async () => {
     })
     availableUsers.value = response.data
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error)
     availableUsers.value = []
   } finally {
     loading.value = false
@@ -229,11 +228,11 @@ const linkStudent = async () => {
   try {
     isLinking.value = true
     
-    // Pegar dados do instrutor logado
+   
     const userData = JSON.parse(sessionStorage.getItem('user'))
     const userId = userData.id
     
-    // Buscar o instrutor pelo userId
+   
     const instructorsResponse = await api.get('/instructors')
     const allInstructors = instructorsResponse.data
     const currentInstructor = allInstructors.find(
@@ -245,19 +244,18 @@ const linkStudent = async () => {
       return
     }
 
-    // Criar o registro de aluno vinculado
+   
     await api.post('/students/link', {
       userId: selectedUser.value._id,
       instructorId: currentInstructor._id
     })
 
-    // Emitir evento de sucesso
+   
     emit('linked')
     
-    // Fechar modal
+   
     close()
   } catch (error) {
-    console.error('Erro ao vincular aluno:', error)
     showNotification('error', 'Erro ao Vincular', error.response?.data?.message || 'Erro ao vincular aluno')
   } finally {
     isLinking.value = false
@@ -274,7 +272,7 @@ const close = () => {
 }
 
 onMounted(() => {
-  // Não carrega nada inicialmente, apenas quando o usuário buscar
+ 
 })
 </script>
 
